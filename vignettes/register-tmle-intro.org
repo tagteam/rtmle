@@ -1,0 +1,93 @@
+* About
+
+The R-package =rtmle= implements a class of targeted minimum loss
+estimators for the analysis of longitudinal register data. The
+functionality is similar to the established R-package =ltmle= with the
+following features and focus points:
+
+- explicit handling of competing risks
+- polypharmacy
+- descriptive statistics
+- diagnostic tools (not to be confused with model goodness of fit)
+- subgroup analysis
+- support for glmnet
+- cheap bootstrap inference
+- cross-fitting 
+- parallel computing
+
+* Data structures  
+
+We consider register data in the following format.
+
+#+ATTR_LATEX: :options otherkeywords={}, deletekeywords={}
+#+BEGIN_SRC R  :results output raw drawer  :exports both  :session *R* :cache yes
+library(rtmle)
+library(prodlim)
+library(data.table)
+set.seed(118)
+ld <- simulate_long_data(n = 10000,number_epochs = 20,beta_sum_A_on_Y = -.1,beta_A0_on_Y = 0)
+ld[,nth := 1:.N,by = "id"]
+ld[,num := .N,by = "id"]
+pop <- ld[nth == num,.(id,start = 0, death_date = terminal_time,censored_date = terminal_time,terminal_event,sex,age)]
+pop[terminal_event == 0,death_date := NA]
+pop[terminal_event == 1,censored_date := NA]
+pop[,terminal_event := NULL]
+outcome_data <- ld[!duplicated(id) & terminal_event == "Y",.(id,date = terminal_time,stop = NA)]
+como_baseline <- ld[!duplicated(id) & L_0 == 1,.(id,date = 0)]
+como_data <- ld[event == "L",.(id,date = time)]
+como_data <- rbind(como_baseline,como_data)
+# random baseline treatment
+treatment_baseline <- ld[!duplicated(id) & A_0 == 1,.(id,date = 0)]
+treatment_data <- ld[event == "A",.(id,date = time)]
+treatment_data <- rbind(treatment_baseline,treatment_data)
+w_outcome <- widen_outcome(outcome_name = "Y",pop = pop,intervals = seq(0,2000,30.45*6),como = list("Y" = outcome_data),id = "id")
+w_treatment <- widen_treatment(treatment = treatment_data,treatment_name = "A",pop = pop,intervals = seq(0,2000,30.45*6),id = "id")
+w_como <- widen_treatment(treatment_name = "L",treatment = como_data,pop = pop,intervals = seq(0,2000,30.45*6),id = "id")
+#+END_SRC
+
+#+RESULTS[(2024-07-19 11:28:52) b661f0a850e5c61d3031fcb15269161033feec13]:
+:results:
+Aggregate function missing, defaulting to 'length'
+:end:
+
+* Example
+
+#+ATTR_LATEX: :options otherkeywords={}, deletekeywords={}
+#+BEGIN_SRC R  :results output raw drawer  :exports both  :session *R* :cache yes  
+x <- rtmle_init(intervals = 3,name_id = "id",name_outcome = "Y",name_competing = "Dead",name_censoring = "Censored",censored_label = "censored")
+treatment_data(x) <- w_treatment
+outcome_data(x) <- w_outcome
+timevar_data(x) <- w_como
+baseline_data(x) <- pop[,.(id,age,sex)]
+prepare_data(x) <- "A"
+protocol(x,name = "always_A",variable = "A") <- 1
+model(x) <- "additive"
+x$estimator <- "tmle"
+system.time(x <- run_rtmle(x))
+x$estimates
+#+END_SRC
+
+#+RESULTS:
+:results:
+Error in UseMethod("protocol<-") (from protocol_rtmle.R#17) : 
+  no applicable method for 'protocol<-' applied to an object of class "rtmle"
+Error in UseMethod("model<-") (from model_rtmle.R#17) : 
+  no applicable method for 'model<-' applied to an object of class "rtmle"
+Error in rowCumprods(as.matrix(intervention_probs[, -1, with = FALSE])) (from run_rtmle.R#64) : 
+  could not find function "rowCumprods"
+Timing stopped at: 0.003 0 0.003
+NULL
+:end:
+
+#+TITLE: Introduction to the R-package rtmle
+#+Author: Thomas Alexander Gerds
+#+Date: 
+#+EMAIL: tag@biostat.ku.dk
+#+LaTeX_CLASS: org-article
+#+OPTIONS: H:3 num:t toc:nil \n:nil @:t ::t |:t ^:t -:t f:t *:t <:t
+#+OPTIONS: TeX:t LaTeX:t skip:nil d:t todo:t pri:nil tags:not-in-toc author:nil
+#+LaTeX_HEADER:\usepackage{authblk}
+#+LaTeX_HEADER:\usepackage{natbib}
+#+LaTeX_HEADER:\author{Thomas Alexander Gerds}
+#+LaTeX_HEADER:\affil{Department of Biostatistics, University of Copenhagen}
+
