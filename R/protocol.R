@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 3 2024 (13:46)
 ## Version:
-## Last-Updated: Jul 26 2024 (11:57) 
+## Last-Updated: Aug  1 2024 (10:16) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 14
+##     Update #: 16
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -30,8 +30,9 @@
 "protocol<-" <- function(x,...,value) {
     stopifnot(is.list(value))
     stopifnot(all(c("name","treatment_variables","intervention")%in%names(value)))
-    x$protocols[[value$name]]$protocol <- data.table(time = x$time,
-                                                     variable = paste0(value$treatment_variables,"_",x$time),
+    intervention_times <- x$time[-length(x$time)]
+    x$protocols[[value$name]]$intervention_table <- data.table(time = intervention_times,
+                                                     variable = paste0(value$treatment_variables,"_",intervention_times),
                                                      value = value$intervention)
     x$protocols[[value$name]]$treatment_variables <- value$treatment_variables
     x

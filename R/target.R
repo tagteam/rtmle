@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 3 2024 (13:46)
 ## Version:
-## Last-Updated: Jul 26 2024 (11:54) 
+## Last-Updated: Aug  1 2024 (10:41) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 10
+##     Update #: 21
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -30,15 +30,16 @@
     stopifnot(is.list(value))
     stopifnot(all(c("name","strategy","estimator","protocol")%in%names(value)))
     if (length(value$strategy) == 1 && value$strategy == "additive"){
-        x$models = additive_formalizer(x = x,
-                                       treatment_variables = x$protocols[[value$protocol]]$treatment_variables,
-                                       Markov = NULL)
+        # FIXME: some formulas could be shared across protocols
+        x$models[[value$protocol]] = additive_formalizer(x = x,
+                                                         protocol = value$protocol,
+                                                         Markov = NULL)
         ## model(x) <- list(formalizer = "additive",treatment_variables = x$protocols[[value$protocol]]$treatment_variables)
         x$targets[[value$name]][["strategy"]] <- "additive"
     }else{
         stop("Don't know about this strategy.")
     }
-    x$targets[[value$name]][["protocol"]] <- value$protocol
+    x$targets[[value$name]][["protocols"]] <- unique(c(x$targets[[value$name]][["protocols"]],value$protocol))
     x$targets[[value$name]][["estimator"]] <- "tmle"
     x
 }

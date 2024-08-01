@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 29 2024 (10:44) 
 ## Version: 
-## Last-Updated: Jul 29 2024 (14:51) 
+## Last-Updated: Aug  1 2024 (12:08) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 2
+##     Update #: 4
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -22,16 +22,25 @@
 #' @method summary rtmle
 #' @export
 summary.rtmle <- function(object,...){
-    do.call(rbind,lapply(names(object$targets),function(tar){
-        e = object$targets[[tar]]$estimates
-        ic = object$targets[[tar]]$IC
-        se = sqrt(var(ic)/NROW(ic))
-        lower = e-qnorm(.975)*se
-        upper = e+qnorm(.975)*se
-        sline = Publish::formatCI(x = e,
-                                  lower = lower,upper = upper,show.x = TRUE)
-        data.table(Target = tar,Estimate = e,std.err =se ,"Estimate (CI_95)" = sline)
-    }))
+    do.call(rbind,lapply(names(object$targets),function(target_name){
+        protocols <- x$targets[[target_name]]$protocols
+        do.call(rbind,lapply(protocols,function(protocol_name){
+            e = object$estimate[[target_name]][[protocol_name]]
+            ic = object$IC[[target_name]][[protocol_name]]
+            se = sqrt(var(ic)/NROW(ic))
+            lower = e-qnorm(.975)*se
+            upper = e+qnorm(.975)*se
+            sline = Publish::formatCI(x = e,
+                                      lower = lower,
+                                      upper = upper,
+                                      show.x = TRUE)
+            data.table(Target = target_name,
+                       Protocol = protocol_name,
+                       Estimate = e,
+                       std.err =se ,
+                       "Estimate (CI_95)" = sline)
+        }))}))
+}
 }
 
 

@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 19 2024 (07:23) 
 ## Version: 
-## Last-Updated: Jul 19 2024 (07:41) 
+## Last-Updated: Aug  1 2024 (10:08) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 3
+##     Update #: 5
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -51,14 +51,14 @@ rtmle_init <- function(intervals,
                        name_censoring,
                        censored_label){
     time_labels = paste0("time_",0:intervals)
-    outcome_models = lapply(seq_along(time_labels[-1]),function(j){list(formula = NULL,fit = NULL)})
-    names(outcome_models) = time_labels[-1]
-    propensity_models = lapply(seq_along(time_labels[-1]),function(j){list(formula = NULL,fit = NULL)})
-    names(propensity_models) = time_labels[-length(time_labels)]
-    censoring_models = lapply(seq_along(time_labels[-1]),function(j){list(formula = NULL,fit = NULL)})
-    names(censoring_models) = time_labels[-1]
+    ## outcome_models = lapply(seq_along(time_labels[-1]),function(j){list(formula = NULL,fit = NULL)})
+    ## names(outcome_models) = time_labels[-1]
+    ## propensity_models = lapply(seq_along(time_labels[-1]),function(j){list(formula = NULL,fit = NULL)})
+    ## names(propensity_models) = time_labels[-length(time_labels)]
+    ## censoring_models = lapply(seq_along(time_labels[-1]),function(j){list(formula = NULL,fit = NULL)})
+    ## names(censoring_models) = time_labels[-1]
     x = list(targets = NULL,
-             models = list(outcome = outcome_models,propensity = propensity_models,censoring = censoring_models),
+             ## models = list(outcome = outcome_models,propensity = propensity_models,censoring = censoring_models),
              estimates = NULL,
              data = NULL,
              name_id = name_id,
