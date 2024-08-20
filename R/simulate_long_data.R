@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 11 2024 (13:24) 
 ## Version: 
-## Last-Updated: Jul 30 2024 (10:38) 
+## Last-Updated: Aug 20 2024 (14:16) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 238
+##     Update #: 242
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -78,6 +78,7 @@ simulate_long_data <- function(n,
         id = 1:n,
         sex=rbinom(n,1,.4),
         age=runif(n,40,90),
+        A = numeric(n),
         sum_A = numeric(n),
         sum_L = numeric(n),
         time = numeric(n),
@@ -87,7 +88,7 @@ simulate_long_data <- function(n,
     ## pop[, A_0:=rbinom(.N,1,lava::expit(0.35+0.1*L_0-0.3*sex-0.01*age))]
     pop[, A_0:=rbinom(.N,1,0.5)]
     pop[, L_0:=rbinom(n,1,.17)]
-    people_atrisk <- pop[,.(id,entrytime = time,age,sex,L_0,A_0,sum_L,sum_A)]
+    people_atrisk <- pop[,.(id,entrytime = time,age,sex,L_0,A_0,sum_L,A,sum_A)]
     people_atrisk[,propensity_A := lava::expit(-3 + Beta$age_on_A*age+Beta$sex_on_A*sex+Beta$L0_on_A*L_0+Beta$A0_on_A*A_0)]
     people_atrisk[,hazard_ratio_L := exp(Beta$age_on_L*age+Beta$sex_on_L*sex)]
     people_atrisk[,hazard_ratio_Y := exp(Beta$age_on_Y*age+Beta$sex_on_Y*sex+Beta$L0_on_Y*L_0+Beta$A0_on_Y*A_0)]
@@ -129,7 +130,8 @@ simulate_long_data <- function(n,
         #
         people_atrisk = people_atrisk[!is_terminal]
         # draw treatment at the doctor visit times
-        people_atrisk[event == "V",sum_A := sum_A+rbinom(.N,1,propensity_A)]
+        people_atrisk[event == "V",A := rbinom(.N,1,propensity_A)]
+        people_atrisk[event == "V",sum_A := sum_A+A]
         # add to comorbidity index 
         people_atrisk[event == "L",sum_L := sum_L+1]
         # collect followup information
@@ -178,7 +180,7 @@ simulate_long_data <- function(n,
         timevar_data <- rbind(timevar_baseline,timevar_data)
         # random baseline treatment
         treatment_baseline <- pop[time == 0 & A_0 == 1,.(id,date = 0)]
-        treatment_data <- pop[event == "A",.(id,date = time)]
+        treatment_data <- pop[event == "V" & A == 1,.(id,date = time)]
         treatment_data <- rbind(treatment_baseline,treatment_data)
         list(baseline_data = bsl,
              treatment_data = treatment_data,

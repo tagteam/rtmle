@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 29 2024 (10:44) 
 ## Version: 
-## Last-Updated: Aug  1 2024 (12:08) 
+## Last-Updated: Aug  1 2024 (13:44) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 4
+##     Update #: 5
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -40,7 +40,6 @@ summary.rtmle <- function(object,...){
                        std.err =se ,
                        "Estimate (CI_95)" = sline)
         }))}))
-}
 }
 
 
