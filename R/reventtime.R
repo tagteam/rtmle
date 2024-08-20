@@ -28,7 +28,7 @@ reventtime <- function(n,
     }
     ## linear approximation
     lapprox <- function(values, breaks, fx){
-        pos <- sindex(jump.times = breaks, eval.times = values)
+        pos <- prodlim::sindex(jump.times = breaks, eval.times = values)
         maxindex <- which(pos == length(breaks))
         next_pos <- pos + 1
         pos <- pmax(pos,1)
@@ -46,7 +46,7 @@ reventtime <- function(n,
     if (!is.null(entrytime) && any(entrytime>0)) {
         if (length(entrytime) == 1) entrytime <- rep(entrytime, n)
         ## if (FALSE){
-        pos <- sindex(jump.times = breaks, eval.times = entrytime)
+        pos <- prodlim::sindex(jump.times = breaks, eval.times = entrytime)
         maxindex <- which(pos == length(breaks))
         next_pos <- pos + 1
         pos <- pmax(pos,1)
@@ -65,7 +65,7 @@ reventtime <- function(n,
     # where E is expontential with rate 1
     erate <- rexp(n)/hazardratio + entry_cumhazard
     ## if (FALSE){
-    pos <- sindex(jump.times = cumhazard, eval.times = erate)
+    pos <- prodlim::sindex(jump.times = cumhazard, eval.times = erate)
     maxindex <- which(pos == length(cumhazard))
     next_pos <- pos + 1
     pos <- pmax(pos,1)
