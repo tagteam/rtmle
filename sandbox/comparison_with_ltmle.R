@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 25 2024 (09:50) 
 ## Version: 
-## Last-Updated: Aug  1 2024 (13:54) 
+## Last-Updated: Aug 22 2024 (16:07) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 12
+##     Update #: 13
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -24,6 +24,7 @@ source("~/research/Epidemi/Reddie/LEADER/functions/run_ltmle.R")
 source("~/research/Epidemi/Reddie/LEADER/functions/summary.runLtmle.R")
 set.seed(112)
 ld <- simulate_long_data(n = 100,number_epochs = 20,beta = list(A_on_Y = -.2,A0_on_Y = -0.3,A0_on_A = 6),register_format = TRUE)
+
 x <- rtmle_init(intervals = 3,name_id = "id",name_outcome = "Y",name_competing = "Dead",name_censoring = "Censored",censored_label = "censored")
 add_long_data(x) <- ld
 prepare_data(x) <- list(treatment_variables = "A",reset = TRUE,intervals = seq(0,2000,30.45*6))

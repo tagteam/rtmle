@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 11 2024 (13:24) 
 ## Version: 
-## Last-Updated: Aug 20 2024 (14:16) 
+## Last-Updated: Aug 27 2024 (14:19) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 242
+##     Update #: 244
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -16,9 +16,8 @@
 ### Code:
 #'
 #' library(data.table)
-#' n <- 2000
-#' ld <- simulate_long_data(n,time = d$time,number_epochs=20,beta=0.05)
-#' ld2 <- simulate_long_data(n,time = d$time,number_epochs=20,beta=-0.05)
+#' ld <- simulate_long_data(n=100,number_epochs=20,register_format=TRUE)
+#' map_grid(grid=seq(0,10*timevar_data,
 #' ld[,table(table(id))]
 #' ld[,num:=.N,by="id"]
 #' ld[num==1]
@@ -121,7 +120,7 @@ simulate_long_data <- function(n,
     while (j < number_epochs && nrow(people_atrisk)>0){
         # calculate the time and type of the minimum of latent times to V,L,C,Y,D
         # matrix with latent times
-        next_doctor_visit <- c(schedule,10*365)[1+sindex(eval.times = people_atrisk$entrytime,jump.times = schedule)]
+        next_doctor_visit <- c(schedule,10*365)[1+prodlim::sindex(eval.times = people_atrisk$entrytime,jump.times = schedule)]
         ttt = do.call("cbind",list(
                                   next_doctor_visit,
                                   reventtime(n = nrow(people_atrisk),breaks = time,cumhazard = Baseline_Rate[["L"]],hazardratio = people_atrisk$hazard_ratio_L,entrytime = people_atrisk$entrytime,decimals = 2),
