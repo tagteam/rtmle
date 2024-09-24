@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 29 2024 (14:01) 
 ## Version: 
-## Last-Updated: Aug  1 2024 (10:45) 
+## Last-Updated: Sep 23 2024 (12:38) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 8
+##     Update #: 10
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -16,9 +16,9 @@
 ### Code:
 
 fit_propensity_models <- function(formula,data, speed = TRUE,...){
-    if (speed & !inherits(try(
-                     fit <- speedglm::speedglm(formula = formula,data = data,family = binomial(),maxit = 100),silent = TRUE),
-                     "try-error")){
+    if (speed && !inherits(try(
+                      fit <- speedglm::speedglm(formula = formula,data = data,family = binomial(),maxit = 100),silent = TRUE),
+                      "try-error")){
     } else{
         if (inherits(try(fit <- glm(formula = formula,data = data,family = binomial()),
                          silent = TRUE),"try-error"))

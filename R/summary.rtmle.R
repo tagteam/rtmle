@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 29 2024 (10:44) 
 ## Version: 
-## Last-Updated: Aug 26 2024 (10:07) 
+## Last-Updated: Sep 22 2024 (18:27) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 8
+##     Update #: 17
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -26,8 +26,8 @@ summary.rtmle <- function(object,...){
         target <- object$targets[[target_name]]
         protocols <- object$protocols
         do.call(rbind,lapply(names(protocols),function(protocol_name){
-            e = target$estimates
-            ic = target$IC
+            e = object$estimate[[target_name]][[protocol_name]]
+            ic = object$IC[[target_name]][[protocol_name]]
             se = sqrt(var(ic)/NROW(ic))
             lower = e-qnorm(.975)*se
             upper = e+qnorm(.975)*se

@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul  3 2024 (11:13) 
 ## Version: 
-## Last-Updated: Aug  1 2024 (10:44) 
+## Last-Updated: Sep 23 2024 (12:13) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 43
+##     Update #: 54
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -18,9 +18,10 @@ additive_formalizer <- function(x,
                                 protocol,
                                 Markov = NULL){
     treatment_variables <- x$protocols[[protocol]]$treatment_variables
-    name_time_covariates <- x$prepared_data[[protocol]]$name_time_covariates
-    name_baseline_covariates <- x$prepared_data[[protocol]]$name_baseline_covariates
-    protocol_data <- x$prepared_data[[protocol]]$data
+    name_time_covariates <- x$prepared_data$name_time_covariates
+    name_baseline_covariates <- x$prepared_data$name_baseline_covariates
+    name_constant_variables <- x$prepared_data$name_constant_variables
+    protocol_data <- x$prepared_data$data
     if (length(name_time_covariates)>0){
         if (length(Markov)>0 && Markov[[1]]!="")
             if (any(not_found <- !(Markov%in%name_time_covariates)))
@@ -34,14 +35,18 @@ additive_formalizer <- function(x,
                                         work_data = protocol_data,
                                         name_baseline_covariates = name_baseline_covariates,
                                         name_time_covariates = name_time_covariates,
-                                        name_treatment_variables = reg,
-                                        regimen = FALSE,
                                         Markov = Markov,
-                                        constant_variables = x$constant_variables))
+                                        # remove baseline treatment from predictor variables
+                                        constant_variables = c(name_constant_variables,reg)))
     })))
     # censoring in first interval
     if(length(x$name_censoring)>0){
-        censoring_formulas <- paste0(x$name_censoring,"_1"," ~ ", formalize(timepoint = 0,work_data = protocol_data,name_baseline_covariates = name_baseline_covariates,name_time_covariates = name_time_covariates,name_treatment_variables = treatment_variables,regimen = TRUE,Markov = Markov,constant_variables = x$constant_variables))
+        censoring_formulas <- paste0(x$name_censoring,"_1"," ~ ", formalize(timepoint = 0,
+                                                                            work_data = protocol_data,
+                                                                            name_baseline_covariates = name_baseline_covariates,
+                                                                            name_time_covariates = name_time_covariates,
+                                                                            Markov = Markov,
+                                                                            constant_variables = name_constant_variables))
     } else {
         censoring_formulas <- NULL
     }
@@ -49,12 +54,22 @@ additive_formalizer <- function(x,
     if(K>1){
         propensity_formulas <- c(propensity_formulas,unlist(lapply(x$times[-1],function(tk){
             c(unlist(lapply(treatment_variables, function(reg){
-                paste0(reg,"_",tk," ~ ",formalize(timepoint = tk, work_data = protocol_data,name_baseline_covariates = name_baseline_covariates,name_time_covariates  = name_time_covariates,name_treatment_variables = reg, regimen = TRUE,Markov = Markov, constant_variables = x$constant_variables))
+                paste0(reg,"_",tk," ~ ",formalize(timepoint = tk,
+                                                  work_data = protocol_data,
+                                                  name_baseline_covariates = name_baseline_covariates,
+                                                  name_time_covariates  = name_time_covariates,
+                                                  Markov = Markov,
+                                                  constant_variables = name_constant_variables))
             })))
         })))
         if(length(x$name_censoring)>0){
             censoring_formulas <- c(censoring_formulas,unlist(lapply(x$times[-c(1,2)],function(tk){
-                paste0(x$name_censoring,"_",tk," ~ ",formalize(timepoint = tk, work_data = protocol_data,name_baseline_covariates = name_baseline_covariates,name_time_covariates = name_time_covariates,name_treatment_variables = treatment_variables, regimen = TRUE,Markov = Markov, constant_variables = x$constant_variables))
+                paste0(x$name_censoring,"_",tk," ~ ",formalize(timepoint = tk,
+                                                               work_data = protocol_data,
+                                                               name_baseline_covariates = name_baseline_covariates,
+                                                               name_time_covariates = name_time_covariates,
+                                                               Markov = Markov,
+                                                               constant_variables = name_constant_variables))
             })))
         }
     }
@@ -66,8 +81,7 @@ additive_formalizer <- function(x,
         paste0(x$name_outcome,"_",tk," ~ ", formalize(timepoint = tk, work_data = protocol_data,
                                                       name_baseline_covariates = name_baseline_covariates,
                                                       name_time_covariates  = name_time_covariates, 
-                                                      name_treatment_variables = treatment_variables, regimen = TRUE,
-                                                      Markov = Markov, constant_variables = x$constant_variables))
+                                                      Markov = Markov, constant_variables = name_constant_variables))
     }))
     names(outcome_formulas)=paste0(x$name_outcome,"_",x$times[-1])
     # names for treatment and censoring formulas

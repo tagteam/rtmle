@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul  1 2024 (09:11) 
 ## Version: 
-## Last-Updated: Aug  1 2024 (11:13) 
+## Last-Updated: Sep 24 2024 (15:49) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 201
+##     Update #: 247
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -15,7 +15,7 @@
 ## 
 ### Code:
 #' @export
-run_rtmle <- function(x,targets,refit = FALSE,speed = FALSE,...){
+run_rtmle <- function(x,targets,learner = "learn_glm",refit = FALSE,...){
     # FIXME: for target in targets
     available_targets <- names(x$targets)
     if (!missing(targets)) {
@@ -28,13 +28,14 @@ run_rtmle <- function(x,targets,refit = FALSE,speed = FALSE,...){
     }else{
         run_these_targets <- available_targets
     }
+    x$sequential_outcome_regression <- vector(mode = "list",length(x$targets))
     for (target_name in run_these_targets){
         message("Running target: ",target_name)
         ## protocols <- names(x$protocols)
         protocols <- x$targets[[target_name]]$protocols
         for (protocol_name in protocols){
             message("Current protocol: ",protocol_name)
-            protocol_data <- x$prepared_data[[protocol_name]]$data
+            protocol_data <- x$prepared_data$data
             # initialize influence curve vector
             x$IC[[target_name]][[protocol_name]] <- numeric(nrow(protocol_data))
             #
@@ -42,10 +43,16 @@ run_rtmle <- function(x,targets,refit = FALSE,speed = FALSE,...){
             #
             current_protocol <- x$protocols[[protocol_name]]
             intervention_table <- current_protocol$intervention_table
-            protocol_Anodes <- x$prepared_data[[protocol_name]]$Anodes
-            protocol_Cnodes <- x$prepared_data[[protocol_name]]$Cnodes
-            protocol_Dnodes <- x$prepared_data[[protocol_name]]$Dnodes
-            protocol_Ynodes <- x$prepared_data[[protocol_name]]$Ynodes
+            if (length(x$times)>1){
+                protocol_Anodes <- sapply(x$times[-length(x$times)],function(tk){
+                    paste0(x$protocols[[protocol_name]]$treatment_variables,"_",tk)
+                })
+            } else{
+                protocol_Anodes <- x$protocols[[protocol_name]]$treatment_variables
+            }
+            protocol_Cnodes <- x$prepared_data$Cnodes
+            protocol_Dnodes <- x$prepared_data$Dnodes
+            protocol_Ynodes <- x$prepared_data$Ynodes
             #
             # define a matrix with the cumulative intervention/censoring probabilities
             #
@@ -67,21 +74,17 @@ run_rtmle <- function(x,targets,refit = FALSE,speed = FALSE,...){
                         outcome_free <- rep(TRUE,nrow(protocol_data))
                         uncensored <- rep(TRUE,nrow(protocol_data))
                     }
-                    if (any(outcome_free&uncensored)){
+                    if (any(outcome_free & uncensored)){
                         # fit the propensity regression model
                         if (refit || length(x$models[[protocol_name]][["propensity"]][[protocol_Anodes[[j+1]]]]$fit) == 0){
                             if (!is.null(ff <- x$models[[protocol_name]][["propensity"]][[protocol_Anodes[[j+1]]]]$formula)){
-                                x$models[[protocol_name]][["propensity"]][[protocol_Anodes[[j+1]]]]$fit <- fit_propensity_models(formula = ff,
-                                                                                                                                 data = protocol_data[outcome_free&uncensored],
-                                                                                                                                 speed = speed)
+                                x$models[[protocol_name]][["propensity"]][[protocol_Anodes[[j+1]]]]$fit <- do.call(learner,list(formula = ff,data = protocol_data[outcome_free&uncensored],...))
                             }
                         }
                         # fit censoring model
                         if (refit || length(x$models[[protocol_name]][["censoring"]]$fit) == 0){
                             if (!is.null(ff <- x$models[[protocol_name]][["censoring"]][[protocol_Cnodes[[j+1]]]]$formula)){
-                                x$models[[protocol_name]][["censoring"]][[protocol_Cnodes[[j+1]]]]$fit <- fit_censoring_models(formula = ff,
-                                                                                                                               data = protocol_data[outcome_free&uncensored],
-                                                                                                                               speed = speed)
+                                x$models[[protocol_name]][["censoring"]][[protocol_Cnodes[[j+1]]]]$fit <- do.call(learner,list(formula = ff,data = protocol_data[outcome_free&uncensored],...))
                             }
                         }
                     }
@@ -91,17 +94,17 @@ run_rtmle <- function(x,targets,refit = FALSE,speed = FALSE,...){
                     intervened_data = intervene(data = protocol_data[outcome_free],
                                                 intervention_table = intervention_table,
                                                 time = j)
-                    intervention_probs[outcome_free][[protocol_Anodes[[j+1]]]] <- predict(x$models[[protocol_name]][["propensity"]][[protocol_Anodes[[j+1]]]]$fit,
-                                                                                          newdata = intervened_data,
-                                                                                          type = "response")
-                    intervention_probs[outcome_free][[protocol_Cnodes[[j+1]]]] <- predict(x$models[[protocol_name]][["censoring"]][[protocol_Cnodes[[j+1]]]]$fit,newdata = intervened_data,type = "response")
+                    intervention_probs[outcome_free][[protocol_Anodes[[j+1]]]] <- predictRisk(x$models[[protocol_name]][["propensity"]][[protocol_Anodes[[j+1]]]]$fit,
+                                                                                              newdata = intervened_data)
+                    intervention_probs[outcome_free][[protocol_Cnodes[[j+1]]]] <- predictRisk(x$models[[protocol_name]][["censoring"]][[protocol_Cnodes[[j+1]]]]$fit,
+                                                                                              newdata = intervened_data)
                 }
                 x$cumulative_intervention_probs[[protocol_name]] <- matrixStats::rowCumprods(as.matrix(intervention_probs[,-1,with = FALSE]))
             }
             #
             # define a matrix which indicates if the intervention is followed
             #
-            if (length(x$intervention_match[[protocol_name]]) == 0){
+            if (length(intervention_match <- x$intervention_match[[protocol_name]]) == 0){
                 # fixme for target in targets
                 intervention_match <- matrix(0,ncol = length(protocol_Anodes),nrow = nrow(protocol_data))
                 for(j in x$times[-c(length(x$times))]){
@@ -117,6 +120,7 @@ run_rtmle <- function(x,targets,refit = FALSE,speed = FALSE,...){
             # Q-part: loop backwards in time through iterative condtional expectations
             #
             # the first step is the outcome regression of the last time interval
+            x$sequential_outcome_regression[[target_name]] = vector(3,mode = "list")
             for (j in rev(x$times)[-length(x$times)]){
                 # formula
                 # FIXME: protocols could share the outcome formula?
@@ -130,27 +134,27 @@ run_rtmle <- function(x,targets,refit = FALSE,speed = FALSE,...){
                 }
                 # data at-risk at the beginning of the interval
                 if (j > 1){
-                    outcome_free <- protocol_data[[paste0(x$name_outcome,"_",j-1)]]%in%0
+                    outcome_free <- protocol_data[[protocol_Ynodes[[j-1]]]]%in%0
                     # competing risks
-                    # FIXME: should be protocol_Dnodes[[j-1]] or [[j]]? instead of paste0
-                    if (length(protocol_Dnodes)>0) outcome_free <- outcome_free&protocol_data[[paste0(x$name_competing,"_",j-1)]]%in%0
-                    uncensored <- protocol_data[[paste0(x$name_censoring,"_",j-1)]]%in%"uncensored"
+                    if (length(protocol_Dnodes)>0){
+                        outcome_free <- outcome_free&protocol_data[[protocol_Dnodes[[j-1]]]]%in%0
+                    }
+                    uncensored <- protocol_data[[protocol_Cnodes[[j-1]]]]%in%"uncensored"
                 }else{
                     outcome_free <- rep(TRUE,nrow(protocol_data))
                     uncensored <- rep(TRUE,nrow(protocol_data))
                 }
                 # fit outcome regression
-                if (speed & !inherits(try(fit_last <- speedglm::speedglm(formula = interval_outcome_formula,
-                                                                         data = protocol_data[outcome_free&uncensored],
-                                                                         family = binomial(),
-                                                                         maxit = 100),silent = TRUE),
-                                      "try-error")){
-                } else
-                    fit_last <- glm(formula = interval_outcome_formula,
-                                    data = protocol_data[outcome_free&uncensored],
-                                    family = "binomial")
+                if (j == length(x$times)){
+                    # we always have the censoring node _j *before* the outcome node _j
+                    # hence to analyse Y_j we need C_j = "uncensored" for the modeling of Y_j
+                    fit_last <- do.call(learner,list(formula = interval_outcome_formula,data = protocol_data[outcome_free&protocol_data[[protocol_Cnodes[[j]]]]%in%"uncensored"],...))
+                } else{
+                    # note that we can still predict those who are censored at C_j but uncensored at C_{j-1} 
+                    fit_last <- do.call(learner,list(formula = interval_outcome_formula,data = protocol_data[outcome_free&uncensored],...))
+                }
                 # save fitted object
-                x$models[["outcome"]][[j]]$fit <- fit_last
+                x$models[[protocol_name]][["outcome"]][[protocol_Ynodes[[j]]]]$fit <- fit_last
                 # intervene according to protocol for targets
                 # FIXME: intervene on all variables or only those after
                 #        time j? those in current outcome_formula
@@ -162,7 +166,7 @@ run_rtmle <- function(x,targets,refit = FALSE,speed = FALSE,...){
                     time = j)
                 # set predicted value as outcome for next regression
                 ## FIXME: if (target$estimator == "tmle")
-                y <- predict(fit_last,newdata = intervened_data ,type = "response")
+                y <- predictRisk(fit_last,newdata = intervened_data)
                 current_cnode = protocol_data[[paste0(x$name_censoring,"_",j)]]
                 if (length(x$targets[[target_name]]$estimator) == 0 || x$targets[[target_name]]$estimator == "tmle"){
                     W = update_Q(Y = Yhat,
@@ -171,10 +175,11 @@ run_rtmle <- function(x,targets,refit = FALSE,speed = FALSE,...){
                                  uncensored_undeterministic = outcome_free & (current_cnode%in%"uncensored"),
                                  intervention.match = x$intervention_match[[protocol_name]][,intervention_table[time == j-1]$variable])
                 }else{
-                    W <- predict(fit_last,
-                                 newdata = intervened_data ,
-                                 type = "response")
+                    W <- y
                 }
+                x$sequential_outcome_regression[[target_name]]$predicted_values <- cbind(x$sequential_outcome_regression[[target_name]]$predicted_values,W)
+                x$sequential_outcome_regression[[target_name]]$fit <- c(x$sequential_outcome_regression[[target_name]]$fit,list(fit_last))
+                x$sequential_outcome_regression[[target_name]]$intervened_data <- c(x$sequential_outcome_regression[[target_name]]$intervened_data,list(intervened_data))
                 # calculate contribution to influence function
                 h.g.ratio <- 1/x$cumulative_intervention_probs[[protocol_name]][,match(paste0("Censored_",j),colnames(x$cumulative_intervention_probs[[protocol_name]]))]
                 index <- (current_cnode%in%"uncensored") & intervention_match[,intervention_table[time == j-1]$variable]

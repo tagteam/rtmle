@@ -3,9 +3,8 @@
 \name{simulate_long_data}
 \alias{simulate_long_data}
 \title{library(data.table)
-n <- 2000
-ld <- simulate_long_data(n,time = d$time,number_epochs=20,beta=0.05)
-ld2 <- simulate_long_data(n,time = d$time,number_epochs=20,beta=-0.05)
+ld <- simulate_long_data(n=100,number_epochs=20,register_format=TRUE)
+map_grid(grid=seq(0,10*timevar_data,
 ld\link{,table(table(id))}
 ld\link{,num:=.N,by="id"}
 ld\link{num==1}
@@ -13,17 +12,18 @@ ld}
 \usage{
 simulate_long_data(
   n,
-  number_epochs,
+  number_epochs = 10,
   baseline_rate,
   beta,
-  register_format = FALSE
+  register_format = FALSE,
+  int_dist = FALSE,
+  baseline_hazard_outcomes = 0.001
 )
 }
 \description{
 library(data.table)
-n <- 2000
-ld <- simulate_long_data(n,time = d$time,number_epochs=20,beta=0.05)
-ld2 <- simulate_long_data(n,time = d$time,number_epochs=20,beta=-0.05)
+ld <- simulate_long_data(n=100,number_epochs=20,register_format=TRUE)
+map_grid(grid=seq(0,10*timevar_data,
 ld\link{,table(table(id))}
 ld\link{,num:=.N,by="id"}
 ld\link{num==1}

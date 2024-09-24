@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul  4 2024 (07:40) 
 ## Version: 
-## Last-Updated: Jul 26 2024 (15:05) 
+## Last-Updated: Sep 23 2024 (12:11) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 5
+##     Update #: 15
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -18,8 +18,6 @@ formalize <- function(timepoint,
                       work_data, 
                       name_baseline_covariates,
                       name_time_covariates,
-                      name_treatment_variables,
-                      regimen = TRUE,
                       Markov = NULL,
                       constant_variables = NULL){
     form = NULL
@@ -42,11 +40,6 @@ formalize <- function(timepoint,
     included_vars=c(included_baseline_covariates,
                     non_markov_time_covariates,
                     markov_time_covariates)
-    if(regimen == TRUE) {
-        included_vars = c(included_vars,
-                          setdiff(sapply(name_treatment_variables, function(nt) {paste0(nt, "_", 0:max(0, (timepoint - 1)))}),
-                                  constant_variables))
-    }
     # remove vars that are not in data
     has_not=match(included_vars,names(work_data),nomatch=0)==0
     included_vars=included_vars[!has_not]

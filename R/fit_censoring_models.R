@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 29 2024 (13:59) 
 ## Version: 
-## Last-Updated: Aug  1 2024 (10:45) 
+## Last-Updated: Sep 23 2024 (12:34) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 7
+##     Update #: 8
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -15,7 +15,7 @@
 ## 
 ### Code:
 fit_censoring_models <- function(formula,data, speed = TRUE,...){
-    if (speed & !inherits(try(
+    if (speed && !inherits(try(
                      fit <- speedglm::speedglm(formula = formula,data = data,family = binomial(),maxit = 100),silent = TRUE),
                      "try-error")){
     } else{

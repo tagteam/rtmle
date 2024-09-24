@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 11 2024 (13:24) 
 ## Version: 
-## Last-Updated: Aug 27 2024 (14:19) 
+## Last-Updated: Sep 22 2024 (15:38) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 244
+##     Update #: 248
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -24,7 +24,7 @@
 #' ld
 #' @export
 simulate_long_data <- function(n,
-                               number_epochs,
+                               number_epochs = 10,
                                baseline_rate,
                                beta,
                                register_format = FALSE,
@@ -208,8 +208,7 @@ simulate_long_data <- function(n,
         treatment_data <- pop[event == "V" & A == 1,.(id,date = time)] 
         treatment_data <- rbind(treatment_baseline,treatment_data)
         list(baseline_data = bsl,
-             treatment_data = treatment_data,
-             timevar_data = timevar_data,
+             timevar_data = list(L = timevar_data,A = treatment_data),
              outcome_data = outcome_data,
              competingrisk_data = competingrisk_data,
              censored_data = censored_data)

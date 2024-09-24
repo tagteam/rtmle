@@ -3,6 +3,10 @@
 
 ## usethis namespace: start
 #' @importFrom data.table :=
+#' @importFrom data.table setkey
+#' @importFrom data.table setkeyv
+#' @importFrom data.table setnames
+#' @importFrom data.table copy
 #' @importFrom data.table .BY
 #' @importFrom data.table .EACHI
 #' @importFrom data.table .GRP

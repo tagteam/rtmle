@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 3 2024 (13:46)
 ## Version:
-## Last-Updated: Aug  1 2024 (13:52) 
+## Last-Updated: Sep 24 2024 (10:20) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 23
+##     Update #: 24
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -42,7 +42,7 @@
         stop("Don't know about this strategy.")
     }
     x$targets[[value$name]][["protocols"]] <- unique(c(x$targets[[value$name]][["protocols"]],value$protocols))
-    x$targets[[value$name]][["estimator"]] <- "tmle"
+    x$targets[[value$name]][["estimator"]] <- value$estimator
     x
 }
 ######################################################################

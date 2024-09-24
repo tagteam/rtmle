@@ -41,8 +41,7 @@ x <- rtmle_init(intervals = 8, name_id = "id",
                 name_outcome = "Y", name_competing = "Dead",
                 name_censoring = "Censored",censored_label = "censored")
 add_long_data(x) <- ld
-prepare_data(x) <- list(treatment_variables = "A",
-                       reset = TRUE,
+prepare_data(x) <- list(reset = TRUE,
                        intervals = seq(0,2000,30.45*6))
 x$prepared_data
 }
