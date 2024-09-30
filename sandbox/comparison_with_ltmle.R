@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 25 2024 (09:50) 
 ## Version: 
-## Last-Updated: Sep 22 2024 (18:29) 
+## Last-Updated: Sep 30 2024 (09:12) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 25
+##     Update #: 26
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -30,7 +30,11 @@ baseline_data(x) <- ld$baseline_data[,start_followup_date:=0]
 x <- long_to_wide(x,intervals = seq(0,2000,30.45*6))
 protocol(x) <- list(name = "Always_A",treatment_variables = "A",intervention = 1)
 prepare_data(x) <- list()
-target(x) <- list(name = "Outcome_risk",strategy = "additive",estimator = "tmle",estimands = 3,protocols = "Always_A")
+target(x) <- list(name = "Outcome_risk",
+                  strategy = "additive",
+                  estimator = "tmle",
+                  estimands = 3,
+                  protocols = "Always_A")
 system.time(x <- run_rtmle(x))
 summary(x)
 # Ltmle

@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul  3 2024 (11:13) 
 ## Version: 
-## Last-Updated: Sep 23 2024 (12:13) 
+## Last-Updated: Sep 30 2024 (09:13) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 54
+##     Update #: 56
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -40,8 +40,8 @@ additive_formalizer <- function(x,
                                         constant_variables = c(name_constant_variables,reg)))
     })))
     # censoring in first interval
-    if(length(x$name_censoring)>0){
-        censoring_formulas <- paste0(x$name_censoring,"_1"," ~ ", formalize(timepoint = 0,
+    if(length(x$names$censoring)>0){
+        censoring_formulas <- paste0(x$names$censoring,"_1"," ~ ", formalize(timepoint = 0,
                                                                             work_data = protocol_data,
                                                                             name_baseline_covariates = name_baseline_covariates,
                                                                             name_time_covariates = name_time_covariates,
@@ -62,9 +62,9 @@ additive_formalizer <- function(x,
                                                   constant_variables = name_constant_variables))
             })))
         })))
-        if(length(x$name_censoring)>0){
+        if(length(x$names$censoring)>0){
             censoring_formulas <- c(censoring_formulas,unlist(lapply(x$times[-c(1,2)],function(tk){
-                paste0(x$name_censoring,"_",tk," ~ ",formalize(timepoint = tk,
+                paste0(x$names$censoring,"_",tk," ~ ",formalize(timepoint = tk,
                                                                work_data = protocol_data,
                                                                name_baseline_covariates = name_baseline_covariates,
                                                                name_time_covariates = name_time_covariates,
@@ -78,12 +78,12 @@ additive_formalizer <- function(x,
     ## on the previously observed covariates and regimen.
     ## The reason for this is we do not want to mistakenly assume that L_1 -> A_1 when in reality A_1 happens before L_1
     outcome_formulas <- unlist(lapply(x$times[-1],function(tk){
-        paste0(x$name_outcome,"_",tk," ~ ", formalize(timepoint = tk, work_data = protocol_data,
+        paste0(x$names$outcome,"_",tk," ~ ", formalize(timepoint = tk, work_data = protocol_data,
                                                       name_baseline_covariates = name_baseline_covariates,
                                                       name_time_covariates  = name_time_covariates, 
                                                       Markov = Markov, constant_variables = name_constant_variables))
     }))
-    names(outcome_formulas)=paste0(x$name_outcome,"_",x$times[-1])
+    names(outcome_formulas)=paste0(x$names$outcome,"_",x$times[-1])
     # names for treatment and censoring formulas
     names(propensity_formulas) <- as.character(unlist(lapply(propensity_formulas,function(x){strsplit(x," ~ ")[[1]][[1]]})))
     names(censoring_formulas) <- as.character(unlist(lapply(censoring_formulas,function(x){strsplit(x," ~ ")[[1]][[1]]})))

@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 19 2024 (07:23) 
 ## Version: 
-## Last-Updated: Aug  1 2024 (10:08) 
+## Last-Updated: Sep 30 2024 (09:19) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 5
+##     Update #: 13
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -51,20 +51,12 @@ rtmle_init <- function(intervals,
                        name_censoring,
                        censored_label){
     time_labels = paste0("time_",0:intervals)
-    ## outcome_models = lapply(seq_along(time_labels[-1]),function(j){list(formula = NULL,fit = NULL)})
-    ## names(outcome_models) = time_labels[-1]
-    ## propensity_models = lapply(seq_along(time_labels[-1]),function(j){list(formula = NULL,fit = NULL)})
-    ## names(propensity_models) = time_labels[-length(time_labels)]
-    ## censoring_models = lapply(seq_along(time_labels[-1]),function(j){list(formula = NULL,fit = NULL)})
-    ## names(censoring_models) = time_labels[-1]
     x = list(targets = NULL,
-             ## models = list(outcome = outcome_models,propensity = propensity_models,censoring = censoring_models),
-             estimates = NULL,
-             data = NULL,
-             name_id = name_id,
-             name_outcome = name_outcome,
-             name_competing = name_competing,
-             name_censoring = name_censoring,
+             estimate = NULL,
+             names = list("id" = name_id,
+                          "outcome" = name_outcome,
+                          "competing" = name_competing,
+                          "censoring" = name_censoring),
              censored_label = censored_label,
              times = 0:intervals)
     class(x) = "rtmle"

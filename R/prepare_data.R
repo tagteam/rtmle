@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 19 2024 (10:07) 
 ## Version: 
-## Last-Updated: Sep 23 2024 (10:13) 
+## Last-Updated: Sep 30 2024 (09:18) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 104
+##     Update #: 109
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -40,7 +40,7 @@
 #' x <- rtmle_init(intervals = 8, name_id = "id",
 #'                 name_outcome = "Y", name_competing = "Dead",
 #'                 name_censoring = "Censored",censored_label = "censored")
-#' x$long_data <- ld[c("outcome_data","censored_data","competingrisk_data","timevar_data")]
+#' x$long_data <- ld[c("outcome_data","censored_data","competing_data","timevar_data")]
 #' baseline_data(x) <- ld$baseline_data[,start_followup_date:=0]
 #' x <- long_to_wide(x,intervals=seq(0,2000,30.45*6))
 #' prepare_data(x) <- list()
@@ -58,36 +58,36 @@
     time_horizon = max(x$times)
     stopifnot(is.list(value))
     stopifnot(inherits(x$data$outcome_data,"data.table"))
-    stopifnot(match(x$name_id,names(x$data$outcome_data),nomatch = 0)>0)
+    stopifnot(match(x$names$id,names(x$data$outcome_data),nomatch = 0)>0)
     subset = value$subset
     work_data <- x$data$outcome_data
-    data.table::setkeyv(work_data,x$name_id)
+    data.table::setkeyv(work_data,x$names$id)
     # adding the baseline covariates
-    name_baseline_covariates = setdiff(names(x$data$baseline_data),x$name_id)
+    name_baseline_covariates = setdiff(names(x$data$baseline_data),x$names$id)
     if (!is.null(x$data$baseline_data)){
         stopifnot(inherits(x$data$baseline_data,"data.table"))
-        stopifnot(match(x$name_id,names(x$data$baseline_data),nomatch = 0)>0)
-        work_data=x$data$baseline_data[work_data,on = x$name_id]
+        stopifnot(match(x$names$id,names(x$data$baseline_data),nomatch = 0)>0)
+        work_data=x$data$baseline_data[work_data,on = x$names$id]
     }
     # adding the timevarying covariates including treatment variables
     name_time_covariates <- NULL
     if (is.data.frame(x$data$timevar_data)){
         name_time_covariates <- unique(sapply(strsplit(names(x$data$timevar_data),"_"),"[",1))[-1]
-        work_data <- work_data[x$data$timevar_data,on = x$name_id]
+        work_data <- work_data[x$data$timevar_data,on = x$names$id]
     }else{
         name_time_covariates <- names(x$data$timevar_data)
         if (length(name_time_covariates)>0){
             for (Vname in name_time_covariates){
-                work_data <- work_data[x$data$timevar_data[[Vname]],on = x$name_id]
+                work_data <- work_data[x$data$timevar_data[[Vname]],on = x$names$id]
             }
         }
     }
     #
     # exclude subjects with outcome/death/censored at time zero
     # 
-    Y_0 = match(paste0(x$name_outcome,"_",0),names(work_data))
-    D_0 = match(paste0(x$name_competing,"_",0),names(work_data))
-    C_0 = match(paste0(x$name_censoring,"_",0),names(work_data))
+    Y_0 = match(paste0(x$names$outcome,"_",0),names(work_data))
+    D_0 = match(paste0(x$names$competing,"_",0),names(work_data))
+    C_0 = match(paste0(x$names$censoring,"_",0),names(work_data))
     excluded <- FALSE
     if (!is.na(Y_0)){
         if(!is.na(D_0)&!is.na(C_0)){
@@ -114,22 +114,22 @@
         stopifnot(nrow(work_data)>0)
     }
     # sorting the variables for LTMLE
-    work_data = work_data[,c(x$name_id, intersect(c(name_baseline_covariates,unlist(sapply(x$times, function(timepoint){
+    work_data = work_data[,c(x$names$id, intersect(c(name_baseline_covariates,unlist(sapply(x$times, function(timepoint){
         if(timepoint == 0){
             paste0(name_time_covariates,"_",timepoint)
         } else{
             if(timepoint != x$times[K]){
-                paste0(c(x$name_censoring, x$name_outcome, x$name_competing, name_time_covariates),"_",timepoint)
+                paste0(c(x$names$censoring, x$names$outcome, x$names$competing, name_time_covariates),"_",timepoint)
             } else {
-                paste0(c(x$name_censoring, x$name_outcome),"_",timepoint)
+                paste0(c(x$names$censoring, x$names$outcome),"_",timepoint)
             }
         }
     }))), names(work_data))), with = FALSE]
     # subset data
     if(length(subset)>0){
         subset_dt = data.table(ID = subset)
-        setnames(subset_dt,"ID",x$name_id)
-        work_data = work_data$data[subset_dt,on = x$name_id]
+        setnames(subset_dt,"ID",x$names$id)
+        work_data = work_data$data[subset_dt,on = x$names$id]
     }
     # label the variables that are constant in the subset data
     same = sapply(work_data, function(x){length(unique(x))==1})
@@ -139,15 +139,15 @@
         constant_variables <- NULL}
     name_baseline_covariates <- intersect(name_baseline_covariates,names(work_data))
     ## check
-    if(length(x$name_censoring)>0){
-        for(col in sapply(x$times[-1], function(timepoint){paste0(x$name_censoring,"_",timepoint)})){
+    if(length(x$names$censoring)>0){
+        for(col in sapply(x$times[-1], function(timepoint){paste0(x$names$censoring,"_",timepoint)})){
             set(work_data, j = col, value=as.factor(ifelse(work_data[[col]]%in%x$censored_label,"censored","uncensored")))
         }
     }
     ## Manipulation of the event nodes
-    Y_nodes = unlist(lapply(x$times[-1], function(time){paste0(x$name_outcome, "_", time)}))
-    D_nodes = unlist(lapply(x$times[-c(1,K)], function(time){paste0(x$name_competing, "_", time)}))
-    C_nodes = unlist(lapply(x$times[-1], function(time){paste0(x$name_censoring, "_", time)}))
+    Y_nodes = unlist(lapply(x$times[-1], function(time){paste0(x$names$outcome, "_", time)}))
+    D_nodes = unlist(lapply(x$times[-c(1,K)], function(time){paste0(x$names$competing, "_", time)}))
+    C_nodes = unlist(lapply(x$times[-1], function(time){paste0(x$names$censoring, "_", time)}))
     Y_nodes_position = match(Y_nodes, names(work_data))
     D_nodes_position = match(D_nodes, names(work_data))
     C_nodes_position = match(C_nodes, names(work_data))
@@ -174,7 +174,7 @@
                 for(l in later_Y_nodes) {set(work_data,j=l,i=which(has_outcome),value=1)}
             }
         }
-        if(length(x$name_competing)>0){
+        if(length(x$names$competing)>0){
             for(k in D_nodes_position){
                 later_nodes=setdiff((k+1):NCOL(work_data),Y_nodes_position)
                 # Later outcome event nodes are set to 0
@@ -186,7 +186,7 @@
             }
         }
         ## All nodes should be NA as soon as censoring has occurred
-        if(length(x$name_censoring)>0){
+        if(length(x$names$censoring)>0){
             for(k in C_nodes_position){
                 later_nodes=(k+1):NCOL(work_data)
                 if(any(has_censored <- (work_data[[k]]%in%"censored"))){
@@ -199,7 +199,7 @@
         # time_horizon = 1 we set the outcome to NA in case of censored
         #                  and same for competing risks
         #
-        if(length(x$name_censoring)>0){
+        if(length(x$names$censoring)>0){
             for(k in C_nodes_position){
                 later_nodes=(k+1):NCOL(work_data)
                 if(any(has_censored <- (work_data[[k]]%in%"censored"))){
@@ -210,7 +210,7 @@
     }
     L_nodes <- c(sapply(x$times, function(k) {paste0(c(name_time_covariates), "_", k)}))
     L_nodes <- L_nodes[match(L_nodes, names(work_data),nomatch = 0)!=0]
-    if(length(x$name_censoring)==0) {C_nodes = NULL}
+    if(length(x$names$censoring)==0) {C_nodes = NULL}
     x$prepared_data$data <- work_data[]
     x$prepared_data$name_time_covariates <- name_time_covariates
     x$prepared_data$name_baseline_covariates <- name_baseline_covariates

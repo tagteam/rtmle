@@ -1,6 +1,6 @@
 widen_outcome <- function(outcome_name,
                           outcome_data,
-                          competingrisk_data,
+                          competing_data,
                           censored_data,
                           grid,
                           fun.aggregate = NULL,
@@ -10,7 +10,7 @@ widen_outcome <- function(outcome_name,
     # death and right censored
     # -----------------------------------------------------------------------
     wide=map_grid(grid=grid,
-                       data=competingrisk_data,
+                       data=competing_data,
                        name="Dead",
                        rollforward=Inf,
                        id = id)

@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 11 2024 (13:24) 
 ## Version: 
-## Last-Updated: Sep 22 2024 (15:38) 
+## Last-Updated: Sep 30 2024 (09:18) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 248
+##     Update #: 249
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -196,7 +196,7 @@ simulate_long_data <- function(n,
         bsl <- pop[time == 0,.(id,sex,age)]
         event_data <- pop[time == 0,.(id,terminal_time = terminal_time,terminal_event)]
         censored_data <- event_data[terminal_event == "C",.(id,date = terminal_time)]
-        competingrisk_data <- event_data[terminal_event == "D",.(id,date = terminal_time)]
+        competing_data <- event_data[terminal_event == "D",.(id,date = terminal_time)]
         outcome_data <- event_data[terminal_event == "Y",.(id,date = terminal_time)]
         timevar_baseline <- pop[time == 0 & L_0 == 1,.(id,date = 0)]
         timevar_data <- pop[event == "L",.(id,date = time)]
@@ -210,7 +210,7 @@ simulate_long_data <- function(n,
         list(baseline_data = bsl,
              timevar_data = list(L = timevar_data,A = treatment_data),
              outcome_data = outcome_data,
-             competingrisk_data = competingrisk_data,
+             competing_data = competing_data,
              censored_data = censored_data)
     }else{
         pop[]
