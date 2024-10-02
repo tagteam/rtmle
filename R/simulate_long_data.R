@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 11 2024 (13:24) 
 ## Version: 
-## Last-Updated: Oct  2 2024 (10:58) 
+## Last-Updated: Oct  2 2024 (15:42) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 250
+##     Update #: 251
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -31,6 +31,7 @@ simulate_long_data <- function(n,
                                int_dist=FALSE,
                                baseline_hazard_outcomes = 0.001) {
     hazard_ratio_C <- hazard_ratio_D <- hazard_ratio_L <- hazard_ratio_A <- hazard_ratio_Y <- event <- terminal_time <- terminal_event <- entrytime <- NULL
+    A_0 <- L_0 <- id <- age <- sex <- sum_L <- A <- sum_A <- propensity_A <- NULL
     beta_init <- list(A0_on_A = 0,
                       A0_on_Y = 0,
                       A0_on_D = 0,
@@ -82,8 +83,8 @@ simulate_long_data <- function(n,
     # baseline variables
     pop <- data.table(
         id = 1:n,
-        sex=rbinom(n,1,.4),
-        age=runif(n,40,90),
+        sex=stats::rbinom(n,1,.4),
+        age=stats::runif(n,40,90),
         A = as.numeric(rep(NA, n)),
         sum_A = numeric(n),
         sum_L = numeric(n),
@@ -91,16 +92,16 @@ simulate_long_data <- function(n,
         event = rep("0",n)
     )
     # baseline treatment depends on baseline variables
-    ## pop[, A_0:=rbinom(.N,1,lava::expit(0.35+0.1*L_0-0.3*sex-0.01*age))]
+    ## pop[, A_0:=stats::rbinom(.N,1,lava::expit(0.35+0.1*L_0-0.3*sex-0.01*age))]
     if (int_dist)
       pop[, A_0:=1]
     else {
-      pop[, A_0:=rbinom(.N,1,0.5)]
+      pop[, A_0:=stats::rbinom(.N,1,0.5)]
     }
   
     
-    pop[, L_0:=rbinom(n,1,.17)]
-    people_atrisk <- pop[,.(id,entrytime = time,age,sex,L_0,A_0,sum_L,A,sum_A)]
+    pop[, L_0:=stats::rbinom(n,1,.17)]
+    people_atrisk <- pop[,data.table::data.table(id,entrytime = time,age,sex,L_0,A_0,sum_L,A,sum_A)]
 
     if (int_dist){
       people_atrisk[,propensity_A := 1]
@@ -147,7 +148,7 @@ simulate_long_data <- function(n,
         #
         people_atrisk = people_atrisk[!is_terminal]
         # draw treatment at the doctor visit times
-        people_atrisk[event == "V",A := rbinom(.N,1,propensity_A)]
+        people_atrisk[event == "V",A := stats::rbinom(.N,1,propensity_A)]
 
         # update propensity score
         # if (int_dist)

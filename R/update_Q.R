@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul  3 2024 (13:54) 
 ## Version: 
-## Last-Updated: Oct  2 2024 (15:04) 
+## Last-Updated: Oct  2 2024 (15:42) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 14
+##     Update #: 15
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -44,7 +44,7 @@ update_Q <- function(Y,
         ## m <- ltmle.glm(f, data = data.temp[weights > 0, ], family = quasibinomial(),
         ## weights = as.vector(scale(weights[weights > 0], center = FALSE)))
         ## browser(skipCalls = TRUE)
-        Qstar <- predict(m, newdata = data.temp, type = "response")
+        Qstar <- stats::predict(m, newdata = data.temp, type = "response")
     }
     else {
         Qstar <- stats::plogis(logitQ)

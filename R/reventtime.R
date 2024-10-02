@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 12 2024 (09:38) 
 ## Version: 
-## Last-Updated: Aug 27 2024 (08:45) 
+## Last-Updated: Oct  2 2024 (15:38) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 67
+##     Update #: 68
 #----------------------------------------------------------------------
 ## 
 ### Comaxtimeentary: 
@@ -36,7 +36,7 @@ reventtime <- function(n,
         approx_value <- (values - breaks[pos])/(breaks[next_pos] - breaks[pos])
         approx_value[maxindex] <- 0
         res <- approx_value * (fx[next_pos] - fx[pos]) + fx[pos]
-        res[is.na(res)] <- tail(fx, 1)
+        res[is.na(res)] <- utils::tail(fx, 1)
         return(res)
     }
     if (missing(hazardratio)) {
@@ -63,7 +63,7 @@ reventtime <- function(n,
     }
     # The distribution of T|X is the same as Lambda^-1(E/HR)
     # where E is expontential with rate 1
-    erate <- rexp(n)/hazardratio + entry_cumhazard
+    erate <- stats::rexp(n)/hazardratio + entry_cumhazard
     ## if (FALSE){
     pos <- prodlim::sindex(jump.times = cumhazard, eval.times = erate)
     maxindex <- which(pos == length(cumhazard))
