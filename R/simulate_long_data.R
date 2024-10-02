@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 11 2024 (13:24) 
 ## Version: 
-## Last-Updated: Sep 30 2024 (09:18) 
+## Last-Updated: Oct  2 2024 (10:58) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 249
+##     Update #: 250
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -30,6 +30,7 @@ simulate_long_data <- function(n,
                                register_format = FALSE,
                                int_dist=FALSE,
                                baseline_hazard_outcomes = 0.001) {
+    hazard_ratio_C <- hazard_ratio_D <- hazard_ratio_L <- hazard_ratio_A <- hazard_ratio_Y <- event <- terminal_time <- terminal_event <- entrytime <- NULL
     beta_init <- list(A0_on_A = 0,
                       A0_on_Y = 0,
                       A0_on_D = 0,

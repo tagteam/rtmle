@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 29 2024 (10:44) 
 ## Version: 
-## Last-Updated: Sep 22 2024 (18:27) 
+## Last-Updated: Oct  2 2024 (15:04) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 17
+##     Update #: 29
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -22,25 +22,18 @@
 #' @method summary rtmle
 #' @export
 summary.rtmle <- function(object,...){
+    Estimate <- Upper <- Lower <- NULL
     do.call(rbind,lapply(names(object$targets),function(target_name){
         target <- object$targets[[target_name]]
         protocols <- object$protocols
-        do.call(rbind,lapply(names(protocols),function(protocol_name){
+        out <- do.call(rbind,lapply(names(protocols),function(protocol_name){
             e = object$estimate[[target_name]][[protocol_name]]
-            ic = object$IC[[target_name]][[protocol_name]]
-            se = sqrt(var(ic)/NROW(ic))
-            lower = e-qnorm(.975)*se
-            upper = e+qnorm(.975)*se
-            sline = Publish::formatCI(x = e,
-                                      lower = lower,
-                                      upper = upper,
-                                      show.x = TRUE)
-            data.table(Target = target_name,
-                       Protocol = protocol_name,
-                       Estimate = e,
-                       std.err =se ,
-                       "Estimate (CI_95)" = sline)
-        }))}))
+            e[, "Estimate (CI_95)":= Publish::formatCI(x = 100*Estimate,lower = 100*Lower,upper = 100*Upper,show.x = TRUE)]
+        }))
+        for (nix in c("Estimate","Standard_error","Lower","Upper"))
+            set(out,j = nix,value = NULL)
+        out
+    }))
 }
 
 

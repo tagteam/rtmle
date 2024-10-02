@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 27 2024 (18:30) 
 ## Version: 
-## Last-Updated: Sep 28 2024 (18:08) 
+## Last-Updated: Oct  2 2024 (15:31) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 7
+##     Update #: 9
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -40,69 +40,33 @@ glm_net <- function(formula,
                     ...){
     requireNamespace(c("glmnet","prodlim"))
     if (is.character(formula)) formula <- formula(formula)
-    tt <- all.vars(update(formula,".~1"))
-    if (length(tt) != 1){
-        if (missing(family)) family <- "cox"
-        strata.num = start = status = NULL
-        EHF = prodlim::EventHistory.frame(formula,data,unspecialsDesign = TRUE,specials = NULL)
-        stopifnot(attr(EHF$event.history,"model")[[1]] == "survival")
-        # blank Cox object needed for predictions
-        data = data.frame(cbind(EHF$event.history,EHF$design))
-        bl_cph <- coxph(Surv(time,status)~1,data=data,x=1,y=1)
-        bl_obj <- coxModelFrame(bl_cph)[]
-        bl_obj[,strata.num:=0]
-        bl_obj[,order := 1:.N]
-        data.table::setorder(bl_obj, strata.num,stop,start,-status)
-        sorted_x_train = EHF$design[bl_obj[,order],] ## save this for calculating Breslow estimator when doing predictions
-        ## bl_obj$linear_predictor = c(exp(predict(fit,newx = EHF$design,type = "link", s=lambda)))
-        design <- EHF$design[bl_obj$order,]
-        if (!cv){
-            fit <- glmnet::glmnet(x=EHF$design,
-                                  y=EHF$event.history,
-                                  lambda=lambda,
-                                  alpha= alpha,
-                                  family=family,
-                                  ...)
-        }
-        else {
-            fit <- glmnet::cv.glmnet(x=EHF$design,
-                                     y=EHF$event.history,
-                                     lambda=lambda,
-                                     nfolds=nfolds,
-                                     type.measure = type.measure,
-                                     alpha=alpha,
-                                     family=family,
-                                     ...)
-            lambda <- fit$lambda
-        }
-    } else {
-        if (missing(family)) family <- "binomial"
-        sorted_x_train=bl_obj=terms=design = NULL
-        y  <- data[[tt[1]]]
-        # factor levels should be ordered. e.g., first censored than uncensored
-        if (is.factor(y)) {
-            y <- as.numeric(y)-1
-        }
-        x <- model.matrix(formula, data=data)
-        if (!cv){
-            fit <- glmnet::glmnet(x=x,
-                                  y=y,
-                                  lambda=lambda,
-                                  alpha=alpha,
-                                  family=family,
-                                  ...)
-        }
-        else {
-            fit <- glmnet::cv.glmnet(x=x,
-                                     y=y,
-                                     lambda=lambda,
-                                     nfolds=nfolds,
-                                     type.measure =type.measure,
-                                     alpha=alpha,
-                                     family=family,
-                                     ...)
-            lambda <- fit$lambda
-        }
+    tt <- all.vars(stats::update(formula,".~1"))
+    if (missing(family)) family <- "binomial"
+    sorted_x_train=bl_obj=terms=design = NULL
+    y  <- data[[tt[1]]]
+    # factor levels should be ordered. e.g., first censored than uncensored
+    if (is.factor(y)) {
+        y <- as.numeric(y)-1
+    }
+    x <- model.matrix(formula, data=data)
+    if (!cv){
+        fit <- glmnet::glmnet(x=x,
+                              y=y,
+                              lambda=lambda,
+                              alpha=alpha,
+                              family=family,
+                              ...)
+    }
+    else {
+        fit <- glmnet::cv.glmnet(x=x,
+                                 y=y,
+                                 lambda=lambda,
+                                 nfolds=nfolds,
+                                 type.measure =type.measure,
+                                 alpha=alpha,
+                                 family=family,
+                                 ...)
+        lambda <- fit$lambda
     }
     out = list(fit = fit,
                surv_info = bl_obj,

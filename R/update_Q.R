@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul  3 2024 (13:54) 
 ## Version: 
-## Last-Updated: Sep 26 2024 (10:36) 
+## Last-Updated: Oct  2 2024 (15:04) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 13
+##     Update #: 14
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -27,7 +27,7 @@ update_Q <- function(Y,
     weights[subjects_with_weights] <- 1/cum.g[subjects_with_weights]
     if (anyNA(weights)) stop("NA in weights")
     if (any(weights > 0)) {
-        f <- as.formula("Y ~ -1 + S1 + offset(off)")
+        f <- stats::as.formula("Y ~ -1 + S1 + offset(off)")
         data.temp <- data.frame(Y, S1 = rep(1,N),off)
         ## print(f)
         ## print(head(subjects_with_weights))
@@ -35,11 +35,11 @@ update_Q <- function(Y,
         ## print(head(as.vector(scale(weights[weights > 0], center = FALSE))))
         has_weight <- weights > 0
         weights <- as.vector(scale(weights[has_weight], center = FALSE))
-        m <- glm(formula = f,
-                 family = quasibinomial(),
+        m <- stats::glm(formula = f,
+                 family = stats::quasibinomial(),
                  data = data.frame(data.temp[has_weight, ],weights),
                  weights = weights,
-                 control = glm.control(maxit = 100))
+                 control = stats::glm.control(maxit = 100))
         ## browser(skipCalls=TRUE)
         ## m <- ltmle.glm(f, data = data.temp[weights > 0, ], family = quasibinomial(),
         ## weights = as.vector(scale(weights[weights > 0], center = FALSE)))
@@ -47,7 +47,7 @@ update_Q <- function(Y,
         Qstar <- predict(m, newdata = data.temp, type = "response")
     }
     else {
-        Qstar <- plogis(logitQ)
+        Qstar <- stats::plogis(logitQ)
         m <- "no Qstar fit because no subjects alive, uncensored, following intervention"
     }
     return(Qstar)

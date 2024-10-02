@@ -7,6 +7,7 @@ map_grid <- function(grid,
                      fill=NA,
                      X.factor=FALSE,
                      id){
+    X = NULL
     if (length(data)==0) return(NULL)
     setkeyv(grid,c(id,"date"))
     setkeyv(data,c(id,"date"))
@@ -18,8 +19,8 @@ map_grid <- function(grid,
     setkeyv(grid,c(id,"interval"))
     # note: need do.call because otherwise fun.aggregate is not
     #       interpreted correctly
-    wide <- do.call(dcast,list(grid,
-                               formula(paste0(id,"~interval")),
+    wide <- do.call(data.table::dcast,list(grid,
+                               stats::formula(paste0(id,"~interval")),
                                value.var="X",
                                sep="_",
                                fun.aggregate = fun.aggregate,

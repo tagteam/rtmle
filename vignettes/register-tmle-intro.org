@@ -20,64 +20,207 @@ following features and focus points:
 We consider register data in the following format.
 
 #+ATTR_LATEX: :options otherkeywords={}, deletekeywords={}
-#+BEGIN_SRC R  :results output raw drawer  :exports both  :session *R* :cache yes
+#+BEGIN_SRC R  :results output verbatim  :exports both  :session *R* :cache yes
 library(rtmle)
 library(prodlim)
+library(riskRegression)
 library(data.table)
 set.seed(118)
-ld <- simulate_long_data(n = 10000,number_epochs = 20,beta_sum_A_on_Y = -.1,beta_A0_on_Y = 0)
-ld[,nth := 1:.N,by = "id"]
-ld[,num := .N,by = "id"]
-pop <- ld[nth == num,.(id,start = 0, death_date = terminal_time,censored_date = terminal_time,terminal_event,sex,age)]
-pop[terminal_event == 0,death_date := NA]
-pop[terminal_event == 1,censored_date := NA]
-pop[,terminal_event := NULL]
-outcome_data <- ld[!duplicated(id) & terminal_event == "Y",.(id,date = terminal_time,stop = NA)]
-como_baseline <- ld[!duplicated(id) & L_0 == 1,.(id,date = 0)]
-como_data <- ld[event == "L",.(id,date = time)]
-como_data <- rbind(como_baseline,como_data)
-# random baseline treatment
-treatment_baseline <- ld[!duplicated(id) & A_0 == 1,.(id,date = 0)]
-treatment_data <- ld[event == "A",.(id,date = time)]
-treatment_data <- rbind(treatment_baseline,treatment_data)
-w_outcome <- widen_outcome(outcome_name = "Y",pop = pop,intervals = seq(0,2000,30.45*6),como = list("Y" = outcome_data),id = "id")
-w_treatment <- widen_treatment(treatment = treatment_data,treatment_name = "A",pop = pop,intervals = seq(0,2000,30.45*6),id = "id")
-w_como <- widen_treatment(treatment_name = "L",treatment = como_data,pop = pop,intervals = seq(0,2000,30.45*6),id = "id")
+ld <- simulate_long_data(n = 10000,number_epochs = 20,beta = list(sum_A_on_Y = -.1,A0_on_Y = 0),register_format = TRUE)
+ld
 #+END_SRC
 
-#+RESULTS[(2024-07-19 11:28:52) b661f0a850e5c61d3031fcb15269161033feec13]:
-:results:
-Aggregate function missing, defaulting to 'length'
-:end:
+#+begin_example
+$baseline_data
+          id   sex      age
+       <int> <int>    <num>
+    1:     1     0 59.44409
+    2:     2     1 73.01360
+    3:     3     0 78.26086
+    4:     4     1 66.53408
+    5:     5     0 62.35921
+   ---                     
+ 9996:  9996     0 43.90035
+ 9997:  9997     1 41.32339
+ 9998:  9998     0 65.08893
+ 9999:  9999     1 42.23665
+10000: 10000     1 57.38959
+
+$timevar_data
+$timevar_data$L
+         id   date
+      <int>  <num>
+   1:     1   0.00
+   2:     3   0.00
+   3:     5   0.00
+   4:     8   0.00
+   5:    14   0.00
+  ---             
+5119:  9988 421.80
+5120:  9992 355.43
+5121:  9995 246.33
+5122:  9998 377.86
+5123:  9998 483.76
+
+$timevar_data$A
+         id  date
+      <int> <num>
+   1:     1     0
+   2:     3     0
+   3:     5     0
+   4:     7     0
+   5:     9     0
+  ---            
+5249:  9590   365
+5250:  9671   365
+5251:  9694   365
+5252:  9859   365
+5253:  9984   730
+
+
+$outcome_data
+         id    date
+      <int>   <num>
+   1:     1 1076.89
+   2:     3   50.49
+   3:     6  140.84
+   4:     7  402.61
+   5:    11  481.58
+  ---              
+3341:  9979   60.41
+3342:  9990   31.30
+3343:  9993   19.82
+3344:  9998  609.26
+3345:  9999    8.99
+
+$competing_data
+         id   date
+      <int>  <num>
+   1:     4  89.71
+   2:     8  91.81
+   3:    10 545.28
+   4:    13 446.94
+   5:    14 459.49
+  ---             
+3360:  9987  30.28
+3361:  9988 476.90
+3362:  9994 311.22
+3363:  9996  71.81
+3364:  9997 179.60
+
+$censored_data
+         id    date
+      <int>   <num>
+   1:     2  260.64
+   2:     5    6.32
+   3:     9  209.74
+   4:    25  298.93
+   5:    33  341.00
+  ---              
+3287:  9989   53.65
+3288:  9991  392.38
+3289:  9992 1046.23
+3290:  9995  758.63
+3291: 10000  140.10
+#+end_example
 
 * Example
 
+
+** Initializing
+
+
 #+ATTR_LATEX: :options otherkeywords={}, deletekeywords={}
-#+BEGIN_SRC R  :results output raw drawer  :exports both  :session *R* :cache yes  
+#+BEGIN_SRC R  :results output verbatim  :exports both  :session *R* :cache yes  
 x <- rtmle_init(intervals = 3,name_id = "id",name_outcome = "Y",name_competing = "Dead",name_censoring = "Censored",censored_label = "censored")
-treatment_data(x) <- w_treatment
-outcome_data(x) <- w_outcome
-timevar_data(x) <- w_como
-baseline_data(x) <- pop[,.(id,age,sex)]
-prepare_data(x) <- "A"
-protocol(x,name = "always_A",variable = "A") <- 1
-model(x) <- "additive"
-x$estimator <- "tmle"
-system.time(x <- run_rtmle(x))
-x$estimates
+x
 #+END_SRC
 
-#+RESULTS:
-:results:
-Error in UseMethod("protocol<-") (from protocol_rtmle.R#17) : 
-  no applicable method for 'protocol<-' applied to an object of class "rtmle"
-Error in UseMethod("model<-") (from model_rtmle.R#17) : 
-  no applicable method for 'model<-' applied to an object of class "rtmle"
-Error in rowCumprods(as.matrix(intervention_probs[, -1, with = FALSE])) (from run_rtmle.R#64) : 
-  could not find function "rowCumprods"
-Timing stopped at: 0.003 0 0.003
-NULL
-:end:
+: Targeted minimum loss analysis of register data.
+:   Initialized to 3 time intervals (starting at time zero).
+:   The name of the subject id variable is 'id'.
+:   The outcome, competing risk and censoring variables are named 'Y', 'Dead', and 'Censored', respectively.
+: TODO: The object contains no data yet. Add them with the functions 'add_long_data<-' and 'add_data<-'.
+: TODO: The object contains no protocols. Add them with the function 'protocol<-'.
+: TODO: The object contains no targets yet. Add them with the function 'target<-'.
+
+** Adding the data
+
+#+ATTR_LATEX: :options otherkeywords={}, deletekeywords={}
+#+BEGIN_SRC R  :results output verbatim  :exports both  :session *R* :cache yes  
+x$long_data <- ld[c("outcome_data","censored_data","competing_data","timevar_data")]
+baseline_data(x) <- ld$baseline_data[,start_followup_date:=0]
+x
+#+END_SRC
+
+: Targeted minimum loss analysis of register data.
+:   Initialized to 3 time intervals (starting at time zero).
+:   The name of the subject id variable is 'id'.
+:   The outcome, competing risk and censoring variables are named 'Y', 'Dead', and 'Censored', respectively.
+: TODO: The object contains no protocols. Add them with the function 'protocol<-'.
+: TODO: The object contains no targets yet. Add them with the function 'target<-'.
+
+** Preparing the data
+
+#+ATTR_LATEX: :options otherkeywords={}, deletekeywords={}
+#+BEGIN_SRC R  :results output verbatim  :exports both  :session *R* :cache yes  
+x <- long_to_wide(x,intervals = seq(0,2000,30.45*6))
+prepare_data(x) <- list()
+#+END_SRC
+
+
+** Defining the protocols
+
+#+ATTR_LATEX: :options otherkeywords={}, deletekeywords={}
+#+BEGIN_SRC R  :results output verbatim  :exports both  :session *R* :cache yes  
+protocol(x) <- list(name = "always A",treatment_variables = "A",intervention = 1)
+protocol(x) <- list(name = "never A",treatment_variables = "A",intervention = 0)
+x
+#+END_SRC
+
+: Targeted minimum loss analysis of register data.
+:   Initialized to 3 time intervals (starting at time zero).
+:   The name of the subject id variable is 'id'.
+:   The outcome, competing risk and censoring variables are named 'Y', 'Dead', and 'Censored', respectively.
+: TODO: The object contains no targets yet. Add them with the function 'target<-'.
+
+** Defining the targets
+
+#+ATTR_LATEX: :options otherkeywords={}, deletekeywords={}
+#+BEGIN_SRC R  :results output verbatim  :exports both  :session *R* :cache yes  
+target(x) <- list(name = "Outcome_risk",strategy = "additive",estimator = "tmle",time_horizon = 3,protocols = c("always A","never A"))
+target(x) <- list(name = "Outcome_risk_g",strategy = "additive",estimator = "g",time_horizon = 3,protocols = c("always A","never A"))
+x
+#+END_SRC
+
+: Targeted minimum loss analysis of register data.
+:   Initialized to 3 time intervals (starting at time zero).
+:   The name of the subject id variable is 'id'.
+:   The outcome, competing risk and censoring variables are named 'Y', 'Dead', and 'Censored', respectively.
+
+** Sequential regression with and without TMLE update step
+
+#+ATTR_LATEX: :options otherkeywords={}, deletekeywords={}
+#+BEGIN_SRC R  :results output verbatim  :exports both  :session *R* :cache yes
+x <- run_rtmle(x,learn = "learn_glm")
+summary(x)
+#+END_SRC
+
+#+begin_example
+Running target: Outcome_risk
+Current protocol: always A
+Current protocol: never A
+Running target: Outcome_risk_g
+Current protocol: always A
+Current protocol: never A
+There were 17 warnings (use warnings() to see them)
+Target Protocol  Estimate               std.err                      Estimate (CI_95)
+           <char>   <char>     <num>                 <num>                                <char>
+1:   Outcome_risk always A 0.3349403           0.004767184                      0.33 [0.33;0.34]
+2:   Outcome_risk  never A 0.3596512 32412113987.867225647 0.36 [-63526576078.67;63526576079.39]
+3: Outcome_risk_g always A 0.3349413           0.004767184                      0.33 [0.33;0.34]
+4: Outcome_risk_g  never A 0.3594489 32411831082.687652588 0.36 [-63526021594.70;63526021595.42]
+#+end_example
 
 #+TITLE: Introduction to the R-package rtmle
 #+Author: Thomas Alexander Gerds
@@ -90,4 +233,5 @@ NULL
 #+LaTeX_HEADER:\usepackage{natbib}
 #+LaTeX_HEADER:\author{Thomas Alexander Gerds}
 #+LaTeX_HEADER:\affil{Department of Biostatistics, University of Copenhagen}
+#+set: superman-org-export-target: html
 

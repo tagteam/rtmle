@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul  3 2024 (11:13) 
 ## Version: 
-## Last-Updated: Sep 30 2024 (09:13) 
+## Last-Updated: Oct  2 2024 (15:27) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 56
+##     Update #: 57
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -16,8 +16,12 @@
 ### Code:
 additive_formalizer <- function(x,
                                 protocol,
+                                treatment_variables,
                                 Markov = NULL){
-    treatment_variables <- x$protocols[[protocol]]$treatment_variables
+    # FIXME: improve the stopping message
+    if (missing(treatment_variables))
+        treatment_variables <- x$protocols[[protocol]]$treatment_variables
+    stopifnot(length(treatment_variables)>0)
     name_time_covariates <- x$prepared_data$name_time_covariates
     name_baseline_covariates <- x$prepared_data$name_baseline_covariates
     name_constant_variables <- x$prepared_data$name_constant_variables
@@ -42,11 +46,11 @@ additive_formalizer <- function(x,
     # censoring in first interval
     if(length(x$names$censoring)>0){
         censoring_formulas <- paste0(x$names$censoring,"_1"," ~ ", formalize(timepoint = 0,
-                                                                            work_data = protocol_data,
-                                                                            name_baseline_covariates = name_baseline_covariates,
-                                                                            name_time_covariates = name_time_covariates,
-                                                                            Markov = Markov,
-                                                                            constant_variables = name_constant_variables))
+                                                                             work_data = protocol_data,
+                                                                             name_baseline_covariates = name_baseline_covariates,
+                                                                             name_time_covariates = name_time_covariates,
+                                                                             Markov = Markov,
+                                                                             constant_variables = name_constant_variables))
     } else {
         censoring_formulas <- NULL
     }
@@ -65,11 +69,11 @@ additive_formalizer <- function(x,
         if(length(x$names$censoring)>0){
             censoring_formulas <- c(censoring_formulas,unlist(lapply(x$times[-c(1,2)],function(tk){
                 paste0(x$names$censoring,"_",tk," ~ ",formalize(timepoint = tk,
-                                                               work_data = protocol_data,
-                                                               name_baseline_covariates = name_baseline_covariates,
-                                                               name_time_covariates = name_time_covariates,
-                                                               Markov = Markov,
-                                                               constant_variables = name_constant_variables))
+                                                                work_data = protocol_data,
+                                                                name_baseline_covariates = name_baseline_covariates,
+                                                                name_time_covariates = name_time_covariates,
+                                                                Markov = Markov,
+                                                                constant_variables = name_constant_variables))
             })))
         }
     }
@@ -79,9 +83,9 @@ additive_formalizer <- function(x,
     ## The reason for this is we do not want to mistakenly assume that L_1 -> A_1 when in reality A_1 happens before L_1
     outcome_formulas <- unlist(lapply(x$times[-1],function(tk){
         paste0(x$names$outcome,"_",tk," ~ ", formalize(timepoint = tk, work_data = protocol_data,
-                                                      name_baseline_covariates = name_baseline_covariates,
-                                                      name_time_covariates  = name_time_covariates, 
-                                                      Markov = Markov, constant_variables = name_constant_variables))
+                                                       name_baseline_covariates = name_baseline_covariates,
+                                                       name_time_covariates  = name_time_covariates, 
+                                                       Markov = Markov, constant_variables = name_constant_variables))
     }))
     names(outcome_formulas)=paste0(x$names$outcome,"_",x$times[-1])
     # names for treatment and censoring formulas

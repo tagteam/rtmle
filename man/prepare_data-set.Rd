@@ -14,7 +14,6 @@ prepare_data(x, ...) <- value
 \item{value}{A list with the following forced elements:
 \itemize{
 \item \code{"intervals"} The time intervals
-\item \code{"treatment_variables"} The treatment variables
 }}
 }
 \value{
@@ -33,17 +32,19 @@ censoring nodes (C_nodes) and adds them to the object.
 }
 \examples{
 set.seed(112)
-ld <- simulate_long_data(n = 100,number_epochs = 20,
+ld <- simulate_long_data(n = 101,number_epochs = 20,
                          beta = list(A_on_Y = -.2,
                          A0_on_Y = -0.3,A0_on_A = 6),
                                register_format = TRUE)
 x <- rtmle_init(intervals = 8, name_id = "id",
                 name_outcome = "Y", name_competing = "Dead",
                 name_censoring = "Censored",censored_label = "censored")
-add_long_data(x) <- ld
-prepare_data(x) <- list(reset = TRUE,
-                       intervals = seq(0,2000,30.45*6))
-x$prepared_data
+x$long_data <- ld[c("outcome_data","censored_data","competing_data","timevar_data")]
+baseline_data(x) <- ld$baseline_data[,start_followup_date:=0]
+x <- long_to_wide(x,intervals=seq(0,2000,30.45*6))
+prepare_data(x) <- list()
+                       
+x$prepared_data$data
 }
 \seealso{
 rtmle_init

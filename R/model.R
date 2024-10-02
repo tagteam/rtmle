@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul  3 2024 (13:46) 
 ## Version: 
-## Last-Updated: Jul 26 2024 (11:57) 
+## Last-Updated: Oct  2 2024 (15:35) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 6
+##     Update #: 7
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -22,8 +22,6 @@
         x$models = additive_formalizer(x = x,
                                        treatment_variables = value$treatment_variables,
                                        Markov = NULL)
-    }else{
-        x$models[[model]][[paste0("time_",time)]]$formula <- value
     }
     x
 }
