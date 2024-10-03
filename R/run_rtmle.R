@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul  1 2024 (09:11) 
 ## Version: 
-## Last-Updated: Oct  3 2024 (10:21) 
+## Last-Updated: Oct  3 2024 (11:28) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 312
+##     Update #: 314
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -159,6 +159,8 @@ run_rtmle <- function(x,
             }
         }
     }
+    # FIXME: how could x loose its class?
+    class(x) <- "rtmle"
     x
 }
 ######################################################################

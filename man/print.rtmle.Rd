@@ -8,6 +8,8 @@
 }
 \arguments{
 \item{x}{Object to be printed}
+
+\item{...}{Not used for now}
 }
 \description{
 This print function informs about the current state of the object and
