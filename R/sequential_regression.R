@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 30 2024 (14:30) 
 ## Version: 
-## Last-Updated: Oct  2 2024 (15:52) 
+## Last-Updated: Oct  3 2024 (10:02) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 22
+##     Update #: 23
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -41,7 +41,7 @@ sequential_regression <- function(x,
     # the first step is the outcome regression of the last time interval
     x$sequential_outcome_regression[[target_name]] = vector(3,mode = "list")
     stopifnot(time_horizon>0)
-    name_time_horizon <- paste0("time_horizon_",time_horizon)
+    label_time_horizon <- paste0("time_horizon_",time_horizon)
     reverse_time_scale <- rev(seq(1,time_horizon,1))
     for (j in reverse_time_scale){
         # formula
@@ -111,7 +111,7 @@ sequential_regression <- function(x,
         h.g.ratio <- 1/x$cumulative_intervention_probs[[protocol_name]][,match(paste0("Censored_",j),colnames(x$cumulative_intervention_probs[[protocol_name]]))]
         index <- (current_cnode%in%"uncensored") & intervention_match[,intervention_table[time == j-1]$variable]
         if (any(h.g.ratio[index] != 0)) {
-            x$IC[[target_name]][[protocol_name]][[name_time_horizon]][index] <- x$IC[[target_name]][[protocol_name]][[name_time_horizon]][index] + (Yhat[index] - W[index]) * h.g.ratio[index]
+            x$IC[[target_name]][[protocol_name]][[label_time_horizon]][index] <- x$IC[[target_name]][[protocol_name]][[label_time_horizon]][index] + (Yhat[index] - W[index]) * h.g.ratio[index]
         }
         ## curIC <- CalcIC(Qstar.kplus1, Qstar, update.list$h.g.ratio,
         ## uncensored, intervention.match, regimes.with.positive.weight)
@@ -129,11 +129,11 @@ sequential_regression <- function(x,
     }
     # g-formula and tmle estimator
     x$estimate[[target_name]][[protocol_name]][Time_horizon == time_horizon, Estimate := mean(protocol_data$predicted_outcome)]
-    ic <- x$IC[[target_name]][[protocol_name]][[name_time_horizon]] + protocol_data$predicted_outcome - mean(protocol_data$predicted_outcome)
+    ic <- x$IC[[target_name]][[protocol_name]][[label_time_horizon]] + protocol_data$predicted_outcome - mean(protocol_data$predicted_outcome)
     x$estimate[[target_name]][[protocol_name]][Time_horizon == time_horizon, Standard_error := sqrt(stats::var(ic)/NROW(protocol_data))]
     x$estimate[[target_name]][[protocol_name]][Time_horizon == time_horizon, Lower := Estimate-stats::qnorm(.975)*Standard_error]
     x$estimate[[target_name]][[protocol_name]][Time_horizon == time_horizon, Upper := Estimate+stats::qnorm(.975)*Standard_error]
-    x$IC[[target_name]][[protocol_name]][[name_time_horizon]] <- ic
+    x$IC[[target_name]][[protocol_name]][[label_time_horizon]] <- ic
     return(x[])
 }
 

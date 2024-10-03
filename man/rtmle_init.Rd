@@ -7,17 +7,20 @@
 rtmle_init(
   intervals,
   name_id,
+  name_time = "date",
   name_outcome,
   name_competing,
-  name_censoring,
-  censored_label
+  name_censoring = "Censored",
+  censored_label = "censored"
 )
 }
 \arguments{
 \item{intervals}{Number of discrete time intervals for updating information in a longitudinal setting.
 Set this to 1 for settings where no updating of information should happen after time zero.}
 
-\item{name_id}{Name of the subject id variable}
+\item{name_id}{Name of the subject identifier variable}
+
+\item{name_time}{Name of the time variable, e.g., \code{"date"} would be an appropriate name when the data are recorded as calendar dates.}
 
 \item{name_outcome}{Name of the outcome variable(s). For example, the value \code{"cvddeath"} would mean
 in a longitudinal setting with \code{intervals=3} that the variables in the data set are named \code{"cvddeath_1", "cvddeath_2", "cvddeath_3"}.
@@ -27,7 +30,8 @@ In the setting where \code{intervals=1} this should be the full name of the outc
 
 \item{name_censoring}{Name of the censoring variable(s).}
 
-\item{censored_label}{Label of the values of the censoring variable(s) that indicated that the data of the subject at this time interval are censored.}
+\item{censored_label}{Label of the values of the censoring variable(s) that indicated that
+the data of the subject at this time interval are censored.}
 }
 \value{
 A list with class \code{"rtmle"} and the following elements:
@@ -46,9 +50,10 @@ and other instructions such as
 # longitudinal setting
 x <- rtmle_init(intervals=3,
                 name_id="pnr",
+                name_time="date",
                 name_outcome="cvddeath",
                 name_competing="death",
-                name_censoring="C",
+                name_censoring="Censored",
                 censored_label="0")
 
 }

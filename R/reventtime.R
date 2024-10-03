@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 12 2024 (09:38) 
 ## Version: 
-## Last-Updated: Oct  2 2024 (15:38) 
+## Last-Updated: Oct  2 2024 (16:03) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 68
+##     Update #: 69
 #----------------------------------------------------------------------
 ## 
 ### Comaxtimeentary: 
@@ -42,7 +42,7 @@ reventtime <- function(n,
     if (missing(hazardratio)) {
         hazardratio <- rep(1,n)
     }
-    maxtime <- tail(breaks, 1)
+    maxtime <- utils::tail(breaks, 1)
     if (!is.null(entrytime) && any(entrytime>0)) {
         if (length(entrytime) == 1) entrytime <- rep(entrytime, n)
         ## if (FALSE){
@@ -54,7 +54,7 @@ reventtime <- function(n,
         approx_value <- (entrytime - breaks[pos])/(breaks[next_pos] - breaks[pos])
         approx_value[maxindex] <- 0
         entry_cumhazard <- approx_value * (cumhazard[next_pos] - cumhazard[pos]) + cumhazard[pos]
-        entry_cumhazard[is.na(entry_cumhazard)] <- tail(cumhazard, 1)
+        entry_cumhazard[is.na(entry_cumhazard)] <- utils::tail(cumhazard, 1)
         ## }
         ## entry_cumhazard <- lapprox(values = entrytime,breaks = breaks,fx = cumhazard)
     }
@@ -73,7 +73,7 @@ reventtime <- function(n,
     approx_value <- (erate - cumhazard[pos])/(cumhazard[next_pos] - cumhazard[pos])
     approx_value[maxindex] <- 0
     etime <- approx_value * (breaks[next_pos] - breaks[pos]) + breaks[pos]
-    etime[is.na(etime)] <- tail(breaks, 1)
+    etime[is.na(etime)] <- utils::tail(breaks, 1)
     ## }
     ## etime <- pmin(lapprox(values = erate,fx = breaks,breaks = cumhazard),maxtime)
     if (!is.null(decimals))

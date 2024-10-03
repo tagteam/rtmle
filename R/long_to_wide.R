@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 22 2024 (14:07) 
 ## Version: 
-## Last-Updated: Oct  2 2024 (15:34) 
+## Last-Updated: Oct  3 2024 (07:35) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 18
+##     Update #: 19
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -23,7 +23,7 @@
 #' This function is used to prepare the discretized time analysis of register data.
 #' The start_followup_date is the calendar date where the follow up starts
 #' or can be zero if the followup data are readily on the time on study scale  
-#' @param x object as obtained with rtmle_init
+#' @param x object of class \code{rtmle} 
 #' @param intervals a vector of time points that discretize the followup time into intervals
 #' @param fun function used to map information onto the intervals. see Details.
 #' @details TODO

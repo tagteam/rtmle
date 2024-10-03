@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 27 2024 (18:30) 
 ## Version: 
-## Last-Updated: Oct  2 2024 (15:31) 
+## Last-Updated: Oct  2 2024 (16:02) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 9
+##     Update #: 10
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -48,7 +48,7 @@ glm_net <- function(formula,
     if (is.factor(y)) {
         y <- as.numeric(y)-1
     }
-    x <- model.matrix(formula, data=data)
+    x <- stats::model.matrix(formula, data=data)
     if (!cv){
         fit <- glmnet::glmnet(x=x,
                               y=y,

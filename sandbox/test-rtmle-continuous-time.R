@@ -11,7 +11,7 @@ res <- rep(NA, time_horizon)
 for (time in 1:time_horizon){
   print(paste0("time: ", time))
   x <- rtmle_init(intervals = time,name_id = "id",name_outcome = "Y",name_competing = "Dead",name_censoring = "Censored",censored_label = "censored")
-  add_long_data(x) <- ld
+  add_register_data(x) <- ld
   protocol(x) <- list(name = "Always_A",
                       treatment_variables = "A",
                       intervention = 1)

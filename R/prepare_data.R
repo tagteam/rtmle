@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 19 2024 (10:07) 
 ## Version: 
-## Last-Updated: Sep 30 2024 (09:18) 
+## Last-Updated: Oct  3 2024 (09:58) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 109
+##     Update #: 110
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -91,22 +91,22 @@
     excluded <- FALSE
     if (!is.na(Y_0)){
         if(!is.na(D_0)&!is.na(C_0)){
-            excluded <- (work_data[[Y_0]]%in%1)|(work_data[[D_0]]%in%1)|(work_data[[C_0]]%in%x$censored_label)
+            excluded <- (work_data[[Y_0]]%in%1)|(work_data[[D_0]]%in%1)|(work_data[[C_0]]%in%x$names$censored_label)
         }
         if(!is.na(D_0)){
             excluded <- (work_data[[Y_0]]%in%1)|(work_data[[D_0]]%in%1)
         }
         if(!is.na(C_0)){
-            excluded <- (work_data[[Y_0]]%in%1)|(work_data[[C_0]]%in%x$censored_label)
+            excluded <- (work_data[[Y_0]]%in%1)|(work_data[[C_0]]%in%x$names$censored_label)
         }
     }else{
         if(!is.na(D_0)&!is.na(C_0)){
-            excluded <- (work_data[[D_0]]%in%1)|(work_data[[C_0]]%in%x$censored_label)
+            excluded <- (work_data[[D_0]]%in%1)|(work_data[[C_0]]%in%x$names$censored_label)
         }
         if(!is.na(D_0)){
             excluded <- (work_data[[D_0]]%in%1)
         }
-        if(!is.na(C_0)){excluded <- (work_data[[C_0]]%in%x$censored_label)
+        if(!is.na(C_0)){excluded <- (work_data[[C_0]]%in%x$names$censored_label)
         }
     }
     if (any(excluded)){
@@ -141,7 +141,7 @@
     ## check
     if(length(x$names$censoring)>0){
         for(col in sapply(x$times[-1], function(timepoint){paste0(x$names$censoring,"_",timepoint)})){
-            set(work_data, j = col, value=as.factor(ifelse(work_data[[col]]%in%x$censored_label,"censored","uncensored")))
+            set(work_data, j = col, value=as.factor(ifelse(work_data[[col]]%in%x$names$censored_label,"censored","uncensored")))
         }
     }
     ## Manipulation of the event nodes

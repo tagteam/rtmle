@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 25 2024 (09:50) 
 ## Version: 
-## Last-Updated: Sep 30 2024 (09:12) 
+## Last-Updated: Oct  2 2024 (15:54) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 26
+##     Update #: 27
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -33,7 +33,6 @@ prepare_data(x) <- list()
 target(x) <- list(name = "Outcome_risk",
                   strategy = "additive",
                   estimator = "tmle",
-                  estimands = 3,
                   protocols = "Always_A")
 system.time(x <- run_rtmle(x))
 summary(x)

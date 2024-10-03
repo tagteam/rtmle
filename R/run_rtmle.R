@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul  1 2024 (09:11) 
 ## Version: 
-## Last-Updated: Oct  2 2024 (09:48) 
+## Last-Updated: Oct  3 2024 (10:21) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 308
+##     Update #: 312
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -14,6 +14,15 @@
 #----------------------------------------------------------------------
 ## 
 ### Code:
+#' Sequential regression with TMLE update step for discretized follow-up data
+#'
+#' This function runs the analysis defined in previous steps.
+#' @param x object of class \code{rtmle} 
+#' @param targets Selection of targets to be analysed. If missing all targets in x$targets are analysed.
+#' @param learner A function which is called to fit (learn) the nuisance parameter models.
+#' @param time_horizon The time horizon at which to calculate risks. If it is a vector the analysis will be performed for each element of the vector. 
+#' @param refit Logical. If \code{TRUE} ignore any propensity score and censoring models learned in previous calls to this function. Default is \code{FALSE}.
+#' @param ... Additional arguments passed to the learner function.
 #' @export
 run_rtmle <- function(x,
                       targets,
@@ -36,7 +45,7 @@ run_rtmle <- function(x,
     } else {
         stopifnot(all(time_horizon <= max(x$time) & time_horizon>0))
     }
-    name_time_horizon <- paste0("time_horizon_",time_horizon)
+    label_time_horizon <- paste0("time_horizon_",time_horizon)
     x$sequential_outcome_regression <- vector(mode = "list",length(run_these_targets))
     names(x$sequential_outcome_regression) = run_these_targets
     for (target_name in run_these_targets){
@@ -51,7 +60,7 @@ run_rtmle <- function(x,
             N <- NROW(protocol_data)
             # initialize influence curve vector
             for (th in 1:length(time_horizon)){
-                x$IC[[target_name]][[protocol_name]][[name_time_horizon[[th]]]] <- numeric(N)
+                x$IC[[target_name]][[protocol_name]][[label_time_horizon[[th]]]] <- numeric(N)
             }
             #
             # g-part: fit nuisance parameter models for propensity and censoring
@@ -105,7 +114,7 @@ run_rtmle <- function(x,
                     }
                     # set the treatment variables to their protocol values
                     ## FIXME: could subset data to the variables in the current formula
-                    # FIXME: also those censored?
+                    # FIXME: predict also subjects who will be censored in current interval? Think: YES
                     intervened_data = intervene(data = protocol_data[outcome_free],
                                                 intervention_table = intervention_table,
                                                 time = j)

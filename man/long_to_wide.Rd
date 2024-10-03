@@ -13,7 +13,7 @@ long_to_wide(
 )
 }
 \arguments{
-\item{x}{object as obtained with rtmle_init}
+\item{x}{object of class \code{rtmle}}
 
 \item{intervals}{a vector of time points that discretize the followup time into intervals}
 
