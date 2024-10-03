@@ -1,0 +1,462 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<!-- 2024-09-30 Mon 10:07 -->
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Introduction to the R-package rtmle</title>
+<meta name="generator" content="Org Mode" />
+<style type="text/css">
+  #content { max-width: 60em; margin: auto; }
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #e6e6e6;
+    border-radius: 3px;
+    background-color: #f2f2f2;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: auto;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    top: -8px;
+    right: 12px;
+    padding: 3px;
+    color: #555;
+    background-color: #f2f2f299;
+  }
+  pre.src:hover:before { display: inline; margin-top: 14px;}
+  /* Languages per Org manual */
+  pre.src-asymptote:before { content: 'Asymptote'; }
+  pre.src-awk:before { content: 'Awk'; }
+  pre.src-authinfo::before { content: 'Authinfo'; }
+  pre.src-C:before { content: 'C'; }
+  /* pre.src-C++ doesn't work in CSS */
+  pre.src-clojure:before { content: 'Clojure'; }
+  pre.src-css:before { content: 'CSS'; }
+  pre.src-D:before { content: 'D'; }
+  pre.src-ditaa:before { content: 'ditaa'; }
+  pre.src-dot:before { content: 'Graphviz'; }
+  pre.src-calc:before { content: 'Emacs Calc'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-fortran:before { content: 'Fortran'; }
+  pre.src-gnuplot:before { content: 'gnuplot'; }
+  pre.src-haskell:before { content: 'Haskell'; }
+  pre.src-hledger:before { content: 'hledger'; }
+  pre.src-java:before { content: 'Java'; }
+  pre.src-js:before { content: 'Javascript'; }
+  pre.src-latex:before { content: 'LaTeX'; }
+  pre.src-ledger:before { content: 'Ledger'; }
+  pre.src-lisp:before { content: 'Lisp'; }
+  pre.src-lilypond:before { content: 'Lilypond'; }
+  pre.src-lua:before { content: 'Lua'; }
+  pre.src-matlab:before { content: 'MATLAB'; }
+  pre.src-mscgen:before { content: 'Mscgen'; }
+  pre.src-ocaml:before { content: 'Objective Caml'; }
+  pre.src-octave:before { content: 'Octave'; }
+  pre.src-org:before { content: 'Org mode'; }
+  pre.src-oz:before { content: 'OZ'; }
+  pre.src-plantuml:before { content: 'Plantuml'; }
+  pre.src-processing:before { content: 'Processing.js'; }
+  pre.src-python:before { content: 'Python'; }
+  pre.src-R:before { content: 'R'; }
+  pre.src-ruby:before { content: 'Ruby'; }
+  pre.src-sass:before { content: 'Sass'; }
+  pre.src-scheme:before { content: 'Scheme'; }
+  pre.src-screen:before { content: 'Gnu Screen'; }
+  pre.src-sed:before { content: 'Sed'; }
+  pre.src-sh:before { content: 'shell'; }
+  pre.src-sql:before { content: 'SQL'; }
+  pre.src-sqlite:before { content: 'SQLite'; }
+  /* additional languages in org.el's org-babel-load-languages alist */
+  pre.src-forth:before { content: 'Forth'; }
+  pre.src-io:before { content: 'IO'; }
+  pre.src-J:before { content: 'J'; }
+  pre.src-makefile:before { content: 'Makefile'; }
+  pre.src-maxima:before { content: 'Maxima'; }
+  pre.src-perl:before { content: 'Perl'; }
+  pre.src-picolisp:before { content: 'Pico Lisp'; }
+  pre.src-scala:before { content: 'Scala'; }
+  pre.src-shell:before { content: 'Shell Script'; }
+  pre.src-ebnf2ps:before { content: 'ebfn2ps'; }
+  /* additional language identifiers per "defun org-babel-execute"
+       in ob-*.el */
+  pre.src-cpp:before  { content: 'C++'; }
+  pre.src-abc:before  { content: 'ABC'; }
+  pre.src-coq:before  { content: 'Coq'; }
+  pre.src-groovy:before  { content: 'Groovy'; }
+  /* additional language identifiers from org-babel-shell-names in
+     ob-shell.el: ob-shell is the only babel language using a lambda to put
+     the execution function name together. */
+  pre.src-bash:before  { content: 'bash'; }
+  pre.src-csh:before  { content: 'csh'; }
+  pre.src-ash:before  { content: 'ash'; }
+  pre.src-dash:before  { content: 'dash'; }
+  pre.src-ksh:before  { content: 'ksh'; }
+  pre.src-mksh:before  { content: 'mksh'; }
+  pre.src-posh:before  { content: 'posh'; }
+  /* Additional Emacs modes also supported by the LaTeX listings package */
+  pre.src-ada:before { content: 'Ada'; }
+  pre.src-asm:before { content: 'Assembler'; }
+  pre.src-caml:before { content: 'Caml'; }
+  pre.src-delphi:before { content: 'Delphi'; }
+  pre.src-html:before { content: 'HTML'; }
+  pre.src-idl:before { content: 'IDL'; }
+  pre.src-mercury:before { content: 'Mercury'; }
+  pre.src-metapost:before { content: 'MetaPost'; }
+  pre.src-modula-2:before { content: 'Modula-2'; }
+  pre.src-pascal:before { content: 'Pascal'; }
+  pre.src-ps:before { content: 'PostScript'; }
+  pre.src-prolog:before { content: 'Prolog'; }
+  pre.src-simula:before { content: 'Simula'; }
+  pre.src-tcl:before { content: 'tcl'; }
+  pre.src-tex:before { content: 'TeX'; }
+  pre.src-plain-tex:before { content: 'Plain TeX'; }
+  pre.src-verilog:before { content: 'Verilog'; }
+  pre.src-vhdl:before { content: 'VHDL'; }
+  pre.src-xml:before { content: 'XML'; }
+  pre.src-nxml:before { content: 'XML'; }
+  /* add a generic configuration mode; LaTeX export needs an additional
+     (add-to-list 'org-latex-listings-langs '(conf " ")) in .emacs */
+  pre.src-conf:before { content: 'Configuration File'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .equation-container {
+    display: table;
+    text-align: center;
+    width: 100%;
+  }
+  .equation {
+    vertical-align: middle;
+  }
+  .equation-label {
+    display: table-cell;
+    text-align: right;
+    vertical-align: middle;
+  }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  .org-svg { }
+</style>
+<link rel="stylesheet" type="text/css" href="https://publicifsv.sund.ku.dk/~tag/styles/practicals.css" />
+</head>
+<body>
+<div id="preamble" class="status">
+<br>Thomas Alexander Gerds
+</div>
+<div id="content" class="content">
+<h1 class="title">Introduction to the R-package rtmle</h1>
+<div id="outline-container-org21f84b8" class="outline-2">
+<h2 id="org21f84b8"><span class="section-number-2">1.</span> About</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+The R-package <code>rtmle</code> implements a class of targeted minimum loss
+estimators for the analysis of longitudinal register data. The
+functionality is similar to the established R-package <code>ltmle</code> with the
+following features and focus points:
+</p>
+
+<ul class="org-ul">
+<li>explicit handling of competing risks</li>
+<li>polypharmacy</li>
+<li>descriptive statistics</li>
+<li>diagnostic tools (not to be confused with model goodness of fit)</li>
+<li>subgroup analysis</li>
+<li>support for glmnet</li>
+<li>cheap bootstrap inference</li>
+<li>cross-fitting</li>
+<li>parallel computing</li>
+</ul>
+</div>
+</div>
+<div id="outline-container-org393793d" class="outline-2">
+<h2 id="org393793d"><span class="section-number-2">2.</span> Data structures</h2>
+<div class="outline-text-2" id="text-2">
+<p>
+We consider register data in the following format.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-R"><span style="color: #008b8b;">library</span>(rtmle)
+<span style="color: #008b8b;">library</span>(prodlim)
+<span style="color: #008b8b;">library</span>(riskRegression)
+<span style="color: #008b8b;">library</span>(data.table)
+set.seed(118)
+ld <span style="color: #008b8b;">&lt;-</span> simulate_long_data(n = 10000,number_epochs = 20,beta = list(sum_A_on_Y = -.1,A0_on_Y = 0),register_format = <span style="color: #228b22;">TRUE</span>)
+ld
+</pre>
+</div>
+
+<pre class="example" id="org5fce428">
+$baseline_data
+          id   sex      age
+       &lt;int&gt; &lt;int&gt;    &lt;num&gt;
+    1:     1     0 59.44409
+    2:     2     1 73.01360
+    3:     3     0 78.26086
+    4:     4     1 66.53408
+    5:     5     0 62.35921
+   ---                     
+ 9996:  9996     0 43.90035
+ 9997:  9997     1 41.32339
+ 9998:  9998     0 65.08893
+ 9999:  9999     1 42.23665
+10000: 10000     1 57.38959
+
+$timevar_data
+$timevar_data$L
+         id   date
+      &lt;int&gt;  &lt;num&gt;
+   1:     1   0.00
+   2:     3   0.00
+   3:     5   0.00
+   4:     8   0.00
+   5:    14   0.00
+  ---             
+5119:  9988 421.80
+5120:  9992 355.43
+5121:  9995 246.33
+5122:  9998 377.86
+5123:  9998 483.76
+
+$timevar_data$A
+         id  date
+      &lt;int&gt; &lt;num&gt;
+   1:     1     0
+   2:     3     0
+   3:     5     0
+   4:     7     0
+   5:     9     0
+  ---            
+5249:  9590   365
+5250:  9671   365
+5251:  9694   365
+5252:  9859   365
+5253:  9984   730
+
+
+$outcome_data
+         id    date
+      &lt;int&gt;   &lt;num&gt;
+   1:     1 1076.89
+   2:     3   50.49
+   3:     6  140.84
+   4:     7  402.61
+   5:    11  481.58
+  ---              
+3341:  9979   60.41
+3342:  9990   31.30
+3343:  9993   19.82
+3344:  9998  609.26
+3345:  9999    8.99
+
+$competing_data
+         id   date
+      &lt;int&gt;  &lt;num&gt;
+   1:     4  89.71
+   2:     8  91.81
+   3:    10 545.28
+   4:    13 446.94
+   5:    14 459.49
+  ---             
+3360:  9987  30.28
+3361:  9988 476.90
+3362:  9994 311.22
+3363:  9996  71.81
+3364:  9997 179.60
+
+$censored_data
+         id    date
+      &lt;int&gt;   &lt;num&gt;
+   1:     2  260.64
+   2:     5    6.32
+   3:     9  209.74
+   4:    25  298.93
+   5:    33  341.00
+  ---              
+3287:  9989   53.65
+3288:  9991  392.38
+3289:  9992 1046.23
+3290:  9995  758.63
+3291: 10000  140.10
+</pre>
+</div>
+</div>
+<div id="outline-container-org8826256" class="outline-2">
+<h2 id="org8826256"><span class="section-number-2">3.</span> Example</h2>
+<div class="outline-text-2" id="text-3">
+</div>
+<div id="outline-container-org74256cd" class="outline-3">
+<h3 id="org74256cd"><span class="section-number-3">3.1.</span> Initializing</h3>
+<div class="outline-text-3" id="text-3-1">
+<div class="org-src-container">
+<pre class="src src-R">x <span style="color: #008b8b;">&lt;-</span> rtmle_init(intervals = 3,name_id = <span style="color: #8b2252;">"id"</span>,name_outcome = <span style="color: #8b2252;">"Y"</span>,name_competing = <span style="color: #8b2252;">"Dead"</span>,name_censoring = <span style="color: #8b2252;">"Censored"</span>,censored_label = <span style="color: #8b2252;">"censored"</span>)
+x
+</pre>
+</div>
+
+<pre class="example">
+Targeted minimum loss analysis of register data.
+  Initialized to 3 time intervals (starting at time zero).
+  The name of the subject id variable is 'id'.
+  The outcome, competing risk and censoring variables are named 'Y', 'Dead', and 'Censored', respectively.
+TODO: The object contains no data yet. Add them with the functions 'add_register_data&lt;-' and 'add_data&lt;-'.
+TODO: The object contains no protocols. Add them with the function 'protocol&lt;-'.
+TODO: The object contains no targets yet. Add them with the function 'target&lt;-'.
+</pre>
+</div>
+</div>
+<div id="outline-container-orgc85ad80" class="outline-3">
+<h3 id="orgc85ad80"><span class="section-number-3">3.2.</span> Adding the data</h3>
+<div class="outline-text-3" id="text-3-2">
+<div class="org-src-container">
+<pre class="src src-R">x$long_data <span style="color: #008b8b;">&lt;-</span> ld[c(<span style="color: #8b2252;">"outcome_data"</span>,<span style="color: #8b2252;">"censored_data"</span>,<span style="color: #8b2252;">"competing_data"</span>,<span style="color: #8b2252;">"timevar_data"</span>)]
+baseline_data(x) <span style="color: #008b8b;">&lt;-</span> ld$baseline_data[,start_followup_date:=0]
+x
+</pre>
+</div>
+
+<pre class="example">
+Targeted minimum loss analysis of register data.
+  Initialized to 3 time intervals (starting at time zero).
+  The name of the subject id variable is 'id'.
+  The outcome, competing risk and censoring variables are named 'Y', 'Dead', and 'Censored', respectively.
+TODO: The object contains no protocols. Add them with the function 'protocol&lt;-'.
+TODO: The object contains no targets yet. Add them with the function 'target&lt;-'.
+</pre>
+</div>
+</div>
+<div id="outline-container-org536f9db" class="outline-3">
+<h3 id="org536f9db"><span class="section-number-3">3.3.</span> Preparing the data</h3>
+<div class="outline-text-3" id="text-3-3">
+<div class="org-src-container">
+<pre class="src src-R">x <span style="color: #008b8b;">&lt;-</span> long_to_wide(x,intervals = seq(0,2000,30.45*6))
+prepare_data(x) <span style="color: #008b8b;">&lt;-</span> list()
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-org25c2cf1" class="outline-3">
+<h3 id="org25c2cf1"><span class="section-number-3">3.4.</span> Defining the protocols</h3>
+<div class="outline-text-3" id="text-3-4">
+<div class="org-src-container">
+<pre class="src src-R">protocol(x) <span style="color: #008b8b;">&lt;-</span> list(name = <span style="color: #8b2252;">"always A"</span>,treatment_variables = <span style="color: #8b2252;">"A"</span>,intervention = 1)
+protocol(x) <span style="color: #008b8b;">&lt;-</span> list(name = <span style="color: #8b2252;">"never A"</span>,treatment_variables = <span style="color: #8b2252;">"A"</span>,intervention = 0)
+x
+</pre>
+</div>
+
+<pre class="example">
+Targeted minimum loss analysis of register data.
+  Initialized to 3 time intervals (starting at time zero).
+  The name of the subject id variable is 'id'.
+  The outcome, competing risk and censoring variables are named 'Y', 'Dead', and 'Censored', respectively.
+TODO: The object contains no targets yet. Add them with the function 'target&lt;-'.
+</pre>
+</div>
+</div>
+<div id="outline-container-orgdee0b0c" class="outline-3">
+<h3 id="orgdee0b0c"><span class="section-number-3">3.5.</span> Defining the targets</h3>
+<div class="outline-text-3" id="text-3-5">
+<div class="org-src-container">
+<pre class="src src-R">target(x) <span style="color: #008b8b;">&lt;-</span> list(name = <span style="color: #8b2252;">"Outcome_risk"</span>,strategy = <span style="color: #8b2252;">"additive"</span>,estimator = <span style="color: #8b2252;">"tmle"</span>,time_horizon = 3,protocols = c(<span style="color: #8b2252;">"always A"</span>,<span style="color: #8b2252;">"never A"</span>))
+target(x) <span style="color: #008b8b;">&lt;-</span> list(name = <span style="color: #8b2252;">"Outcome_risk_g"</span>,strategy = <span style="color: #8b2252;">"additive"</span>,estimator = <span style="color: #8b2252;">"g"</span>,time_horizon = 3,protocols = c(<span style="color: #8b2252;">"always A"</span>,<span style="color: #8b2252;">"never A"</span>))
+x
+</pre>
+</div>
+
+<pre class="example">
+Targeted minimum loss analysis of register data.
+  Initialized to 3 time intervals (starting at time zero).
+  The name of the subject id variable is 'id'.
+  The outcome, competing risk and censoring variables are named 'Y', 'Dead', and 'Censored', respectively.
+</pre>
+</div>
+</div>
+<div id="outline-container-org0a6cc81" class="outline-3">
+<h3 id="org0a6cc81"><span class="section-number-3">3.6.</span> Sequential regression with and without TMLE update step</h3>
+<div class="outline-text-3" id="text-3-6">
+<div class="org-src-container">
+<pre class="src src-R">x <span style="color: #008b8b;">&lt;-</span> run_rtmle(x,learn = <span style="color: #8b2252;">"learn_glm"</span>)
+summary(x)
+</pre>
+</div>
+
+<pre class="example" id="orga6f5f3f">
+Running target: Outcome_risk
+Current protocol: always A
+Current protocol: never A
+Running target: Outcome_risk_g
+Current protocol: always A
+Current protocol: never A
+There were 17 warnings (use warnings() to see them)
+Target Protocol  Estimate               std.err                      Estimate (CI_95)
+           &lt;char&gt;   &lt;char&gt;     &lt;num&gt;                 &lt;num&gt;                                &lt;char&gt;
+1:   Outcome_risk always A 0.3349403           0.004767184                      0.33 [0.33;0.34]
+2:   Outcome_risk  never A 0.3596512 32412113987.867225647 0.36 [-63526576078.67;63526576079.39]
+3: Outcome_risk_g always A 0.3349413           0.004767184                      0.33 [0.33;0.34]
+4: Outcome_risk_g  never A 0.3594489 32411831082.687652588 0.36 [-63526021594.70;63526021595.42]
+</pre>
+</div>
+</div>
+</div>
+</div>
+<div id="postamble" class="status">
+Last update: 30 Sep 2024 by Thomas Alexander Gerds.
+</div>
+</body>
+</html>
