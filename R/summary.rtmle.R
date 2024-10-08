@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 29 2024 (10:44) 
 ## Version: 
-## Last-Updated: Oct  2 2024 (15:04) 
+## Last-Updated: Oct  8 2024 (18:31) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 29
+##     Update #: 33
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -18,9 +18,9 @@
 #'
 #' 
 #' @param object Object to be summarized
-#' @param ...
-#' @method summary rtmle
+#' @param ... not used
 #' @export
+#' @method summary rtmle
 summary.rtmle <- function(object,...){
     Estimate <- Upper <- Lower <- NULL
     do.call(rbind,lapply(names(object$targets),function(target_name){

@@ -4,7 +4,7 @@
 \name{rtmle-package}
 \alias{rtmle}
 \alias{rtmle-package}
-\title{rtmle: What the Package Does (One Line, Title Case)}
+\title{rtmle: Analysing Longitudinal Observational and Randomized Data with the Targeted Minimum Loss Estimator}
 \description{
 Flexible Implementation of Targeted Minimum Loss Estimators Optimized For Register Data
 }

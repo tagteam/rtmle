@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul  3 2024 (13:48) 
 ## Version: 
-## Last-Updated: Oct  2 2024 (09:32) 
+## Last-Updated: Oct  8 2024 (18:09) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 5
+##     Update #: 7
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -14,6 +14,8 @@
 #----------------------------------------------------------------------
 ## 
 ### Code:
+#' @export
+#' @method coef rtmle
 coef.rtmle <- function(object,...){
     res = lapply(names(object$models),function(p){
         inner = lapply(names(object$models[[p]]),function(m){

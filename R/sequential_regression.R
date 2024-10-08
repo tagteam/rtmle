@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 30 2024 (14:30) 
 ## Version: 
-## Last-Updated: Oct  3 2024 (10:02) 
+## Last-Updated: Oct  3 2024 (16:18) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 23
+##     Update #: 24
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -61,15 +61,15 @@ sequential_regression <- function(x,
             if (length(protocol_Dnodes)>0){
                 outcome_free <- outcome_free&protocol_data[[protocol_Dnodes[[j-1]]]]%in%0
             }
-            uncensored <- protocol_data[[protocol_Cnodes[[j-1]]]]%in%"uncensored"
+            uncensored <- protocol_data[[protocol_Cnodes[[j-1]]]]%in%x$names$uncensored_label
         }else{
             outcome_free <- rep(TRUE,nrow(protocol_data))
             uncensored <- rep(TRUE,nrow(protocol_data))
         }
         # fit outcome regression
         # we always have the censoring node _j *before* the outcome node _j
-        # hence to analyse Y_j we need C_j = "uncensored" for the modeling of Y_j
-        fit_last <- do.call(learner,list(formula = interval_outcome_formula,data = protocol_data[outcome_free&protocol_data[[protocol_Cnodes[[j]]]]%in%"uncensored"],...))
+        # hence to analyse Y_j we need C_j = x$names$uncensored_label for the modeling of Y_j
+        fit_last <- do.call(learner,list(formula = interval_outcome_formula,data = protocol_data[outcome_free&protocol_data[[protocol_Cnodes[[j]]]]%in%x$names$uncensored_label],...))
         # save fitted object
         x$models[[protocol_name]][["outcome"]][[protocol_Ynodes[[j]]]]$fit <- fit_last
         # intervene according to protocol for targets
@@ -98,7 +98,7 @@ sequential_regression <- function(x,
             if (inherits(try(W <- update_Q(Y = Yhat,
                                            logitQ = lava::logit(y),
                                            cum.g = x$cumulative_intervention_probs[[protocol_name]][,protocol_Cnodes[[j]]], 
-                                           uncensored_undeterministic = outcome_free & (current_cnode%in%"uncensored"),
+                                           uncensored_undeterministic = outcome_free & (current_cnode%in%x$names$uncensored_label),
                                            intervention.match = x$intervention_match[[protocol_name]][,intervention_table[time == j-1]$variable])),"try-error"))
                 stop("Fluctuation model used in the TMLE update step failed in the attempt to run function update_Q")
         }else{
@@ -109,7 +109,7 @@ sequential_regression <- function(x,
         x$sequential_outcome_regression[[target_name]]$intervened_data <- c(x$sequential_outcome_regression[[target_name]]$intervened_data,list(intervened_data))
         # calculate contribution to influence function
         h.g.ratio <- 1/x$cumulative_intervention_probs[[protocol_name]][,match(paste0("Censored_",j),colnames(x$cumulative_intervention_probs[[protocol_name]]))]
-        index <- (current_cnode%in%"uncensored") & intervention_match[,intervention_table[time == j-1]$variable]
+        index <- (current_cnode%in%x$names$uncensored_label) & intervention_match[,intervention_table[time == j-1]$variable]
         if (any(h.g.ratio[index] != 0)) {
             x$IC[[target_name]][[protocol_name]][[label_time_horizon]][index] <- x$IC[[target_name]][[protocol_name]][[label_time_horizon]][index] + (Yhat[index] - W[index]) * h.g.ratio[index]
         }

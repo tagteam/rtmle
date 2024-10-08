@@ -15,6 +15,7 @@
 ^.*\.Rproj$
 ^\.Rproj\.user$
 ^appveyor\.yml$
+^codecov\.yml$
 ^rtmle\.Rproj$
 ^\.github$
 ^_pkgdown\.yml$

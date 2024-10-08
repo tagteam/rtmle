@@ -8,6 +8,8 @@
 }
 \arguments{
 \item{object}{Object to be summarized}
+
+\item{...}{not used}
 }
 \description{
 Summarizing the results of a register data analysis with the targeted minimum loss estimator

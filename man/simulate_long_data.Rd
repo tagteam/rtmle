@@ -4,7 +4,6 @@
 \alias{simulate_long_data}
 \title{library(data.table)
 ld <- simulate_long_data(n=100,number_epochs=20,register_format=TRUE)
-ld\link{,table(table(id))}
 ld\link{,num:=.N,by="id"}
 ld}
 \usage{
@@ -21,7 +20,6 @@ simulate_long_data(
 \description{
 library(data.table)
 ld <- simulate_long_data(n=100,number_epochs=20,register_format=TRUE)
-ld\link{,table(table(id))}
 ld\link{,num:=.N,by="id"}
 ld
 }

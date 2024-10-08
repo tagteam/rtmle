@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 11 2024 (13:24) 
 ## Version: 
-## Last-Updated: Oct  3 2024 (07:13) 
+## Last-Updated: Oct  8 2024 (18:15) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 254
+##     Update #: 255
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -17,7 +17,6 @@
 #'
 #' library(data.table)
 #' ld <- simulate_long_data(n=100,number_epochs=20,register_format=TRUE)
-#' ld[,table(table(id))]
 #' ld[,num:=.N,by="id"]
 #' ld
 #' @export

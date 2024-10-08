@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul  1 2024 (09:11) 
 ## Version: 
-## Last-Updated: Oct  3 2024 (11:28) 
+## Last-Updated: Oct  8 2024 (18:22) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 314
+##     Update #: 323
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -30,6 +30,7 @@ run_rtmle <- function(x,
                       time_horizon,
                       refit = FALSE,
                       ...){
+    time <- value <- NULL
     requireNamespace("riskRegression")
     # for loop across targets
     available_targets <- names(x$targets)
@@ -86,13 +87,13 @@ run_rtmle <- function(x,
                 setnames(intervention_probs,c(x$names$id,c(rbind(protocol_Anodes,protocol_Cnodes))))
                 # predict the propensity score/1-probability of censored
                 # intervene according to protocol for targets
-                # in the last time interval we do not need propensities/censoring probabilities  
+                # in the last time interval we do not need propensities/censoring probabilities
                 for (j in x$times[-length(x$times)]){
                     if (j > 0){
                         outcome_free <- protocol_data[[protocol_Ynodes[[j]]]]%in%0
                         # competing risks
                         if (length(protocol_Dnodes)>0) outcome_free <- outcome_free&protocol_data[[protocol_Dnodes[[j]]]]%in%0
-                        uncensored <- protocol_data[[protocol_Cnodes[[j]]]]%in%"uncensored"
+                        uncensored <- protocol_data[[protocol_Cnodes[[j]]]]%in%x$names$uncensored_label
                     }else{
                         # assume that all are at risk at time 0
                         outcome_free <- rep(TRUE,N)
@@ -100,7 +101,8 @@ run_rtmle <- function(x,
                     }
                     if (any(outcome_free & uncensored)){
                         # fit the propensity regression model
-                        if (refit || length(x$models[[protocol_name]][["propensity"]][[protocol_Anodes[[j+1]]]]$fit) == 0){
+                        if (
+                            refit || length(x$models[[protocol_name]][["propensity"]][[protocol_Anodes[[j+1]]]]$fit) == 0){
                             if (!is.null(ff <- x$models[[protocol_name]][["propensity"]][[protocol_Anodes[[j+1]]]]$formula)){
                                 x$models[[protocol_name]][["propensity"]][[protocol_Anodes[[j+1]]]]$fit <- do.call(learner,list(formula = ff,data = protocol_data[outcome_free&uncensored],...))
                             }
@@ -114,12 +116,15 @@ run_rtmle <- function(x,
                     }
                     # set the treatment variables to their protocol values
                     ## FIXME: could subset data to the variables in the current formula
-                    # FIXME: predict also subjects who will be censored in current interval? Think: YES
+                    ## FIXME: predict also subjects who will be censored in current interval? Think: YES
                     intervened_data = intervene(data = protocol_data[outcome_free],
                                                 intervention_table = intervention_table,
                                                 time = j)
                     intervention_probs[outcome_free][[protocol_Anodes[[j+1]]]] <- riskRegression::predictRisk(x$models[[protocol_name]][["propensity"]][[protocol_Anodes[[j+1]]]]$fit,
                                                                                                               newdata = intervened_data)
+                    # FIXME: this hack works probably only with exactly 2 treatment levels?
+                    if (match(intervention_table[time == j,value],x$names$treatment_levels)<length(x$names$treatment_levels))
+                    intervention_probs[outcome_free][[protocol_Anodes[[j+1]]]] <- 1-intervention_probs[outcome_free][[protocol_Anodes[[j+1]]]]
                     intervention_probs[outcome_free][[protocol_Cnodes[[j+1]]]] <- riskRegression::predictRisk(x$models[[protocol_name]][["censoring"]][[protocol_Cnodes[[j+1]]]]$fit,
                                                                                                               newdata = intervened_data)
                 }

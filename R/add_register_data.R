@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 25 2024 (11:24)
 ## Version:
-## Last-Updated: Oct  3 2024 (07:35) 
+## Last-Updated: Oct  8 2024 (18:08) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 12
+##     Update #: 13
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -13,8 +13,9 @@
 ### Change Log:
 #----------------------------------------------------------------------
 ## ### Code:
-
-#' @export
+#' Adding register data to a rtmle object
+#'
+#' This function adds a list of register dataset to an existing rtmle object
 #' @param x object of class \code{rtmle} 
 #' @param ... Not used (not yet)
 #' @param value Named list of data.frames or data.tables or tibbles. Each data.frame
@@ -22,6 +23,7 @@
 #' by \code{x$names$id}. However, not all subjects must have a row in the data.frame.
 #' Each data.frame should also have a time or date variable which must have the same name
 #' as defined by \code{x$names$time}.
+#' @export
 "add_register_data<-" <- function(x,...,value){
     nv <- names(value)
     if (!list(value) || any(sapply(value,is.data.frame) == FALSE) || any(is.na(nv)) || any(nv == ""))

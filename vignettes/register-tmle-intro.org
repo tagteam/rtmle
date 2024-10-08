@@ -30,7 +30,7 @@ ld <- simulate_long_data(n = 10000,number_epochs = 20,beta = list(sum_A_on_Y = -
 ld
 #+END_SRC
 
-#+RESULTS[(2024-10-03 11:30:02) c882943695f57f545c4d35bcaa06c480ca36b3a8]:
+#+RESULTS[(2024-10-03 16:28:18) c882943695f57f545c4d35bcaa06c480ca36b3a8]:
 :results:
 $baseline_data
           id   sex      age
@@ -137,7 +137,7 @@ x <- rtmle_init(intervals = 3,name_id = "id",name_outcome = "Y",name_competing =
 x
 #+END_SRC
 
-#+RESULTS[(2024-10-03 11:30:02) 8b507b232db5bb073a8147380c6d781f9e76f9f1]:
+#+RESULTS[(2024-10-03 16:28:18) 8b507b232db5bb073a8147380c6d781f9e76f9f1]:
 :results:
 Targeted minimum loss analysis of register data.
   Initialized to 3 time intervals (starting at time zero).
@@ -154,11 +154,11 @@ TODO: The object contains no targets yet. Add them with the function 'target<-'.
 #+ATTR_LATEX: :options otherkeywords={}, deletekeywords={}
 #+BEGIN_SRC R  :results output verbatim drawer  :exports both  :session *R* :cache yes  
 x$long_data <- ld[c("outcome_data","censored_data","competing_data","timevar_data")]
-baseline_data(x) <- ld$baseline_data[,start_followup_date:=0]
+add_baseline_data(x) <- ld$baseline_data[,start_followup_date:=0]
 x
 #+END_SRC
 
-#+RESULTS[(2024-10-03 11:30:02) baab07cfaaf782a112f2659e6a4ba4dd791d5050]:
+#+RESULTS[(2024-10-03 16:28:18) baab07cfaaf782a112f2659e6a4ba4dd791d5050]:
 :results:
 Targeted minimum loss analysis of register data.
   Initialized to 3 time intervals (starting at time zero).
@@ -177,7 +177,7 @@ x <- long_to_wide(x,intervals = seq(0,2000,30.45*6))
 prepare_data(x) <- list()
 #+END_SRC
 
-#+RESULTS[(2024-10-03 11:30:03) a3b2259f4fbd1a6505a368eec81f685182ce33b6]:
+#+RESULTS[(2024-10-03 16:28:20) a3b2259f4fbd1a6505a368eec81f685182ce33b6]:
 :results:
 :end:
 
@@ -187,11 +187,11 @@ prepare_data(x) <- list()
 #+ATTR_LATEX: :options otherkeywords={}, deletekeywords={}
 #+BEGIN_SRC R  :results output verbatim drawer  :exports both  :session *R* :cache yes  
 protocol(x) <- list(name = "always A",treatment_variables = "A",intervention = 1)
-protocol(x) <- list(name = "never A",treatment_variables = "B",intervention = 0)
+protocol(x) <- list(name = "never A",treatment_variables = "A",intervention = 0)
 x
 #+END_SRC
 
-#+RESULTS[(2024-10-03 11:30:03) c33c12a3fb685d3e26c9888a929f778ad970845e]:
+#+RESULTS[(2024-10-03 16:28:20) b573ac1575eb7a69bf7d0c058328d423181f467f]:
 :results:
 Targeted minimum loss analysis of register data.
   Initialized to 3 time intervals (starting at time zero).
@@ -210,7 +210,7 @@ target(x) <- list(name = "Outcome_risk_g",strategy = "additive",estimator = "g",
 x
 #+END_SRC
 
-#+RESULTS[(2024-10-03 11:30:03) e10547eb4a9d4e196a8b46472920dd0a1fd24c68]:
+#+RESULTS[(2024-10-03 16:28:20) e10547eb4a9d4e196a8b46472920dd0a1fd24c68]:
 :results:
 Targeted minimum loss analysis of register data.
   Initialized to 3 time intervals (starting at time zero).
@@ -227,26 +227,27 @@ x <- run_rtmle(x,learn = "learn_glm")
 summary(x)
 #+END_SRC
 
-#+RESULTS[(2024-10-03 11:30:05) 2ba32a24f4c0bcf2c0fd1e66163ca03fff3cfca9]:
+#+RESULTS[(2024-10-03 16:28:21) 2ba32a24f4c0bcf2c0fd1e66163ca03fff3cfca9]:
 :results:
 Running target: Outcome_risk
 Current protocol: always A
 Current protocol: never A
-Running target: Outcome_risk_g
-Current protocol: always A
-Current protocol: never A
-There were 17 warnings (use warnings() to see them)
-Target Protocol Time_horizon Estimator                           Estimate (CI_95)
-           <char>   <char>        <int>    <char>                                     <char>
-1:   Outcome_risk always A            3      tmle                        33.49 [32.56;34.43]
-2:   Outcome_risk  never A            3      tmle 35.97 [-6352657607866.70;6352657607938.63]
-3: Outcome_risk_g always A            3         g                        33.49 [32.56;34.43]
-4: Outcome_risk_g  never A            3         g 35.94 [-6352602159470.42;6352602159542.31]
-Warning messages:
-1: Invalid .internal.selfref detected and fixed by taking a (shallow) copy of the data.table so that := can add this new column by reference. At an earlier point, this data.table has been copied by R (or was created manually using structure() or similar). Avoid names<- and attr<- which in R currently (and oddly) may copy the whole data.table. Use set* syntax instead to avoid copying: ?set, ?setnames and ?setattr. If this message doesn't help, please report your use case to the data.table issue tracker so the root cause can be fixed or this message improved. 
-2: Invalid .internal.selfref detected and fixed by taking a (shallow) copy of the data.table so that := can add this new column by reference. At an earlier point, this data.table has been copied by R (or was created manually using structure() or similar). Avoid names<- and attr<- which in R currently (and oddly) may copy the whole data.table. Use set* syntax instead to avoid copying: ?set, ?setnames and ?setattr. If this message doesn't help, please report your use case to the data.table issue tracker so the root cause can be fixed or this message improved. 
-3: Invalid .internal.selfref detected and fixed by taking a (shallow) copy of the data.table so that := can add this new column by reference. At an earlier point, this data.table has been copied by R (or was created manually using structure() or similar). Avoid names<- and attr<- which in R currently (and oddly) may copy the whole data.table. Use set* syntax instead to avoid copying: ?set, ?setnames and ?setattr. If this message doesn't help, please report your use case to the data.table issue tracker so the root cause can be fixed or this message improved. 
-4: Invalid .internal.selfref detected and fixed by taking a (shallow) copy of the data.table so that := can add this new column by reference. At an earlier point, this data.table has been copied by R (or was created manually using structure() or similar). Avoid names<- and attr<- which in R currently (and oddly) may copy the whole data.table. Use set* syntax instead to avoid copying: ?set, ?setnames and ?setattr. If this message doesn't help, please report your use case to the data.table issue tracker so the root cause can be fixed or this message improved.
+Error: No method available for evaluating predicted probabilities from objects in class: NULL. But, you can write it yourself or ask the package manager.
+In addition: Warning messages:
+1: glm.fit: algorithm did not converge 
+2: In predict.lm(object, newdata, se.fit, scale = 1, type = if (type ==  :
+  prediction from rank-deficient fit; attr(*, "non-estim") has doubtful cases
+3: In predict.lm(object, newdata, se.fit, scale = 1, type = if (type ==  :
+  prediction from rank-deficient fit; attr(*, "non-estim") has doubtful cases
+4: In predict.lm(object, newdata, se.fit, scale = 1, type = if (type ==  :
+  prediction from rank-deficient fit; attr(*, "non-estim") has doubtful cases
+5: In predict.lm(object, newdata, se.fit, scale = 1, type = if (type ==  :
+  prediction from rank-deficient fit; attr(*, "non-estim") has doubtful cases
+6: In eval(family$initialize) : non-integer #successes in a binomial glm!
+7: In predict.lm(object, newdata, se.fit, scale = 1, type = if (type ==  :
+  prediction from rank-deficient fit; attr(*, "non-estim") has doubtful cases
+8: In eval(family$initialize) : non-integer #successes in a binomial glm!
+Error: Check that is.data.table(DT) == TRUE. Otherwise, :=, `:=`(...) and let(...) are defined for use in j, once only and in particular ways. See help(":=").
 :end:
 
 

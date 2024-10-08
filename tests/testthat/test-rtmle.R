@@ -6,7 +6,7 @@ set.seed(112)
 ld <- simulate_long_data(n = 1000,number_epochs = 20,beta = list(A_on_Y = -.2,A0_on_Y = -0.3,A0_on_A = 6),register_format = TRUE)
 x <- rtmle_init(intervals = 2,name_id = "id",name_outcome = "Y",name_competing = "Dead",name_censoring = "Censored",censored_label = "censored")
 x$long_data <- ld[c("outcome_data","censored_data","competing_data","timevar_data")]
-baseline_data(x) <- ld$baseline_data[,start_followup_date:=0]
+add_baseline_data(x) <- ld$baseline_data[,start_followup_date:=0]
 x <- long_to_wide(x,intervals = seq(0,2000,30.45*6))
 protocol(x) <- list(name = "Always_A",
                     treatment_variables = "A",

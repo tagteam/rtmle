@@ -1,5 +1,5 @@
 Package: rtmle
-Title: What the Package Does (One Line, Title Case)
+Title: Analysing Longitudinal Observational and Randomized Data with the Targeted Minimum Loss Estimator
 Version: 2024.10.02
 Authors@R: c(
     person("Thomas Alexander", "Gerds", , "tag@biostat.ku.dk", role = c("aut", "cre"),

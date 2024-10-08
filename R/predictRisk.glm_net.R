@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 28 2024 (08:34) 
 ## Version: 
-## Last-Updated: Oct  2 2024 (15:37) 
+## Last-Updated: Oct  8 2024 (18:09) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 2
+##     Update #: 3
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -15,9 +15,9 @@
 ## 
 ### Code:
 ## * predictRisk.glm_net
+##' @export
 ##' @rdname predictRisk
 ##' @method predictRisk glm_net
-##' @export
 predictRisk.glm_net <- function(object,newdata,times=NA,...) {
     args <- list(...)
     # check if user has supplied a lambda value

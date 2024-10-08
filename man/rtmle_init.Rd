@@ -11,6 +11,8 @@ rtmle_init(
   name_outcome,
   name_competing,
   name_censoring = "Censored",
+  treatment_levels = c("0", "1"),
+  censored_levels = c("uncensored", "censored"),
   censored_label = "censored"
 )
 }
@@ -30,13 +32,20 @@ In the setting where \code{intervals=1} this should be the full name of the outc
 
 \item{name_censoring}{Name of the censoring variable(s).}
 
-\item{censored_label}{Label of the values of the censoring variable(s) that indicated that
-the data of the subject at this time interval are censored.}
+\item{treatment_levels}{Character vector with the treatment levels.}
+
+\item{censored_levels}{Character vector with the censoring levels.}
+
+\item{censored_label}{A single character value. Label of the values of the censoring variable(s) that indicated that
+the data of the subject at this time interval are censored. Must be an element of \code{censored_levels} too.}
 }
 \value{
 A list with class \code{"rtmle"} and the following elements:
 \itemize{
-\item
+\item targets
+\item estimate
+\item names
+\item times
 }
 }
 \description{
@@ -54,6 +63,8 @@ x <- rtmle_init(intervals=3,
                 name_outcome="cvddeath",
                 name_competing="death",
                 name_censoring="Censored",
+                treatment_levels = c("0","1"),
+                censored_levels = c("1","0"),
                 censored_label="0")
 
 }

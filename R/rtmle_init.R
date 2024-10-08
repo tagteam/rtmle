@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 19 2024 (07:23) 
 ## Version: 
-## Last-Updated: Oct  3 2024 (10:00) 
+## Last-Updated: Oct  8 2024 (18:26) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 18
+##     Update #: 29
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -28,11 +28,16 @@
 ##' In the setting where \code{intervals=1} this should be the full name of the outcome variable.
 ##' @param name_competing Name of the competing risk variable(s).
 ##' @param name_censoring Name of the censoring variable(s).
-##' @param censored_label Label of the values of the censoring variable(s) that indicated that
-##' the data of the subject at this time interval are censored.
+##' @param treatment_levels Character vector with the treatment levels.
+##' @param censored_levels Character vector with the censoring levels.
+##' @param censored_label A single character value. Label of the values of the censoring variable(s) that indicated that
+##' the data of the subject at this time interval are censored. Must be an element of \code{censored_levels} too.
 ##' @return A list with class \code{"rtmle"} and the following elements:
 ##' \itemize{
-##' \item
+##' \item targets
+##' \item estimate
+##' \item names
+##' \item times
 ##' }
 ##' @seealso run_rtmle
 ##' @examples
@@ -43,6 +48,8 @@
 ##'                 name_outcome="cvddeath",
 ##'                 name_competing="death",
 ##'                 name_censoring="Censored",
+##'                 treatment_levels = c("0","1"),
+##'                 censored_levels = c("1","0"),
 ##'                 censored_label="0")
 ##' 
 ##' @export 
@@ -53,8 +60,17 @@ rtmle_init <- function(intervals,
                        name_outcome,
                        name_competing,
                        name_censoring = "Censored",
+                       treatment_levels = c("0","1"),
+                       censored_levels = c("uncensored","censored"),
                        censored_label = "censored"){
     time_labels = paste0("time_",0:intervals)
+    if (!length(censored_levels) %in%c(0,1,2))
+        stop("Wrong number of censored levels: has to be 0, 1, or 2.")
+    stopifnot(censored_label%in%censored_levels)
+    if (length(censored_levels) == 2)
+        uncensored_label = setdiff(censored_levels,censored_label)
+    else
+        uncensored_label = NULL
     x = list(targets = NULL,
              estimate = NULL,
              names = list("id" = name_id,
@@ -62,7 +78,10 @@ rtmle_init <- function(intervals,
                           "outcome" = name_outcome,
                           "competing" = name_competing,
                           "censoring" = name_censoring,
-                          "censored_label" = censored_label),
+                          "treatment_levels" = treatment_levels,
+                          "censored_levels" = censored_levels,
+                          "censored_label" = censored_label,
+                          "uncensored_label" = uncensored_label),
              times = 0:intervals)
     class(x) = "rtmle"
     x

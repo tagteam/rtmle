@@ -40,7 +40,7 @@ x <- rtmle_init(intervals = 8, name_id = "id",
                 name_outcome = "Y", name_competing = "Dead",
                 name_censoring = "Censored",censored_label = "censored")
 x$long_data <- ld[c("outcome_data","censored_data","competing_data","timevar_data")]
-baseline_data(x) <- ld$baseline_data[,start_followup_date:=0]
+add_baseline_data(x) <- ld$baseline_data[,start_followup_date:=0]
 x <- long_to_wide(x,intervals=seq(0,2000,30.45*6))
 prepare_data(x) <- list()
                        
