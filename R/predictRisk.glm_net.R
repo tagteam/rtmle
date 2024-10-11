@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 28 2024 (08:34) 
 ## Version: 
-## Last-Updated: Oct  8 2024 (18:09) 
+## Last-Updated: Oct  8 2024 (18:33) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 3
+##     Update #: 4
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -16,7 +16,6 @@
 ### Code:
 ## * predictRisk.glm_net
 ##' @export
-##' @rdname predictRisk
 ##' @method predictRisk glm_net
 predictRisk.glm_net <- function(object,newdata,times=NA,...) {
     args <- list(...)

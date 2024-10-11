@@ -6,7 +6,7 @@ Authors@R: c(
            comment = c(ORCID = "0000-0002-5955-816X")),
     person("Johan Sebastian", "Ohlendorff", , "johan.sebastian.ohlendorff@sund.ku.dk", role = "ctb")
   )
-Description: Flexible Implementation of Targeted Minimum Loss Estimators Optimized For Register Data 
+Description: Flexible Implementation of the Targeted Minimum Loss Estimators. Functions are Optimized for large-scale Register Data. 
 License: GPL (>= 3)
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)

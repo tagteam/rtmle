@@ -3,13 +3,13 @@
 \name{simulate_long_data}
 \alias{simulate_long_data}
 \title{library(data.table)
-ld <- simulate_long_data(n=100,number_epochs=20,register_format=TRUE)
+ld <- simulate_long_data(n=100,number_visits=20,register_format=TRUE)
 ld\link{,num:=.N,by="id"}
 ld}
 \usage{
 simulate_long_data(
   n,
-  number_epochs = 10,
+  number_visits = 10,
   baseline_rate,
   beta,
   register_format = FALSE,
@@ -19,7 +19,7 @@ simulate_long_data(
 }
 \description{
 library(data.table)
-ld <- simulate_long_data(n=100,number_epochs=20,register_format=TRUE)
+ld <- simulate_long_data(n=100,number_visits=20,register_format=TRUE)
 ld\link{,num:=.N,by="id"}
 ld
 }

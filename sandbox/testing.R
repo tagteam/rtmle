@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 25 2024 (09:49) 
 ## Version: 
-## Last-Updated: Aug 20 2024 (14:16) 
+## Last-Updated: Oct  8 2024 (18:39) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 3
+##     Update #: 4
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -22,9 +22,9 @@ library(targets)
 setwd("~/research/SoftWare/rtmle/")
 #tar_source("R/")
 set.seed(112)
-ld <- simulate_long_data(n = 10000,number_epochs = 20,beta = list(A_on_Y = -.2,A0_on_Y = -0.3,A0_on_A = 6))
+ld <- simulate_long_data(n = 10000,number_visits = 20,beta = list(A_on_Y = -.2,A0_on_Y = -0.3,A0_on_A = 6))
 set.seed(18124)
-ld0 <- simulate_long_data(n = 10000,number_epochs = 20,beta = list(A0_on_Y = 0,A0_on_A = 6))
+ld0 <- simulate_long_data(n = 10000,number_visits = 20,beta = list(A0_on_Y = 0,A0_on_A = 6))
 ld[,table(terminal_event)]
 ld[,table(A_0)]
 ld[,table(table(id))]

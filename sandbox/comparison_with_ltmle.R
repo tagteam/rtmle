@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 25 2024 (09:50) 
 ## Version: 
-## Last-Updated: Oct  8 2024 (18:29) 
+## Last-Updated: Oct  8 2024 (18:39) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 28
+##     Update #: 29
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -23,7 +23,7 @@ tar_source("~/research/Methods/TMLE_for_breakfast/Ltmle/R/")
 source("~/research/Epidemi/Reddie/LEADER/functions/run_ltmle.R")
 source("~/research/Epidemi/Reddie/LEADER/functions/summary.runLtmle.R")
 set.seed(112)
-ld <- simulate_long_data(n = 100,number_epochs = 20,beta = list(A_on_Y = -.2,A0_on_Y = -0.3,A0_on_A = 6),register_format = TRUE)
+ld <- simulate_long_data(n = 100,number_visits = 20,beta = list(A_on_Y = -.2,A0_on_Y = -0.3,A0_on_A = 6),register_format = TRUE)
 x <- rtmle_init(intervals = 3,name_id = "id",name_outcome = "Y",name_competing = "Dead",name_censoring = "Censored",censored_label = "censored")
 x$long_data <- ld[c("outcome_data","censored_data","competingrisk_data","timevar_data")]
 add_baseline_data(x) <- ld$baseline_data[,start_followup_date:=0]

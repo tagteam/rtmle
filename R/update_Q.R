@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul  3 2024 (13:54) 
 ## Version: 
-## Last-Updated: Oct  2 2024 (15:42) 
+## Last-Updated: Oct 11 2024 (14:23) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 15
+##     Update #: 18
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -45,8 +45,8 @@ update_Q <- function(Y,
         ## weights = as.vector(scale(weights[weights > 0], center = FALSE)))
         ## browser(skipCalls = TRUE)
         Qstar <- stats::predict(m, newdata = data.temp, type = "response")
-    }
-    else {
+    } else {
+        warning("No TMLE update because no subject has positive weight")
         Qstar <- stats::plogis(logitQ)
         m <- "no Qstar fit because no subjects alive, uncensored, following intervention"
     }

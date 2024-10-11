@@ -3,7 +3,7 @@ library(rtmle)
 library(data.table)
 library(prodlim)
 set.seed(112)
-ld <- simulate_long_data(n = 1000,number_epochs = 20,beta = list(A_on_Y = -.2,A0_on_Y = -0.3,A0_on_A = 6),register_format = TRUE)
+ld <- simulate_long_data(n = 1000,number_visits = 20,beta = list(A_on_Y = -.2,A0_on_Y = -0.3,A0_on_A = 6),register_format = TRUE)
 x <- rtmle_init(intervals = 2,name_id = "id",name_outcome = "Y",name_competing = "Dead",name_censoring = "Censored",censored_label = "censored")
 x$long_data <- ld[c("outcome_data","censored_data","competing_data","timevar_data")]
 add_baseline_data(x) <- ld$baseline_data[,start_followup_date:=0]

@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul  4 2024 (07:40) 
 ## Version: 
-## Last-Updated: Sep 23 2024 (12:11) 
+## Last-Updated: Oct 11 2024 (07:05) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 15
+##     Update #: 16
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -22,8 +22,8 @@ formalize <- function(timepoint,
                       constant_variables = NULL){
     form = NULL
     # remove constant variables
-    included_baseline_covariates=setdiff(name_baseline_covariates,constant_variables)
-    included_time_covariates=setdiff(name_time_covariates,constant_variables)
+    included_baseline_covariates <- setdiff(name_baseline_covariates,constant_variables)
+    included_time_covariates <- setdiff(name_time_covariates,constant_variables)
     # check Markov assumption for time-varying variables
     # and add _time 
     has_markov=match(included_time_covariates,Markov,nomatch=0)

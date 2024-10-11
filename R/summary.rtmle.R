@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 29 2024 (10:44) 
 ## Version: 
-## Last-Updated: Oct  8 2024 (18:31) 
+## Last-Updated: Oct 11 2024 (08:15) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 33
+##     Update #: 36
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -27,7 +27,8 @@ summary.rtmle <- function(object,...){
         target <- object$targets[[target_name]]
         protocols <- object$protocols
         out <- do.call(rbind,lapply(names(protocols),function(protocol_name){
-            e = object$estimate[[target_name]][[protocol_name]]
+            # to avoid the internal selfdetect problem we take a copy
+            e = data.table::copy(object$estimate[[target_name]][[protocol_name]])
             e[, "Estimate (CI_95)":= Publish::formatCI(x = 100*Estimate,lower = 100*Lower,upper = 100*Upper,show.x = TRUE)]
         }))
         for (nix in c("Estimate","Standard_error","Lower","Upper"))

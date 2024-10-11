@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul  3 2024 (11:13) 
 ## Version: 
-## Last-Updated: Oct  2 2024 (15:27) 
+## Last-Updated: Oct 11 2024 (13:57) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 57
+##     Update #: 60
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -17,13 +17,15 @@
 additive_formalizer <- function(x,
                                 protocol,
                                 treatment_variables,
+                                include_variables = NULL,
+                                exclude_variables = NULL,
                                 Markov = NULL){
     # FIXME: improve the stopping message
     if (missing(treatment_variables))
         treatment_variables <- x$protocols[[protocol]]$treatment_variables
     stopifnot(length(treatment_variables)>0)
-    name_time_covariates <- x$prepared_data$name_time_covariates
-    name_baseline_covariates <- x$prepared_data$name_baseline_covariates
+    name_time_covariates <- setdiff(x$prepared_data$name_time_covariates,exclude_variables)
+    name_baseline_covariates <- setdiff(x$prepared_data$name_baseline_covariates,exclude_variables)
     name_constant_variables <- x$prepared_data$name_constant_variables
     protocol_data <- x$prepared_data$data
     if (length(name_time_covariates)>0){

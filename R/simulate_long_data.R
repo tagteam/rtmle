@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 11 2024 (13:24) 
 ## Version: 
-## Last-Updated: Oct  8 2024 (18:15) 
+## Last-Updated: Oct  8 2024 (21:20) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 255
+##     Update #: 259
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -15,13 +15,18 @@
 ## 
 ### Code:
 #'
-#' library(data.table)
-#' ld <- simulate_long_data(n=100,number_epochs=20,register_format=TRUE)
-#' ld[,num:=.N,by="id"]
-#' ld
+#' library(data.table) ld <-
+#' simulate_long_data(n=100,number_visits=20,register_format=TRUE) ld
 #' @export
+#' @param n Sample size
+#' @param number_visits Number of doctor visit times covariates and treatment change 
+#' @param baseline_rate Vector of hazard rates
+#' @param beta List of regression coefficients
+#' @param register_format Logical. If \code{TRUE} the result is not in wide format but re-formatted as a list of register data. 
+#' @param int_dist
+#' @param baseline_hazard_outcomes
 simulate_long_data <- function(n,
-                               number_epochs = 10,
+                               number_visits = 10,
                                baseline_rate,
                                beta,
                                register_format = FALSE,
@@ -116,7 +121,7 @@ simulate_long_data <- function(n,
     j <- 1
     # doctor visit schedule (could be person specific but fixed for now)
     schedule <- seq(365,10*365,365)
-    while (j < number_epochs && nrow(people_atrisk)>0){
+    while (j < number_visits && nrow(people_atrisk)>0){
         # calculate the time and type of the minimum of latent times to V,L,C,Y,D
         # matrix with latent times
         next_doctor_visit <- c(schedule,10*365)[1+prodlim::sindex(eval.times = people_atrisk$entrytime,jump.times = schedule)]

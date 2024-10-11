@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 30 2024 (14:30) 
 ## Version: 
-## Last-Updated: Oct  3 2024 (16:18) 
+## Last-Updated: Oct 11 2024 (14:22) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 24
+##     Update #: 31
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -93,6 +93,7 @@ sequential_regression <- function(x,
         if (any(y[!is.na(y)] > 1)) y <- pmin(y,0.9999)
         ## y <- pmax(pmin(y,0.99999),0.00001)
         ## y <- pmax(pmin(y,0.9999),0.0001)
+        # FIXME: decide to either use paste0(x$names$censoring,"_",j) or protocol_Cnodes[[j]]
         current_cnode = as.character(protocol_data[[paste0(x$names$censoring,"_",j)]])
         if (length(x$targets[[target_name]]$estimator) == 0 || x$targets[[target_name]]$estimator == "tmle"){
             if (inherits(try(W <- update_Q(Y = Yhat,

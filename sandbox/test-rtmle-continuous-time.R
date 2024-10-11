@@ -5,7 +5,7 @@ library(prodlim)
 library(targets)
 set.seed(126) 
 base_hazard_outcome <- 0.0001
-ld <- simulate_long_data(n = 10000,number_epochs = 20,beta = list(A_on_Y = -.2,A0_on_Y = -0.3,A0_on_A = 2.6),register_format = TRUE, baseline_hazard_outcomes = base_hazard_outcome)
+ld <- simulate_long_data(n = 10000,number_visits = 20,beta = list(A_on_Y = -.2,A0_on_Y = -0.3,A0_on_A = 2.6),register_format = TRUE, baseline_hazard_outcomes = base_hazard_outcome)
 time_horizon <- 9
 res <- rep(NA, time_horizon)
 for (time in 1:time_horizon){
@@ -25,7 +25,7 @@ for (time in 1:time_horizon){
   res[time] <- x$estimate$Outcome_risk$Always_A
 }
 
-ld_int <- simulate_long_data(200000,number_epochs=20,beta=list(A_on_Y = -.2,A0_on_Y = -0.3),int_dist=TRUE,baseline_hazard_outcomes = base_hazard_outcome)
+ld_int <- simulate_long_data(200000,number_visits=20,beta=list(A_on_Y = -.2,A0_on_Y = -0.3),int_dist=TRUE,baseline_hazard_outcomes = base_hazard_outcome)
 ld_int <- ld_int[, c("id", "terminal_time", "terminal_event")]
 ld_int <- unique(ld_int)  
 

@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 19 2024 (10:07) 
 ## Version: 
-## Last-Updated: Oct  8 2024 (18:28) 
+## Last-Updated: Oct  8 2024 (18:39) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 111
+##     Update #: 112
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -33,7 +33,7 @@
 ##' @seealso rtmle_init
 ##' @examples
 ##' set.seed(112)
-#' ld <- simulate_long_data(n = 101,number_epochs = 20,
+#' ld <- simulate_long_data(n = 101,number_visits = 20,
 #'                          beta = list(A_on_Y = -.2,
 #'                          A0_on_Y = -0.3,A0_on_A = 6),
 #'                                register_format = TRUE)

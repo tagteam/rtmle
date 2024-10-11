@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 3 2024 (13:46)
 ## Version:
-## Last-Updated: Sep 24 2024 (10:20) 
+## Last-Updated: Oct 11 2024 (14:23) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 24
+##     Update #: 27
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -29,11 +29,28 @@
 "target<-" <- function(x,...,value) {
     stopifnot(is.list(value))
     stopifnot(all(c("name","strategy","estimator","protocols")%in%names(value)))
+    stopifnot(all(value[["protocols"]]%in%names(x$protocols)))
+    if (length(value[["include_variables"]])>0)
+        include_variables <- value[["include_variables"]]
+    else
+        include_variables <- NULL
+    if (length(value[["exclude_variables"]])>0)
+        exclude_variables <- value[["exclude_variables"]]
+    else
+        exclude_variables <- NULL
+    all_treatment_variables <- sapply(x$protocols,function(u)u$treatment_variables)
     if (length(value$strategy) == 1 && value$strategy == "additive"){
         # FIXME: some formulas could be shared across protocols
         for (protocol in value$protocols){
+            if (length(value[["exclude_other_treatments"]])>0){
+                protocol_exclude_variables <- c(exclude_variables,setdiff(all_treatment_variables,x$protocols[[protocol]]$treatment_variables))
+            } else{
+                protocol_exclude_variables <- exclude_variables
+            }
             x$models[[protocol]] = additive_formalizer(x = x,
                                                        protocol = protocol,
+                                                       exclude_variables = protocol_exclude_variables,
+                                                       include_variables = include_variables,
                                                        Markov = NULL)
             ## model(x) <- list(formalizer = "additive",treatment_variables = x$protocols[[value$protocol]]$treatment_variables)
             x$targets[[value$name]][["strategy"]] <- "additive"

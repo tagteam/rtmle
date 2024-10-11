@@ -32,7 +32,7 @@ censoring nodes (C_nodes) and adds them to the object.
 }
 \examples{
 set.seed(112)
-ld <- simulate_long_data(n = 101,number_epochs = 20,
+ld <- simulate_long_data(n = 101,number_visits = 20,
                          beta = list(A_on_Y = -.2,
                          A0_on_Y = -0.3,A0_on_A = 6),
                                register_format = TRUE)
