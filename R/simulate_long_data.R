@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 11 2024 (13:24) 
 ## Version: 
-## Last-Updated: Oct  8 2024 (21:20) 
+## Last-Updated: Oct 14 2024 (07:11) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 259
+##     Update #: 261
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -23,8 +23,8 @@
 #' @param baseline_rate Vector of hazard rates
 #' @param beta List of regression coefficients
 #' @param register_format Logical. If \code{TRUE} the result is not in wide format but re-formatted as a list of register data. 
-#' @param int_dist
-#' @param baseline_hazard_outcomes
+#' @param int_dist JOHAN NEEDS TO DESCRIBE THIS 
+#' @param baseline_hazard_outcomes Baseline hazard function 
 simulate_long_data <- function(n,
                                number_visits = 10,
                                baseline_rate,

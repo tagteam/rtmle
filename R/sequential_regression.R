@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 30 2024 (14:30) 
 ## Version: 
-## Last-Updated: Oct 11 2024 (14:22) 
+## Last-Updated: Oct 12 2024 (08:24) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 31
+##     Update #: 40
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -89,8 +89,10 @@ sequential_regression <- function(x,
         # note that we can still predict those who are censored at C_j but uncensored at C_{j-1}
         y <- riskRegression::predictRisk(fit_last,newdata = intervened_data)
         # avoid missing values due to logit
-        if (any(y[!is.na(y)] < 0)) y <- pmax(y,0.0001)
-        if (any(y[!is.na(y)] > 1)) y <- pmin(y,0.9999)
+        if (x$targets[[target_name]]$estimator == "tmle"){
+            if (any(y[!is.na(y)] < 0)) y <- pmax(y,0.0001)
+            if (any(y[!is.na(y)] > 1)) y <- pmin(y,0.9999)
+        }
         ## y <- pmax(pmin(y,0.99999),0.00001)
         ## y <- pmax(pmin(y,0.9999),0.0001)
         # FIXME: decide to either use paste0(x$names$censoring,"_",j) or protocol_Cnodes[[j]]
@@ -128,6 +130,7 @@ sequential_regression <- function(x,
             # fixme j or j-1?
             value = protocol_data[[paste0(x$names$outcome,"_",j)]][which(!outcome_free|!uncensored)])
     }
+    ## if (time_horizon == 2) browser()
     # g-formula and tmle estimator
     x$estimate[[target_name]][[protocol_name]][Time_horizon == time_horizon, Estimate := mean(protocol_data$predicted_outcome)]
     ic <- x$IC[[target_name]][[protocol_name]][[label_time_horizon]] + protocol_data$predicted_outcome - mean(protocol_data$predicted_outcome)

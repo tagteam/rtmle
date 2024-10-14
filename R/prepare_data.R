@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 19 2024 (10:07) 
 ## Version: 
-## Last-Updated: Oct  8 2024 (18:39) 
+## Last-Updated: Oct 12 2024 (08:16) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 112
+##     Update #: 114
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -72,7 +72,13 @@
     # adding the timevarying covariates including treatment variables
     name_time_covariates <- NULL
     if (is.data.frame(x$data$timevar_data)){
-        name_time_covariates <- unique(sapply(strsplit(names(x$data$timevar_data),"_"),"[",1))[-1]
+        # a time varying covariate is recognized when
+        # there is a _1 version of it. That is a variable called hba_1 (root: hba) and also
+        # a variable hba1c_level_1_1 (root: hba1c_level_1)
+        # FIXME: there could be root variables which have time 3 version but not a time 1 version
+        name_time_covariates <- unlist(lapply(grep("_1$",names(x$data$timevar_data),value=TRUE),
+                                             function(x){substring(x,0,nchar(x)-2)}))
+        ## unique(sapply(strsplit(names(x$data$timevar_data),"_"),"[",1))[-1]
         work_data <- work_data[x$data$timevar_data,on = x$names$id]
     }else{
         name_time_covariates <- names(x$data$timevar_data)

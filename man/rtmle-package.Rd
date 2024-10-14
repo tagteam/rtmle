@@ -6,7 +6,7 @@
 \alias{rtmle-package}
 \title{rtmle: Analysing Longitudinal Observational and Randomized Data with the Targeted Minimum Loss Estimator}
 \description{
-Flexible Implementation of Targeted Minimum Loss Estimators Optimized For Register Data
+Flexible Implementation of the Targeted Minimum Loss Estimators. Functions are Optimized for large-scale Register Data.
 }
 \author{
 \strong{Maintainer}: Thomas Alexander Gerds \email{tag@biostat.ku.dk} (\href{https://orcid.org/0000-0002-5955-816X}{ORCID})

@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 25 2024 (09:50) 
 ## Version: 
-## Last-Updated: Oct  8 2024 (18:39) 
+## Last-Updated: Oct 12 2024 (07:30) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 29
+##     Update #: 31
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -25,30 +25,27 @@ source("~/research/Epidemi/Reddie/LEADER/functions/summary.runLtmle.R")
 set.seed(112)
 ld <- simulate_long_data(n = 100,number_visits = 20,beta = list(A_on_Y = -.2,A0_on_Y = -0.3,A0_on_A = 6),register_format = TRUE)
 x <- rtmle_init(intervals = 3,name_id = "id",name_outcome = "Y",name_competing = "Dead",name_censoring = "Censored",censored_label = "censored")
-x$long_data <- ld[c("outcome_data","censored_data","competingrisk_data","timevar_data")]
+x$long_data <- ld[c("outcome_data","censored_data","competing_data","timevar_data")]
 add_baseline_data(x) <- ld$baseline_data[,start_followup_date:=0]
 x <- long_to_wide(x,intervals = seq(0,2000,30.45*6))
 protocol(x) <- list(name = "Always_A",treatment_variables = "A",intervention = 1)
 prepare_data(x) <- list()
-target(x) <- list(name = "Outcome_risk",
-                  strategy = "additive",
-                  estimator = "tmle",
-                  protocols = "Always_A")
-system.time(x <- run_rtmle(x))
+target(x) <- list(name = "Outcome_risk",strategy = "additive",estimator = "tmle",protocols = "Always_A")
+system.time(x <- run_rtmle(x,time_horizon = 1:3))
 summary(x)
 # Ltmle
 vn <- names(x$prepared_data$data)
 w_treatment <- x$prepared_data$data[,c("id",grep("A_",vn,value = TRUE)),with = FALSE]
 w_outcome <- x$prepared_data$data[,c("id",grep("Y_|Censored_|Dead_",vn,value = TRUE)),with = FALSE]
 w_timevar <- x$prepared_data$data[,c("id",grep("L_",vn,value = TRUE)),with = FALSE]
-system.time(tfit <- run_ltmle(name_outcome="Y",time_horizon=3,reduce = FALSE,regimen_data=list("A" = w_treatment),outcome_data=list("Y" = w_outcome),baseline_data=x$prepared_data$data[,.(id,sex,age)],timevar_data=w_timevar,SL.library="glm",censor_others = FALSE,gbounds=c(0,1),abar = rep(1,3),name_id = "id",verbose=FALSE,gcomp = FALSE))
+system.time(tfit <- run_ltmle(name_outcome="Y",time_horizon=1:3,reduce = FALSE,regimen_data=list("A" = w_treatment),outcome_data=list("Y" = w_outcome),baseline_data=x$prepared_data$data[,.(id,sex,age)],timevar_data=w_timevar,SL.library="glm",censor_others = FALSE,gbounds=c(0,1),abar = rep(1,3),name_id = "id",verbose=FALSE,gcomp = FALSE))
 ## system.time(tfit1 <- run_ltmle(name_outcome="Y",time_horizon=3,reduce = FALSE,regimen_data=list("A" = w_treatment),outcome_data=list("Y" = w_outcome),baseline_data=x$prepared_data[,.(id,sex,age)],timevar_data=w_timevar,SL.library="glm",censor_others = FALSE,gbounds=c(0,1),abar = list(rep(1,3),rep(0,3)),name_id = "id",verbose=FALSE,gcomp = TRUE))
 summary(tfit)
 ## source("~/research/SoftWare/rtmle/R/summary.rtmle.R")
 summary(x)
 ## summary(tfit1)
-all.equal(as.numeric(tfit$A$Ltmle_fit$estimate),x$estimate$Outcome_risk[["Always_A"]])
-all.equal(c(tfit$A$Ltmle_fit$IC),x$targets$Outcome_risk$IC)
+all.equal(as.numeric(tfit$A$Ltmle_fit$estimate),x$estimate$Outcome_risk[["Always_A"]]$Estimate)
+all.equal(c(tfit$A$Ltmle_fit$IC),unlist(x$IC$Outcome_risk$Always_A,use.names = FALSE))
 ## tfit$A$Ltmle_fit$fit$Q
 ## tfit$A$Ltmle_fit$fit$Qstar
 ## b <- tfit$A$Ltmle_fit$formulas$Qform

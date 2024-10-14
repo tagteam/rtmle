@@ -143,7 +143,7 @@ Targeted minimum loss analysis of register data.
   Initialized to 3 time intervals (starting at time zero).
   The name of the subject id variable is 'id'.
   The outcome, competing risk and censoring variables are named 'Y', 'Dead', and 'Censored', respectively.
-TODO: The object contains no data yet. Add them with the functions 'add_register_data<-' and 'add_data<-'.
+TODO: The object contains no data yet. Add them with the functions 'add_long_data<-' and 'add_data<-'.
 TODO: The object contains no protocols. Add them with the function 'protocol<-'.
 TODO: The object contains no targets yet. Add them with the function 'target<-'.
 :end:

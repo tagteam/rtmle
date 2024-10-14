@@ -2,10 +2,8 @@
 % Please edit documentation in R/simulate_long_data.R
 \name{simulate_long_data}
 \alias{simulate_long_data}
-\title{library(data.table)
-ld <- simulate_long_data(n=100,number_visits=20,register_format=TRUE)
-ld\link{,num:=.N,by="id"}
-ld}
+\title{library(data.table) ld <-
+simulate_long_data(n=100,number_visits=20,register_format=TRUE) ld}
 \usage{
 simulate_long_data(
   n,
@@ -17,9 +15,22 @@ simulate_long_data(
   baseline_hazard_outcomes = 0.001
 )
 }
+\arguments{
+\item{n}{Sample size}
+
+\item{number_visits}{Number of doctor visit times covariates and treatment change}
+
+\item{baseline_rate}{Vector of hazard rates}
+
+\item{beta}{List of regression coefficients}
+
+\item{register_format}{Logical. If \code{TRUE} the result is not in wide format but re-formatted as a list of register data.}
+
+\item{int_dist}{JOHAN NEEDS TO DESCRIBE THIS}
+
+\item{baseline_hazard_outcomes}{Baseline hazard function}
+}
 \description{
-library(data.table)
-ld <- simulate_long_data(n=100,number_visits=20,register_format=TRUE)
-ld\link{,num:=.N,by="id"}
-ld
+library(data.table) ld <-
+simulate_long_data(n=100,number_visits=20,register_format=TRUE) ld
 }
