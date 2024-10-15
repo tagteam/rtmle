@@ -1,0 +1,29 @@
+*.o
+*.so
+.DS_Store
+.Rproj.user
+.Rhistory
+riskRegression.Rproj
+docs
+revdep
+/doc/
+/Meta/
+.Rprofile
+### TeX ###
+## Core latex/pdflatex auxiliary files:
+*.synctex.gz
+*.aux
+*.el
+*.synctex.gz
+*.tex
+*.lof
+*.log
+*.lot
+*.fls
+*.out
+*.toc
+*.fmt
+*.fot
+*.cb
+*.cb2
+.*.lb
