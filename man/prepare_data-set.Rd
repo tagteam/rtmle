@@ -26,9 +26,9 @@ checked for the analysis and added as \code{x$prepared_data}.
 }
 \details{
 As a wanted side effect the function identifies the variables
-for the intervention nodes (A_nodes), the time dependent covariates (B_nodes)
-the outcome nodes (Y_nodes), the competing risk nodes (D_nodes) and the
-censoring nodes (C_nodes) and adds them to the object.
+for the intervention variables (A_variables), the time dependent covariates (B_variables)
+the outcome variables (outcome_variables), the competing risk variables (competing_variables) and the
+censoring variables (censoring_variables) and adds them to the object.
 }
 \examples{
 set.seed(112)
@@ -38,7 +38,7 @@ ld <- simulate_long_data(n = 101,number_visits = 20,
                                register_format = TRUE)
 x <- rtmle_init(intervals = 8, name_id = "id",
                 name_outcome = "Y", name_competing = "Dead",
-                name_censoring = "Censored",censored_label = "censored")
+                name_censoring = "Censored",censored_label = x$names$censored_label)
 x$long_data <- ld[c("outcome_data","censored_data","competing_data","timevar_data")]
 add_baseline_data(x) <- ld$baseline_data[,start_followup_date:=0]
 x <- long_to_wide(x,intervals=seq(0,2000,30.45*6))

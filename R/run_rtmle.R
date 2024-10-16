@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul  1 2024 (09:11) 
 ## Version: 
-## Last-Updated: Oct 11 2024 (12:43) 
+## Last-Updated: Oct 16 2024 (15:24) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 324
+##     Update #: 333
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -57,7 +57,7 @@ run_rtmle <- function(x,
         protocols <- x$targets[[target_name]]$protocols
         for (protocol_name in protocols){
             message("Current protocol: ",protocol_name)
-            protocol_data <- x$prepared_data$data
+            protocol_data <- x$prepared_data
             N <- NROW(protocol_data)
             # initialize influence curve vector
             for (th in 1:length(time_horizon)){
@@ -69,31 +69,34 @@ run_rtmle <- function(x,
             current_protocol <- x$protocols[[protocol_name]]
             intervention_table <- current_protocol$intervention_table
             if (length(x$times)>1){
-                protocol_Anodes <- sapply(x$times[-length(x$times)],function(tk){
+                treatment_variables <- sapply(x$times[-length(x$times)],function(tk){
                     paste0(x$protocols[[protocol_name]]$treatment_variables,"_",tk)
                 })
             } else{
-                protocol_Anodes <- x$protocols[[protocol_name]]$treatment_variables
+                treatment_variables <- x$protocols[[protocol_name]]$treatment_variables
             }
-            protocol_Cnodes <- x$prepared_data$Cnodes
-            protocol_Dnodes <- x$prepared_data$Dnodes
-            protocol_Ynodes <- x$prepared_data$Ynodes
+            # since time_horizon can be a vector we need the maximum
+            max_time_horizon <- max(time_horizon)
+            censoring_variables <- paste0(x$names$censoring,"_",1:max_time_horizon)
+            competing_variables <- paste0(x$names$competing,"_",1:(max_time_horizon-1))
+            outcome_variables <- paste0(x$names$outcome,"_",1:max_time_horizon)
+            
             #
             # define a matrix with the cumulative intervention/censoring probabilities
             #
             if (refit || length(x$cumulative_intervention_probs[[protocol_name]]) == 0){
                 intervention_probs <- data.table(ID = protocol_data[[x$names$id]])
-                intervention_probs <- cbind(intervention_probs,matrix(1,nrow = N,ncol = length(protocol_Anodes)+length(protocol_Cnodes)))
-                setnames(intervention_probs,c(x$names$id,c(rbind(protocol_Anodes,protocol_Cnodes))))
+                intervention_probs <- cbind(intervention_probs,matrix(1,nrow = N,ncol = length(treatment_variables)+length(censoring_variables)))
+                setnames(intervention_probs,c(x$names$id,c(rbind(treatment_variables,censoring_variables))))
                 # predict the propensity score/1-probability of censored
                 # intervene according to protocol for targets
                 # in the last time interval we do not need propensities/censoring probabilities
                 for (j in x$times[-length(x$times)]){
                     if (j > 0){
-                        outcome_free <- protocol_data[[protocol_Ynodes[[j]]]]%in%0
+                        outcome_free <- protocol_data[[outcome_variables[[j]]]]%in%0
                         # competing risks
-                        if (length(protocol_Dnodes)>0) outcome_free <- outcome_free&protocol_data[[protocol_Dnodes[[j]]]]%in%0
-                        uncensored <- protocol_data[[protocol_Cnodes[[j]]]]%in%x$names$uncensored_label
+                        if (length(competing_variables)>0) outcome_free <- outcome_free&protocol_data[[competing_variables[[j]]]]%in%0
+                        uncensored <- protocol_data[[censoring_variables[[j]]]]%in%x$names$uncensored_label
                     }else{
                         # assume that all are at risk at time 0
                         outcome_free <- rep(TRUE,N)
@@ -102,15 +105,15 @@ run_rtmle <- function(x,
                     if (any(outcome_free & uncensored)){
                         # fit the propensity regression model
                         if (
-                            refit || length(x$models[[protocol_name]][["propensity"]][[protocol_Anodes[[j+1]]]]$fit) == 0){
-                            if (!is.null(ff <- x$models[[protocol_name]][["propensity"]][[protocol_Anodes[[j+1]]]]$formula)){
-                                x$models[[protocol_name]][["propensity"]][[protocol_Anodes[[j+1]]]]$fit <- do.call(learner,list(formula = ff,data = protocol_data[outcome_free&uncensored],...))
+                            refit || length(x$models[[protocol_name]][["propensity"]][[treatment_variables[[j+1]]]]$fit) == 0){
+                            if (!is.null(ff <- x$models[[protocol_name]][["propensity"]][[treatment_variables[[j+1]]]]$formula)){
+                                x$models[[protocol_name]][["propensity"]][[treatment_variables[[j+1]]]]$fit <- do.call(learner,list(formula = ff,data = protocol_data[outcome_free&uncensored],...))
                             }
                         }
                         # fit censoring model
                         if (refit || length(x$models[[protocol_name]][["censoring"]]$fit) == 0){
-                            if (!is.null(ff <- x$models[[protocol_name]][["censoring"]][[protocol_Cnodes[[j+1]]]]$formula)){
-                                x$models[[protocol_name]][["censoring"]][[protocol_Cnodes[[j+1]]]]$fit <- do.call(learner,list(formula = ff,data = protocol_data[outcome_free&uncensored],...))
+                            if (!is.null(ff <- x$models[[protocol_name]][["censoring"]][[censoring_variables[[j+1]]]]$formula)){
+                                x$models[[protocol_name]][["censoring"]][[censoring_variables[[j+1]]]]$fit <- do.call(learner,list(formula = ff,data = protocol_data[outcome_free&uncensored],...))
                             }
                         }
                     }
@@ -120,12 +123,12 @@ run_rtmle <- function(x,
                     intervened_data = intervene(data = protocol_data[outcome_free],
                                                 intervention_table = intervention_table,
                                                 time = j)
-                    intervention_probs[outcome_free][[protocol_Anodes[[j+1]]]] <- riskRegression::predictRisk(x$models[[protocol_name]][["propensity"]][[protocol_Anodes[[j+1]]]]$fit,
+                    intervention_probs[outcome_free][[treatment_variables[[j+1]]]] <- riskRegression::predictRisk(x$models[[protocol_name]][["propensity"]][[treatment_variables[[j+1]]]]$fit,
                                                                                                               newdata = intervened_data)
                     # FIXME: this hack works probably only with exactly 2 treatment levels?
                     if (match(intervention_table[time == j,value],x$names$treatment_levels)<length(x$names$treatment_levels))
-                    intervention_probs[outcome_free][[protocol_Anodes[[j+1]]]] <- 1-intervention_probs[outcome_free][[protocol_Anodes[[j+1]]]]
-                    intervention_probs[outcome_free][[protocol_Cnodes[[j+1]]]] <- riskRegression::predictRisk(x$models[[protocol_name]][["censoring"]][[protocol_Cnodes[[j+1]]]]$fit,
+                    intervention_probs[outcome_free][[treatment_variables[[j+1]]]] <- 1-intervention_probs[outcome_free][[treatment_variables[[j+1]]]]
+                    intervention_probs[outcome_free][[censoring_variables[[j+1]]]] <- riskRegression::predictRisk(x$models[[protocol_name]][["censoring"]][[censoring_variables[[j+1]]]]$fit,
                                                                                                               newdata = intervened_data)
                 }
                 # FIXME: write this rowCumprods in armadillo
@@ -136,14 +139,14 @@ run_rtmle <- function(x,
             #
             if (length(intervention_match <- x$intervention_match[[protocol_name]]) == 0){
                 # fixme for target in targets
-                intervention_match <- matrix(0,ncol = length(protocol_Anodes),nrow = N)
+                intervention_match <- matrix(0,ncol = length(treatment_variables),nrow = N)
                 for(j in x$times[-c(length(x$times))]){
                     if (j == 0)
                         intervention_match[,j+1] <- previous <- (protocol_data[[intervention_table[j+1]$variable]] %in% c(intervention_table[j+1]$value,NA))
                     else
                         intervention_match[,j+1] <- previous <- previous*(protocol_data[[intervention_table[j+1]$variable]] %in% c(intervention_table[j+1]$value,NA))
                 }
-                colnames(intervention_match) <- protocol_Anodes
+                colnames(intervention_match) <- treatment_variables
                 x$intervention_match[[protocol_name]] <- intervention_match
             }
             # 

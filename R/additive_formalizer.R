@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul  3 2024 (11:13) 
 ## Version: 
-## Last-Updated: Oct 11 2024 (13:57) 
+## Last-Updated: Oct 16 2024 (08:31) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 60
+##     Update #: 62
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -24,10 +24,9 @@ additive_formalizer <- function(x,
     if (missing(treatment_variables))
         treatment_variables <- x$protocols[[protocol]]$treatment_variables
     stopifnot(length(treatment_variables)>0)
-    name_time_covariates <- setdiff(x$prepared_data$name_time_covariates,exclude_variables)
-    name_baseline_covariates <- setdiff(x$prepared_data$name_baseline_covariates,exclude_variables)
-    name_constant_variables <- x$prepared_data$name_constant_variables
-    protocol_data <- x$prepared_data$data
+    name_time_covariates <- setdiff(x$names$name_time_covariates,exclude_variables)
+    name_baseline_covariates <- setdiff(x$names$name_baseline_covariates,exclude_variables)
+    name_constant_variables <- x$names$name_constant_variables
     if (length(name_time_covariates)>0){
         if (length(Markov)>0 && Markov[[1]]!="")
             if (any(not_found <- !(Markov%in%name_time_covariates)))
@@ -38,7 +37,7 @@ additive_formalizer <- function(x,
     # baseline propensity
     propensity_formulas <- c(unlist(lapply(treatment_variables,function(reg){
         paste0(reg,"_0"," ~ ",formalize(timepoint = 0,
-                                        work_data = protocol_data,
+                                        work_data = x$prepared_data,
                                         name_baseline_covariates = name_baseline_covariates,
                                         name_time_covariates = name_time_covariates,
                                         Markov = Markov,
@@ -48,7 +47,7 @@ additive_formalizer <- function(x,
     # censoring in first interval
     if(length(x$names$censoring)>0){
         censoring_formulas <- paste0(x$names$censoring,"_1"," ~ ", formalize(timepoint = 0,
-                                                                             work_data = protocol_data,
+                                                                             work_data = x$prepared_data,
                                                                              name_baseline_covariates = name_baseline_covariates,
                                                                              name_time_covariates = name_time_covariates,
                                                                              Markov = Markov,
@@ -61,7 +60,7 @@ additive_formalizer <- function(x,
         propensity_formulas <- c(propensity_formulas,unlist(lapply(x$times[-1],function(tk){
             c(unlist(lapply(treatment_variables, function(reg){
                 paste0(reg,"_",tk," ~ ",formalize(timepoint = tk,
-                                                  work_data = protocol_data,
+                                                  work_data = x$prepared_data,
                                                   name_baseline_covariates = name_baseline_covariates,
                                                   name_time_covariates  = name_time_covariates,
                                                   Markov = Markov,
@@ -71,7 +70,7 @@ additive_formalizer <- function(x,
         if(length(x$names$censoring)>0){
             censoring_formulas <- c(censoring_formulas,unlist(lapply(x$times[-c(1,2)],function(tk){
                 paste0(x$names$censoring,"_",tk," ~ ",formalize(timepoint = tk,
-                                                                work_data = protocol_data,
+                                                                work_data = x$prepared_data,
                                                                 name_baseline_covariates = name_baseline_covariates,
                                                                 name_time_covariates = name_time_covariates,
                                                                 Markov = Markov,
@@ -84,7 +83,7 @@ additive_formalizer <- function(x,
     ## on the previously observed covariates and regimen.
     ## The reason for this is we do not want to mistakenly assume that L_1 -> A_1 when in reality A_1 happens before L_1
     outcome_formulas <- unlist(lapply(x$times[-1],function(tk){
-        paste0(x$names$outcome,"_",tk," ~ ", formalize(timepoint = tk, work_data = protocol_data,
+        paste0(x$names$outcome,"_",tk," ~ ", formalize(timepoint = tk, work_data = x$prepared_data,
                                                        name_baseline_covariates = name_baseline_covariates,
                                                        name_time_covariates  = name_time_covariates, 
                                                        Markov = Markov, constant_variables = name_constant_variables))
@@ -94,8 +93,8 @@ additive_formalizer <- function(x,
     names(propensity_formulas) <- as.character(unlist(lapply(propensity_formulas,function(x){strsplit(x," ~ ")[[1]][[1]]})))
     names(censoring_formulas) <- as.character(unlist(lapply(censoring_formulas,function(x){strsplit(x," ~ ")[[1]][[1]]})))
     # Remove gformulas of variables not in data, e.g., if we exclude censor others at time point 0
-    propensity_formulas <- propensity_formulas[names(propensity_formulas) %in% names(protocol_data)]
-    censoring_formulas <- censoring_formulas[names(censoring_formulas) %in% names(protocol_data)]
+    propensity_formulas <- propensity_formulas[names(propensity_formulas) %in% names(x$prepared_data)]
+    censoring_formulas <- censoring_formulas[names(censoring_formulas) %in% names(x$prepared_data)]
     list(propensity = lapply(propensity_formulas,function(f)list(formula = f)),
          censoring = lapply(censoring_formulas,function(f)list(formula = f)),
          outcome = lapply(outcome_formulas,function(f)list(formula = f)))
