@@ -19,12 +19,13 @@ map_grid <- function(grid,
     setkeyv(grid,c(id,"interval"))
     # note: need do.call because otherwise fun.aggregate is not
     #       interpreted correctly
-    wide <- do.call(data.table::dcast,list(grid,
-                               stats::formula(paste0(id,"~interval")),
-                               value.var="X",
-                               sep="_",
-                               fun.aggregate = fun.aggregate,
-                               fill=fill))
+    wide <- do.call(data.table::dcast,
+                    list(grid,
+                         stats::formula(paste0(id,"~interval")),
+                         value.var="X",
+                         sep="_",
+                         fun.aggregate = fun.aggregate,
+                         fill=fill))
     if (X.factor) {
         # this is for ltmle censored/uncensored
         for (cc in names(wide)[-1]){

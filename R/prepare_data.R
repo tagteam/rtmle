@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 19 2024 (10:07) 
 ## Version: 
-## Last-Updated: Oct 16 2024 (14:08) 
+## Last-Updated: Oct 19 2024 (10:42) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 156
+##     Update #: 162
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -72,6 +72,32 @@
     ## work_data = work_data$data[subset_dt,on = x$names$id]
     ## }else{
     work_data <- x$data$outcome_data
+    ##
+    ## analysis of the outcome, competing and censoring variables
+    ##
+    outcome_variables = paste0(x$names$outcome, "_", 1:max_time_horizon)
+    outcome_variables_position = match(outcome_variables, names(work_data))
+    if (any(this_out <- is.na(outcome_variables_position))){
+        stop(paste0("Cannot find outcome variable(s):\n",paste0(outcome_variables[this_out],collapse = ", "),"\n in x$data$outcome_data"))
+    }
+    if(length(x$names$competing)>0){    
+        competing_variables = paste0(x$names$competing, "_", 1:(max_time_horizon-1))
+        competing_variables_position = match(competing_variables, names(work_data))
+        if (any(this_out <- is.na(competing_variables_position))){
+            stop(paste0("Cannot find competing risk variable(s):\n",paste0(competing_variables[this_out],collapse = ", "),"\n in x$data$outcome_data"))
+        }
+    }else{
+        competing_variables <- NULL
+    }
+    if(length(x$names$censoring)>0){
+        censoring_variables = paste0(x$names$censoring, "_", 1:max_time_horizon)
+        censoring_variables_position = match(censoring_variables, names(work_data))
+        if (any(this_out <- is.na(censoring_variables_position))){
+            stop(paste0("Cannot find censoring variable(s):\n",paste0(censoring_variables[this_out],collapse = ", "),"\n in x$data$outcome_data"))
+        }
+    }else{
+        censoring_variables <- NULL
+    }
     #
     # exclude subjects with outcome/death/censored events at time zero
     #
@@ -143,23 +169,6 @@
     name_baseline_covariates <- intersect(name_baseline_covariates,names(work_data))
     # FIXME: remove or elaborate this sanity check 
     stopifnot(nrow(work_data)>0)
-    ##
-    ## analysis of the outcome, competing and censoring variables
-    ##
-    outcome_variables = paste0(x$names$outcome, "_", 1:max_time_horizon)
-    outcome_variables_position = match(outcome_variables, names(work_data))
-    if(length(x$names$competing)>0){    
-        competing_variables = paste0(x$names$competing, "_", 1:(max_time_horizon-1))
-        competing_variables_position = match(competing_variables, names(work_data))
-    }else{
-        competing_variables <- NULL
-    }
-    if(length(x$names$censoring)>0){
-        censoring_variables = paste0(x$names$censoring, "_", 1:max_time_horizon)
-        censoring_variables_position = match(censoring_variables, names(work_data))
-    }else{
-        censoring_variables <- NULL
-    }
     ## make sure that the order of the censoring variables are factors with ordered labels 
     ## such that we estimate the probability of being uncensored and not the probability being censored
     if(length(x$names$censoring)>0){

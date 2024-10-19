@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 22 2024 (14:07) 
 ## Version: 
-## Last-Updated: Oct  3 2024 (07:35) 
+## Last-Updated: Oct 16 2024 (22:08) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 19
+##     Update #: 20
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -65,10 +65,21 @@ long_to_wide <- function(x,
     # FIXME: check for data after the end of followup?
     ## grid <- grid[date<=end+length_interval]
     # mapping outcome information to discrete time scale
-    x$data$outcome_data <- widen_outcome(outcome_name = x$names$outcome,outcome_data = x$long_data$outcome_data,competing_data = x$long_data$competing_data,censored_data = x$long_data$censored_data,grid = grid,fun.aggregate = NULL,id = x$names$id)
+    x$data$outcome_data <- widen_outcome(outcome_name = x$names$outcome,
+                                         outcome_data = x$long_data$outcome_data,
+                                         competing_data = x$long_data$competing_data,
+                                         censored_data = x$long_data$censored_data,
+                                         grid = grid,
+                                         fun.aggregate = NULL,
+                                         id = x$names$id)
     # time dependent variables including treatment
     for (Vname in Vnames){
-        x$data$timevar_data[[Vname]] <- map_grid(grid=grid,data=x$long_data$timevar_data[[Vname]],name=Vname,fun.aggregate = fun,rollforward=(length_interval - 1),id = x$names$id)
+        x$data$timevar_data[[Vname]] <- map_grid(grid=grid,
+                                                 data=x$long_data$timevar_data[[Vname]],
+                                                 name=Vname,
+                                                 fun.aggregate = fun,
+                                                 rollforward=(length_interval - 1),
+                                                 id = x$names$id)
     }
     return(x)
 }

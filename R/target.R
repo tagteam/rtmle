@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 3 2024 (13:46)
 ## Version:
-## Last-Updated: Oct 11 2024 (14:23) 
+## Last-Updated: Oct 19 2024 (10:04) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 27
+##     Update #: 30
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -51,7 +51,7 @@
                                                        protocol = protocol,
                                                        exclude_variables = protocol_exclude_variables,
                                                        include_variables = include_variables,
-                                                       Markov = NULL)
+                                                       Markov = value$markov)
             ## model(x) <- list(formalizer = "additive",treatment_variables = x$protocols[[value$protocol]]$treatment_variables)
             x$targets[[value$name]][["strategy"]] <- "additive"
         }

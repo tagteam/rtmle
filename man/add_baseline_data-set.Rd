@@ -10,6 +10,8 @@ add_baseline_data(x, ...) <- value
 \item{x}{object of class \code{rtmle}}
 
 \item{...}{Not used (not yet)}
+
+\item{value}{data.frame, data.table or tibble which contains the baseline data}
 }
 \description{
 This function adds a baseline dataset to an existing rtmle object
