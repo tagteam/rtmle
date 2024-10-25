@@ -1,8 +1,8 @@
 ** rtmle
 
-https://github.com/jsohlendorff/rtmle/actions/workflows/R-CMD-check.yaml/badge.svg [[https://github.com/jsohlendorff/rtmle/actions/workflows/R-CMD-check.yaml][R-CMD-check]]
+https://github.com/tagteam/rtmle/actions/workflows/R-CMD-check.yaml/badge.svg [[https://github.com/tagteam/rtmle/actions/workflows/R-CMD-check.yaml][R-CMD-check]]
 
-https://codecov.io/gh/jsohlendorff/rtmle/graph/badge.svg?token=FLEY02HKN3 [[https://codecov.io/gh/jsohlendorff/rtmle][Code coverage]]
+https://codecov.io/gh/tagteam/rtmle/graph/badge.svg?token=FLEY02HKN3 [[https://codecov.io/gh/tagteam/rtmle][Code coverage]]
 
 ** Installation
 
@@ -11,15 +11,9 @@ You can install the development version of rtmle from [GitHub](https://github.co
 #+ATTR_LATEX: :options otherkeywords={}, deletekeywords={}
 #+BEGIN_SRC R  :results output raw  :exports code  :session *R* :cache yes  
 # install.packages("devtools")
-devtools::install_github("jsohlendorff/rtmle")
+devtools::install_github("tagteam/rtmle")
 #+END_SRC
 
-** Example
-
-#+ATTR_LATEX: :options otherkeywords={}, deletekeywords={}
-#+BEGIN_SRC R  :results output raw  :exports code  :session *R* :cache yes  
-
-#+END_SRC
 
 #+TITLE: Development of R-package rtmle
 #+Author: 

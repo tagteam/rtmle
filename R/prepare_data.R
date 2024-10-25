@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 19 2024 (10:07) 
 ## Version: 
-## Last-Updated: Oct 19 2024 (10:42) 
+## Last-Updated: Oct 22 2024 (10:40) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 162
+##     Update #: 173
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -76,25 +76,13 @@
     ## analysis of the outcome, competing and censoring variables
     ##
     outcome_variables = paste0(x$names$outcome, "_", 1:max_time_horizon)
-    outcome_variables_position = match(outcome_variables, names(work_data))
-    if (any(this_out <- is.na(outcome_variables_position))){
-        stop(paste0("Cannot find outcome variable(s):\n",paste0(outcome_variables[this_out],collapse = ", "),"\n in x$data$outcome_data"))
-    }
     if(length(x$names$competing)>0){    
         competing_variables = paste0(x$names$competing, "_", 1:(max_time_horizon-1))
-        competing_variables_position = match(competing_variables, names(work_data))
-        if (any(this_out <- is.na(competing_variables_position))){
-            stop(paste0("Cannot find competing risk variable(s):\n",paste0(competing_variables[this_out],collapse = ", "),"\n in x$data$outcome_data"))
-        }
     }else{
         competing_variables <- NULL
     }
     if(length(x$names$censoring)>0){
         censoring_variables = paste0(x$names$censoring, "_", 1:max_time_horizon)
-        censoring_variables_position = match(censoring_variables, names(work_data))
-        if (any(this_out <- is.na(censoring_variables_position))){
-            stop(paste0("Cannot find censoring variable(s):\n",paste0(censoring_variables[this_out],collapse = ", "),"\n in x$data$outcome_data"))
-        }
     }else{
         censoring_variables <- NULL
     }
@@ -149,7 +137,7 @@
     # sorting of variables should not be necessary because the formulas define the dependencies
     # but sorting is still be convenient for data inspections
     # and also our data manipulation below where we set values to NA after censoring still depends on the order 
-    work_data = work_data[,c(x$names$id, intersect(c(name_baseline_covariates,unlist(sapply(x$times, function(timepoint){
+    work_data <- work_data[,c(x$names$id, intersect(c(name_baseline_covariates,unlist(sapply(x$times, function(timepoint){
         if(timepoint == 0){
             paste0(name_time_covariates,"_",timepoint)
         } else{
@@ -160,6 +148,23 @@
             }
         }
     }))), names(work_data))), with = FALSE]
+    # now the number of columns are final and we can search for the outcome variables 
+    outcome_variables_position = match(outcome_variables, names(work_data))
+    if (any(this_out <- is.na(outcome_variables_position))){
+        stop(paste0("Cannot find outcome variable(s):\n",paste0(outcome_variables[this_out],collapse = ", "),"\n in x$data$outcome_data"))
+    }
+    if(length(x$names$censoring)>0){
+        censoring_variables_position = match(censoring_variables, names(work_data))
+        if (any(this_out <- is.na(censoring_variables_position))){
+            stop(paste0("Cannot find censoring variable(s):\n",paste0(censoring_variables[this_out],collapse = ", "),"\n in x$data$outcome_data"))
+        }
+    }
+    if(length(x$names$competing)>0){    
+        competing_variables_position = match(competing_variables, names(work_data))
+        if (any(this_out <- is.na(competing_variables_position))){
+            stop(paste0("Cannot find competing risk variable(s):\n",paste0(competing_variables[this_out],collapse = ", "),"\n in x$data$outcome_data"))
+        }
+    }
     # label the variables that are constant in the (subset) data
     same = sapply(work_data, function(x){length(unique(x))==1})
     if(sum(same)>0){
@@ -186,8 +191,8 @@
     if (length(x$names$censoring)>0){
         for(j in 1:(max_time_horizon)){
             if((j<max_time_horizon) & !(length(x$names$competing_variables) == 0)){
-                has_outcome_and_censored <- (((work_data[[outcome_variables[[j]]]]%in%"1")
-                    |(work_data[[competing_variables[[j]]]]%in%"1"))
+                has_outcome_and_censored <- (((work_data[[outcome_variables[[j]]]]%in%1)
+                    |(work_data[[competing_variables[[j]]]]%in%1))
                     & (work_data[[censoring_variables[[j]]]]%in%x$names$censored_label))
             } else{
                 has_outcome_and_censored <- ((work_data[[outcome_variables_position[[j]]]]%in%1)
@@ -260,15 +265,21 @@
     ##  
     x$followup <- work_data[,c(x$names$id),with = FALSE]
     x$followup[,last_interval := numeric(.N)]
+    ## if (length(censoring_variables)>0){
+    ## x$followup[,uncensored := numeric(.N)]
+    ## }
     if (max_time_horizon>1){
         for (j in 0:(max_time_horizon-2)){
             vital <- 1*(work_data[[outcome_variables[[j+1]]]] %in% "0")
-            if (length(censoring_variables)>0)
+            if (length(censoring_variables)>0){
                 vital <- vital * 1*(work_data[[censoring_variables[[j+1]]]] %in% x$names$uncensored_label)
+                ## UC <- 1*(work_data[[censoring_variables[[j+1]]]] %in% x$names$uncensored_label)
+                ## vital <- vital * UC
+                ## x$followup[,uncensored := uncensored+UC]
+            }
             if (length(competing_variables)>0)
                 vital <- vital * (work_data[[competing_variables[[j+1]]]] %in% "0")
             x$followup[,last_interval := last_interval+vital]
-            ## x$followup[[paste0("vital_",j)]] = vital
         }
     }
     x$prepared_data <- work_data[]

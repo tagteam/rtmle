@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul  3 2024 (11:13) 
 ## Version: 
-## Last-Updated: Oct 16 2024 (08:31) 
+## Last-Updated: Oct 22 2024 (09:44) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 62
+##     Update #: 65
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -95,9 +95,7 @@ additive_formalizer <- function(x,
     # Remove gformulas of variables not in data, e.g., if we exclude censor others at time point 0
     propensity_formulas <- propensity_formulas[names(propensity_formulas) %in% names(x$prepared_data)]
     censoring_formulas <- censoring_formulas[names(censoring_formulas) %in% names(x$prepared_data)]
-    list(propensity = lapply(propensity_formulas,function(f)list(formula = f)),
-         censoring = lapply(censoring_formulas,function(f)list(formula = f)),
-         outcome = lapply(outcome_formulas,function(f)list(formula = f)))
+    lapply(c(propensity_formulas,censoring_formulas,outcome_formulas),function(f)list(formula = f))
 }
 ######################################################################
 ### additive_formalizer.R ends here

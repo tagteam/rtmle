@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul  3 2024 (13:54) 
 ## Version: 
-## Last-Updated: Oct 11 2024 (14:23) 
+## Last-Updated: Oct 24 2024 (07:44) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 18
+##     Update #: 24
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -19,6 +19,7 @@ update_Q <- function(Y,
                      cum.g, 
                      uncensored_undeterministic,
                      intervention.match) {
+    browser()
     N <- length(Y)
     off <- as.vector(logitQ)
     if (length(cum.g) == 0) cum.g <- 1
@@ -29,17 +30,13 @@ update_Q <- function(Y,
     if (any(weights > 0)) {
         f <- stats::as.formula("Y ~ -1 + S1 + offset(off)")
         data.temp <- data.frame(Y, S1 = rep(1,N),off)
-        ## print(f)
-        ## print(head(subjects_with_weights))
-        ## print(tail(subjects_with_weights))
-        ## print(head(as.vector(scale(weights[weights > 0], center = FALSE))))
         has_weight <- weights > 0
         weights <- as.vector(scale(weights[has_weight], center = FALSE))
         m <- stats::glm(formula = f,
-                 family = stats::quasibinomial(),
-                 data = data.frame(data.temp[has_weight, ],weights),
-                 weights = weights,
-                 control = stats::glm.control(maxit = 100))
+                        family = stats::quasibinomial(),
+                        data = data.frame(data.temp[has_weight, ],weights),
+                        weights = weights,
+                        control = stats::glm.control(maxit = 100))
         ## browser(skipCalls=TRUE)
         ## m <- ltmle.glm(f, data = data.temp[weights > 0, ], family = quasibinomial(),
         ## weights = as.vector(scale(weights[weights > 0], center = FALSE)))
@@ -51,17 +48,6 @@ update_Q <- function(Y,
         m <- "no Qstar fit because no subjects alive, uncensored, following intervention"
     }
     return(Qstar)
-    ## indicator <- uncensored * intervention.match
-    ## h.g.ratio <- indicator/cum.g 
-    ## for (i in 1:num.regimes) {
-    ## h.g.ratio[, i, ] <- h.g.ratio[, i, ] 
-    ## weight.zero.index <- msm.weights[, i] == 0
-    ## h.g.ratio[weight.zero.index, i, ] <- 0
-    ## }
-    ## return(list(Qstar = Qstar,
-    ## h.g.ratio = h.g.ratio,
-    ## off = off,
-    ## fit = m))
 }
 
 

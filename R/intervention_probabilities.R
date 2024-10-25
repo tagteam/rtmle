@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Oct 17 2024 (09:26) 
 ## Version: 
-## Last-Updated: Oct 19 2024 (09:39) 
+## Last-Updated: Oct 22 2024 (10:14) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 4
+##     Update #: 30
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -46,44 +46,32 @@ intervention_probabilities <- function(x,
         # intervene according to protocol for targets
         # in the last time interval we do not need propensities/censoring probabilities
         for (j in x$times[-length(x$times)]){
-            if (j > 0){
-                outcome_free <- x$prepared_data[[outcome_variables[[j]]]]%in%0
-                # competing risks
-                if (length(competing_variables)>0) outcome_free <- outcome_free&x$prepared_data[[competing_variables[[j]]]]%in%0
-                uncensored <- x$prepared_data[[censoring_variables[[j]]]]%in%x$names$uncensored_label
-            }else{
-                # assume that all are at risk at time 0
-                outcome_free <- rep(TRUE,N)
-                uncensored <- rep(TRUE,N)
-            }
-            if (any(outcome_free & uncensored)){
-                # fit the propensity regression model
-                if (
-                    refit || length(x$models[[protocol_name]][["propensity"]][[treatment_variables[[j+1]]]]$fit) == 0){
-                    if (!is.null(ff <- x$models[[protocol_name]][["propensity"]][[treatment_variables[[j+1]]]]$formula)){
-                        x$models[[protocol_name]][["propensity"]][[treatment_variables[[j+1]]]]$fit <- do.call(learner,list(formula = ff,data = x$prepared_data[outcome_free&uncensored],...))
+            # see who is at_risk at time_j
+            outcome_free_and_uncensored <- x$followup$last_interval >= j
+            if (any(outcome_free_and_uncensored)){
+                # set the treatment variables to their protocol values
+                ## FIXME: could subset data to the variables in the current formula
+                ## FIXME: predict also subjects who will be censored in current interval? Think: YES
+                intervened_data <- intervene(data = x$prepared_data[outcome_free_and_uncensored][,(1:(-1+match(treatment_variables[[j+1]],names(x$prepared_data)))),with = FALSE],
+                                            intervention_table = intervention_table,
+                                            time = j)
+                for (G in c(treatment_variables[[j+1]],censoring_variables[[j+1]]))
+                    # fit the propensity and censoring regression models
+                    # and store probabilities as intervention_probs
+                    if (refit || length(x$models[[protocol_name]][[G]]$fit) == 0){
+                        if (!is.null(ff <- x$models[[protocol_name]][[G]]$formula)){
+                            predicted_values <- do.call(learner,list(character_formula = ff,data = x$prepared_data[outcome_free_and_uncensored],intervened_data = intervened_data))
+                            x$model[[protocol_name]][[G]]$fit <- attr(predicted_values,"fit")
+                            data.table::setattr(predicted_values,"fit",NULL)
+                            intervention_probs[outcome_free_and_uncensored][[G]] <- predicted_values
+                            # FIXME: this hack works but only when there are exactly 2 treatment levels!
+                            if (!(G %in% censoring_variables)){ # then G is a treatment variable
+                                if (match(intervention_table[time == j,value],x$names$treatment_levels)<length(x$names$treatment_levels))
+                                    intervention_probs[outcome_free_and_uncensored][[G]] <- 1-intervention_probs[outcome_free_and_uncensored][[G]]
+                            }
+                        }
                     }
-                }
-                # fit censoring model
-                if (refit || length(x$models[[protocol_name]][["censoring"]]$fit) == 0){
-                    if (!is.null(ff <- x$models[[protocol_name]][["censoring"]][[censoring_variables[[j+1]]]]$formula)){
-                        x$models[[protocol_name]][["censoring"]][[censoring_variables[[j+1]]]]$fit <- do.call(learner,list(formula = ff,data = x$prepared_data[outcome_free&uncensored],...))
-                    }
-                }
             }
-            # set the treatment variables to their protocol values
-            ## FIXME: could subset data to the variables in the current formula
-            ## FIXME: predict also subjects who will be censored in current interval? Think: YES
-            intervened_data = intervene(data = x$prepared_data[outcome_free],
-                                        intervention_table = intervention_table,
-                                        time = j)
-            intervention_probs[outcome_free][[treatment_variables[[j+1]]]] <- riskRegression::predictRisk(x$models[[protocol_name]][["propensity"]][[treatment_variables[[j+1]]]]$fit,
-                                                                                                          newdata = intervened_data)
-            # FIXME: this hack works probably only with exactly 2 treatment levels?
-            if (match(intervention_table[time == j,value],x$names$treatment_levels)<length(x$names$treatment_levels))
-                intervention_probs[outcome_free][[treatment_variables[[j+1]]]] <- 1-intervention_probs[outcome_free][[treatment_variables[[j+1]]]]
-            intervention_probs[outcome_free][[censoring_variables[[j+1]]]] <- riskRegression::predictRisk(x$models[[protocol_name]][["censoring"]][[censoring_variables[[j+1]]]]$fit,
-                                                                                                          newdata = intervened_data)
         }
         # FIXME: write this rowCumprods in armadillo
         x$cumulative_intervention_probs[[protocol_name]] <- matrixStats::rowCumprods(as.matrix(intervention_probs[,-1,with = FALSE]))
