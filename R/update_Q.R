@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul  3 2024 (13:54) 
 ## Version: 
-## Last-Updated: Oct 24 2024 (07:44) 
+## Last-Updated: Oct 26 2024 (07:32) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 24
+##     Update #: 28
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -19,11 +19,11 @@ update_Q <- function(Y,
                      cum.g, 
                      uncensored_undeterministic,
                      intervention.match) {
-    browser()
     N <- length(Y)
     off <- as.vector(logitQ)
     if (length(cum.g) == 0) cum.g <- 1
-    subjects_with_weights <- uncensored_undeterministic & as.vector(intervention.match)
+    ## FIXME: are there better ways to remove those censored in current interval?
+    subjects_with_weights <- !is.na(Y) & uncensored_undeterministic & as.vector(intervention.match)
     weights <- numeric(N)
     weights[subjects_with_weights] <- 1/cum.g[subjects_with_weights]
     if (anyNA(weights)) stop("NA in weights")

@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 30 2024 (14:30) 
 ## Version: 
-## Last-Updated: Oct 24 2024 (07:38) 
+## Last-Updated: Oct 26 2024 (11:26) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 84
+##     Update #: 97
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -48,19 +48,22 @@ sequential_regression <- function(x,
         # because the TMLE update step needs to subset the predicted values to the non-NA outcomes
         if (j == time_horizon) {
             outcome_name <- outcome_variables[[time_horizon]]
+            # FIXME: protocols could share the outcome formula?
+            interval_outcome_formula = x$models[[protocol_name]][[outcome_variables[[j]]]]$formula
         } else {
             outcome_name <- "rtmle_predicted_outcome" 
+            interval_outcome_formula <- stats::update(stats::formula(x$models[[protocol_name]][[outcome_variables[[j]]]]$formula),"rtmle_predicted_outcome~.")
         }
+        ## HERE
         ## Y <- x$prepared_data[outcome_free_and_uncensored][[outcome_name]]
-        Y <- x$prepared_data[outcome_free_and_uncensored][[outcome_name]]
-        # formula
-        # FIXME: protocols could share the outcome formula?
-        interval_outcome_formula = x$models[[protocol_name]][[outcome_variables[[j]]]]$formula
+        Y <- x$prepared_data[[outcome_name]]
         # intervene according to protocol for targets
         # FIXME: intervene on all variables or only those after
         #        time j? those in current outcome_formula
         intervened_data = intervene(
-            data = x$prepared_data[outcome_free_and_uncensored][,1:(-1+match(outcome_variables[[j]],names(x$prepared_data))),with = FALSE],
+            ## HERE
+            ## data = x$prepared_data[outcome_free_and_uncensored][,1:(-1+match(outcome_variables[[j]],names(x$prepared_data))),with = FALSE],
+            data = x$prepared_data[,1:(-1+match(outcome_variables[[j]],names(x$prepared_data))),with = FALSE],
             intervention_table = intervention_table,
             time = j)
         # fit outcome regression
@@ -68,9 +71,10 @@ sequential_regression <- function(x,
         # hence to analyse Y_j we need C_j = "uncensored" for the modeling of Y_j
         # we thus remove subjects who are at risk at the beginning of the interval
         # but get censored during the interval (in fact, their outcome is NA)
-        dd <- x$prepared_data[outcome_free_and_uncensored & !is.na(Y)]
         fit_last <- do.call(learner,list(character_formula = interval_outcome_formula,
-                                         data = x$prepared_data[outcome_free_and_uncensored][!is.na(Y)],
+                                         ## HERE
+                                         ## data = x$prepared_data[outcome_free_and_uncensored][!is.na(Y)][,1:(match(outcome_variables[[j]],names(x$prepared_data))),with = FALSE],
+                                         data = x$prepared_data[outcome_free_and_uncensored][,c(1:(match(outcome_variables[[j]],names(x$prepared_data))),NCOL(x$prepared_data)),with = FALSE],
                                          intervened_data = intervened_data))
         # save fitted object
         x$models[[protocol_name]][[outcome_variables[[j]]]]$fit <- attr(fit_last,"fit")
@@ -96,15 +100,19 @@ sequential_regression <- function(x,
             current_prediction <- lava::logit(fit_last[!is.na(Y)])
             current_outcome <- Y[!is.na(Y)]
             # construction of clever covariates
-            ## imatch <- x$intervention_match[[protocol_name]][,intervention_table[time == j-1]$variable][outcome_free_and_uncensored][!is.na(Y)]
-            ## tmp <- cbind(Y = x$prepared_data[[outcome_name]],imatch = x$intervention_match[[protocol_name]][,intervention_table[time == j-1]$variable])
-            ## print(tmp)
-            if (inherits(try(W <- update_Q(Y = Y[!is.na(Y)],
-                                           logitQ = lava::logit(fit_last[!is.na(Y)]),
-                                           cum.g = x$cumulative_intervention_probs[[protocol_name]][,censoring_variables[[j]]][outcome_free_and_uncensored][!is.na(Y)], 
-                                           uncensored_undeterministic = outcome_free_and_uncensored,
-                                           intervention.match = x$intervention_match[[protocol_name]][,intervention_table[time == j-1]$variable])
-                             ),"try-error"))
+            if (inherits(try(
+                ## HERE
+                W <- update_Q(Y = Y,
+                              logitQ = lava::logit(fit_last),
+                              cum.g = x$cumulative_intervention_probs[[protocol_name]][,censoring_variables[[j]]],
+                              uncensored_undeterministic = outcome_free_and_uncensored,
+                              intervention.match = x$intervention_match[[protocol_name]][,intervention_table[time == j-1]$variable])
+                ## W <- update_Q(Y = Y[!is.na(Y)],
+                ## logitQ = lava::logit(fit_last[!is.na(Y)]),
+                ## cum.g = x$cumulative_intervention_probs[[protocol_name]][,censoring_variables[[j]]][outcome_free_and_uncensored][!is.na(Y)], 
+                ## uncensored_undeterministic = outcome_free_and_uncensored,
+                ## intervention.match = x$intervention_match[[protocol_name]][,intervention_table[time == j-1]$variable])
+            ),"try-error"))
                 stop("Fluctuation model used in the TMLE update step failed in the attempt to run function update_Q")
         }else{
             W <- fit_last

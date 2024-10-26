@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 23 2024 (12:49) 
 ## Version: 
-## Last-Updated: Oct 23 2024 (06:59) 
+## Last-Updated: Oct 26 2024 (11:29) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 34
+##     Update #: 45
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -18,6 +18,7 @@ learn_glm <- function(character_formula,data,intervened_data,...){
     # FIXME: maxit should be controllable
     speed = TRUE
     # extract the data
+    # FIXME: should not let NA's pass until here
     model_frame <- stats::model.frame(stats::formula(character_formula),
                                       data = data,
                                       drop.unused.levels = TRUE,
@@ -26,10 +27,10 @@ learn_glm <- function(character_formula,data,intervened_data,...){
     Y_label <- names(model_frame)[[1]]
     tf <- stats::terms(model_frame)
     X <- stats::model.matrix(object = tf, data = model_frame)
-    speed = FALSE
+    speed = TRUE
     if (speed && !inherits(try(
-                      fit <- speedglm::speedglm.wfit(y = Y,
-                                                     X = X,
+                      fit <- speedglm::speedglm.wfit(y = Y[!is.na(Y)],
+                                                     X = X[!is.na(Y),],
                                                      intercept = attributes(tf)$intercept,
                                                      offset = stats::model.offset(model_frame),
                                                      family = quasibinomial(),
@@ -39,8 +40,8 @@ learn_glm <- function(character_formula,data,intervened_data,...){
         class(fit) <- c("speedglm", "speedlm")
     }else{
         if (!inherits(try(
-                 fit <- stats::glm.fit(y = Y,
-                                       x = X,
+                 fit <- stats::glm.fit(y = Y[!is.na(Y)],
+                                       x = X[!is.na(Y),],
                                        offset = stats::model.offset(model_frame),
                                        intercept = attributes(tf)$intercept,
                                        family = quasibinomial(),
@@ -59,6 +60,7 @@ learn_glm <- function(character_formula,data,intervened_data,...){
     }
     fit$terms <- tf
     predicted_values <- predict(fit, type = "response", newdata = intervened_data, se = FALSE)
+    ## print(predicted_values)
     data.table::setattr(predicted_values,"fit",coef(summary(fit)))
     return(predicted_values)
 }
