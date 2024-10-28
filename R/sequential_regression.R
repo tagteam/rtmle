@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 30 2024 (14:30) 
 ## Version: 
-## Last-Updated: Oct 26 2024 (11:26) 
+## Last-Updated: Oct 28 2024 (16:00) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 97
+##     Update #: 109
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -60,10 +60,12 @@ sequential_regression <- function(x,
         # intervene according to protocol for targets
         # FIXME: intervene on all variables or only those after
         #        time j? those in current outcome_formula
+        history_of_variables <- names(x$prepared_data)[1:(-1+match(outcome_variables[[j]],names(x$prepared_data)))]
+        intervenable_history <- setdiff(history_of_variables,c(outcome_variables,censoring_variables,competing_variables))
         intervened_data = intervene(
             ## HERE
             ## data = x$prepared_data[outcome_free_and_uncensored][,1:(-1+match(outcome_variables[[j]],names(x$prepared_data))),with = FALSE],
-            data = x$prepared_data[,1:(-1+match(outcome_variables[[j]],names(x$prepared_data))),with = FALSE],
+            data = x$prepared_data[,intervenable_history,with = FALSE],
             intervention_table = intervention_table,
             time = j)
         # fit outcome regression
@@ -71,10 +73,14 @@ sequential_regression <- function(x,
         # hence to analyse Y_j we need C_j = "uncensored" for the modeling of Y_j
         # we thus remove subjects who are at risk at the beginning of the interval
         # but get censored during the interval (in fact, their outcome is NA)
+        if (j == time_horizon)
+            learn_variables <- c(history_of_variables,outcome_variables[[j]])
+        else
+            learn_variables <- c(history_of_variables,"rtmle_predicted_outcome")
         fit_last <- do.call(learner,list(character_formula = interval_outcome_formula,
                                          ## HERE
                                          ## data = x$prepared_data[outcome_free_and_uncensored][!is.na(Y)][,1:(match(outcome_variables[[j]],names(x$prepared_data))),with = FALSE],
-                                         data = x$prepared_data[outcome_free_and_uncensored][,c(1:(match(outcome_variables[[j]],names(x$prepared_data))),NCOL(x$prepared_data)),with = FALSE],
+                                         data = x$prepared_data[outcome_free_and_uncensored][,learn_variables,with = FALSE],
                                          intervened_data = intervened_data))
         # save fitted object
         x$models[[protocol_name]][[outcome_variables[[j]]]]$fit <- attr(fit_last,"fit")
@@ -89,7 +95,7 @@ sequential_regression <- function(x,
         ## y <- riskRegression::predictRisk(fit_last,newdata = intervened_data)
         # avoid missing values due to logit
         if (x$targets[[target_name]]$estimator == "tmle"){
-            if (any(fit_last[!is.na(fit_last)] < 0)) fit_last <- pmax(fit_last,0.0001)
+            if (any(fit_last[!is.na(fit_last)] <= 0)) fit_last <- pmax(fit_last,0.0001)
             if (any(fit_last[!is.na(fit_last)] > 1)) fit_last <- pmin(fit_last,0.9999)
         }
         ## y <- pmax(pmin(y,0.99999),0.00001)
@@ -97,8 +103,9 @@ sequential_regression <- function(x,
         # TMLE update step
         if (length(x$targets[[target_name]]$estimator) == 0 || x$targets[[target_name]]$estimator == "tmle"){
             # use only data from subjects who are uncensored in current interval
-            current_prediction <- lava::logit(fit_last[!is.na(Y)])
-            current_outcome <- Y[!is.na(Y)]
+            ## current_prediction <- lava::logit(fit_last[!is.na(Y)])
+            ## current_outcome <- Y[!is.na(Y)]
+            ## print(data.table(Y = Y,fit_last = fit_last))
             # construction of clever covariates
             if (inherits(try(
                 ## HERE
@@ -113,7 +120,8 @@ sequential_regression <- function(x,
                 ## uncensored_undeterministic = outcome_free_and_uncensored,
                 ## intervention.match = x$intervention_match[[protocol_name]][,intervention_table[time == j-1]$variable])
             ),"try-error"))
-                stop("Fluctuation model used in the TMLE update step failed in the attempt to run function update_Q")
+                stop(paste0("Fluctuation model used in the TMLE update step failed",
+                           " in the attempt to run function update_Q at time point: ",j))
         }else{
             W <- fit_last
         }

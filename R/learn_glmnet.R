@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 23 2024 (16:42) 
 ## Version: 
-## Last-Updated: Sep 28 2024 (08:28) 
+## Last-Updated: Oct 28 2024 (12:14) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 16
+##     Update #: 26
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -14,26 +14,32 @@
 #----------------------------------------------------------------------
 ## 
 ### Code:
-learn_glmnet <- function(formula,data,selector = "undersmooth",...){
+learn_glmnet <- function(character_formula,data,intervened_data,selector = "undersmooth",...){
     requireNamespace("glmnet")
-    requireNamespace("riskRegression")
+    ## requireNamespace("riskRegression")
     ## FAM <- ifelse(length(unique(Y))>2,"gaussian","binomial")
+    model_frame <- stats::model.frame(stats::formula(character_formula),
+                                      data = data,
+                                      drop.unused.levels = TRUE,
+                                      na.action = na.omit)
     if (selector == "undersmooth"){
         # Forcing cv = FALSE
-        args <- c(list(cv = FALSE),list(formula = formula,data = data,family = "gaussian",...))
+        args <- c(list(cv = FALSE),list(formula = character_formula,data = model_frame,family = "gaussian",...))
         args <- args[unique(names(args))]
         fit <- do.call(glm_net,args)
         selected.lambda <- fit$fit$lambda[length(fit$fit$lambda)]
     }else{
         # forcing cv
         stopifnot(selector%in%c("lambda.min","lambda.1se"))
-        args <- c(list(cv = TRUE),list(formula = formula,data = data,family = "gaussian",...))
+        args <- c(list(cv = TRUE),list(formula = character_formula,data = data,family = "gaussian",...))
         args <- args[unique(names(args))]
         fit <- do.call(glm_net,args)
         selected.lambda <- fit$fit[[selector]]
     }
-    attr(fit,"selected.lambda") <- selected.lambda
-    fit
+    ## if (names(model_frame)[[1]] == "Y_2") browser(skipCalls=1L)
+    predicted_values <- predictRisk(fit, type = "response", newdata = intervened_data, lambda = selected.lambda)
+    data.table::setattr(predicted_values,"selected.lambda",selected.lambda)
+    predicted_values
 }
 
 
