@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Oct 17 2024 (09:26) 
 ## Version: 
-## Last-Updated: Nov  1 2024 (10:47) 
+## Last-Updated: Nov  1 2024 (10:59) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 68
+##     Update #: 69
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -63,9 +63,15 @@ intervention_probabilities <- function(x,
                     history_of_variables <- 1:(match(censoring_variables[[j+1]],names(x$prepared_data)))
                 else
                     history_of_variables <- 1:(match(treatment_variables[[j+1]],names(x$prepared_data)))
-                intervened_data <- intervene(data = x$prepared_data[outcome_free_and_uncensored][,history_of_variables,with = FALSE],
-                                             intervention_table = intervention_table,
-                                             time = j)
+                if (missing(intervene_function))
+                    intervened_data <- intervene(data = x$prepared_data[outcome_free_and_uncensored][,history_of_variables,with = FALSE],
+                                                 intervention_table = intervention_table,
+                                                 time = j)
+                else
+                    intervened_data <- do.call(intervene_function,list(data = x$prepared_data[outcome_free_and_uncensored][,history_of_variables,with = FALSE],
+                                                                       intervention_table = intervention_table,
+                                                                       time = j))
+                    
                 for (G in c(treatment_variables[[j+1]],censoring_variables[[j+1]]))
                     # fit the propensity and censoring regression models
                     # and store probabilities as intervention_probs
