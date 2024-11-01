@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 30 2024 (14:30) 
 ## Version: 
-## Last-Updated: Oct 28 2024 (16:00) 
+## Last-Updated: Nov  1 2024 (07:35) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 109
+##     Update #: 139
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -77,11 +77,29 @@ sequential_regression <- function(x,
             learn_variables <- c(history_of_variables,outcome_variables[[j]])
         else
             learn_variables <- c(history_of_variables,"rtmle_predicted_outcome")
-        fit_last <- do.call(learner,list(character_formula = interval_outcome_formula,
-                                         ## HERE
-                                         ## data = x$prepared_data[outcome_free_and_uncensored][!is.na(Y)][,1:(match(outcome_variables[[j]],names(x$prepared_data))),with = FALSE],
-                                         data = x$prepared_data[outcome_free_and_uncensored][,learn_variables,with = FALSE],
-                                         intervened_data = intervened_data))
+        
+        args <- list(character_formula = interval_outcome_formula,
+                     data = x$prepared_data[outcome_free_and_uncensored][,learn_variables,with = FALSE],
+                     intervened_data = intervened_data[outcome_free_and_uncensored],...)
+        if (length(learner)>1){
+            if (j == time_horizon)
+                args <- c(args,list(learners = learner, outcome_variable = outcome_variables[[j]], id_variable = x$names$id))
+            else
+                args <- c(args,list(learners = learner, outcome_variable = "rtmle_predicted_outcome", id_variable = x$names$id))
+            if (inherits(try(
+                fit_last <- do.call("superlearn",args),silent = FALSE),
+                "try-error")) {
+                ## browser(skipCalls=1L)
+                stop(paste0("Sequential regression fit failed with formula:\n",interval_outcome_formula))
+            }
+        }else{
+            if (inherits(try(
+                fit_last <- do.call(learner,args),silent = FALSE),
+                "try-error")) {
+                ## browser(skipCalls=1L)
+                stop(paste0("Sequential regression fit failed with formula:\n",interval_outcome_formula))
+            }
+        }
         # save fitted object
         x$models[[protocol_name]][[outcome_variables[[j]]]]$fit <- attr(fit_last,"fit")
         data.table::setattr(fit_last,"fit",NULL)
@@ -107,10 +125,13 @@ sequential_regression <- function(x,
             ## current_outcome <- Y[!is.na(Y)]
             ## print(data.table(Y = Y,fit_last = fit_last))
             # construction of clever covariates
+            Wold <- rep(NA,length(Y))
+            Wold[outcome_free_and_uncensored] <- lava::logit(fit_last)
+            ## if (j == 1) browser(skipCalls=1L)
             if (inherits(try(
                 ## HERE
                 W <- update_Q(Y = Y,
-                              logitQ = lava::logit(fit_last),
+                              logitQ = Wold,
                               cum.g = x$cumulative_intervention_probs[[protocol_name]][,censoring_variables[[j]]],
                               uncensored_undeterministic = outcome_free_and_uncensored,
                               intervention.match = x$intervention_match[[protocol_name]][,intervention_table[time == j-1]$variable])
@@ -121,7 +142,7 @@ sequential_regression <- function(x,
                 ## intervention.match = x$intervention_match[[protocol_name]][,intervention_table[time == j-1]$variable])
             ),"try-error"))
                 stop(paste0("Fluctuation model used in the TMLE update step failed",
-                           " in the attempt to run function update_Q at time point: ",j))
+                            " in the attempt to run function update_Q at time point: ",j))
         }else{
             W <- fit_last
         }
@@ -133,6 +154,7 @@ sequential_regression <- function(x,
         }
         # calculate contribution to influence function
         h.g.ratio <- 1/x$cumulative_intervention_probs[[protocol_name]][,match(censoring_variables[[j]],colnames(x$cumulative_intervention_probs[[protocol_name]]))]
+        if (any(h.g.ratio>10000)) h.g.ratio <- pmin(h.g.ratio,10000)
         current_cnode <- as.character(x$prepared_data[[paste0(x$names$censoring,"_",j)]])
         index <- (current_cnode%in%x$names$uncensored_label) & intervention_match[,intervention_table[time == j-1]$variable]
         if (any(h.g.ratio[index] != 0)) {

@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Oct 28 2024 (09:26) 
 ## Version: 
-## Last-Updated: Oct 28 2024 (16:03) 
+## Last-Updated: Oct 29 2024 (08:13) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 18
+##     Update #: 22
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -32,7 +32,6 @@ learn_ranger <- function(character_formula,data,intervened_data,...){
         stop(paste0("\nCould not fit model with ranger:\n",
                     "Formula:",character_formula))
     }
-    
     predicted_values <- vector(mode = "numeric",length = NROW(intervened_data))
     this <- which(apply(intervened_data,1,function(x)any(is.na(x))))
     if (any(this)){

@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 25 2024 (09:50) 
 ## Version: 
-## Last-Updated: Oct 26 2024 (11:31) 
+## Last-Updated: Oct 31 2024 (15:15) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 44
+##     Update #: 45
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -33,7 +33,7 @@ prepare_data(x) <- list()
 target(x) <- list(name = "Outcome_risk",strategy = "additive",estimator = "tmle",protocols = "Always_A")
 ## system.time(x <- run_rtmle(x,time_horizon = 1))
 ## system.time(x <- run_rtmle(x,time_horizon = 2))
-system.time(x <- run_rtmle(x,time_horizon = 1:3))
+system.time(x <- run_rtmle(x,learner = "learn_glm",time_horizon = 1:3))
 summary(x)
 # Ltmle
 vn <- names(x$prepared_data)

@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul  1 2024 (09:11) 
 ## Version: 
-## Last-Updated: Oct 28 2024 (16:03) 
+## Last-Updated: Oct 29 2024 (08:10) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 339
+##     Update #: 343
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -60,7 +60,9 @@ run_rtmle <- function(x,
             x <- intervention_probabilities(x,
                                             protocol_name = protocol_name,
                                             refit = refit,
-                                            learner = learner,...)
+                                            learner = learner,
+                                            time_horizon = time_horizon,
+                                            ...)
             # 
             # Q-part: loop backwards in time through iterative condtional expectations
             #
