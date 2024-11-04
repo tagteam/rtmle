@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 23 2024 (16:42) 
 ## Version: 
-## Last-Updated: Oct 28 2024 (12:14) 
+## Last-Updated: Nov  4 2024 (06:58) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 26
+##     Update #: 36
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -20,11 +20,14 @@ learn_glmnet <- function(character_formula,data,intervened_data,selector = "unde
     ## FAM <- ifelse(length(unique(Y))>2,"gaussian","binomial")
     model_frame <- stats::model.frame(stats::formula(character_formula),
                                       data = data,
-                                      drop.unused.levels = TRUE,
+                                      drop.unused.levels = FALSE,
                                       na.action = na.omit)
     if (selector == "undersmooth"){
         # Forcing cv = FALSE
-        args <- c(list(cv = FALSE),list(formula = character_formula,data = model_frame,family = "gaussian",...))
+        args <- c(list(cv = FALSE),list(formula = character_formula,
+                                        data = model_frame,
+                                        family = "gaussian",
+                                        ...))
         args <- args[unique(names(args))]
         fit <- do.call(glm_net,args)
         selected.lambda <- fit$fit$lambda[length(fit$fit$lambda)]
@@ -36,8 +39,15 @@ learn_glmnet <- function(character_formula,data,intervened_data,selector = "unde
         fit <- do.call(glm_net,args)
         selected.lambda <- fit$fit[[selector]]
     }
-    ## if (names(model_frame)[[1]] == "Y_2") browser(skipCalls=1L)
-    predicted_values <- predictRisk(fit, type = "response", newdata = intervened_data, lambda = selected.lambda)
+    imodel_frame <- stats::model.frame(stats::formula(stats::delete.response(stats::terms(stats::formula(character_formula)))),
+                                       data = intervened_data,
+                                       drop.unused.levels = FALSE,
+                                       na.action = na.fail)
+    predicted_values <- predictRisk(fit,
+                                    type = "response",
+                                    newdata = imodel_frame,
+                                    lambda = selected.lambda)
+
     data.table::setattr(predicted_values,"selected.lambda",selected.lambda)
     predicted_values
 }

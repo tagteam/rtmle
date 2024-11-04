@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul  1 2024 (09:11) 
 ## Version: 
-## Last-Updated: Oct 29 2024 (08:10) 
+## Last-Updated: Nov  3 2024 (14:33) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 343
+##     Update #: 359
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -31,6 +31,8 @@ run_rtmle <- function(x,
                       refit = FALSE,
                       ...){
     time <- value <- NULL
+    # check data 
+    ## sapply(x$prepared_data,function(x)sum(is.na(x)))
     requireNamespace("riskRegression")
     # for loop across targets
     available_targets <- names(x$targets)
@@ -45,6 +47,21 @@ run_rtmle <- function(x,
         time_horizon <- max(x$time)
     } else {
         stopifnot(all(time_horizon <= max(x$time) & time_horizon>0))
+    }
+    if (length(learner)>1){
+        for (this_learner in 1:length(learner)){
+            ## if no learner function is specified then assume that the name
+            ## is a function
+            if (is.character(name_is_fun <- learner[[this_learner]])){
+                learner[[this_learner]] <- list(learner_fun = name_is_fun)
+                names(learner)[[this_learner]] <- name_is_fun
+            }else{
+                if (length(learner[[this_learner]][["learner_fun"]]) == 0)
+                    learner[[this_learner]]$learner_fun <- names(learner)[[this_learner]]
+            }
+        }
+        ## make unique names
+        names(learner) <- make.names(names(learner),unique = TRUE)
     }
     for (target_name in run_these_targets){
         message("Running target: ",target_name)

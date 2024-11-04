@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 3 2024 (13:46)
 ## Version:
-## Last-Updated: Aug  1 2024 (10:16) 
+## Last-Updated: Nov  2 2024 (07:23) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 16
+##     Update #: 18
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -32,9 +32,14 @@
     stopifnot(all(c("name","treatment_variables","intervention")%in%names(value)))
     intervention_times <- x$time[-length(x$time)]
     x$protocols[[value$name]]$intervention_table <- data.table(time = intervention_times,
-                                                     variable = paste0(value$treatment_variables,"_",intervention_times),
-                                                     value = value$intervention)
+                                                               variable = paste0(value$treatment_variables,"_",intervention_times),
+                                                               value = value$intervention)
     x$protocols[[value$name]]$treatment_variables <- value$treatment_variables
+    if (length(value$intervene_function)>0){
+        x$protocols[[value$name]]$intervene_function <- value$intervene_function
+    }else{
+        x$protocols[[value$name]]$intervene_function <- "intervene"
+    }
     x
 }
 ######################################################################

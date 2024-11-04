@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Oct 17 2024 (09:26) 
 ## Version: 
-## Last-Updated: Nov  1 2024 (10:59) 
+## Last-Updated: Nov  4 2024 (06:39) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 69
+##     Update #: 98
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -56,45 +56,63 @@ intervention_probabilities <- function(x,
             # see who is at_risk at time_j
             outcome_free_and_uncensored <- x$followup$last_interval >= j
             if (any(outcome_free_and_uncensored)){
-                # set the treatment variables to their protocol values
-                ## FIXME: could subset data to the variables in the current formula
-                ## FIXME: predict also subjects who will be censored in current interval? Think: YES
                 if (length(censoring_variables[[j+1]])>0)
                     history_of_variables <- 1:(match(censoring_variables[[j+1]],names(x$prepared_data)))
                 else
                     history_of_variables <- 1:(match(treatment_variables[[j+1]],names(x$prepared_data)))
-                if (missing(intervene_function))
-                    intervened_data <- intervene(data = x$prepared_data[outcome_free_and_uncensored][,history_of_variables,with = FALSE],
-                                                 intervention_table = intervention_table,
-                                                 time = j)
-                else
-                    intervened_data <- do.call(intervene_function,list(data = x$prepared_data[outcome_free_and_uncensored][,history_of_variables,with = FALSE],
-                                                                       intervention_table = intervention_table,
-                                                                       time = j))
-                    
+                # FIXME: would be better to restrict to the variables that occur in the current formula
+                current_data <- x$prepared_data[outcome_free_and_uncensored,history_of_variables,with = FALSE]
+                current_constants <- sapply(current_data, function(x){length(unique(x))==1})
+                if (any(current_constants)) {
+                    current_constants <- names(current_constants[current_constants])
+                }else{
+                    current_constants <- NULL
+                }
+                # set the treatment variables to their protocolled values
+                intervened_data <- do.call(x$protocol[[protocol_name]]$intervene_function,
+                                           list(data = current_data,
+                                                intervention_table = intervention_table,
+                                                time = j))
                 for (G in c(treatment_variables[[j+1]],censoring_variables[[j+1]]))
                     # fit the propensity and censoring regression models
                     # and store probabilities as intervention_probs
                     if (refit || length(x$models[[protocol_name]][[G]]$fit) == 0){
-                        if (!is.null(ff <- x$models[[protocol_name]][[G]]$formula)){
-                            # FIXME: reduce number of columns to the current interval
-                            ## if (G == "Placebo_2") browser(skipCalls=1L)
-                            args <- list(character_formula = ff,
-                                         data = x$prepared_data[outcome_free_and_uncensored][,history_of_variables,with = FALSE],
-                                         intervened_data = intervened_data,...)
-                            if (length(learner)>1){
-                                args <- c(args,list(learners = learner, outcome_variable = G, id_variable = x$names$id))
-                                if (inherits(try(
-                                    predicted_values <- do.call("superlearn",args),silent = FALSE),
-                                    "try-error")) {browser(skipCalls=1L)
-                                    stop(paste0("Failed to superlearn/crossfit with formula ",ff))
-                                }
+                        if (G %in% current_constants){
+                            if (G %in% censoring_variables){
+                                predicted_values <- 1*(current_data[[G]] == x$names$uncensored_label)
                             }else{
-                                if (inherits(try(
-                                    predicted_values <- do.call(learner,args),silent = FALSE),
-                                    "try-error")) {
-                                    browser(skipCalls=1L)
-                                    stop(paste0("Failed to learn/predict with formula ",ff))
+                                predicted_values <- current_data[[G]]
+                            }
+                            x$models[[protocol_name]][[G]]$fit <- "No variation in this variable"
+                        }else{
+                            if (length(ff <- x$models[[protocol_name]][[G]]$formula)>0){
+                                # remove constant predictor variables
+                                ff_vars <- all.vars(stats::formula(ff))
+                                if (length(current_constants)>0){
+                                    ## warning("Removing constant variables at time ",j,":\n",paste0(current_constants,collapse = ", ") )
+                                    ff <- delete_variables_from_formula(character_formula = ff,delete_vars = current_constants)
+                                }
+                                args <- list(character_formula = ff,
+                                             data = current_data[,!(names(current_data)%in%current_constants),with = FALSE],
+                                             intervened_data = intervened_data,...)
+                                if (length(learner)>1){
+                                    args <- c(args,
+                                              list(learners = learner,
+                                                   outcome_variable = G,
+                                                   id_variable = x$names$id))
+                                    if (inherits(try(
+                                        predicted_values <- do.call("superlearn",args),silent = FALSE),
+                                        "try-error")) {
+                                        ## browser(skipCalls=1L)
+                                        stop(paste0("Failed to superlearn/crossfit with formula ",ff))
+                                    }
+                                }else{
+                                    if (inherits(try(
+                                        predicted_values <- do.call(learner,args),silent = FALSE),
+                                        "try-error")) {
+                                        ## browser(skipCalls=1L)
+                                        stop(paste0("Failed to learn/predict with formula ",ff))
+                                    }
                                 }
                             }
                             x$models[[protocol_name]][[G]]$fit <- attr(predicted_values,"fit")
@@ -117,8 +135,10 @@ intervention_probabilities <- function(x,
     #
     # define a matrix which indicates if the intervention is followed
     #
-    if (length(intervention_match <- x$intervention_match[[protocol_name]]) == 0){
-        # fixme for target in targets
+    if (length(intervention_match <- x$intervention_match[[protocol_name]]) == 0
+        ||
+        ## the previous run could have produced the matrix but maybe not for all time points
+        NCOL(x$intervention_match[[protocol_name]])<length(eval_times)){
         intervention_match <- matrix(0,ncol = length(treatment_variables),nrow = N)
         for(j in eval_times){
             if (j == 0)

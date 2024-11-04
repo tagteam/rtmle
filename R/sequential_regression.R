@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 30 2024 (14:30) 
 ## Version: 
-## Last-Updated: Nov  1 2024 (07:35) 
+## Last-Updated: Nov  3 2024 (19:33) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 139
+##     Update #: 152
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -62,12 +62,11 @@ sequential_regression <- function(x,
         #        time j? those in current outcome_formula
         history_of_variables <- names(x$prepared_data)[1:(-1+match(outcome_variables[[j]],names(x$prepared_data)))]
         intervenable_history <- setdiff(history_of_variables,c(outcome_variables,censoring_variables,competing_variables))
-        intervened_data = intervene(
-            ## HERE
-            ## data = x$prepared_data[outcome_free_and_uncensored][,1:(-1+match(outcome_variables[[j]],names(x$prepared_data))),with = FALSE],
-            data = x$prepared_data[,intervenable_history,with = FALSE],
-            intervention_table = intervention_table,
-            time = j)
+        
+        intervened_data <- do.call(x$protocol[[protocol_name]]$intervene_function,
+                                   list(data = x$prepared_data[,intervenable_history,with = FALSE],
+                                        intervention_table = intervention_table,
+                                        time = j))
         # fit outcome regression
         # we always have the censoring variable in time interval _j *before* the outcome variable in same interval
         # hence to analyse Y_j we need C_j = "uncensored" for the modeling of Y_j
@@ -77,9 +76,22 @@ sequential_regression <- function(x,
             learn_variables <- c(history_of_variables,outcome_variables[[j]])
         else
             learn_variables <- c(history_of_variables,"rtmle_predicted_outcome")
-        
+        current_data <- x$prepared_data[outcome_free_and_uncensored,learn_variables,with = FALSE]
+        current_constants <- sapply(current_data, function(x){length(unique(x))==1})
+        if (any(current_constants)) {
+            current_constants <- names(current_constants[current_constants])
+        }else{
+            current_constants <- NULL
+        }
+        # remove constant predictor variables
+        interval_outcome_formula_vars <- all.vars(stats::formula(interval_outcome_formula))
+        if (length(current_constants)>0){
+            # FIXME: table warnings and show number of times per warning 
+            ## x$warnings <- paste0("Removing constant variables at time ",j,":\n",paste0(current_constants,collapse = ", "))
+            interval_outcome_formula <- delete_variables_from_formula(character_formula = interval_outcome_formula,delete_vars = current_constants)
+        }
         args <- list(character_formula = interval_outcome_formula,
-                     data = x$prepared_data[outcome_free_and_uncensored][,learn_variables,with = FALSE],
+                     data = current_data[,!(names(current_data)%in%current_constants),with = FALSE],
                      intervened_data = intervened_data[outcome_free_and_uncensored],...)
         if (length(learner)>1){
             if (j == time_horizon)
@@ -127,7 +139,6 @@ sequential_regression <- function(x,
             # construction of clever covariates
             Wold <- rep(NA,length(Y))
             Wold[outcome_free_and_uncensored] <- lava::logit(fit_last)
-            ## if (j == 1) browser(skipCalls=1L)
             if (inherits(try(
                 ## HERE
                 W <- update_Q(Y = Y,

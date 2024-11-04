@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 23 2024 (12:49) 
 ## Version: 
-## Last-Updated: Nov  1 2024 (09:19) 
+## Last-Updated: Nov  3 2024 (19:34) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 54
+##     Update #: 85
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -14,7 +14,11 @@
 #----------------------------------------------------------------------
 ## 
 ### Code:
-learn_glm <- function(character_formula,data,intervened_data,learn_variables = NULL,...){
+learn_glm <- function(character_formula,
+                      data,
+                      intervened_data,
+                      learn_variables = NULL,
+                      ...){
     # FIXME: maxit should be controllable
     speed = TRUE
     # extract the data
@@ -22,12 +26,19 @@ learn_glm <- function(character_formula,data,intervened_data,learn_variables = N
     if (length(learn_variables)>0){
         allvars <- all.vars(stats::formula(character_formula))
         outcome_variable <- allvars[1]
-        keepvars <- intersect(learn_variables,allvars[-1])
-        if (length(keepvars)>0)
+        ## keepvars <- intersect(learn_variables,allvars[-1])
+        keepvars <- grep(paste0("(^",learn_variables,"($|_[1-9][0-9]?$))",collapse = "|"),allvars[-1],value = TRUE)
+        if (length(keepvars)>0){
             character_formula <- paste0(outcome_variable,"~",paste0(keepvars,collapse = "+"))
-        else
-            character_formula <- paste0(outcome_variable,"~1")
+        } else{
+            Y <- data[[outcome_variable]]
+            # FIXME: is it only for censoring variables or can outcome/treatment be factors too?
+            if (is.factor(Y)) Y <- 1*(Y == levels(Y)[[2]])
+            return(mean(Y,na.rm = TRUE))
+        }
     }
+    ## print(character_formula)
+    ## print(outcome_variable)
     model_frame <- stats::model.frame(stats::formula(character_formula),
                                       data = data,
                                       drop.unused.levels = TRUE,
@@ -36,16 +47,20 @@ learn_glm <- function(character_formula,data,intervened_data,learn_variables = N
     Y_label <- names(model_frame)[[1]]
     tf <- stats::terms(model_frame)
     X <- stats::model.matrix(object = tf, data = model_frame)
-    if (any(is.na(X))) stop("Missing values in X")
-    speed = TRUE
+    ## FIXME: need to check missing values much earlier
+    if (any(is.na(X))) {
+        stop("Missing values in X")
+    }
+    ## FIXME: need to have speed as an argument
+    speed = FALSE
     if (speed && !inherits(try(
                       fit <- speedglm::speedglm.wfit(y = Y[!is.na(Y)],
                                                      X = X[!is.na(Y),],
                                                      intercept = attributes(tf)$intercept,
                                                      offset = stats::model.offset(model_frame),
                                                      family = quasibinomial(),
-                                                     maxit = 100)
-                     ,silent = TRUE),
+                                                     maxit = 100),
+                      silent = TRUE),
                       "try-error")){
         class(fit) <- c("speedglm", "speedlm")
     }else{
@@ -69,8 +84,7 @@ learn_glm <- function(character_formula,data,intervened_data,learn_variables = N
         class(fit) <- c(class(fit),"glm")
     }
     fit$terms <- tf
-    predicted_values <- predict(fit, type = "response", newdata = intervened_data, se = FALSE)
-    ## print(predicted_values)
+    predicted_values <- predict(fit,type = "response",newdata = intervened_data,se = FALSE)
     data.table::setattr(predicted_values,"fit",coef(summary(fit)))
     return(predicted_values)
 }

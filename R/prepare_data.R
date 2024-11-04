@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 19 2024 (10:07) 
 ## Version: 
-## Last-Updated: Oct 22 2024 (10:40) 
+## Last-Updated: Nov  3 2024 (14:24) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 173
+##     Update #: 174
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -166,7 +166,7 @@
         }
     }
     # label the variables that are constant in the (subset) data
-    same = sapply(work_data, function(x){length(unique(x))==1})
+    same <- sapply(work_data, function(x){length(unique(x))==1})
     if(sum(same)>0){
         constant_variables <- names(work_data)[same]
     } else{
