@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Oct 31 2024 (07:29) 
 ## Version: 
-## Last-Updated: Nov  2 2024 (12:43) 
+## Last-Updated: Nov  5 2024 (15:27) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 52
+##     Update #: 57
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -38,7 +38,7 @@ superlearn <- function(folds,
                               intervened_data = i_data)
         for (this_learner_name in names(learners)) {
             this_learner <- learners[[this_learner_name]]
-            if (length(unique(learn_data[[outcome_variable]])) == 1){
+            if (length(unique(na.omit(learn_data[[outcome_variable]]))) == 1){
                 if (length(grep("Censored_",outcome_variable)>0)) {
                     predicted_k <- rep(1*("uncensored" == unique(learn_data[[outcome_variable]])),sum(split != k))
                 }else {
@@ -55,8 +55,13 @@ superlearn <- function(folds,
                 else
                     this_learner_args <- this_learner[[-learner_fun_pos]]
                 if (is.na(learner_fun_pos)) stop(paste0("Cannot find learner function for learner ",this_learner_name))
-                predicted_k <- do.call(this_learner[[learner_fun_pos]],
-                                       c(learner_args,this_learner_args))
+                if (inherits(try( 
+                    predicted_k <- do.call(this_learner[[learner_fun_pos]],
+                                           c(learner_args,this_learner_args))
+                ),"try-error")){
+                    ## browser(skipCalls=1L)
+                    stop(paste0("Learning failed in fold ",k," with learner ",this_learner))
+                }
             }
             set(level_one_data,
                 j = this_learner_name,

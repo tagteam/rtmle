@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 23 2024 (16:42) 
 ## Version: 
-## Last-Updated: Nov  4 2024 (06:58) 
+## Last-Updated: Nov  5 2024 (15:27) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 36
+##     Update #: 38
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -14,7 +14,11 @@
 #----------------------------------------------------------------------
 ## 
 ### Code:
-learn_glmnet <- function(character_formula,data,intervened_data,selector = "undersmooth",...){
+learn_glmnet <- function(character_formula,
+                         data,
+                         intervened_data,
+                         selector = "undersmooth",
+                         ...){
     requireNamespace("glmnet")
     ## requireNamespace("riskRegression")
     ## FAM <- ifelse(length(unique(Y))>2,"gaussian","binomial")
