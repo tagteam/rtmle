@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 30 2024 (14:30) 
 ## Version: 
-## Last-Updated: Nov  3 2024 (19:33) 
+## Last-Updated: Nov  6 2024 (08:59) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 152
+##     Update #: 154
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -18,7 +18,9 @@ sequential_regression <- function(x,
                                   target_name,
                                   protocol_name,
                                   time_horizon,
-                                  learner,...){
+                                  learner,
+                                  seed = seed,
+                                  ...){
     time = Time_horizon = Estimate = Standard_error = Lower = Upper = NULL
     # FIXME: inconsistent listing:
     intervention_table <- x$protocols[[protocol_name]]$intervention_table
@@ -95,11 +97,11 @@ sequential_regression <- function(x,
                      intervened_data = intervened_data[outcome_free_and_uncensored],...)
         if (length(learner)>1){
             if (j == time_horizon)
-                args <- c(args,list(learners = learner, outcome_variable = outcome_variables[[j]], id_variable = x$names$id))
+                args <- c(args,list(learners = learner,outcome_variable = outcome_variables[[j]], id_variable = x$names$id))
             else
-                args <- c(args,list(learners = learner, outcome_variable = "rtmle_predicted_outcome", id_variable = x$names$id))
+                args <- c(args,list(learners = learner,outcome_variable = "rtmle_predicted_outcome", id_variable = x$names$id))
             if (inherits(try(
-                fit_last <- do.call("superlearn",args),silent = FALSE),
+                fit_last <- do.call("superlearn",c(args,list(seed = seed))),silent = FALSE),
                 "try-error")) {
                 ## browser(skipCalls=1L)
                 stop(paste0("Sequential regression fit failed with formula:\n",interval_outcome_formula))

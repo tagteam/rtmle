@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul  1 2024 (09:11) 
 ## Version: 
-## Last-Updated: Nov  3 2024 (14:33) 
+## Last-Updated: Nov  6 2024 (08:56) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 359
+##     Update #: 361
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -22,6 +22,7 @@
 #' @param learner A function which is called to fit (learn) the nuisance parameter models.
 #' @param time_horizon The time horizon at which to calculate risks. If it is a vector the analysis will be performed for each element of the vector. 
 #' @param refit Logical. If \code{TRUE} ignore any propensity score and censoring models learned in previous calls to this function. Default is \code{FALSE}.
+#' @param seed Seed used for cross-fitting
 #' @param ... Additional arguments passed to the learner function.
 #' @export
 run_rtmle <- function(x,
@@ -29,6 +30,7 @@ run_rtmle <- function(x,
                       learner = "learn_glm",
                       time_horizon,
                       refit = FALSE,
+                      seed = NULL,
                       ...){
     time <- value <- NULL
     # check data 
@@ -79,6 +81,7 @@ run_rtmle <- function(x,
                                             refit = refit,
                                             learner = learner,
                                             time_horizon = time_horizon,
+                                            seed = seed,
                                             ...)
             # 
             # Q-part: loop backwards in time through iterative condtional expectations
@@ -103,7 +106,9 @@ run_rtmle <- function(x,
                                            target_name = target_name,
                                            protocol_name = protocol_name,
                                            time_horizon = th,
-                                           learner = learner,...)
+                                           learner = learner,
+                                           seed = seed,
+                                           ...)
             }
         }
     }

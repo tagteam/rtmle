@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Oct 31 2024 (07:29) 
 ## Version: 
-## Last-Updated: Nov  5 2024 (15:27) 
+## Last-Updated: Nov  6 2024 (09:47) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 57
+##     Update #: 60
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -79,7 +79,7 @@ superlearn <- function(folds,
         x <- sapply(names(learners),function(this_learner_name){mean((level_one_data[[outcome_variable]]-level_one_data[[this_learner_name]])^2,na.rm = TRUE)})
     }
     winner <- names(x)[which.min(x)]
-    print(winner)
+    ## print(winner)
     return(level_one_data[[winner]])
 }
 

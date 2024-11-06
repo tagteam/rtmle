@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Oct 17 2024 (09:26) 
 ## Version: 
-## Last-Updated: Nov  4 2024 (06:39) 
+## Last-Updated: Nov  6 2024 (08:58) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 98
+##     Update #: 99
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -19,6 +19,7 @@ intervention_probabilities <- function(x,
                                        refit = FALSE,
                                        learner,
                                        time_horizon,
+                                       seed,
                                        ...){
     # FIXME: consider using x$sample_size?
     N <- NROW(x$prepared_data)
@@ -101,7 +102,7 @@ intervention_probabilities <- function(x,
                                                    outcome_variable = G,
                                                    id_variable = x$names$id))
                                     if (inherits(try(
-                                        predicted_values <- do.call("superlearn",args),silent = FALSE),
+                                        predicted_values <- do.call("superlearn",c(args,list(seed = seed))),silent = FALSE),
                                         "try-error")) {
                                         ## browser(skipCalls=1L)
                                         stop(paste0("Failed to superlearn/crossfit with formula ",ff))
