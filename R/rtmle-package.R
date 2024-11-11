@@ -19,7 +19,5 @@
 #' @importFrom ggplot2 autoplot
 #' @importFrom data.table data.table
 #' @importFrom riskRegression predictRisk
-#' @importFrom Rcpp sourceCpp
-#' @useDynLib rtmle, .registration = TRUE
 ## usethis namespace: end
 NULL

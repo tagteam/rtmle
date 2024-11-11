@@ -11,7 +11,7 @@ simulate_long_data(
   baseline_rate,
   beta,
   register_format = FALSE,
-  int_dist = FALSE,
+  interventional_distribution = FALSE,
   baseline_hazard_outcomes = 0.001
 )
 }
@@ -26,7 +26,7 @@ simulate_long_data(
 
 \item{register_format}{Logical. If \code{TRUE} the result is not in wide format but re-formatted as a list of register data.}
 
-\item{int_dist}{JOHAN NEEDS TO DESCRIBE THIS}
+\item{interventional_distribution}{JOHAN NEEDS TO DESCRIBE THIS}
 
 \item{baseline_hazard_outcomes}{Baseline hazard function}
 }

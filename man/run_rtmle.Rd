@@ -4,7 +4,15 @@
 \alias{run_rtmle}
 \title{Sequential regression with TMLE update step for discretized follow-up data}
 \usage{
-run_rtmle(x, targets, learner = "learn_glm", time_horizon, refit = FALSE, ...)
+run_rtmle(
+  x,
+  targets,
+  learner = "learn_glm",
+  time_horizon,
+  refit = FALSE,
+  seed = NULL,
+  ...
+)
 }
 \arguments{
 \item{x}{object of class \code{rtmle}}
@@ -16,6 +24,8 @@ run_rtmle(x, targets, learner = "learn_glm", time_horizon, refit = FALSE, ...)
 \item{time_horizon}{The time horizon at which to calculate risks. If it is a vector the analysis will be performed for each element of the vector.}
 
 \item{refit}{Logical. If \code{TRUE} ignore any propensity score and censoring models learned in previous calls to this function. Default is \code{FALSE}.}
+
+\item{seed}{Seed used for cross-fitting}
 
 \item{...}{Additional arguments passed to the learner function.}
 }

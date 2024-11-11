@@ -10,12 +10,11 @@ Description: Flexible Implementation of the Targeted Minimum Loss Estimators. Fu
 License: GPL (>= 3) + file LICENCE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.1
+RoxygenNote: 7.3.2
 Imports:
     stats,
     utils,	
     data.table,
-    Rcpp,
     riskRegression,
     Publish,
     prodlim,
@@ -26,8 +25,6 @@ Imports:
     Rfast,
     glmnet,
     matrixStats
-LinkingTo: 
-    Rcpp
 Suggests: 
     testthat (>= 3.0.0)
 Config/testthat/edition: 3

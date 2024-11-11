@@ -23,14 +23,14 @@
 #' @param baseline_rate Vector of hazard rates
 #' @param beta List of regression coefficients
 #' @param register_format Logical. If \code{TRUE} the result is not in wide format but re-formatted as a list of register data. 
-#' @param int_dist JOHAN NEEDS TO DESCRIBE THIS 
+#' @param interventional_distribution JOHAN NEEDS TO DESCRIBE THIS 
 #' @param baseline_hazard_outcomes Baseline hazard function 
 simulate_long_data <- function(n,
                                number_visits = 10,
                                baseline_rate,
                                beta,
                                register_format = FALSE,
-                               int_dist=FALSE,
+                               interventional_distribution=FALSE,
                                baseline_hazard_outcomes = 0.001) {
     hazard_ratio_C <- hazard_ratio_D <- hazard_ratio_L <- hazard_ratio_A <- hazard_ratio_Y <- event <- terminal_time <- terminal_event <- entrytime <- NULL
     A_0 <- L_0 <- id <- age <- sex <- sum_L <- A <- sum_A <- propensity_A <- NULL
@@ -78,7 +78,7 @@ simulate_long_data <- function(n,
         # remove the now obsolete init values
         Baseline_Rate <- Baseline_Rate[unique(names(Baseline_Rate))]
     }
-    if (int_dist){
+    if (interventional_distribution){
       Baseline_Rate[["C"]] <- rep(0,nt)
     }
     
@@ -95,7 +95,7 @@ simulate_long_data <- function(n,
     )
     # baseline treatment depends on baseline variables
     ## pop[, A_0:=stats::rbinom(.N,1,lava::expit(0.35+0.1*L_0-0.3*sex-0.01*age))]
-    if (int_dist)
+    if (interventional_distribution)
       pop[, A_0:=1]
     else {
       pop[, A_0:=stats::rbinom(.N,1,0.5)]
@@ -105,7 +105,7 @@ simulate_long_data <- function(n,
     pop[, L_0:=stats::rbinom(n,1,.17)]
     people_atrisk <- pop[,data.table::data.table(id,entrytime = time,age,sex,L_0,A_0,sum_L,A,sum_A)]
 
-    if (int_dist){
+    if (interventional_distribution){
       people_atrisk[,propensity_A := 1]
     } else {
       people_atrisk[,propensity_A := lava::expit(-3 + Beta$age_on_A*age+Beta$sex_on_A*sex+Beta$L0_on_A*L_0+Beta$A0_on_A*A_0)] ## does not depend on previous treatment; only baseline treatment
@@ -153,7 +153,7 @@ simulate_long_data <- function(n,
         people_atrisk[event == "V",A := stats::rbinom(.N,1,propensity_A)]
 
         # update propensity score
-        # if (int_dist)
+        # if (interventional_distribution)
         #   people_atrisk[event == "V",propensity_A := 1]
         # else
         #   people_atrisk[event == "V",propensity_A := lava::expit(-3 + Beta$age_on_A*age+Beta$sex_on_A*sex+Beta$L0_on_A*L_0+Beta$A0_on_A*A)]
