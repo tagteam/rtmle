@@ -36,9 +36,9 @@
 #' # You are only at risk for a change in the covariate process if you have not had a change yet
 #' else return(as.numeric(m == 0))
 #' }
-#' simulate_surv_data(N = N, beta = beta, eta = eta, nu = nu, at_risk = at_risk, term_deltas = term_deltas)
+#' sim_recur_event_data(N = N, beta = beta, eta = eta, nu = nu, at_risk = at_risk, term_deltas = term_deltas)
 
-simulate_surv_data <- function(N,                      # Number of individuals
+sim_recur_event_data <- function(N,           # Number of individuals
                     beta,                   # Effects
                     eta,                    # Shape parameters
                     nu,                     # Scale parameters
