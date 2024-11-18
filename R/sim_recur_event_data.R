@@ -1,49 +1,55 @@
-#' Simulate Survival Data
+#' Function to simulate recurrent event data. The number of events simulated corresponds
+#' to the length of the eta and nu vector, and the number of columns in the beta matrix.
+#' By default 4 different types of events are simulated: Operation (0), Death (1), Censoring(2)
+#' and Change in Covariate Process(4). Death and Censoring are terminal events and Operation
+#' and Chnage in Covariate Process can occur once.
 #'
-#' @param N A double for the number of individuals
-#' @param beta A matrix of doubles for the baseline covariate effects,
-#' the effect of the event number, the treatment effect and the effect of an additional changing covariate L1.
-#' @param eta Vector of shape parameters
-#' @param nu Vector of scale parameters
-#' @param at_risk At risk function
-#' @param term_deltas Terminal events
+#' Different settings can be specified: Survival setting, competing risk setting and operation setting.
+#' The different settings can be specified by the at_risk function. Default is the operation setting.
 #'
-#' @return Data frame containing the simulated data
+#' @title Simulate Recurrent Event Data
+#'
+#' @param N A double for the number of simulated individuals
+#' @param beta A matrix of doubles for the effects of covariates on the hazard functions. The columns represent
+#' the events operation, death, censoring, and covariate change. The rows represent the baseline covariate L0,
+#' the event number k, treatment A, and the additional covariate L1. Default is set to 0.
+#'
+#' @param eta Vector of shape parameters for the Weibull distribution. Default is set to 0.1.
+#' @param nu Vector of scale parameters for the Weibull distribution. Default is set to 0.1.
+#' @param at_risk At risk function. Default is set to recurrent event setting. A survival
+#' or competing risk setting can be specified as well.
+#' @param term_deltas Terminal events. Default is set so that event 1 and 2 are terminal events.
+#'
+#' @return Data frame containing the simulated data. There is a column for ID, time of event (Time),
+#' event type (Delta), baseline covariate (L0), additional covariate (L1) and Treatment (A)
 #' @export
 #'
 #' @examples
-#'
-#'
-#'
-#' # Effect on Operation
-#' beta0 <- c(3, 0, 1, 9)
-#' # Effect on Censoring
-#' beta1 <- c(0, 0, -1, 5)
-#' # Effect on Death
-#' beta2 <- c(3, 0, 1, 1)
-#' # Effect on time varying covariate
-#' beta3 <- c(3, 0, -1, 0.5)
-#' beta <- cbind(beta0, beta1, beta2, beta3)
-#' term_deltas <- c(1, 2)
-#' at_risk <- function(x, k, m) {
-#' # If you have not died yet or been censored yet, you are at risk for dying or being censored
-#' if(x == 1 | x == 2) return(1)
-#' # You are only at risk for an operation if you have not had an operation yet
-#' else if(x == 0) return(as.numeric(k == 0 | (k == 1 & m == 1)))
-#' # You are only at risk for a change in the covariate process if you have not had a change yet
-#' else return(as.numeric(m == 0))
-#' }
 #' sim_recur_event_data(N = 10)
 
 sim_recur_event_data <- function(N,         # Number of individuals
-                    beta,                   # Effects
+                    beta = NULL,            # Effects
                     eta = rep(0.1,4),       # Shape parameters
                     nu = rep(1.1,4),        # Scale parameters
-                    at_risk,                # Function defining the setting
+                    at_risk = NULL,         # Function defining the setting
                     term_deltas = c(1,2)    # Terminal events
 ){
 
+  if(is.null(beta)){
+    beta <- matrix(0, nrow = 4, ncol = 4)
+  }
 
+
+  if(is.null(at_risk)){
+    at_risk <- function(x, k, m) {
+      # If you have not died yet or been censored yet, you are at risk for dying or being censored
+      if(x == 1 | x == 2) return(1)
+      # You are only at risk for an operation if you have not had an operation yet
+      else if(x == 0) return(as.numeric(k == 0 | (k == 1 & m == 1)))
+      # You are only at risk for a change in the covariate process if you have not had a change yet
+      else return(as.numeric(m == 0))
+      }
+    }
 
   # Events
   x <- 1:ncol(beta)

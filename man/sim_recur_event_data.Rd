@@ -2,54 +2,42 @@
 % Please edit documentation in R/sim_recur_event_data.R
 \name{sim_recur_event_data}
 \alias{sim_recur_event_data}
-\title{Simulate Survival Data}
+\title{Simulate Recurrent Event Data}
 \usage{
-sim_recur_event_data(N, beta, eta, nu, at_risk, term_deltas)
+sim_recur_event_data(
+  N,
+  beta = NULL,
+  eta = rep(0.1, 4),
+  nu = rep(1.1, 4),
+  at_risk = NULL,
+  term_deltas = c(1, 2)
+)
 }
 \arguments{
-\item{N}{A double for the number of individuals}
+\item{N}{A double for the number of simulated individuals}
 
-\item{beta}{A matrix of doubles for the baseline covariate effects,
-the effect of the event number, the treatment effect and the effect of an additional changing covariate L1.}
+\item{beta}{A matrix of doubles for the effects of covariates on the hazard functions. The columns represent
+the events operation, death, censoring, and covariate change. The rows represent the baseline covariate L0,
+the event number k, treatment A, and the additional covariate L1. Default is set to 0.}
 
-\item{eta}{Vector of shape parameters}
+\item{eta}{Vector of shape parameters for the Weibull distribution. Default is set to 0.1.}
 
-\item{nu}{Vector of scale parameters}
+\item{nu}{Vector of scale parameters for the Weibull distribution. Default is set to 0.1.}
 
-\item{at_risk}{At risk function}
+\item{at_risk}{At risk function. Default is set to recurrent event setting. A survival
+or competing risk setting can be specified as well.}
 
-\item{term_deltas}{Terminal events}
+\item{term_deltas}{Terminal events. Default is set so that event 1 and 2 are terminal events.}
 }
 \value{
-Data frame containing the simulated data
+Data frame containing the simulated data. There is a column for ID, time of event (Time),
+event type (Delta), baseline covariate (L0), additional covariate (L1) and Treatment (A)
 }
 \description{
-Simulate Survival Data
+Function to simulate recurrent event data. The number of events simulated corresponds
+to the length of the eta and nu vector, and the number of columns in the beta matrix.
+Different settings can be specified: Survival setting, competing risk setting and operation setting.
 }
 \examples{
-
-
-
-N <- 50
-eta <- c(0.1, 0.1, 0.1, 0.1)
-nu <- c(1.1, 1.1, 1.1, 1.1)
-# Effect on Operation
-beta0 <- c(3, 0, 1, 9)
-# Effect on Censoring
-beta1 <- c(0, 0, -1, 5)
-# Effect on Death
-beta2 <- c(3, 0, 1, 1)
-# Effect on time varying covariate
-beta3 <- c(3, 0, -1, 0.5)
-beta <- cbind(beta0, beta1, beta2, beta3)
-term_deltas <- c(1, 2)
-at_risk <- function(x, k, m) {
-# If you have not died yet or been censored yet, you are at risk for dying or being censored
-if(x == 1 | x == 2) return(1)
-# You are only at risk for an operation if you have not had an operation yet
-else if(x == 0) return(as.numeric(k == 0 | (k == 1 & m == 1)))
-# You are only at risk for a change in the covariate process if you have not had a change yet
-else return(as.numeric(m == 0))
-}
-sim_recur_event_data(N = N, beta = beta, eta = eta, nu = nu, at_risk = at_risk, term_deltas = term_deltas)
+sim_recur_event_data(N = 10)
 }
