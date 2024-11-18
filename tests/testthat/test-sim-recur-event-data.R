@@ -19,18 +19,18 @@ at_risk2 <- function(x, k, m) {
 # Testing whether estimated effects correspond to true effects
 
 # Generating data
-N <- 2000
-data_test <- sim_recur_event_data(N = N, beta = beta, eta = eta, nu = nu, at_risk = at_risk2, term_deltas = term_deltas)
-# Creating a k and m variable
-data_test <- data_test %>% mutate(k = ave(ID, ID, FUN = seq_along) - 1) %>%
-  mutate(m = ave(ID, ID, FUN = seq_along))
-
-
-survfit_oper <- coxph(Surv(Time, Delta == 0) ~ L0 + k + A + L1, data = data_test[data_test$k == 0,])
-survfit_cens <- coxph(Surv(Time, Delta == 1) ~ L0 + k + A + L1, data = data_test[data_test$k == 0,])
-survfit_death <- coxph(Surv(Time, Delta == 2) ~ L0 + k + A + L1, data = data_test[data_test$k == 0,])
-survfit_cov <- coxph(Surv(Time, Delta == 3) ~ L0 + k + A + L1, data = data_test[data_test$k == 0,])
-confint(survfit_oper); beta0
-confint(survfit_cens); beta1
-confint(survfit_death); beta2
-confint(survfit_cov); beta3
+#N <- 2000
+#data_test <- sim_recur_event_data(N = N, beta = beta, eta = eta, nu = nu, at_risk = at_risk2, term_deltas = term_deltas)
+## Creating a k and m variable
+#data_test <- data_test %>% mutate(k = ave(ID, ID, FUN = seq_along) - 1) %>%
+#  mutate(m = ave(ID, ID, FUN = seq_along))
+#
+#
+#survfit_oper <- coxph(Surv(Time, Delta == 0) ~ L0 + k + A + L1, data = data_test[data_test$k == 0,])
+#survfit_cens <- coxph(Surv(Time, Delta == 1) ~ L0 + k + A + L1, data = data_test[data_test$k == 0,])
+#survfit_death <- coxph(Surv(Time, Delta == 2) ~ L0 + k + A + L1, data = data_test[data_test$k == 0,])
+#survfit_cov <- coxph(Surv(Time, Delta == 3) ~ L0 + k + A + L1, data = data_test[data_test$k == 0,])
+#confint(survfit_oper); beta0
+#confint(survfit_cens); beta1
+#confint(survfit_death); beta2
+#confint(survfit_cov); beta3

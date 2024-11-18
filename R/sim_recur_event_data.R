@@ -15,9 +15,6 @@
 #'
 #'
 #'
-#' N <- 50
-#' eta <- c(0.1, 0.1, 0.1, 0.1)
-#' nu <- c(1.1, 1.1, 1.1, 1.1)
 #' # Effect on Operation
 #' beta0 <- c(3, 0, 1, 9)
 #' # Effect on Censoring
@@ -36,15 +33,17 @@
 #' # You are only at risk for a change in the covariate process if you have not had a change yet
 #' else return(as.numeric(m == 0))
 #' }
-#' sim_recur_event_data(N = N, beta = beta, eta = eta, nu = nu, at_risk = at_risk, term_deltas = term_deltas)
+#' sim_recur_event_data(N = 10)
 
-sim_recur_event_data <- function(N,           # Number of individuals
+sim_recur_event_data <- function(N,         # Number of individuals
                     beta,                   # Effects
-                    eta,                    # Shape parameters
-                    nu,                     # Scale parameters
+                    eta = rep(0.1,4),       # Shape parameters
+                    nu = rep(1.1,4),        # Scale parameters
                     at_risk,                # Function defining the setting
-                    term_deltas             # Terminal events
+                    term_deltas = c(1,2)    # Terminal events
 ){
+
+
 
   # Events
   x <- 1:ncol(beta)
