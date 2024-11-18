@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul  1 2024 (09:11) 
 ## Version: 
-## Last-Updated: Nov  9 2024 (11:33) 
+## Last-Updated: Nov 16 2024 (17:21) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 366
+##     Update #: 367
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -35,7 +35,8 @@ run_rtmle <- function(x,
     time <- value <- NULL
     # check data 
     ## sapply(x$prepared_data,function(x)sum(is.na(x)))
-    requireNamespace("riskRegression")
+    if (!(x$names$id%in%names(x$prepared_data)))
+        stop(paste0("Cannot see id variable ",x$names$id," in x$prepared_data."))
     # for loop across targets
     available_targets <- names(x$targets)
     if (!missing(targets)) {

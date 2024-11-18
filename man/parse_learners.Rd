@@ -22,9 +22,10 @@ As a side effect an attribute is given to the object such that when running
 on its own output the function does nothing.
 }
 \examples{
-pl <- parse_learners(c(list("glmnet",
-                      "glm"=list(learn_variables="A")),list("learn_ranger"),
-                      list(list(learn_fun="learn_ranger",num.trees=5))))
+parse_learners(c("learn_glm","learn_glm"))
+parse_learners(c(list("learn_glmnet",
+                 "glm"=list(learn_variables="A")),list("learn_ranger"),
+                 list(list(learner_fun="learn_ranger",num.trees=5))))
 }
 \seealso{
 \code{\link{superlearn}}, \code{\link{run_rtmle}}

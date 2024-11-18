@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 23 2024 (16:42) 
 ## Version: 
-## Last-Updated: Nov  5 2024 (15:27) 
+## Last-Updated: Nov 16 2024 (17:14) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 38
+##     Update #: 40
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -14,6 +14,7 @@
 #----------------------------------------------------------------------
 ## 
 ### Code:
+#' @export
 learn_glmnet <- function(character_formula,
                          data,
                          intervened_data,

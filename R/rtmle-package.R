@@ -15,6 +15,7 @@
 #' @importFrom data.table .N
 #' @importFrom data.table .NGRP
 #' @importFrom data.table .SD
+#' @importFrom stats coef formula glm.control na.fail na.omit na.pass predict quasibinomial time
 #' @importFrom survival Surv
 #' @importFrom ggplot2 autoplot
 #' @importFrom data.table data.table

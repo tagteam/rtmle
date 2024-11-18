@@ -3,6 +3,7 @@
 ^.*\.o$
 ^.*\.so$
 ^README.org$
+^TODO.org$
 ^vignettes/.*\.org$
 ^vignettes/auto$
 ^vignettes/.*\.tex$

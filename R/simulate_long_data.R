@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 11 2024 (13:24) 
 ## Version: 
-## Last-Updated: Oct 14 2024 (07:11) 
+## Last-Updated: Nov 18 2024 (11:31) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 261
+##     Update #: 264
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -25,6 +25,10 @@
 #' @param register_format Logical. If \code{TRUE} the result is not in wide format but re-formatted as a list of register data. 
 #' @param interventional_distribution JOHAN NEEDS TO DESCRIBE THIS 
 #' @param baseline_hazard_outcomes Baseline hazard function 
+#' @param int_dist JOHAN NEEDS TO DESCRIBE THIS 
+#' @param baseline_hazard_outcomes Baseline hazard function
+#' @examples
+#' simulate_long_data(10)
 simulate_long_data <- function(n,
                                number_visits = 10,
                                baseline_rate,

@@ -14,6 +14,7 @@ Flexible Implementation of the Targeted Minimum Loss Estimators. Functions are O
 Other contributors:
 \itemize{
   \item Johan Sebastian Ohlendorff \email{johan.sebastian.ohlendorff@sund.ku.dk} [contributor]
+  \item Michaela Lukacova \email{michaela.lukacova@sund.ku.dk} [contributor]
 }
 
 }

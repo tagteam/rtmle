@@ -38,10 +38,10 @@ passed on as additional arguments to the learner function.}
 
 \item{intervened_data}{The data were all intervention variables are readily set according to the intervention protocol.}
 
-\item{...}{Not (yet) used.}
-
-\item{assemble}{Type of superlearning. When \code{"winner"} the discrete super learner is the learner with the lowest
+\item{ensemble}{Type of superlearning. When \code{"winner"} the discrete super learner is the learner with the lowest
 level-one mean squared prediction error (Brier score).}
+
+\item{...}{Not (yet) used.}
 }
 \value{
 The level-one data column of the discrete superlearner.

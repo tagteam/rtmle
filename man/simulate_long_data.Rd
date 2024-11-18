@@ -34,3 +34,6 @@ simulate_long_data(
 library(data.table) ld <-
 simulate_long_data(n=100,number_visits=20,register_format=TRUE) ld
 }
+\examples{
+simulate_long_data(10)
+}

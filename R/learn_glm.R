@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 23 2024 (12:49) 
 ## Version: 
-## Last-Updated: Nov  3 2024 (19:34) 
+## Last-Updated: Nov 16 2024 (17:39) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 85
+##     Update #: 89
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -14,6 +14,7 @@
 #----------------------------------------------------------------------
 ## 
 ### Code:
+#' @export
 learn_glm <- function(character_formula,
                       data,
                       intervened_data,
@@ -37,8 +38,6 @@ learn_glm <- function(character_formula,
             return(mean(Y,na.rm = TRUE))
         }
     }
-    ## print(character_formula)
-    ## print(outcome_variable)
     model_frame <- stats::model.frame(stats::formula(character_formula),
                                       data = data,
                                       drop.unused.levels = TRUE,

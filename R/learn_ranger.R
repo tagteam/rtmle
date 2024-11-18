@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Oct 28 2024 (09:26) 
 ## Version: 
-## Last-Updated: Nov  9 2024 (11:31) 
+## Last-Updated: Nov 16 2024 (17:15) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 46
+##     Update #: 48
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -14,6 +14,7 @@
 #----------------------------------------------------------------------
 ## 
 ### Code:
+#' @export
 learn_ranger <- function(character_formula,data,intervened_data,...){
     # extract the data
     # FIXME: should not let NA's pass until here

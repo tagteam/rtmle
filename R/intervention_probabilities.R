@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Oct 17 2024 (09:26) 
 ## Version: 
-## Last-Updated: Nov  6 2024 (08:58) 
+## Last-Updated: Nov 16 2024 (17:55) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 99
+##     Update #: 114
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -43,7 +43,11 @@ intervention_probabilities <- function(x,
     } else{
         treatment_variables <- x$protocols[[protocol_name]]$treatment_variables
     }
-    censoring_variables <- paste0(x$names$censoring,"_",1:max_time_horizon)
+    if (length(x$names$censoring_variables)>0){
+        censoring_variables <- paste0(x$names$censoring,"_",1:max_time_horizon)
+    }else{
+        censoring_variables <- NULL
+    }
     competing_variables <- paste0(x$names$competing,"_",1:(max_time_horizon-1))
     outcome_variables <- paste0(x$names$outcome,"_",1:max_time_horizon)
     if (refit || length(x$cumulative_intervention_probs[[protocol_name]]) == 0){
@@ -55,13 +59,19 @@ intervention_probabilities <- function(x,
         # in the last time interval we do not need propensities/censoring probabilities
         for (j in eval_times){
             # see who is at_risk at time_j
-            outcome_free_and_uncensored <- x$followup$last_interval >= j
+            if (j == 0){
+                outcome_free_and_uncensored <- rep(TRUE,N)
+            }else{
+                outcome_free_and_uncensored <- x$followup$last_interval >= j
+            }
             if (any(outcome_free_and_uncensored)){
-                if (length(censoring_variables[[j+1]])>0)
+                if (length(censoring_variables[[j+1]])>0){
                     history_of_variables <- 1:(match(censoring_variables[[j+1]],names(x$prepared_data)))
-                else
+                } else{
                     history_of_variables <- 1:(match(treatment_variables[[j+1]],names(x$prepared_data)))
+                }
                 # FIXME: would be better to restrict to the variables that occur in the current formula
+                # FIXME: would be better to remove the id variable
                 current_data <- x$prepared_data[outcome_free_and_uncensored,history_of_variables,with = FALSE]
                 current_constants <- sapply(current_data, function(x){length(unique(x))==1})
                 if (any(current_constants)) {
@@ -142,7 +152,7 @@ intervention_probabilities <- function(x,
         NCOL(x$intervention_match[[protocol_name]])<length(eval_times)){
         intervention_match <- matrix(0,ncol = length(treatment_variables),nrow = N)
         for(j in eval_times){
-            if (j == 0)
+           if (j == 0)
                 intervention_match[,j+1] <- previous <- (x$prepared_data[[intervention_table[j+1]$variable]] %in% c(intervention_table[j+1]$value,NA))
             else
                 intervention_match[,j+1] <- previous <- previous*(x$prepared_data[[intervention_table[j+1]$variable]] %in% c(intervention_table[j+1]$value,NA))

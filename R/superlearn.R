@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Oct 31 2024 (07:29) 
 ## Version: 
-## Last-Updated: Nov  9 2024 (11:31) 
+## Last-Updated: Nov 16 2024 (17:04) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 83
+##     Update #: 85
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -34,7 +34,7 @@
 ##' @param id_variable The name of the subject id variable.
 ##' @param data The data for learning.
 ##' @param intervened_data The data were all intervention variables are readily set according to the intervention protocol.
-##' @param assemble Type of superlearning. When \code{"winner"} the discrete super learner is the learner with the lowest
+##' @param ensemble Type of superlearning. When \code{"winner"} the discrete super learner is the learner with the lowest
 ##' level-one mean squared prediction error (Brier score).
 ##' @param ... Not (yet) used. 
 ##' @return The level-one data column of the discrete superlearner. 

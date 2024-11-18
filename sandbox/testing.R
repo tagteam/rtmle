@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 25 2024 (09:49) 
 ## Version: 
-## Last-Updated: Oct  8 2024 (18:39) 
+## Last-Updated: Nov 16 2024 (16:51) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 4
+##     Update #: 5
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -20,6 +20,12 @@ library(data.table)
 library(prodlim)
 library(targets)
 setwd("~/research/SoftWare/rtmle/")
+
+parse_learners(c(list("learn_glmnet",
+                      "glm"=list(learn_variables="A")),
+                 list("learn_ranger"),
+                 list(list(learner_fun="learn_ranger",num.trees=5))))
+
 #tar_source("R/")
 set.seed(112)
 ld <- simulate_long_data(n = 10000,number_visits = 20,beta = list(A_on_Y = -.2,A0_on_Y = -0.3,A0_on_A = 6))
