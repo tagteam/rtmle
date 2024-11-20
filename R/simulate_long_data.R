@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 11 2024 (13:24) 
 ## Version: 
-## Last-Updated: Oct 14 2024 (07:11) 
+## Last-Updated: Nov 20 2024 (11:53) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 261
+##     Update #: 268
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -14,17 +14,20 @@
 #----------------------------------------------------------------------
 ## 
 ### Code:
+#' Simulating longitudinal data for illustration purposes 
 #'
-#' library(data.table) ld <-
-#' simulate_long_data(n=100,number_visits=20,register_format=TRUE) ld
-#' @export
+#' FIXME
+#' @title Simulating longitudinal data
 #' @param n Sample size
 #' @param number_visits Number of doctor visit times covariates and treatment change 
 #' @param baseline_rate Vector of hazard rates
 #' @param beta List of regression coefficients
 #' @param register_format Logical. If \code{TRUE} the result is not in wide format but re-formatted as a list of register data. 
-#' @param interventional_distribution JOHAN NEEDS TO DESCRIBE THIS 
+#' @param interventional_distribution Logical. If \code{TRUE} the data generating mechanism produces uncensored data under the intervention
 #' @param baseline_hazard_outcomes Baseline hazard function 
+#' @examples
+#' simulate_long_data(10)
+#' @export
 simulate_long_data <- function(n,
                                number_visits = 10,
                                baseline_rate,

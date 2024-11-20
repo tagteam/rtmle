@@ -3,9 +3,11 @@
 ^.*\.o$
 ^.*\.so$
 ^README.org$
+^TODO.org$
 ^vignettes/.*\.org$
 ^vignettes/auto$
 ^vignettes/.*\.tex$
+^vignettes/.*\.synctex.gz$
 ^vignettes/.*\.pdf$
 ^vignettes/.*\.bbl$
 ^vignettes/.*\.aux$

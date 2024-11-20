@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Oct 28 2024 (10:19) 
 ## Version: 
-## Last-Updated: Nov  2 2024 (07:42) 
+## Last-Updated: Nov  9 2024 (11:38) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 6
+##     Update #: 7
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -27,7 +27,11 @@ x <- long_to_wide(x,intervals = seq(0,2000,30.45*12))
 protocol(x) <- list(name = "Always_A",treatment_variables = "A",intervention = 1)
 prepare_data(x) <- list()
 target(x) <- list(name = "Outcome_risk",strategy = "additive",estimator = "tmle",protocols = "Always_A")
-system.time(x <- run_rtmle(x,refit = TRUE,time_horizon = 2,folds = 10,learner = c("learn_glm","learn_glm")))
+system.time(x <- run_rtmle(x,
+                           refit = TRUE,
+                           time_horizon = 2,
+                           folds = 10,
+                           learner = c("learn_glm","learn_glm")))
 summary(x)
 system.time(x <- run_rtmle(x,refit = TRUE,time_horizon = 1:3,learner = "learn_glm"))
 summary(x)

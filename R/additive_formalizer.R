@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul  3 2024 (11:13) 
 ## Version: 
-## Last-Updated: Oct 22 2024 (09:44) 
+## Last-Updated: Nov 18 2024 (11:17) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 65
+##     Update #: 71
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -91,10 +91,15 @@ additive_formalizer <- function(x,
     names(outcome_formulas)=paste0(x$names$outcome,"_",x$times[-1])
     # names for treatment and censoring formulas
     names(propensity_formulas) <- as.character(unlist(lapply(propensity_formulas,function(x){strsplit(x," ~ ")[[1]][[1]]})))
-    names(censoring_formulas) <- as.character(unlist(lapply(censoring_formulas,function(x){strsplit(x," ~ ")[[1]][[1]]})))
+    if (length(x$names$censoring)>0){
+        names(censoring_formulas) <- as.character(unlist(lapply(censoring_formulas,function(x){strsplit(x," ~ ")[[1]][[1]]})))
+        # Remove gformulas of variables not in data, e.g., if we exclude censor others at time point 0
+        censoring_formulas <- censoring_formulas[names(censoring_formulas) %in% names(x$prepared_data)]
+    }else{
+        censoring_formulas <- NULL
+    }
     # Remove gformulas of variables not in data, e.g., if we exclude censor others at time point 0
     propensity_formulas <- propensity_formulas[names(propensity_formulas) %in% names(x$prepared_data)]
-    censoring_formulas <- censoring_formulas[names(censoring_formulas) %in% names(x$prepared_data)]
     lapply(c(propensity_formulas,censoring_formulas,outcome_formulas),function(f)list(formula = f))
 }
 ######################################################################

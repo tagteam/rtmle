@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul  1 2024 (09:11) 
 ## Version: 
-## Last-Updated: Nov  6 2024 (08:56) 
+## Last-Updated: Nov 16 2024 (17:21) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 361
+##     Update #: 367
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -35,7 +35,8 @@ run_rtmle <- function(x,
     time <- value <- NULL
     # check data 
     ## sapply(x$prepared_data,function(x)sum(is.na(x)))
-    requireNamespace("riskRegression")
+    if (!(x$names$id%in%names(x$prepared_data)))
+        stop(paste0("Cannot see id variable ",x$names$id," in x$prepared_data."))
     # for loop across targets
     available_targets <- names(x$targets)
     if (!missing(targets)) {
@@ -51,19 +52,7 @@ run_rtmle <- function(x,
         stopifnot(all(time_horizon <= max(x$time) & time_horizon>0))
     }
     if (length(learner)>1){
-        for (this_learner in 1:length(learner)){
-            ## if no learner function is specified then assume that the name
-            ## is a function
-            if (is.character(name_is_fun <- learner[[this_learner]])){
-                learner[[this_learner]] <- list(learner_fun = name_is_fun)
-                names(learner)[[this_learner]] <- name_is_fun
-            }else{
-                if (length(learner[[this_learner]][["learner_fun"]]) == 0)
-                    learner[[this_learner]]$learner_fun <- names(learner)[[this_learner]]
-            }
-        }
-        ## make unique names
-        names(learner) <- make.names(names(learner),unique = TRUE)
+        learners <- parse_learners(learner)
     }
     for (target_name in run_these_targets){
         message("Running target: ",target_name)

@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Oct 28 2024 (09:26) 
 ## Version: 
-## Last-Updated: Nov  5 2024 (13:41) 
+## Last-Updated: Nov 20 2024 (11:45) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 41
+##     Update #: 54
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -14,6 +14,19 @@
 #----------------------------------------------------------------------
 ## 
 ### Code:
+##' Learning nuisance parameter models for TMLE and predicting
+##' probabilities in intervened data based on \code{\link{ranger}}
+##'
+##' Hyperparameters are set via ...
+##' @title Nuisance parameter learner based on \code{\link{ranger}}
+##' @param character_formula Formula for nuisance parameter as a character
+##' @param data Data for learning 
+##' @param intervened_data Data for prediction 
+##' @param ... Additional arguments for the learning phase passed to \code{\link{ranger}}. These can include hyperparameters.
+##' @return A vector of predicted probabilities which has the fit as an attribute.  
+##' @seealso \code{link{superlearn}}, \code{link{learn_glm}}, \code{link{learn_glmnet}}
+##' @export 
+##' @author Thomas A. Gerds <tag@@biostat.ku.dk>
 learn_ranger <- function(character_formula,data,intervened_data,...){
     # extract the data
     # FIXME: should not let NA's pass until here
@@ -39,6 +52,9 @@ learn_ranger <- function(character_formula,data,intervened_data,...){
                     "Formula:",character_formula))
     }
     predicted_values <- vector(mode = "numeric",length = NROW(intervened_data))
+    ivars <- all.vars(formula(character_formula))[-1]
+    # remove all other variables to avoid false positive missing values
+    intervened_data <- intervened_data[,ivars,with = FALSE]
     no_missing <- !(apply(intervened_data,1,function(x)any(is.na(x))))
     predicted_values[!no_missing] <- as.numeric(NA)
     if (probability) {
@@ -55,6 +71,7 @@ learn_ranger <- function(character_formula,data,intervened_data,...){
         }
     }
     data.table::setattr(predicted_values,"fit",NULL)
+    if (length(predicted_values) != NROW(intervened_data))browser(skipCalls=1L)
     return(predicted_values)
 }
 

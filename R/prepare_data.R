@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 19 2024 (10:07) 
 ## Version: 
-## Last-Updated: Nov  3 2024 (14:24) 
+## Last-Updated: Nov 20 2024 (10:45) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 174
+##     Update #: 180
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -33,19 +33,19 @@
 ##' @seealso rtmle_init
 ##' @examples
 ##' set.seed(112)
-#' ld <- simulate_long_data(n = 101,number_visits = 20,
+#' ld <- simulate_long_data(n = 11,number_visits = 20,
 #'                          beta = list(A_on_Y = -.2,
 #'                          A0_on_Y = -0.3,A0_on_A = 6),
 #'                                register_format = TRUE)
-#' x <- rtmle_init(intervals = 8, name_id = "id",
+#' x <- rtmle_init(intervals = 3, name_id = "id",
 #'                 name_outcome = "Y", name_competing = "Dead",
-#'                 name_censoring = "Censored",censored_label = x$names$censored_label)
+#'                 name_censoring = "Censored",censored_label = "censored")
 #' x$long_data <- ld[c("outcome_data","censored_data","competing_data","timevar_data")]
 #' add_baseline_data(x) <- ld$baseline_data[,start_followup_date:=0]
 #' x <- long_to_wide(x,intervals=seq(0,2000,30.45*6))
 #' prepare_data(x) <- list()
-#'                        
-#' x$prepared_data$data
+#' x$prepared_data
+#' 
 ##' @export 
 ##' @author Thomas A. Gerds <tag@@biostat.ku.dk>
 "prepare_data<-" <- function(x,...,value){
@@ -264,7 +264,7 @@
     ## recall that K is the number of time points where the first time point is always 0
     ##  
     x$followup <- work_data[,c(x$names$id),with = FALSE]
-    x$followup[,last_interval := numeric(.N)]
+    set(x$followup,j = "last_interval",value = numeric(NROW(x$followup)))
     ## if (length(censoring_variables)>0){
     ## x$followup[,uncensored := numeric(.N)]
     ## }
@@ -279,7 +279,7 @@
             }
             if (length(competing_variables)>0)
                 vital <- vital * (work_data[[competing_variables[[j+1]]]] %in% "0")
-            x$followup[,last_interval := last_interval+vital]
+            set(x$followup,j = "last_interval",value = x$followup[["last_interval"]]+vital)
         }
     }
     x$prepared_data <- work_data[]
