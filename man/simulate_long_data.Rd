@@ -2,8 +2,7 @@
 % Please edit documentation in R/simulate_long_data.R
 \name{simulate_long_data}
 \alias{simulate_long_data}
-\title{library(data.table) ld <-
-simulate_long_data(n=100,number_visits=20,register_format=TRUE) ld}
+\title{Simulating longitudinal data}
 \usage{
 simulate_long_data(
   n,
@@ -26,13 +25,15 @@ simulate_long_data(
 
 \item{register_format}{Logical. If \code{TRUE} the result is not in wide format but re-formatted as a list of register data.}
 
-\item{interventional_distribution}{JOHAN NEEDS TO DESCRIBE THIS}
+\item{interventional_distribution}{Logical. If \code{TRUE} the data generating mechanism produces uncensored data under the intervention}
 
 \item{baseline_hazard_outcomes}{Baseline hazard function}
 }
 \description{
-library(data.table) ld <-
-simulate_long_data(n=100,number_visits=20,register_format=TRUE) ld
+Simulating longitudinal data for illustration purposes
+}
+\details{
+FIXME
 }
 \examples{
 simulate_long_data(10)

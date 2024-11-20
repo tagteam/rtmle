@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Oct 17 2024 (09:26) 
 ## Version: 
-## Last-Updated: Nov 16 2024 (17:55) 
+## Last-Updated: Nov 20 2024 (10:37) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 114
+##     Update #: 124
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -43,7 +43,7 @@ intervention_probabilities <- function(x,
     } else{
         treatment_variables <- x$protocols[[protocol_name]]$treatment_variables
     }
-    if (length(x$names$censoring_variables)>0){
+    if (length(x$names$censoring)>0){
         censoring_variables <- paste0(x$names$censoring,"_",1:max_time_horizon)
     }else{
         censoring_variables <- NULL
@@ -118,6 +118,7 @@ intervention_probabilities <- function(x,
                                         stop(paste0("Failed to superlearn/crossfit with formula ",ff))
                                     }
                                 }else{
+                                    ## if (j == 1) browser(skipCalls=1L)
                                     if (inherits(try(
                                         predicted_values <- do.call(learner,args),silent = FALSE),
                                         "try-error")) {
@@ -131,7 +132,7 @@ intervention_probabilities <- function(x,
                             intervention_probs[outcome_free_and_uncensored][[G]] <- predicted_values
                             # FIXME: this hack works but only when there are exactly 2 treatment levels!
                             if (!(G %in% censoring_variables)){ # then G is a treatment variable
-                                if (match(intervention_table[time == j,value],x$names$treatment_levels)<length(x$names$treatment_levels))
+                                if (match(intervention_table[time == j][["value"]],x$names$treatment_levels)<length(x$names$treatment_levels))
                                     intervention_probs[outcome_free_and_uncensored][[G]] <- 1-intervention_probs[outcome_free_and_uncensored][[G]]
                             }
                         }
@@ -153,9 +154,9 @@ intervention_probabilities <- function(x,
         intervention_match <- matrix(0,ncol = length(treatment_variables),nrow = N)
         for(j in eval_times){
            if (j == 0)
-                intervention_match[,j+1] <- previous <- (x$prepared_data[[intervention_table[j+1]$variable]] %in% c(intervention_table[j+1]$value,NA))
+                intervention_match[,j+1] <- previous <- (x$prepared_data[[intervention_table[j+1]$variable]] %in% c(intervention_table[j+1][["value"]],NA))
             else
-                intervention_match[,j+1] <- previous <- previous*(x$prepared_data[[intervention_table[j+1]$variable]] %in% c(intervention_table[j+1]$value,NA))
+                intervention_match[,j+1] <- previous <- previous*(x$prepared_data[[intervention_table[j+1]$variable]] %in% c(intervention_table[j+1][["value"]],NA))
         }
         colnames(intervention_match) <- treatment_variables
         x$intervention_match[[protocol_name]] <- intervention_match

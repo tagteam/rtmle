@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 23 2024 (16:42) 
 ## Version: 
-## Last-Updated: Nov 16 2024 (17:14) 
+## Last-Updated: Nov 20 2024 (11:49) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 40
+##     Update #: 43
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -14,6 +14,22 @@
 #----------------------------------------------------------------------
 ## 
 ### Code:
+##' Learning nuisance parameter models for TMLE and predicting
+##' probabilities in intervened data based on \code{\link{glmnet}}
+##'
+##' This can be useful to avoid too many parameters in the model.
+##' @title Nuisance parameter learner based on \code{\link{glmnet}}
+##' @param character_formula Formula for nuisance parameter as a character
+##' @param data Data for learning 
+##' @param intervened_data Data for prediction
+##' @param selector Character value deciding about how to select the penalty parameter lambda:
+##' If \code{"undersmooth"} use the lambda value which results in the least amount of
+##' penalty such that the model still fits. The other options are \code{"lambda.min"} and \code{"lambda.1se"} which are 
+##' described in the documentation of \code{\link{glmnet}}.
+##' @param ... Additional arguments for the learning phase passed to \code{\link{glmnet}}. 
+##'        E.g., setting alpha affects the elastic net.
+##' @return A vector of predicted probabilities which has the fit as an attribute.  
+##' @seealso \code{link{superlearn}}, \code{link{learn_ranger}}, \code{link{learn_glm}}
 #' @export
 learn_glmnet <- function(character_formula,
                          data,

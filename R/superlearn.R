@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Oct 31 2024 (07:29) 
 ## Version: 
-## Last-Updated: Nov 16 2024 (17:04) 
+## Last-Updated: Nov 20 2024 (10:43) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 85
+##     Update #: 97
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -38,7 +38,7 @@
 ##' level-one mean squared prediction error (Brier score).
 ##' @param ... Not (yet) used. 
 ##' @return The level-one data column of the discrete superlearner. 
-##' @seealso \code{\link{run_rtmle}}, \code{\link{learn_glm}}, \code{\link{learn_glmnet}}, \code{\link{learn_ranger}}
+##' @seealso \code{\link{run_rtmle}}, \code{learn_glm}, \code{learn_glmnet}, \code{learn_ranger}
 ##' @examples
 ##' # Note that the function is designed to be called from run_rtmle.  
 ##' library(ranger)
@@ -89,15 +89,23 @@ superlearn <- function(folds,
         learning_args <- list(character_formula = character_formula,
                               data = learn_data,
                               intervened_data = i_data)
-        for (this_learner_name in names(learners)) {
-            this_learner <- learners[[this_learner_name]]
-            if (length(unique(na.omit(learn_data[[outcome_variable]]))) == 1){
-                if (length(grep("Censored_",outcome_variable)>0)) {
-                    predicted_k <- rep(1*("uncensored" == unique(learn_data[[outcome_variable]])),sum(split != k))
-                }else {
-                    predicted_k <- rep(unique(learn_data[[outcome_variable]]),sum(split != k))
-                }
-            } else{
+        # when there is no variation in the outcome variable then the predicted risk of all learners
+        # is set to this unique value of the outcome variable
+        if (length(unival <- unique(na.omit(learn_data[[outcome_variable]]))) == 1){
+            if (length(grep("Censored_",outcome_variable)>0)) {
+                predicted_k <- rep(1*("uncensored" == unival),sum(split != k))
+            }else {
+                predicted_k <- rep(unival,sum(split != k))
+            }
+            for (this_learner_name in names(learners)) {
+                set(level_one_data,
+                    j = this_learner_name,
+                    i = which(split != k),
+                    value = predicted_k)
+            }
+        } else{
+            for (this_learner_name in names(learners)) {
+                this_learner <- learners[[this_learner_name]]
                 learner_args <- list(character_formula = character_formula,
                                      data = learn_data,
                                      intervened_data = i_data)
@@ -123,10 +131,9 @@ superlearn <- function(folds,
                 j = this_learner_name,
                 i = which(split != k),
                 value = predicted_k)
+
         }
     }
-    ## print(outcome_variable)
-    ## if (outcome_variable == "primary.outcome_3") browser(skipCalls=1L)
     # discrete super learner (for now)
     # choose the minimizer of the Brier score
     if (length(grep("Censored_",outcome_variable)>0)){

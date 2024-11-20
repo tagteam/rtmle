@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Oct 28 2024 (09:26) 
 ## Version: 
-## Last-Updated: Nov 16 2024 (17:15) 
+## Last-Updated: Nov 20 2024 (11:45) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 48
+##     Update #: 54
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -14,7 +14,19 @@
 #----------------------------------------------------------------------
 ## 
 ### Code:
-#' @export
+##' Learning nuisance parameter models for TMLE and predicting
+##' probabilities in intervened data based on \code{\link{ranger}}
+##'
+##' Hyperparameters are set via ...
+##' @title Nuisance parameter learner based on \code{\link{ranger}}
+##' @param character_formula Formula for nuisance parameter as a character
+##' @param data Data for learning 
+##' @param intervened_data Data for prediction 
+##' @param ... Additional arguments for the learning phase passed to \code{\link{ranger}}. These can include hyperparameters.
+##' @return A vector of predicted probabilities which has the fit as an attribute.  
+##' @seealso \code{link{superlearn}}, \code{link{learn_glm}}, \code{link{learn_glmnet}}
+##' @export 
+##' @author Thomas A. Gerds <tag@@biostat.ku.dk>
 learn_ranger <- function(character_formula,data,intervened_data,...){
     # extract the data
     # FIXME: should not let NA's pass until here
@@ -59,6 +71,7 @@ learn_ranger <- function(character_formula,data,intervened_data,...){
         }
     }
     data.table::setattr(predicted_values,"fit",NULL)
+    if (length(predicted_values) != NROW(intervened_data))browser(skipCalls=1L)
     return(predicted_values)
 }
 

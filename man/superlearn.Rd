@@ -78,7 +78,7 @@ fit <- superlearn(folds = 2,seed = 8,
 
 }
 \seealso{
-\code{\link{run_rtmle}}, \code{\link{learn_glm}}, \code{\link{learn_glmnet}}, \code{\link{learn_ranger}}
+\code{\link{run_rtmle}}, \code{learn_glm}, \code{learn_glmnet}, \code{learn_ranger}
 }
 \author{
 Thomas A. Gerds \href{mailto:tag@biostat.ku.dk}{tag@biostat.ku.dk}

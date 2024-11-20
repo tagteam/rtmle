@@ -1,13 +1,15 @@
 Package: rtmle
 Title: Analysing Longitudinal Observational and Randomized Data with the Targeted Minimum Loss Estimator
-Version: 2024.10.02
+Version: 2024.11.20
 Authors@R: c(
-    person("Thomas Alexander", "Gerds", , "tag@biostat.ku.dk", role = c("aut", "cre"),
+    person("Helene Charlotti Wiese", "Rytgaard", , "hely@sund.ku.dk", role = c("aut", "cre")),
+    person("Thomas Alexander", "Gerds", , "tag@biostat.ku.dk", role = c("aut"),
            comment = c(ORCID = "0000-0002-5955-816X")),
     person("Johan Sebastian", "Ohlendorff", , "johan.sebastian.ohlendorff@sund.ku.dk", role = "ctb"),
     person("Michaela", "Lukacova", , "michaela.lukacova@sund.ku.dk", role = "ctb")
   )
-Description: Flexible Implementation of the Targeted Minimum Loss Estimators. Functions are Optimized for large-scale Register Data. 
+Description: Flexible implementation of the targeted minimum loss estimators.
+             Some of the functions are readily optimized for large-scale register data. 
 License: GPL (>= 3) + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
@@ -28,5 +30,6 @@ Imports:
     ranger,
     matrixStats
 Suggests: 
-    testthat (>= 3.0.0)
+    testthat (>= 3.0.0),
+    ltmle
 Config/testthat/edition: 3

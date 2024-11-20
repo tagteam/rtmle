@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 30 2024 (14:30) 
 ## Version: 
-## Last-Updated: Nov 16 2024 (18:10) 
+## Last-Updated: Nov 20 2024 (09:59) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 171
+##     Update #: 206
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -33,8 +33,8 @@ sequential_regression <- function(x,
     } else{
         treatment_variables <- x$protocols[[protocol_name]]$treatment_variables
     }
-    if (length(x$names$censoring_variables)>0){
-        censoring_variables <- paste0(x$names$censoring,"_",1:max_time_horizon)
+    if (length(x$names$censoring)>0){
+        censoring_variables <- paste0(x$names$censoring,"_",1:time_horizon)
     }else{
         censoring_variables <- NULL
     }
@@ -143,33 +143,32 @@ sequential_regression <- function(x,
         ## y <- pmax(pmin(y,0.99999),0.00001)
         ## y <- pmax(pmin(y,0.9999),0.0001)
         # TMLE update step
+        if (length(x$names$censoring)>0){
+            ipos <- censoring_variables[[j]]
+        }else{
+            ipos <- treatment_variables[[j]]
+        }
         if (length(x$targets[[target_name]]$estimator) == 0 || x$targets[[target_name]]$estimator == "tmle"){
             # use only data from subjects who are uncensored in current interval
-            ## current_prediction <- lava::logit(fit_last[!is.na(Y)])
-            ## current_outcome <- Y[!is.na(Y)]
-            ## print(data.table(Y = Y,fit_last = fit_last))
             # construction of clever covariates
             Wold <- rep(NA,length(Y))
             Wold[outcome_free_and_uncensored] <- lava::logit(fit_last)
-            if (length(x$names$censoring_variables)>0){
-                ipos <- censoring_variables[[j]]
-            }else{
-                ipos <- treatment_variables[[j]]
-            }
+            # FIXME: this test of infinite weights needs more work
+            weights <- x$cumulative_intervention_probs[[protocol_name]][,ipos]
+            imatch <- (x$intervention_match[[protocol_name]][,intervention_table[time == j-1]$variable]%in% 1)
+            if (any(weights[!is.na(Y) & outcome_free_and_uncensored & as.vector(imatch)] == 0))
+                stop("Exactly zero weights encountered at the attempt to run the TMLE-update fluctuation model.\nYou may want to consider bounding the weights somehow.")
             if (inherits(try(
                 W <- update_Q(Y = Y,
                               logitQ = Wold,
-                              cum.g = x$cumulative_intervention_probs[[protocol_name]][,ipos],
-                              uncensored_undeterministic = outcome_free_and_uncensored,
-                              intervention.match = x$intervention_match[[protocol_name]][,intervention_table[time == j-1]$variable])
-                ## W <- update_Q(Y = Y[!is.na(Y)],
-                ## logitQ = lava::logit(fit_last[!is.na(Y)]),
-                ## cum.g = x$cumulative_intervention_probs[[protocol_name]][,censoring_variables[[j]]][outcome_free_and_uncensored][!is.na(Y)], 
-                ## uncensored_undeterministic = outcome_free_and_uncensored,
-                ## intervention.match = x$intervention_match[[protocol_name]][,intervention_table[time == j-1]$variable])
+                              cum.g = weights,
+                              outcome_free_and_uncensored = outcome_free_and_uncensored,
+                              intervention.match = imatch)
             ),"try-error"))
                 stop(paste0("Fluctuation model used in the TMLE update step failed",
                             " in the attempt to run function update_Q at time point: ",j))
+            ## FIXME: why do we not need the following? 
+            ## W[!outcome_free_and_uncensored] <- Y[!outcome_free_and_uncensored]
         }else{
             W <- fit_last
         }
@@ -180,10 +179,14 @@ sequential_regression <- function(x,
             x$sequential_outcome_regression[[target_name]]$intervened_data <- c(x$sequential_outcome_regression[[target_name]]$intervened_data,list(intervened_data))
         }
         # calculate contribution to influence function
-        h.g.ratio <- 1/x$cumulative_intervention_probs[[protocol_name]][,match(censoring_variables[[j]],colnames(x$cumulative_intervention_probs[[protocol_name]]))]
+        h.g.ratio <- 1/x$cumulative_intervention_probs[[protocol_name]][,ipos]
         if (any(h.g.ratio>10000)) h.g.ratio <- pmin(h.g.ratio,10000)
-        current_cnode <- as.character(x$prepared_data[[paste0(x$names$censoring,"_",j)]])
-        index <- (current_cnode%in%x$names$uncensored_label) & intervention_match[,intervention_table[time == j-1]$variable]
+        if (length(x$names$censoring)>0){
+            current_cnode <- as.character(x$prepared_data[[paste0(x$names$censoring,"_",j)]])
+            index <- (current_cnode%in%x$names$uncensored_label) & (intervention_match[,intervention_table[time == j-1]$variable] %in% 1)
+        }else{
+            index <- (intervention_match[,intervention_table[time == j-1]$variable] %in% 1)
+        }
         if (any(h.g.ratio[index] != 0)) {
             x$IC[[target_name]][[protocol_name]][[label_time_horizon]][index] <- x$IC[[target_name]][[protocol_name]][[label_time_horizon]][index] + (Y[index] - W[index]) * h.g.ratio[index]
         }

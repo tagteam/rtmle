@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 19 2024 (10:07) 
 ## Version: 
-## Last-Updated: Nov 16 2024 (17:42) 
+## Last-Updated: Nov 20 2024 (10:45) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 177
+##     Update #: 180
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -264,7 +264,7 @@
     ## recall that K is the number of time points where the first time point is always 0
     ##  
     x$followup <- work_data[,c(x$names$id),with = FALSE]
-    x$followup[,last_interval := numeric(.N)]
+    set(x$followup,j = "last_interval",value = numeric(NROW(x$followup)))
     ## if (length(censoring_variables)>0){
     ## x$followup[,uncensored := numeric(.N)]
     ## }
@@ -279,7 +279,7 @@
             }
             if (length(competing_variables)>0)
                 vital <- vital * (work_data[[competing_variables[[j+1]]]] %in% "0")
-            x$followup[,last_interval := last_interval+vital]
+            set(x$followup,j = "last_interval",value = x$followup[["last_interval"]]+vital)
         }
     }
     x$prepared_data <- work_data[]
