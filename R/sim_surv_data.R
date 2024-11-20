@@ -12,7 +12,8 @@
 #' @return  Data frame containing the simulated survival data
 #' @export
 #'
-#' @examples sim_surv_data(10)
+#' @examples
+#' sim_surv_data(10)
 sim_surv_data <- function(N,
                          beta = NULL,
                          eta = rep(0.1,2),

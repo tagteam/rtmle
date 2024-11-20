@@ -26,19 +26,19 @@ data_test <- data_test %>% mutate(k = ave(ID, ID, FUN = seq_along) - 1) #%>%
   #mutate(m = ave(ID, ID, FUN = seq_along))
 
 
-survfit_oper <- coxph(Surv(Time, Delta == 0) ~ L0 + k + A + L, data = data_test[data_test$k == 0,])
-survfit_cens <- coxph(Surv(Time, Delta == 1) ~ L0 + k + A + L, data = data_test[data_test$k == 0,])
-survfit_death <- coxph(Surv(Time, Delta == 2) ~ L0 + k + A + L, data = data_test[data_test$k == 0,])
-survfit_cov <- coxph(Surv(Time, Delta == 3) ~ L0 + k + A + L, data = data_test[data_test$k == 0,])
-confint(survfit_oper)[1,1] <= 0 & 0 <= confint(survfit_oper)[1,2]
-confint(survfit_oper)[3,1] <= 0 & 0 <= confint(survfit_oper)[3,2]
-confint(survfit_oper)[4,1] <= 0 & 0 <= confint(survfit_oper)[4,2]
-confint(survfit_cens)[1,1] <= 0 & 0 <= confint(survfit_cens)[1,2]
-confint(survfit_cens)[3,1] <= 0 & 0 <= confint(survfit_cens)[3,2]
-confint(survfit_cens)[4,1] <= 0 & 0 <= confint(survfit_cens)[4,2]
-confint(survfit_death)[1,1] <= 0 & 0 <= confint(survfit_death)[1,2]
-confint(survfit_death)[3,1] <= 0 & 0 <= confint(survfit_death)[3,2]
-confint(survfit_death)[4,1] <= 0 & 0 <= confint(survfit_death)[4,2]
-confint(survfit_cov)[1,1] <= 0 & 0 <= confint(survfit_cov)[1,2]
-confint(survfit_cov)[3,1] <= 0 & 0 <= confint(survfit_cov)[3,2]
-confint(survfit_cov)[4,1] <= 0 & 0 <= confint(survfit_cov)[4,2]
+#survfit_oper <- coxph(Surv(Time, Delta == 0) ~ L0 + k + A + L, data = data_test[data_test$k == 0,])
+#survfit_cens <- coxph(Surv(Time, Delta == 1) ~ L0 + k + A + L, data = data_test[data_test$k == 0,])
+#survfit_death <- coxph(Surv(Time, Delta == 2) ~ L0 + k + A + L, data = data_test[data_test$k == 0,])
+#survfit_cov <- coxph(Surv(Time, Delta == 3) ~ L0 + k + A + L, data = data_test[data_test$k == 0,])
+#confint(survfit_oper)[1,1] <= 0 & 0 <= confint(survfit_oper)[1,2]
+#confint(survfit_oper)[3,1] <= 0 & 0 <= confint(survfit_oper)[3,2]
+#confint(survfit_oper)[4,1] <= 0 & 0 <= confint(survfit_oper)[4,2]
+#confint(survfit_cens)[1,1] <= 0 & 0 <= confint(survfit_cens)[1,2]
+#confint(survfit_cens)[3,1] <= 0 & 0 <= confint(survfit_cens)[3,2]
+#confint(survfit_cens)[4,1] <= 0 & 0 <= confint(survfit_cens)[4,2]
+#confint(survfit_death)[1,1] <= 0 & 0 <= confint(survfit_death)[1,2]
+#confint(survfit_death)[3,1] <= 0 & 0 <= confint(survfit_death)[3,2]
+#confint(survfit_death)[4,1] <= 0 & 0 <= confint(survfit_death)[4,2]
+#confint(survfit_cov)[1,1] <= 0 & 0 <= confint(survfit_cov)[1,2]
+#confint(survfit_cov)[3,1] <= 0 & 0 <= confint(survfit_cov)[3,2]
+#confint(survfit_cov)[4,1] <= 0 & 0 <= confint(survfit_cov)[4,2]
