@@ -19,6 +19,7 @@ Imports:
     Publish,
     prodlim,
     ggplot2,
+    dplyr,
     survival,
     lava,
     speedglm,
