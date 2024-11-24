@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 30 2024 (14:30) 
 ## Version: 
-## Last-Updated: Nov 22 2024 (13:01) 
+## Last-Updated: Nov 24 2024 (06:53) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 207
+##     Update #: 209
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -159,14 +159,14 @@ sequential_regression <- function(x,
             if (any(weights[!is.na(Y) & outcome_free_and_uncensored & as.vector(imatch)] == 0))
                 stop("Exactly zero weights encountered at the attempt to run the TMLE-update fluctuation model.\nYou may want to consider bounding the weights somehow.")
             if (inherits(try(
-                W <- update_Q(Y = Y,
-                              logitQ = Wold,
+                W <- tmle_update(Y = Y,
+                              offset = Wold,
                               cum.g = weights,
                               outcome_free_and_uncensored = outcome_free_and_uncensored,
                               intervention.match = imatch)
             ),"try-error"))
                 stop(paste0("Fluctuation model used in the TMLE update step failed",
-                            " in the attempt to run function update_Q at time point: ",j))
+                            " in the attempt to run function tmle_update at time point: ",j))
             ## FIXME: why do we not need the following? 
             ## W[!outcome_free_and_uncensored] <- Y[!outcome_free_and_uncensored]
         }else{
