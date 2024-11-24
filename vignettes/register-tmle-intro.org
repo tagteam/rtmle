@@ -32,6 +32,8 @@ ld
 
 #+RESULTS[(2024-10-03 16:28:18) c882943695f57f545c4d35bcaa06c480ca36b3a8]:
 :results:
+riskRegression version 2024.10.21
+data.table 1.15.4 using 4 threads (see ?getDTthreads).  Latest news: r-datatable.com
 $baseline_data
           id   sex      age
        <int> <int>    <num>
@@ -175,10 +177,37 @@ TODO: The object contains no targets yet. Add them with the function 'target<-'.
 #+BEGIN_SRC R  :results output verbatim drawer  :exports both  :session *R* :cache yes  
 x <- long_to_wide(x,intervals = seq(0,2000,30.45*6))
 prepare_data(x) <- list()
+x$prepared_data
 #+END_SRC
 
-#+RESULTS[(2024-10-03 16:28:20) a3b2259f4fbd1a6505a368eec81f685182ce33b6]:
+#+RESULTS[(2024-11-24 08:01:22) 824e49ea434194f42fc103b764371428d538b5fb]:
 :results:
+id   sex      age start_followup_date   L_0   A_0 Censored_1   Y_1 Dead_1   L_1   A_1 Censored_2   Y_2 Dead_2   L_2   A_2 Censored_3
+       <int> <int>    <num>               <num> <num> <num>     <fctr> <num>  <num> <num> <num>     <fctr> <num>  <num> <num> <num>     <fctr>
+    1:     1     0 59.44409                   0     1     1 uncensored     0      0     0     0 uncensored     0      0     0     0 uncensored
+    2:     2     1 73.01360                   0     0     0 uncensored     0      0     0     0   censored    NA     NA    NA    NA       <NA>
+    3:     3     0 78.26086                   0     1     1 uncensored     1      0    NA    NA       <NA>     1      0    NA    NA       <NA>
+    4:     4     1 66.53408                   0     0     0 uncensored     0      1    NA    NA       <NA>     0      1    NA    NA       <NA>
+    5:     5     0 62.35921                   0     1     1   censored    NA     NA    NA    NA       <NA>    NA     NA    NA    NA       <NA>
+   ---                                                                                                                                        
+ 9996:  9996     0 43.90035                   0     0     0 uncensored     0      1    NA    NA       <NA>     0      1    NA    NA       <NA>
+ 9997:  9997     1 41.32339                   0     0     0 uncensored     0      1    NA    NA       <NA>     0      1    NA    NA       <NA>
+ 9998:  9998     0 65.08893                   0     1     1 uncensored     0      0     0     0 uncensored     0      0     0     0 uncensored
+ 9999:  9999     1 42.23665                   0     0     1 uncensored     1      0    NA    NA       <NA>     1      0    NA    NA       <NA>
+10000: 10000     1 57.38959                   0     1     0   censored    NA     NA    NA    NA       <NA>    NA     NA    NA    NA       <NA>
+         Y_3
+       <num>
+    1:     0
+    2:    NA
+    3:     1
+    4:     0
+    5:    NA
+   ---      
+ 9996:     0
+ 9997:     0
+ 9998:     0
+ 9999:     1
+10000:    NA
 :end:
 
 
@@ -232,22 +261,16 @@ summary(x)
 Running target: Outcome_risk
 Current protocol: always A
 Current protocol: never A
-Error: No method available for evaluating predicted probabilities from objects in class: NULL. But, you can write it yourself or ask the package manager.
-In addition: Warning messages:
-1: glm.fit: algorithm did not converge 
-2: In predict.lm(object, newdata, se.fit, scale = 1, type = if (type ==  :
-  prediction from rank-deficient fit; attr(*, "non-estim") has doubtful cases
-3: In predict.lm(object, newdata, se.fit, scale = 1, type = if (type ==  :
-  prediction from rank-deficient fit; attr(*, "non-estim") has doubtful cases
-4: In predict.lm(object, newdata, se.fit, scale = 1, type = if (type ==  :
-  prediction from rank-deficient fit; attr(*, "non-estim") has doubtful cases
-5: In predict.lm(object, newdata, se.fit, scale = 1, type = if (type ==  :
-  prediction from rank-deficient fit; attr(*, "non-estim") has doubtful cases
-6: In eval(family$initialize) : non-integer #successes in a binomial glm!
-7: In predict.lm(object, newdata, se.fit, scale = 1, type = if (type ==  :
-  prediction from rank-deficient fit; attr(*, "non-estim") has doubtful cases
-8: In eval(family$initialize) : non-integer #successes in a binomial glm!
-Error: Check that is.data.table(DT) == TRUE. Otherwise, :=, `:=`(...) and let(...) are defined for use in j, once only and in particular ways. See help(":=").
+Running target: Outcome_risk_g
+Current protocol: always A
+Current protocol: never A
+Warning messages:
+1: In tmle_update(Y = Y, offset = Wold, intervention_probs = inverse_probability_weights,  :
+  No TMLE update because no subject has positive weight
+2: In tmle_update(Y = Y, offset = Wold, intervention_probs = inverse_probability_weights,  :
+  No TMLE update because no subject has positive weight
+Error in object$estimate[[target_name]][[ref]]$Estimate[[tp]] (from summary.rtmle.R#84) : 
+  subscript out of bounds
 :end:
 
 

@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul  3 2024 (13:54) 
 ## Version: 
-## Last-Updated: Nov 24 2024 (06:53) 
+## Last-Updated: Nov 24 2024 (07:06) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 38
+##     Update #: 41
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -16,19 +16,19 @@
 ### Code:
 tmle_update <- function(Y,
                      offset,
-                     cum.g, 
+                     intervention_probs, 
                      outcome_free_and_uncensored,
-                     intervention.match) {
+                     intervention_match) {
     N <- length(Y)
-    if (length(cum.g) == 0) cum.g <- 1
+    if (length(intervention_probs) == 0) intervention_probs <- 1
     ## FIXME: are there better ways to remove those censored in current interval?
-    subjects_with_weights <- !is.na(Y) & outcome_free_and_uncensored & as.vector(intervention.match)
+    subjects_with_weights <- !is.na(Y) & outcome_free_and_uncensored & as.vector(intervention_match)
     weights <- numeric(N)
-    weights[subjects_with_weights] <- 1/cum.g[subjects_with_weights]
+    weights[subjects_with_weights] <- 1/intervention_probs[subjects_with_weights]
     if (anyNA(weights)) stop("NA in weights")
     if (any(weights > 0)) {
-        f <- stats::as.formula("Y ~ -1 + S1 + offset(off)")
-        data.temp <- data.frame(Y, S1 = rep(1,N),off)
+        f <- stats::as.formula("Y ~ -1 + S1 + offset(offset)")
+        data.temp <- data.frame(Y, S1 = rep(1,N),offset)
         has_weight <- weights > 0
         weights <- as.vector(scale(weights[has_weight], center = FALSE))
         m <- stats::glm(formula = f,

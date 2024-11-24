@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 30 2024 (14:30) 
 ## Version: 
-## Last-Updated: Nov 24 2024 (06:53) 
+## Last-Updated: Nov 24 2024 (07:28) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 209
+##     Update #: 212
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -21,7 +21,7 @@ sequential_regression <- function(x,
                                   learner,
                                   seed = seed,
                                   ...){
-    time = Time_horizon = Estimate = Standard_error = Lower = Upper = NULL
+    time = Time_horizon = Estimate = Target_parameter = Standard_error = Lower = Upper = NULL
     N <- NROW(x$prepared_data)
     # FIXME: inconsistent listing:
     intervention_table <- x$protocols[[protocol_name]]$intervention_table
@@ -153,17 +153,17 @@ sequential_regression <- function(x,
             # construction of clever covariates
             Wold <- rep(NA,length(Y))
             Wold[outcome_free_and_uncensored] <- lava::logit(fit_last)
-            # FIXME: this test of infinite weights needs more work
-            weights <- x$cumulative_intervention_probs[[protocol_name]][,ipos]
+            # FIXME: this test of infinite inverse_probability_weights needs more work
+            inverse_probability_weights <- x$cumulative_intervention_probs[[protocol_name]][,ipos]
             imatch <- (x$intervention_match[[protocol_name]][,intervention_table[time == j-1]$variable]%in% 1)
-            if (any(weights[!is.na(Y) & outcome_free_and_uncensored & as.vector(imatch)] == 0))
-                stop("Exactly zero weights encountered at the attempt to run the TMLE-update fluctuation model.\nYou may want to consider bounding the weights somehow.")
+            if (any(inverse_probability_weights[!is.na(Y) & outcome_free_and_uncensored & as.vector(imatch)] == 0))
+                stop("Exactly zero intervention probabilities encountered at the attempt to run the TMLE-update fluctuation model.\nYou may have to consider changing the target parameter or bounding the intervention probabilities somehow.\nGood luck!")
             if (inherits(try(
                 W <- tmle_update(Y = Y,
                               offset = Wold,
-                              cum.g = weights,
+                              intervention_probs = inverse_probability_weights,
                               outcome_free_and_uncensored = outcome_free_and_uncensored,
-                              intervention.match = imatch)
+                              intervention_match = imatch)
             ),"try-error"))
                 stop(paste0("Fluctuation model used in the TMLE update step failed",
                             " in the attempt to run function tmle_update at time point: ",j))

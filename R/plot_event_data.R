@@ -10,8 +10,8 @@
 #' plot_event_data(data)
 
 plot_event_data <- function(data) {
-
-  data$ID <- as.factor(data$ID)
+    ID <- Time <- max_time <- Delta <- NULL
+    data$ID <- as.factor(data$ID)
 
   data <- data %>%
     dplyr::group_by(ID) %>%
