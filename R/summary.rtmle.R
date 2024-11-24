@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 29 2024 (10:44) 
 ## Version: 
-## Last-Updated: Nov 24 2024 (06:47) 
+## Last-Updated: Nov 24 2024 (06:49) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 63
+##     Update #: 64
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -87,7 +87,7 @@ summary.rtmle <- function(object,targets,reference = NULL,digits = 1,...){
                     risk_ratio_upper <- risk_ratio_estimate*exp(qnorm(.975)*risk_ratio_log_se)
                     e <- data.table(Target = rep(target_name,2),
                                Protocol = rep(protocol_name, 2),
-                               Target_parameter=c("ATE", "Risk ratio"),
+                               Target_parameter=c("Risk_difference", "Risk ratio"),
                                Time_horizon = tp,
                                Estimator = x$estimate[[target_name]][[ref]]$Estimator,
                                Reference = rep(reference, 2),
@@ -96,8 +96,8 @@ summary.rtmle <- function(object,targets,reference = NULL,digits = 1,...){
                                Lower = c(risk_difference_lower, risk_ratio_lower),
                                Upper = c(risk_difference_upper, risk_ratio_upper),
                                P_value = c(2*pnorm(-abs(risk_difference_estimate/risk_difference_se)), 2*pnorm(-abs(log(risk_ratio_estimate)/risk_ratio_log_se))))
-                    e[Target_parameter == "ATE","Estimate (CI_95)":= Publish::formatCI(x = 100*Estimate,lower = 100*Lower,upper = 100*Upper,show.x = TRUE,digits = digits)]
-                    e[Target_parameter == "Risk_Ratio","Estimate (CI_95)":= Publish::formatCI(x = Estimate,lower = Lower,upper = Upper,show.x = TRUE,digits = digits)]
+                    e[Target_parameter == "Risk_difference","Estimate (CI_95)":= Publish::formatCI(x = 100*Estimate,lower = 100*Lower,upper = 100*Upper,show.x = TRUE,digits = digits)]
+                    e[Target_parameter == "Risk_ratio","Estimate (CI_95)":= Publish::formatCI(x = Estimate,lower = Lower,upper = Upper,show.x = TRUE,digits = digits)]
                     e[]
                 }))}))
             
