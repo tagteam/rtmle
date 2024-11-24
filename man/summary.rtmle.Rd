@@ -4,13 +4,39 @@
 \alias{summary.rtmle}
 \title{Summarizing the results of a register data analysis with the targeted minimum loss estimator}
 \usage{
-\method{summary}{rtmle}(object, ...)
+\method{summary}{rtmle}(object, targets, reference, digits = 1, ...)
 }
 \arguments{
 \item{object}{Object to be summarized}
 
+\item{targets}{Names of targets for which to compute the summary. Defaults to all targets in the object.}
+
+\item{reference}{(Optional) Named list of reference protocols, one for each target.}
+
+\item{digits}{Number of decimals for the confidence intervals}
+
 \item{...}{not used}
 }
 \description{
-Summarizing the results of a register data analysis with the targeted minimum loss estimator
+For each target in the object the risk estimates are summarized in a table with their
+95\% confidence limits.
+}
+\details{
+If a target includes multiple protocols the results includes risk differences.
+}
+\examples{
+
+set.seed(112)
+ld <- simulate_long_data(n = 181,number_visits = 20,beta = list(A_on_Y = -.2,A0_on_Y = -0.3,A0_on_A = 2),register_format = TRUE)
+x <- rtmle_init(intervals = 2,name_id = "id",name_outcome = "Y",name_competing = "Dead",name_censoring = "Censored",censored_label = "censored")
+x$long_data <- ld[c("outcome_data","censored_data","competing_data","timevar_data")]
+add_baseline_data(x) <- ld$baseline_data[,start_followup_date:=0]
+x <- long_to_wide(x,intervals = seq(0,2000,30.45*6))
+protocol(x) <- list(name = "Always_A",treatment_variables = "A",intervention = 1)
+protocol(x) <- list(name = "Never_A",treatment_variables = "A",intervention = 0)
+prepare_data(x) <- list(reset = TRUE)
+target(x) <- list(name = "Outcome_risk",strategy = "additive",estimator = "tmle",protocols = c("Always_A","Never_A"))
+x <- run_rtmle(x,time_horizon=2)
+summary(x,digits=2)
+
 }

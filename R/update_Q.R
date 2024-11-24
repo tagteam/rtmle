@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul  3 2024 (13:54) 
 ## Version: 
-## Last-Updated: Nov 20 2024 (09:59) 
+## Last-Updated: Nov 22 2024 (11:38) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 33
+##     Update #: 37
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -27,7 +27,6 @@ update_Q <- function(Y,
     weights <- numeric(N)
     weights[subjects_with_weights] <- 1/cum.g[subjects_with_weights]
     if (anyNA(weights)) stop("NA in weights")
-    if (any(is.infinite(weights))) browser(skipCalls=1L)
     if (any(weights > 0)) {
         f <- stats::as.formula("Y ~ -1 + S1 + offset(off)")
         data.temp <- data.frame(Y, S1 = rep(1,N),off)
@@ -38,10 +37,6 @@ update_Q <- function(Y,
                         data = data.frame(data.temp[has_weight, ],weights),
                         weights = weights,
                         control = stats::glm.control(maxit = 100))
-        ## browser(skipCalls=TRUE)
-        ## m <- ltmle.glm(f, data = data.temp[weights > 0, ], family = quasibinomial(),
-        ## weights = as.vector(scale(weights[weights > 0], center = FALSE)))
-        ## browser(skipCalls = TRUE)
         Qstar <- stats::predict(m, newdata = data.temp, type = "response")
     } else {
         warning("No TMLE update because no subject has positive weight")

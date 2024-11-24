@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 30 2024 (14:30) 
 ## Version: 
-## Last-Updated: Nov 20 2024 (09:59) 
+## Last-Updated: Nov 22 2024 (13:01) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 206
+##     Update #: 207
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -205,11 +205,11 @@ sequential_regression <- function(x,
             value = x$prepared_data[[paste0(x$names$outcome,"_",j)]][which(!(outcome_free_and_uncensored))])
     }
     # g-formula and tmle estimator
-    x$estimate[[target_name]][[protocol_name]][Time_horizon == time_horizon, Estimate := mean(x$prepared_data$rtmle_predicted_outcome)]
+    x$estimate[[target_name]][[protocol_name]][Time_horizon == time_horizon & Target_parameter == "Risk", Estimate := mean(x$prepared_data$rtmle_predicted_outcome)]
     ic <- x$IC[[target_name]][[protocol_name]][[label_time_horizon]] + x$prepared_data$rtmle_predicted_outcome - mean(x$prepared_data$rtmle_predicted_outcome)
-    x$estimate[[target_name]][[protocol_name]][Time_horizon == time_horizon, Standard_error := sqrt(stats::var(ic)/N)]
-    x$estimate[[target_name]][[protocol_name]][Time_horizon == time_horizon, Lower := Estimate-stats::qnorm(.975)*Standard_error]
-    x$estimate[[target_name]][[protocol_name]][Time_horizon == time_horizon, Upper := Estimate+stats::qnorm(.975)*Standard_error]
+    x$estimate[[target_name]][[protocol_name]][Time_horizon == time_horizon & Target_parameter == "Risk", Standard_error := sqrt(stats::var(ic)/N)]
+    x$estimate[[target_name]][[protocol_name]][Time_horizon == time_horizon & Target_parameter == "Risk", Lower := Estimate-stats::qnorm(.975)*Standard_error]
+    x$estimate[[target_name]][[protocol_name]][Time_horizon == time_horizon & Target_parameter == "Risk", Upper := Estimate+stats::qnorm(.975)*Standard_error]
     x$IC[[target_name]][[protocol_name]][[label_time_horizon]] <- ic
     return(x[])
 }
