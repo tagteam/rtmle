@@ -4,10 +4,12 @@
 \alias{plot_event_data}
 \title{Plot Event Data}
 \usage{
-plot_event_data(data)
+plot_event_data(data, title = "Event Data")
 }
 \arguments{
 \item{data}{Event data: a data frame containing an ID, Time, Delta, L0 and L column.}
+
+\item{title}{Title: a string that will be the title of the plot.}
 }
 \value{
 A plot of the survival data

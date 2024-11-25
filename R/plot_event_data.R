@@ -1,6 +1,7 @@
 #' @title Plot Event Data
 #'
 #' @param data Event data: a data frame containing an ID, Time, Delta, L0 and L column.
+#' @param title Title: a string that will be the title of the plot.
 #'
 #' @return A plot of the survival data
 #' @export
@@ -9,25 +10,30 @@
 #' data <- sim_event_data(10)
 #' plot_event_data(data)
 
-plot_event_data <- function(data) {
+plot_event_data <- function(data, title = "Event Data") {
+  data <- data.table::copy(data)
   Time <- ID <- Delta <- max_time <- NULL
-  data$ID <- as.factor(data$ID)
 
-  # We create a max_time variable
-  result <- data[, list(max_time = max(Time)), by = ID]
-  # We order according to the max_time variable
-  data.table::setorder(result, max_time)
-  # We define the levels of ID according to max_time
-  result[, ID := factor(ID, levels = ID)]
-  # We join the two data frames
-  result <- result[data, on = c("ID")][, max_time := NULL]
+  # We order according to Time
+  ordering <- data[, list(max_time = max(Time)), by = ID]
+  data.table::setorder(ordering, max_time)
 
-  plotdata <- rbind(data, data.frame("ID" = unique(data$ID), L0 = unique(data$L0),
-                                      "Time" = 0, "Delta" = "start", L = 0, A = unique(data$A)))
+  # We add the start time to the data set
+  data[, ID := factor(ID, levels = ordering$ID)]
 
+  if(ncol(data) == 5) {
+    plotdata <- rbind(data, data.table("ID" = unique(data$ID), L0 = unique(data$L0),
+                                       "Time" = 0, "Delta" = "start", A = unique(data$A)))
+  }
+  else{
+    plotdata <- rbind(data, data.table("ID" = unique(data$ID), L0 = unique(data$L0),
+                                       "Time" = 0, "Delta" = "start", L = 0, A = unique(data$A)))
+  }
+
+  # Shapes and color for the plot
   diff_events <- length(unique(plotdata$Delta))
   cols <- c("green4", "blue1", "orange1", "red2")
-  shapess <- c(20, 20, 20 , 20)
+  shapess <- rep(20, diff_events)
 
   ggplot2::ggplot(plotdata) +
     ggplot2::geom_line(ggplot2::aes(x = Time, y = ID, group = ID), color = "grey60", size = 0.7) +
@@ -37,7 +43,7 @@ plot_event_data <- function(data) {
     ggplot2::scale_shape_manual(values = shapess[1:diff_events]) +
     ggplot2::scale_color_manual(values = cols[1:diff_events]) +
     ggplot2::labs(
-      title = "Event Data",
+      title = title,
       x = "Time",
       y = "Patient ID",
       shape = "Event Type",
