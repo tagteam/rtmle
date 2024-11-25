@@ -10,10 +10,7 @@
 #' plot_event_data(data)
 
 plot_event_data <- function(data) {
-
-
   Time <- ID <- Delta <- max_time <- NULL
-
   data$ID <- as.factor(data$ID)
 
   # We create a max_time variable

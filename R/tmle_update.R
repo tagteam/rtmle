@@ -1,11 +1,11 @@
-### update_Q.R --- 
+### tmle_update.R --- 
 #----------------------------------------------------------------------
 ## Author: Thomas Alexander Gerds
 ## Created: Jul  3 2024 (13:54) 
 ## Version: 
-## Last-Updated: Nov 20 2024 (09:59) 
+## Last-Updated: Nov 25 2024 (08:05) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 33
+##     Update #: 47
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -14,23 +14,21 @@
 #----------------------------------------------------------------------
 ## 
 ### Code:
-update_Q <- function(Y,
-                     logitQ,
-                     cum.g, 
+tmle_update <- function(Y,
+                     offset,
+                     intervention_probs, 
                      outcome_free_and_uncensored,
-                     intervention.match) {
+                     intervention_match) {
     N <- length(Y)
-    off <- as.vector(logitQ)
-    if (length(cum.g) == 0) cum.g <- 1
+    if (length(intervention_probs) == 0) intervention_probs <- 1
     ## FIXME: are there better ways to remove those censored in current interval?
-    subjects_with_weights <- !is.na(Y) & outcome_free_and_uncensored & as.vector(intervention.match)
+    subjects_with_weights <- !is.na(Y) & outcome_free_and_uncensored & as.vector(intervention_match)
     weights <- numeric(N)
-    weights[subjects_with_weights] <- 1/cum.g[subjects_with_weights]
+    weights[subjects_with_weights] <- 1/intervention_probs[subjects_with_weights]
     if (anyNA(weights)) stop("NA in weights")
-    if (any(is.infinite(weights))) browser(skipCalls=1L)
     if (any(weights > 0)) {
-        f <- stats::as.formula("Y ~ -1 + S1 + offset(off)")
-        data.temp <- data.frame(Y, S1 = rep(1,N),off)
+        f <- stats::as.formula("Y ~ -1 + S1 + offset(offset)")
+        data.temp <- data.frame(Y, S1 = rep(1,N),offset)
         has_weight <- weights > 0
         weights <- as.vector(scale(weights[has_weight], center = FALSE))
         m <- stats::glm(formula = f,
@@ -38,14 +36,10 @@ update_Q <- function(Y,
                         data = data.frame(data.temp[has_weight, ],weights),
                         weights = weights,
                         control = stats::glm.control(maxit = 100))
-        ## browser(skipCalls=TRUE)
-        ## m <- ltmle.glm(f, data = data.temp[weights > 0, ], family = quasibinomial(),
-        ## weights = as.vector(scale(weights[weights > 0], center = FALSE)))
-        ## browser(skipCalls = TRUE)
         Qstar <- stats::predict(m, newdata = data.temp, type = "response")
     } else {
         warning("No TMLE update because no subject has positive weight")
-        Qstar <- stats::plogis(logitQ)
+        Qstar <- stats::plogis(offset)
         m <- "no Qstar fit because no subjects alive, uncensored, following intervention"
     }
     return(Qstar)
@@ -54,4 +48,4 @@ update_Q <- function(Y,
 
 
 ######################################################################
-### update_Q.R ends here
+### tmle_update.R ends here

@@ -10,7 +10,7 @@ Authors@R: c(
   )
 Description: Flexible implementation of the targeted minimum loss estimators.
              Some of the functions are readily optimized for large-scale register data. 
-License: GPL (>= 3) + file LICENSE
+License: GPL (>= 3)
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
@@ -30,6 +30,7 @@ Imports:
     ranger,
     matrixStats
 Suggests: 
+    R.rsp,
     testthat (>= 3.0.0),
     ltmle
 Config/testthat/edition: 3

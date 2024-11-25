@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul  1 2024 (09:11) 
 ## Version: 
-## Last-Updated: Nov 16 2024 (17:21) 
+## Last-Updated: Nov 22 2024 (13:59) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 367
+##     Update #: 370
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -78,9 +78,11 @@ run_rtmle <- function(x,
             # initialize estimate
             x$estimate[[target_name]][[protocol_name]] <- data.table(Target = target_name,
                                                                      Protocol = protocol_name,
-                                                                     "Time_horizon" = time_horizon,
+                                                                     Target_parameter = "Risk",
+                                                                     Time_horizon = time_horizon,
                                                                      Estimator = x$targets[[target_name]]$estimator,
-                                                                     Estimate = numeric(length(time_horizon)))
+                                                                     Estimate = numeric(length(time_horizon)),
+                                                                     P_value = NA)
             label_time_horizon <- paste0("time_horizon_",time_horizon)
             x$sequential_outcome_regression <- vector(mode = "list",length(run_these_targets))
             names(x$sequential_outcome_regression) = run_these_targets

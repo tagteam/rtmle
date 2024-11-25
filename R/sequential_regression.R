@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 30 2024 (14:30) 
 ## Version: 
-## Last-Updated: Nov 20 2024 (09:59) 
+## Last-Updated: Nov 25 2024 (07:49) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 206
+##     Update #: 216
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -21,7 +21,7 @@ sequential_regression <- function(x,
                                   learner,
                                   seed = seed,
                                   ...){
-    time = Time_horizon = Estimate = Standard_error = Lower = Upper = NULL
+    time = Time_horizon = Estimate = Target_parameter = Standard_error = Lower = Upper = NULL
     N <- NROW(x$prepared_data)
     # FIXME: inconsistent listing:
     intervention_table <- x$protocols[[protocol_name]]$intervention_table
@@ -153,20 +153,20 @@ sequential_regression <- function(x,
             # construction of clever covariates
             Wold <- rep(NA,length(Y))
             Wold[outcome_free_and_uncensored] <- lava::logit(fit_last)
-            # FIXME: this test of infinite weights needs more work
-            weights <- x$cumulative_intervention_probs[[protocol_name]][,ipos]
+            # FIXME: this test of infinite inverse_probability_weights needs more work
+            inverse_probability_weights <- x$cumulative_intervention_probs[[protocol_name]][,ipos]
             imatch <- (x$intervention_match[[protocol_name]][,intervention_table[time == j-1]$variable]%in% 1)
-            if (any(weights[!is.na(Y) & outcome_free_and_uncensored & as.vector(imatch)] == 0))
-                stop("Exactly zero weights encountered at the attempt to run the TMLE-update fluctuation model.\nYou may want to consider bounding the weights somehow.")
+            if (any(inverse_probability_weights[!is.na(Y) & outcome_free_and_uncensored & as.vector(imatch)] == 0))
+                stop("Exactly zero intervention probabilities encountered at the attempt to run the TMLE-update fluctuation model.\nYou may have to consider changing the target parameter or bounding the intervention probabilities somehow.\nGood luck!")
             if (inherits(try(
-                W <- update_Q(Y = Y,
-                              logitQ = Wold,
-                              cum.g = weights,
+                W <- tmle_update(Y = Y,
+                              offset = Wold,
+                              intervention_probs = inverse_probability_weights,
                               outcome_free_and_uncensored = outcome_free_and_uncensored,
-                              intervention.match = imatch)
+                              intervention_match = imatch)
             ),"try-error"))
                 stop(paste0("Fluctuation model used in the TMLE update step failed",
-                            " in the attempt to run function update_Q at time point: ",j))
+                            " in the attempt to run function tmle_update at time point: ",j))
             ## FIXME: why do we not need the following? 
             ## W[!outcome_free_and_uncensored] <- Y[!outcome_free_and_uncensored]
         }else{
@@ -205,11 +205,11 @@ sequential_regression <- function(x,
             value = x$prepared_data[[paste0(x$names$outcome,"_",j)]][which(!(outcome_free_and_uncensored))])
     }
     # g-formula and tmle estimator
-    x$estimate[[target_name]][[protocol_name]][Time_horizon == time_horizon, Estimate := mean(x$prepared_data$rtmle_predicted_outcome)]
+    x$estimate[[target_name]][[protocol_name]][Time_horizon == time_horizon & Target_parameter == "Risk", Estimate := mean(x$prepared_data$rtmle_predicted_outcome)]
     ic <- x$IC[[target_name]][[protocol_name]][[label_time_horizon]] + x$prepared_data$rtmle_predicted_outcome - mean(x$prepared_data$rtmle_predicted_outcome)
-    x$estimate[[target_name]][[protocol_name]][Time_horizon == time_horizon, Standard_error := sqrt(stats::var(ic)/N)]
-    x$estimate[[target_name]][[protocol_name]][Time_horizon == time_horizon, Lower := Estimate-stats::qnorm(.975)*Standard_error]
-    x$estimate[[target_name]][[protocol_name]][Time_horizon == time_horizon, Upper := Estimate+stats::qnorm(.975)*Standard_error]
+    x$estimate[[target_name]][[protocol_name]][Time_horizon == time_horizon & Target_parameter == "Risk", Standard_error := sqrt(stats::var(ic)/N)]
+    x$estimate[[target_name]][[protocol_name]][Time_horizon == time_horizon & Target_parameter == "Risk", Lower := Estimate-stats::qnorm(.975)*Standard_error]
+    x$estimate[[target_name]][[protocol_name]][Time_horizon == time_horizon & Target_parameter == "Risk", Upper := Estimate+stats::qnorm(.975)*Standard_error]
     x$IC[[target_name]][[protocol_name]][[label_time_horizon]] <- ic
     return(x[])
 }

@@ -2,16 +2,8 @@
 "_PACKAGE"
 
 ## usethis namespace: start
-#' @importFrom data.table .BY
-#' @importFrom data.table .EACHI
-#' @importFrom data.table .GRP
-#' @importFrom data.table .I
-#' @importFrom data.table .N
-#' @importFrom data.table .NGRP
-#' @importFrom data.table .SD
-#' @importFrom data.table :=
-#' @importFrom data.table copy
-#' @importFrom stats coef formula glm.control na.fail na.omit na.pass predict quasibinomial time
+#' @importFrom stats pnorm qnorm sd coef formula glm.control na.fail na.omit na.pass predict quasibinomial time
+#' @importFrom data.table .BY .EACHI .GRP .I .N .NGRP .SD := copy  data.table set setkey setkeyv setnames
 #' @importFrom survival Surv
 #' @importFrom ggplot2 autoplot
 #' @importFrom data.table data.table
