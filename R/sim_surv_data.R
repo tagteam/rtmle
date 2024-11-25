@@ -29,8 +29,7 @@ sim_surv_data <- function(N,
   }
   beta <- rbind(c(0, beta[1,],0), rep(0,4), c(0, beta[2,],0), rep(0,4))
   results <- sim_event_data(N, beta, c(0,eta,0), c(0,nu,0), at_risk)
-  results <- results %>%
-    dplyr::select(-L)
+  results <- results[, !c("L")]
 
   return(results)
 }

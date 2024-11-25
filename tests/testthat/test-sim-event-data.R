@@ -1,4 +1,3 @@
-library(dplyr)
 library(survival)
 set.seed(856)
 
@@ -22,7 +21,7 @@ at_risk2 <- function(x, k, L) {
 # Generating data
 data_test <- sim_event_data(N = 100)
 # Creating a k and m variable
-data_test <- data_test %>% mutate(k = ave(ID, ID, FUN = seq_along) - 1) #%>%
+#data_test <- data_test %>% mutate(k = ave(ID, ID, FUN = seq_along) - 1) #%>%
   #mutate(m = ave(ID, ID, FUN = seq_along))
 
 

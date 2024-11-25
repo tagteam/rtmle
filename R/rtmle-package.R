@@ -19,7 +19,6 @@
 #' @importFrom data.table setkey
 #' @importFrom data.table setkeyv
 #' @importFrom data.table setnames
-#' @importFrom dplyr %>%
 #' @importFrom ggplot2 autoplot
 #' @importFrom riskRegression predictRisk
 #' @importFrom survival Surv

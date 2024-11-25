@@ -86,7 +86,7 @@ sim_event_data <- function(N,         # Number of individuals
   }
 
   # Simulation
-  res <- data.frame(ID = numeric(), Time = numeric(), Delta = numeric(), L0 = numeric(),
+  res <- data.table(ID = numeric(), Time = numeric(), Delta = numeric(), L0 = numeric(),
                     L = numeric(), A = numeric())
 
   for(j in 1:N){
@@ -120,7 +120,7 @@ sim_event_data <- function(N,         # Number of individuals
       if(Delta == 3) L[k + 1] <- 1
       else L[k + 1] <- L[k]
     }
-    jth_res <- data.frame(ID = rep(j, k),
+    jth_res <- data.table(ID = rep(j, k),
                           Time = Ts,
                           Delta = Deltas,
                           L0 = rep(L0,k),
