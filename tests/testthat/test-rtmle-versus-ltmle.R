@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Nov 16 2024 (17:04) 
 ## Version: 
-## Last-Updated: Nov 20 2024 (10:17) 
+## Last-Updated: Nov 25 2024 (08:06) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 26
+##     Update #: 31
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -19,8 +19,8 @@ library(ltmle)
 library(rtmle)
 library(data.table)
 
-test_that("single time point compare rtmle with ltmle",
-{
+test_that("single time point compare rtmle with ltmle",{
+    set.seed(8)
     rexpit <- function(x) rbinom(n=length(x), size=1, prob=plogis(x))
     # Single time point Example
     n <- 1000
@@ -28,10 +28,10 @@ test_that("single time point compare rtmle with ltmle",
     A <- rexpit(-1 + 2 * W)
     Y <- rexpit(W + A)
     data <- data.frame(W, A, Y)
-    result1 <- ltmle(data, Anodes="A", Ynodes="Y", abar=1)
+    result1 <- ltmle(data, Anodes="A", Ynodes="Y", abar=1,estimate.time = FALSE,gbounds = c(0,1))
     summary(result1)
     x <- rtmle_init(intervals = 1,name_id = "id",name_outcome = "Y",name_competing = NULL,name_censoring = NULL)
-    rdata <- cbind(id = 1:n,data)
+    rdata <- cbind(id = 1:NROW(data),data)
     setDT(rdata)
     setnames(rdata,c("id","W","A_0","Y_1"))
     x$prepared_data <- rdata
@@ -40,6 +40,8 @@ test_that("single time point compare rtmle with ltmle",
     protocol(x) <- list(name = "A",treatment_variables = "A",intervention = 1)
     target(x) <- list(name = "Outcome_risk",strategy = "additive",estimator = "tmle",protocols = "A")
     x <- run_rtmle(x,refit = TRUE)
+    expect_equal(result1$fit$g[["A"]], as.matrix(x$models[[1]][["A_0"]]$fit))
+    ## all.equal(result1$fit$Q[["Y"]], as.matrix(x$models[[1]][["Y_1"]]$fit))
     expect_equal(result1$estimates[["tmle"]],x$estimate$Outcome_risk$A$Estimate,tolerance = 0.0001)
     expect_equal(result1$IC$tmle,x$IC$Outcome_risk$A$time_horizon_1,tolerance = 0.0001)
 })

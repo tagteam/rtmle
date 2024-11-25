@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 25 2024 (11:24)
 ## Version:
-## Last-Updated: Oct 14 2024 (07:15) 
+## Last-Updated: Nov 25 2024 (08:04) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 15
+##     Update #: 16
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -26,7 +26,7 @@
 #' @export
 "add_long_data<-" <- function(x,...,value){
     nv <- names(value)
-    if (!list(value) || any(sapply(value,is.data.frame) == FALSE) || any(is.na(nv)) || any(nv == ""))
+    if (!is.list(value) || any(sapply(value,is.data.frame) == FALSE) || any(is.na(nv)) || any(nv == ""))
         stop("value must be a named list of data.frames (or data.tables or tibbles)")
     for (name in nv){
         d <- value[[name]]

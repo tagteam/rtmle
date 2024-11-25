@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 29 2024 (10:44) 
 ## Version: 
-## Last-Updated: Nov 24 2024 (08:09) 
+## Last-Updated: Nov 24 2024 (08:17) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 73
+##     Update #: 75
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -48,7 +48,7 @@
 #' @export
 #' @method summary rtmle                 
 summary.rtmle <- function(object,targets,reference = NULL,digits = 1,...){
-    Estimate <- Upper <- Lower <- Target_parameter <- x <- NULL
+    Estimate <- Upper <- Lower <- Target_parameter <- Time_horizon <- x <- NULL
     if (length(object$estimate) == 0) {
         message("The object contains no estimates. To obtain estimates You have to call run_rtmle first. See examples.")
         return(NULL)
