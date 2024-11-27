@@ -1,9 +1,11 @@
+#' Function to plot simulated event data.
+#'
 #' @title Plot Event Data
 #'
 #' @param data Event data: a data frame containing an ID, Time, Delta, L0 and L column.
 #' @param title Title: a string that will be the title of the plot.
 #'
-#' @return A plot of the survival data
+#' @return A plot of the event data
 #' @export
 #'
 #' @examples

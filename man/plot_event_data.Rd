@@ -12,10 +12,10 @@ plot_event_data(data, title = "Event Data")
 \item{title}{Title: a string that will be the title of the plot.}
 }
 \value{
-A plot of the survival data
+A plot of the event data
 }
 \description{
-Plot Event Data
+Function to plot simulated event data.
 }
 \examples{
 data <- sim_event_data(10)
