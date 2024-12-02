@@ -20,15 +20,13 @@ sim_surv_data <- function(N,
                          nu = rep(1.1,2)
 ){
 
-  at_risk <- function(x, k, L) {
-    if(x == 1 | x == 2) return(1)
-    else return(0)
-  }
+  at_risk <- function(i) c(1,1)
+
   if(is.null(beta)){
     beta <- matrix(0, ncol = 2, nrow = 2)
   }
   beta <- rbind(c(0, beta[1,],0), rep(0,4), c(0, beta[2,],0), rep(0,4))
-  results <- sim_event_data(N, beta, c(0,eta,0), c(0,nu,0), at_risk)
+  results <- vec_sim_event_data(N, beta, c(0,eta,0), c(0,nu,0), at_risk)
   results <- results[, !c("L")]
 
   return(results)

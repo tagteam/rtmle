@@ -20,15 +20,14 @@ sim_comp_risk_data <- function(N,
                                nu = rep(1.1,3)
 ){
 
-  at_risk <- function(x, k, L) {
-  if(x == 0 | x == 1 | x == 2) return(1)
-    else return(0)
-  }
+  at_risk <- function(i) c(1,1,1)
+
   if(is.null(beta)){
     beta <- matrix(0, ncol = 3, nrow = 2)
   }
+
   beta <- rbind(c(beta[1,],0), rep(0,4), c(beta[2,],0), rep(0,4))
-  results <- sim_event_data(N, beta, c(eta,0), c(nu,0), at_risk, term_deltas = c(0,1,2))
+  results <- vec_sim_event_data(N, beta, c(eta,0), c(nu,0), at_risk, term_deltas = c(0,1,2))
   results <- results[, !c("L")]
 
   return(results)

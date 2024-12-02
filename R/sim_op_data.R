@@ -20,5 +20,5 @@ sim_op_data <- function(N,
                         beta = NULL,
                         eta = rep(0.1,4),
                         nu = rep(1.1,4)){
-  sim_event_data(N, beta = beta, eta = eta, nu = nu)
+  vec_sim_event_data(N, beta = beta, eta = eta, nu = nu)
 }
