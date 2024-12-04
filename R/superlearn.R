@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Oct 31 2024 (07:29) 
 ## Version: 
-## Last-Updated: Nov 20 2024 (10:43) 
+## Last-Updated: Dec  4 2024 (14:39) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 97
+##     Update #: 105
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -83,7 +83,6 @@ superlearn <- function(folds,
     for (this_learner_name in names(learners))
         set(level_one_data,j = this_learner_name,value = numeric(N))
     for (k in 1:folds){
-        ## print(k)
         learn_data <- data[split == k]
         i_data <- intervened_data[split != k]
         learning_args <- list(character_formula = character_formula,
@@ -122,16 +121,13 @@ superlearn <- function(folds,
                     predicted_k <- do.call(this_learner[[learner_fun_pos]],
                                            c(learner_args,this_learner_args))
                 ),"try-error")){
-                    ## browser(skipCalls=1L)
                     stop(paste0("Learning failed in fold ",k," with learner ",this_learner))
                 }
+                set(level_one_data,
+                    j = this_learner_name,
+                    i = which(split != k),
+                    value = as.vector(predicted_k))
             }
-            ## if (any(is.na(predicted_k))) browser(skipCalls=1L)
-            set(level_one_data,
-                j = this_learner_name,
-                i = which(split != k),
-                value = predicted_k)
-
         }
     }
     # discrete super learner (for now)

@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 3 2024 (13:46)
 ## Version:
-## Last-Updated: Nov  2 2024 (07:23) 
+## Last-Updated: Dec  4 2024 (14:15) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 18
+##     Update #: 20
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -31,14 +31,29 @@
     stopifnot(is.list(value))
     stopifnot(all(c("name","treatment_variables","intervention")%in%names(value)))
     intervention_times <- x$time[-length(x$time)]
-    x$protocols[[value$name]]$intervention_table <- data.table(time = intervention_times,
-                                                               variable = paste0(value$treatment_variables,"_",intervention_times),
-                                                               value = value$intervention)
-    x$protocols[[value$name]]$treatment_variables <- value$treatment_variables
-    if (length(value$intervene_function)>0){
-        x$protocols[[value$name]]$intervene_function <- value$intervene_function
+    tv <- value$treatment_variables
+    if (length(grep("_[0-9]+$",tv))>0){
+        varnames <- unique(sub("_[0-9]+$",tv))
+        if (length(varnames)>1)
+            if (is.list(tv)) {
+                stopifnot(length(unique(sapply(tv,length))))
+                tv <- do.call(cbind,tv)
+            }else{
+                tv <- do.call(cbind,lapply(varnames,function(v)paste0(v,"_",intervention_times)))
+            }
+        it <- cbind(data.table(time = intervention_times),
+                    tv,
+                    data.table(value = value$intervention))
     }else{
-        x$protocols[[value$name]]$intervene_function <- "intervene"
+        x$protocols[[value$name]]$treatment_variables <- tv
+        x$protocols[[value$name]]$intervention_table <- data.table(time = intervention_times,
+                                                                   variable = paste0(value$treatment_variables,"_",intervention_times),
+                                                                   value = value$intervention)
+        if (length(value$intervene_function)>0){
+            x$protocols[[value$name]]$intervene_function <- value$intervene_function
+        }else{
+            x$protocols[[value$name]]$intervene_function <- "intervene"
+        }
     }
     x
 }

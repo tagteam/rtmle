@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 30 2024 (14:30) 
 ## Version: 
-## Last-Updated: Nov 25 2024 (07:49) 
+## Last-Updated: Dec  4 2024 (14:17) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 216
+##     Update #: 218
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -156,14 +156,16 @@ sequential_regression <- function(x,
             # FIXME: this test of infinite inverse_probability_weights needs more work
             inverse_probability_weights <- x$cumulative_intervention_probs[[protocol_name]][,ipos]
             imatch <- (x$intervention_match[[protocol_name]][,intervention_table[time == j-1]$variable]%in% 1)
-            if (any(inverse_probability_weights[!is.na(Y) & outcome_free_and_uncensored & as.vector(imatch)] == 0))
+            if (any(inverse_probability_weights[!is.na(Y) & outcome_free_and_uncensored & as.vector(imatch)] == 0)){
+                browser(skipCalls=1L)
                 stop("Exactly zero intervention probabilities encountered at the attempt to run the TMLE-update fluctuation model.\nYou may have to consider changing the target parameter or bounding the intervention probabilities somehow.\nGood luck!")
+            }
             if (inherits(try(
                 W <- tmle_update(Y = Y,
-                              offset = Wold,
-                              intervention_probs = inverse_probability_weights,
-                              outcome_free_and_uncensored = outcome_free_and_uncensored,
-                              intervention_match = imatch)
+                                 offset = Wold,
+                                 intervention_probs = inverse_probability_weights,
+                                 outcome_free_and_uncensored = outcome_free_and_uncensored,
+                                 intervention_match = imatch)
             ),"try-error"))
                 stop(paste0("Fluctuation model used in the TMLE update step failed",
                             " in the attempt to run function tmle_update at time point: ",j))
