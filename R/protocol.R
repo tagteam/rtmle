@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 3 2024 (13:46)
 ## Version:
-## Last-Updated: Dec  4 2024 (14:15) 
+## Last-Updated: Dec  5 2024 (11:40) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 20
+##     Update #: 23
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -24,7 +24,13 @@
 ##' \itemize{
 ##' \item \code{name}: the name of the protocol
 ##' \item \code{variable}: the name(s) of the variable(s) that the protocols intervenes upon
-##' \item \code{intervention}: function which determines the value(s) of the variable(s) under the intervention
+##' \item \code{intervention}: A matrix or a function. If it is a matrix it should contain the values
+##' that the variables are set to under the intervention in the columns and the time points in the rows.
+##' If the values are the same for all time points it is sufficient to provide a single value per variable.
+##' See examples. If it is a function, it will be called from \code{intervention_probabilities} with two arguments: 
+##' the current time interval and the current history of all variables. The function determines the value(s)
+##' of the treatment variable(s) under the intervention and should return a matrix with as many columns as there are
+##' treatment variables.
 ##' }
 ##' @export
 "protocol<-" <- function(x,...,value) {
