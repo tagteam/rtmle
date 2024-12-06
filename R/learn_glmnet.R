@@ -55,7 +55,7 @@ learn_glmnet <- function(character_formula,
     }else{
         # forcing cv
         stopifnot(selector%in%c("lambda.min","lambda.1se"))
-        args <- c(list(cv = TRUE),list(formula = character_formula,data = data,family = "gaussian",...))
+        args <- c(list(cv = TRUE),list(formula = character_formula,data = model_frame,family = "gaussian",...))
         args <- args[unique(names(args))]
         fit <- do.call(glm_net,args)
         selected.lambda <- fit$fit[[selector]]
