@@ -14,16 +14,20 @@ the events Operation, Death, Censoring, and Covariate Change. The rows represent
 the event number \eqn{k}, treatment \eqn{A}, and the indicator \eqn{L} for change in the covariate process.
 Default is set to 0.}
 
-\item{eta}{Vector of length 4 of shape parameters for the Weibull hazard with parameterization
+\item{eta}{Vector of length 4 of shape parameters for the Weibull intensity with parameterization
 \deqn{\eta \nu t^{\nu - 1}}. Default is set to 0.1 for all events.}
 
 \item{nu}{Vector of scale parameters for the Weibull hazard. Default is set to 0.1 for all events.}
 }
 \value{
-Data frame containing the simulated operation data
+Data frame containing the simulated data. There is a column for ID, time of event (Time),
+event type (Delta), baseline covariate (L0), additional covariate (L) and Treatment (A).
 }
 \description{
-Function to simulate operation data.
+Function to simulate data from an Operation setting. 4 different types of events are simulated, chosen to represent
+Operation (0),Death (1), Censoring(2) and Change in Covariate Process(4). Death and Censoring are terminal events
+and Operation and Change in Covariate Process can occur once. The intensities of the various events depend upon
+previous events and the pre specified \eqn{beta}, \eqn{nu} and \eqn{eta} parameters.
 }
 \examples{
 sim_op_data(10)

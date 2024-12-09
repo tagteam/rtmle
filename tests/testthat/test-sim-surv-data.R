@@ -4,7 +4,7 @@ library(testthat)
 test_that("sim_surv_data simulates data in the right way",{
   set.seed(857)
   beta <- matrix(rnorm(4,0,3), ncol = 2, nrow = 2)
-  data <- sim_surv_data(N = 300, beta = beta)
+  data <- sim_surv_data(N = 400, beta = beta)
 
   survfit_death <- coxph(Surv(Time, Delta == 1) ~ L0 + A, data = data)
   expect_true(confint(survfit_death)[1,1] <= beta[1,1] & beta[1,1] <= confint(survfit_death)[1,2])
