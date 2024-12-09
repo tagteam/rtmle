@@ -23,7 +23,7 @@ sim_comp_risk_data <- function(N,
                                nu = rep(1.1,3)
 ){
 
-  at_risk <- function(i) c(1,1,1,0)
+  at_risk <- function(i, L, k) c(1,1,1,0)
 
   if(is.null(beta)){
     beta <- matrix(0, ncol = 3, nrow = 2)

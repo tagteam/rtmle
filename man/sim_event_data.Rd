@@ -28,8 +28,9 @@ the event number \eqn{k}, treatment \eqn{A}, and the indicator \eqn{L} for chang
 
 \item{at_risk}{At risk function. Default is set to the operation setting. A survival or competing risk
 setting can be specified as well. The \code{at_risk} function is an indicator of whether an individual is at risk
-for a specific event. The function takes as input i, the index belonging to a particular individual, and outputs
-a vector of 0's and 1's corresponding to whether the individual is at risk for a particular event.}
+for a specific event. The function takes as input i (the index belonging to a particular individual) L (indicator
+for a change in covariate) and k (count of previous events).The function returns a vector of 0's and 1's
+corresponding to whether individual i is at risk for a particular event.}
 
 \item{term_deltas}{Terminal events. Default is set so that event 1 and 2 are terminal events.}
 }
