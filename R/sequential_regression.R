@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 30 2024 (14:30) 
 ## Version: 
-## Last-Updated: Dec  4 2024 (14:17) 
+## Last-Updated: Dec  9 2024 (11:17) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 218
+##     Update #: 219
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -151,8 +151,8 @@ sequential_regression <- function(x,
         if (length(x$targets[[target_name]]$estimator) == 0 || x$targets[[target_name]]$estimator == "tmle"){
             # use only data from subjects who are uncensored in current interval
             # construction of clever covariates
-            Wold <- rep(NA,length(Y))
-            Wold[outcome_free_and_uncensored] <- lava::logit(fit_last)
+            W_previous <- rep(NA,length(Y))
+            W_previous[outcome_free_and_uncensored] <- lava::logit(fit_last)
             # FIXME: this test of infinite inverse_probability_weights needs more work
             inverse_probability_weights <- x$cumulative_intervention_probs[[protocol_name]][,ipos]
             imatch <- (x$intervention_match[[protocol_name]][,intervention_table[time == j-1]$variable]%in% 1)
@@ -162,7 +162,7 @@ sequential_regression <- function(x,
             }
             if (inherits(try(
                 W <- tmle_update(Y = Y,
-                                 offset = Wold,
+                                 offset = W_previous,
                                  intervention_probs = inverse_probability_weights,
                                  outcome_free_and_uncensored = outcome_free_and_uncensored,
                                  intervention_match = imatch)

@@ -14,8 +14,14 @@ protocol(x, ...) <- value
 \item{value}{list with three forced elements:
 \itemize{
 \item \code{name}: the name of the protocol
-\item \code{variable}: the name(s) of the variable(s) that the protocols intervenes upon
-\item \code{intervention}: function which determines the value(s) of the variable(s) under the intervention
+\item \code{treatment_variables}: the name(s) of the variable(s) that the protocols intervenes upon
+\item \code{intervention}: A matrix or a function. If it is a matrix it should contain the values
+that the variables are set to under the intervention as columns and one row for each time point.
+If the intervened values are the same for all time points it is sufficient to provide a single value per variable.
+See examples. If it is a function, it will be called from \code{intervention_probabilities} with two arguments:
+the current time interval and the current history of all variables. The function determines the value(s)
+of the treatment variable(s) under the intervention and should return a matrix with as many columns as there are
+treatment variables.
 }}
 }
 \description{
