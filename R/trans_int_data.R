@@ -16,21 +16,23 @@ trans_int_data <- function(data) {
 
   k <- NULL; ID <- NULL; tstart <- NULL; tstop <- NULL; Time <- NULL;
 
+  data <- copy(data)
+
   # Creating a k variable
-  data[, k:= stats::ave(ID, ID, FUN = seq_along) - 1]
+  data[, k:= stats::ave(ID, ID, FUN = seq_along)]
   max_k <- max(data$k)
 
   data_k <- list()
-  data_k[[1]] <- data[data$k == 0,]
+  data_k[[1]] <- data[data$k == 1,]
 
   data_k[[1]][, tstart := 0]
   data_k[[1]][, tstop := Time]
 
-  for(i in 1:max_k){
-    data_k[[i+1]] <- data[data$k == i,]
+  for(i in 2:max_k){
+    data_k[[i]] <- data[data$k == i,]
 
-    data_k[[i+1]][, tstart := data_k[[i]][data_k[[i]]$ID %in% data_k[[i+1]]$ID,]$tstop]
-    data_k[[i+1]][, tstop := Time]
+    data_k[[i]][, tstart := data_k[[i-1]][data_k[[i-1]]$ID %in% data_k[[i]]$ID,]$tstop]
+    data_k[[i]][, tstop := Time]
   }
 
   return(do.call(rbind, data_k))
