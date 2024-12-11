@@ -18,18 +18,19 @@ plot_event_data <- function(data, title = "Event Data") {
 
   # We order according to Time
   ordering <- data[, list(max_time = max(Time)), by = ID]
-  data.table::setorder(ordering, max_time)
+  setkey(ordering, max_time)
 
   # We add the start time to the data set
   data[, ID := factor(ID, levels = ordering$ID)]
 
   if(ncol(data) == 5) {
     plotdata <- rbind(data, data.table("ID" = unique(data$ID), L0 = unique(data$L0),
-                                       "Time" = 0, "Delta" = "start", A = unique(data$A)))
+                                       "Time" = 0, "Delta" = "start", A0 = unique(data$A0)))
   }
   else{
     plotdata <- rbind(data, data.table("ID" = unique(data$ID), L0 = unique(data$L0),
-                                       "Time" = 0, "Delta" = "start", L = 0, A = unique(data$A)))
+                                       "Time" = 0, "Delta" = "start", L = 0,
+                                       A = 0, A0 = unique(data$A)))
   }
 
   # Shapes and color for the plot

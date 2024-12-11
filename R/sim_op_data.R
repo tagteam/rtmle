@@ -1,5 +1,5 @@
 #' Function to simulate data from an Operation setting. 4 different types of events are simulated, chosen to represent
-#' Operation (0),Death (1), Censoring(2) and Change in Covariate Process(4). Death and Censoring are terminal events
+#' Operation (0),Death (1), Censoring(2) and Change in Covariate Process(3). Death and Censoring are terminal events
 #' and Operation and Change in Covariate Process can occur once. The intensities of the various events depend upon
 #' previous events and the pre specified \eqn{beta}, \eqn{nu} and \eqn{eta} parameters.
 #'
@@ -8,14 +8,15 @@
 #' @param N A double of the number of individuals
 #' @param beta A 4X4 matrix of doubles for the effects on the intensities. The columns represent
 #' the events Operation, Death, Censoring, and Covariate Change. The rows represent the baseline covariate \eqn{L0},
-#' the event number \eqn{k}, treatment \eqn{A}, and the indicator \eqn{L} for change in the covariate process.
+#' the indicator for operation \eqn{A}, baseline treatment \eqn{A0}, and the indicator for change in the covariate process \eqn{L}.
 #' Default is set to 0.
 #' @param eta Vector of length 4 of shape parameters for the Weibull intensity with parameterization
 #' \deqn{\eta \nu t^{\nu - 1}}. Default is set to 0.1 for all events.
 #' @param nu Vector of scale parameters for the Weibull hazard. Default is set to 0.1 for all events.
 #'
 #' @return  Data frame containing the simulated data. There is a column for ID, time of event (Time),
-#' event type (Delta), baseline covariate (L0), additional covariate (L) and Treatment (A).
+#' event type (Delta), baseline covariate (L0), additional covariate (L), Baseline Treatment (A0) and
+#' Treatment Process (A).
 #' @export
 #'
 #' @examples
