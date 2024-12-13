@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 30 2024 (14:30) 
 ## Version: 
-## Last-Updated: Dec 13 2024 (08:24) 
+## Last-Updated: Dec 13 2024 (08:38) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 227
+##     Update #: 234
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -90,6 +90,12 @@ sequential_regression <- function(x,
         }else{
             current_constants <- NULL
         }
+        # check if there is variability in the outcome variable
+        if (outcome_variables[[j]]%in%current_constants)
+            stop(paste0("No variation in the outcome variable: ",
+                        outcome_variables[[j]],
+                        ".\nCheck the prepared data:\nx$prepared_data[x$followup$last_interval>=",
+                        j-1,",.(",x$names$id,",",outcome_variables[[j]],")]"))
         # remove constant predictor variables
         interval_outcome_formula_vars <- all.vars(stats::formula(interval_outcome_formula))
         if (length(current_constants)>0){
