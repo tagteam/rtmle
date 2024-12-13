@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 30 2024 (14:30) 
 ## Version: 
-## Last-Updated: Dec  9 2024 (11:17) 
+## Last-Updated: Dec 13 2024 (08:24) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 219
+##     Update #: 227
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -26,13 +26,8 @@ sequential_regression <- function(x,
     # FIXME: inconsistent listing:
     intervention_table <- x$protocols[[protocol_name]]$intervention_table
     intervention_match <- x$intervention_match[[protocol_name]]
-    if (length(x$times)>1){
-        treatment_variables <- sapply(x$times[-length(x$times)],function(tk){
-            paste0(x$protocols[[protocol_name]]$treatment_variables,"_",tk)
-        })
-    } else{
-        treatment_variables <- x$protocols[[protocol_name]]$treatment_variables
-    }
+    # FIXME: treatment_variables=intervention_table$variable?
+    treatment_variables <- x$protocols[[protocol_name]]$intervention_table[time%in%0:time_horizon]$variable
     if (length(x$names$censoring)>0){
         censoring_variables <- paste0(x$names$censoring,"_",1:time_horizon)
     }else{

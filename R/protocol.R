@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 3 2024 (13:46)
 ## Version:
-## Last-Updated: Dec  6 2024 (13:59) 
+## Last-Updated: Dec 13 2024 (08:13) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 26
+##     Update #: 29
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -39,7 +39,7 @@
     intervention_times <- x$time[-length(x$time)]
     tv <- value$treatment_variables
     if (length(grep("_[0-9]+$",tv))>0){
-        varnames <- unique(sub("_[0-9]+$",tv))
+        varnames <- unique(sub("_[0-9]+$","",tv))
     }else{
         varnames <- value$treatment_variables
     }
@@ -55,7 +55,7 @@
     }
     else{
         if (lengths(tv) == 1) {
-            tv <- paste0(tv,"_",intervention_times)
+            tv_seq <- paste0(tv,"_",intervention_times)
         } else {
             if (lengths(tv) != lengths(intervention_times)){
                 stop(paste0("Argument treatment_variables has the wrong length. You can either provide",
@@ -66,7 +66,7 @@
         }
     }
     it <- cbind(data.table(time = intervention_times),
-                tv,
+                variable = tv_seq,
                 data.table(value = value$intervention))
     if (length(value$intervene_function)>0){
         x$protocols[[value$name]]$intervene_function <- value$intervene_function
