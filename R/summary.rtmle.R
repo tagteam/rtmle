@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 29 2024 (10:44) 
 ## Version: 
-## Last-Updated: Nov 24 2024 (08:17) 
+## Last-Updated: Dec  5 2024 (11:40) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 75
+##     Update #: 77
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -97,7 +97,7 @@ summary.rtmle <- function(object,targets,reference = NULL,digits = 1,...){
                     risk_ratio_upper <- risk_ratio_estimate*exp(qnorm(.975)*risk_ratio_log_se)
                     e <- data.table(Target = rep(target_name,2),
                                     Protocol = rep(protocol_name, 2),
-                                    Target_parameter=c("Risk_difference", "Risk ratio"),
+                                    Target_parameter=c("Risk_difference", "Risk_ratio"),
                                     Time_horizon = tp,
                                     Estimator = object$estimate[[target_name]][[ref]]$Estimator,
                                     Reference = rep(reference, 2),

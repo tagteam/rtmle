@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Oct 17 2024 (09:26) 
 ## Version: 
-## Last-Updated: Dec  4 2024 (14:27) 
+## Last-Updated: Dec 13 2024 (08:22) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 129
+##     Update #: 151
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -36,13 +36,7 @@ intervention_probabilities <- function(x,
     eval_times <- x$times[-length(x$times)]
     ## if max_time_horizon = 5 then we need propensities up to time 4
     eval_times <- eval_times[eval_times < max_time_horizon]
-    if (length(x$times)>1){
-        treatment_variables <- sapply(eval_times,function(tk){
-            paste0(x$protocols[[protocol_name]]$treatment_variables,"_",tk)
-        })
-    } else{
-        treatment_variables <- x$protocols[[protocol_name]]$treatment_variables
-    }
+    treatment_variables <- x$protocols[[protocol_name]]$intervention_table[time%in%eval_times]$variable
     if (length(x$names$censoring)>0){
         censoring_variables <- paste0(x$names$censoring,"_",1:max_time_horizon)
     }else{
@@ -114,18 +108,17 @@ intervention_probabilities <- function(x,
                                     if (inherits(try(
                                         predicted_values <- do.call("superlearn",c(args,list(seed = seed))),silent = FALSE),
                                         "try-error")) {
-                                        ## browser(skipCalls=1L)
                                         stop(paste0("Failed to superlearn/crossfit with formula ",ff))
                                     }
                                 }else{
-                                    ## if (j == 1) browser(skipCalls=1L)
                                     if (inherits(try(
                                         predicted_values <- do.call(learner,args),silent = FALSE),
                                         "try-error")) {
-                                        ## browser(skipCalls=1L)
                                         stop(paste0("Failed to learn/predict with formula ",ff))
                                     }
                                 }
+                            }else{
+                                stop(paste0("Cannot see a formula for estimating regression of ",G," at x$models[['",protocol_name,"']][['",G,"']]$formula"))
                             }
                             x$models[[protocol_name]][[G]]$fit <- attr(predicted_values,"fit")
                             data.table::setattr(predicted_values,"fit",NULL)
@@ -153,7 +146,7 @@ intervention_probabilities <- function(x,
         NCOL(x$intervention_match[[protocol_name]])<length(eval_times)){
         intervention_match <- matrix(0,ncol = length(treatment_variables),nrow = N)
         for(j in eval_times){
-           if (j == 0)
+            if (j == 0)
                 intervention_match[,j+1] <- previous <- (x$prepared_data[[intervention_table[j+1]$variable]] %in% c(intervention_table[j+1][["value"]],NA))
             else
                 intervention_match[,j+1] <- previous <- previous*(x$prepared_data[[intervention_table[j+1]$variable]] %in% c(intervention_table[j+1][["value"]],NA))

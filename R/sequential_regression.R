@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 30 2024 (14:30) 
 ## Version: 
-## Last-Updated: Dec  4 2024 (14:17) 
+## Last-Updated: Dec 13 2024 (08:38) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 218
+##     Update #: 234
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -26,13 +26,8 @@ sequential_regression <- function(x,
     # FIXME: inconsistent listing:
     intervention_table <- x$protocols[[protocol_name]]$intervention_table
     intervention_match <- x$intervention_match[[protocol_name]]
-    if (length(x$times)>1){
-        treatment_variables <- sapply(x$times[-length(x$times)],function(tk){
-            paste0(x$protocols[[protocol_name]]$treatment_variables,"_",tk)
-        })
-    } else{
-        treatment_variables <- x$protocols[[protocol_name]]$treatment_variables
-    }
+    # FIXME: treatment_variables=intervention_table$variable?
+    treatment_variables <- x$protocols[[protocol_name]]$intervention_table[time%in%0:time_horizon]$variable
     if (length(x$names$censoring)>0){
         censoring_variables <- paste0(x$names$censoring,"_",1:time_horizon)
     }else{
@@ -95,6 +90,12 @@ sequential_regression <- function(x,
         }else{
             current_constants <- NULL
         }
+        # check if there is variability in the outcome variable
+        if (outcome_variables[[j]]%in%current_constants)
+            stop(paste0("No variation in the outcome variable: ",
+                        outcome_variables[[j]],
+                        ".\nCheck the prepared data:\nx$prepared_data[x$followup$last_interval>=",
+                        j-1,",.(",x$names$id,",",outcome_variables[[j]],")]"))
         # remove constant predictor variables
         interval_outcome_formula_vars <- all.vars(stats::formula(interval_outcome_formula))
         if (length(current_constants)>0){
@@ -151,8 +152,8 @@ sequential_regression <- function(x,
         if (length(x$targets[[target_name]]$estimator) == 0 || x$targets[[target_name]]$estimator == "tmle"){
             # use only data from subjects who are uncensored in current interval
             # construction of clever covariates
-            Wold <- rep(NA,length(Y))
-            Wold[outcome_free_and_uncensored] <- lava::logit(fit_last)
+            W_previous <- rep(NA,length(Y))
+            W_previous[outcome_free_and_uncensored] <- lava::logit(fit_last)
             # FIXME: this test of infinite inverse_probability_weights needs more work
             inverse_probability_weights <- x$cumulative_intervention_probs[[protocol_name]][,ipos]
             imatch <- (x$intervention_match[[protocol_name]][,intervention_table[time == j-1]$variable]%in% 1)
@@ -162,7 +163,7 @@ sequential_regression <- function(x,
             }
             if (inherits(try(
                 W <- tmle_update(Y = Y,
-                                 offset = Wold,
+                                 offset = W_previous,
                                  intervention_probs = inverse_probability_weights,
                                  outcome_free_and_uncensored = outcome_free_and_uncensored,
                                  intervention_match = imatch)

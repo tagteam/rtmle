@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul  1 2024 (09:11) 
 ## Version: 
-## Last-Updated: Nov 22 2024 (13:59) 
+## Last-Updated: Dec 10 2024 (19:28) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 370
+##     Update #: 371
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -47,9 +47,9 @@ run_rtmle <- function(x,
         run_these_targets <- available_targets
     }
     if (missing(time_horizon)) {
-        time_horizon <- max(x$time)
+        time_horizon <- max(x$times)
     } else {
-        stopifnot(all(time_horizon <= max(x$time) & time_horizon>0))
+        stopifnot(all(time_horizon <= max(x$times) & time_horizon>0))
     }
     if (length(learner)>1){
         learners <- parse_learners(learner)

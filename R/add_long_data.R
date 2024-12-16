@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 25 2024 (11:24)
 ## Version:
-## Last-Updated: Nov 25 2024 (08:04) 
+## Last-Updated: Dec 10 2024 (19:11) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 16
+##     Update #: 17
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -31,7 +31,7 @@
     for (name in nv){
         d <- value[[name]]
         if (!(x$names$id %in% names(d)))
-            warning(paste0("Element ",name," lacks the identifier variable ",x$names$id," and is not added."))
+            warning(paste0("Element ",name," does not have a variable called ",x$names$id," and is not added."))
         else{
             x$register_data <- copy(d)
         }

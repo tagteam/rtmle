@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 3 2024 (13:46)
 ## Version:
-## Last-Updated: Oct 19 2024 (10:04) 
+## Last-Updated: Dec 12 2024 (18:34) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 30
+##     Update #: 32
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -38,7 +38,7 @@
         exclude_variables <- value[["exclude_variables"]]
     else
         exclude_variables <- NULL
-    all_treatment_variables <- sapply(x$protocols,function(u)u$treatment_variables)
+    all_treatment_variables <- c(sapply(x$protocols,function(u)u$treatment_variables))
     if (length(value$strategy) == 1 && value$strategy == "additive"){
         # FIXME: some formulas could be shared across protocols
         for (protocol in value$protocols){
