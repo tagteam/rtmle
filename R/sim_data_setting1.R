@@ -24,7 +24,7 @@
 #' sim_data_setting1(10)
 sim_data_setting1 <- function(N, eta = rep(0.1,4), nu = rep(1.1,4), followup = Inf){
 
-  Time <- NULL; A0 <- NULL
+  Time <- A0 <- ID <- NULL
 
   beta <- matrix(ncol = 4, nrow = 4)
 
@@ -49,7 +49,32 @@ sim_data_setting1 <- function(N, eta = rep(0.1,4), nu = rep(1.1,4), followup = I
   beta[2,4] <- -0.5
 
   data <- sim_event_data(N, beta = beta, eta = eta, nu = nu)
-  data <- data[Time < followup]
   data[, A0 := NULL]
+
+  # Incorporating followup time
+  if(followup < Inf){
+
+    # Identifying censored individuals
+    cens <- unique(data[Time > followup]$ID)
+    # Creating new rows for censored individuals
+    cens_data <- data[ID %in% cens & Time <= followup]
+
+    n <- length(cens)
+    Delta <- rep("C", n)
+    L0 <- unique(data[Time > followup]$L0)
+    Time <- rep(followup, n)
+
+    # The A/L value right before censoring
+    A <- numeric(n)
+    A[cens %in% cens_data$ID] <- cens_data[, max(A), by=ID]$V1
+    A[! cens %in% cens_data$ID] <- 0
+    L <- numeric(n)
+    L[cens %in% cens_data$ID] <- cens_data[, max(L), by=ID]$V1
+    L[! cens %in% cens_data$ID] <- 0
+
+    data <- rbind(data[Time <= followup], data.table(ID = cens, Time, Delta, L0, L, A))
+    setkey(data, ID)
+  }
+
   return(data)
 }

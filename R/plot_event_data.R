@@ -13,8 +13,9 @@
 #' plot_event_data(data)
 
 plot_event_data <- function(data, title = "Event Data") {
+  n <- length(unique(data$ID))
   data <- data.table::copy(data)
-  Time <- ID <- Delta <- max_time <- NULL
+  max_time <- NULL
 
   # We order according to Time
   ordering <- data[, list(max_time = max(Time)), by = ID]
@@ -23,15 +24,15 @@ plot_event_data <- function(data, title = "Event Data") {
   # We add the start time to the data set
   data[, ID := factor(ID, levels = ordering$ID)]
 
-  if(ncol(data) == 5) {
-    plotdata <- rbind(data, data.table("ID" = unique(data$ID), L0 = unique(data$L0),
-                                       "Time" = 0, "Delta" = "start", A0 = unique(data$A0)))
-  }
-  else{
-    plotdata <- rbind(data, data.table("ID" = unique(data$ID), L0 = unique(data$L0),
-                                       "Time" = 0, "Delta" = "start", L = 0,
-                                       A = 0, A0 = unique(data$A)))
-  }
+  A0 <- unique(data$A0)
+  Delta <- rep("start", n)
+  ID <- unique(data$ID)
+  L0 <- unique(data$L0)
+  Time <- rep(0, n)
+  A <- if("A" %in% colnames(data)) rep(0,n) else NULL
+  L <- if("L" %in% colnames(data)) rep(0,n) else NULL
+
+  plotdata <- rbind(data, data.table(ID, Time, Delta, L0, L, A, A0))
 
   # Shapes and color for the plot
   diff_events <- length(unique(plotdata$Delta))
