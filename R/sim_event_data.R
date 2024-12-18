@@ -33,7 +33,7 @@
 #' @examples
 #' sim_event_data(N = 10)
 
-sim_event_data <- function(N,                  # Number of individuals
+sim_event_data <- function(N,                      # Number of individuals
                            beta = NULL,            # Effects
                            eta = rep(0.1,4),       # Shape parameters
                            nu = rep(1.1,4),        # Scale parameters

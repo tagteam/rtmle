@@ -55,24 +55,27 @@ sim_data_setting1 <- function(N, eta = rep(0.1,4), nu = rep(1.1,4), followup = I
   if(followup < Inf){
 
     # Identifying censored individuals
-    cens <- unique(data[Time > followup]$ID)
-    # Creating new rows for censored individuals
-    cens_data <- data[ID %in% cens & Time <= followup]
+    cens <- unique(data[Time > followup], by = "ID")
 
-    n <- length(cens)
-    Delta <- rep("C", n)
-    L0 <- unique(data[Time > followup]$L0)
+    # Creating censored rows
+    n <- nrow(cens)
+    L0 <- cens$L0
+    ID_cens <- cens$ID
     Time <- rep(followup, n)
+    Delta <- rep("C", n)
+
+    # Creating new rows for censored individuals
+    cens_data <- data[ID %in% ID_cens & Time <= followup]
 
     # The A/L value right before censoring
     A <- numeric(n)
-    A[cens %in% cens_data$ID] <- cens_data[, max(A), by=ID]$V1
-    A[! cens %in% cens_data$ID] <- 0
+    A[ID_cens %in% cens_data$ID] <- cens_data[, max(A), by=ID]$V1
+    A[! ID_cens %in% cens_data$ID] <- 0
     L <- numeric(n)
-    L[cens %in% cens_data$ID] <- cens_data[, max(L), by=ID]$V1
-    L[! cens %in% cens_data$ID] <- 0
+    L[ID_cens %in% cens_data$ID] <- cens_data[, max(L), by=ID]$V1
+    L[! ID_cens %in% cens_data$ID] <- 0
 
-    data <- rbind(data[Time <= followup], data.table(ID = cens, Time, Delta, L0, L, A))
+    data <- rbind(data[Time <= followup], data.table(ID = ID_cens, Time, Delta, L0, L, A))
     setkey(data, ID)
   }
 
