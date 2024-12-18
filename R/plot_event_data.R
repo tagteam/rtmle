@@ -36,7 +36,7 @@ plot_event_data <- function(data, title = "Event Data") {
 
   # Shapes and color for the plot
   diff_events <- length(unique(plotdata$Delta))
-  cols <- c("green4", "blue1", "orange1", "red2")
+  cols <- c("green4", "blue1", "orange", "red2", "lightgreen")
   shapess <- rep(20, diff_events)
 
   ggplot2::ggplot(plotdata) +
