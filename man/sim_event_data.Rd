@@ -10,7 +10,8 @@ sim_event_data(
   eta = rep(0.1, 4),
   nu = rep(1.1, 4),
   at_risk = NULL,
-  term_deltas = c(1, 2)
+  term_deltas = c(1, 2),
+  max_cens = Inf
 )
 }
 \arguments{
@@ -33,6 +34,8 @@ for a change in covariate) and A (indicator for change in treatment process).The
 and 1's corresponding to whether individual i is at risk for a particular event.}
 
 \item{term_deltas}{Terminal events. Default is set so that event 1 and 2 are terminal events.}
+
+\item{max_cens}{A maximum censoring time. By default set to infinity.}
 }
 \value{
 Data frame containing the simulated data. There is a column for ID, time of event (Time),

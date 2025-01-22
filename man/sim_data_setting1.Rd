@@ -4,10 +4,24 @@
 \alias{sim_data_setting1}
 \title{Simulate Operation Data in Setting 1}
 \usage{
-sim_data_setting1(N, eta = rep(0.1, 4), nu = rep(1.1, 4), followup = Inf)
+sim_data_setting1(
+  N,
+  beta_L_A = 1,
+  beta_L_D = 1,
+  beta_A_D = -1,
+  eta = rep(0.1, 4),
+  nu = rep(1.1, 4),
+  followup = Inf
+)
 }
 \arguments{
 \item{N}{A double of the number of individuals}
+
+\item{beta_L_A}{The effect ofcovariate L = 1 on the probability of A = 1}
+
+\item{beta_L_D}{The effect ofcovariate L = 1 on the probability of D = 1}
+
+\item{beta_A_D}{The effect ofcovariate A = 1 on the probability of D = 1}
 
 \item{eta}{Vector of length 4 of shape parameters for the Weibull intensity with parameterization
 \deqn{\eta \nu t^{\nu - 1}}. Default is set to 0.1 for all events.}

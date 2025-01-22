@@ -9,7 +9,8 @@ sim_data_setting2(
   eta = rep(0.1, 4),
   nu = rep(1.1, 4),
   followup = Inf,
-  setting = "a"
+  beta_L_D = 1,
+  cens = 1
 )
 }
 \arguments{
@@ -22,8 +23,9 @@ sim_data_setting2(
 
 \item{followup}{A censoring time. By default set to infinity.}
 
-\item{setting}{Specifies how change in covariate process affects risk of death. Can be set to either "a" or "b".
-Is by default set to "a".}
+\item{beta_L_D}{Specifies how change in covariate process affects risk of death. Is by default set to 1.}
+
+\item{cens}{Specifies whether you are at risk of being censored}
 }
 \value{
 Data frame containing the simulated data. There is a column for ID, time of event (Time),
@@ -38,8 +40,7 @@ parameters. The dependence on previous events is controlled by parameters chosen
 (L0) increases the probability of covariate change (L = 1). Initial treatment (A0 = 1) reduces the risk of a change
 in the covariate process (L= 1) and the risk of death. A large baseline covariate (L0) increase the risk of death.
 probability of operation (A = 1). Operation (A = 1) decreases the risk of death. The censoring process does not
-depend on anything. Further two settings can be specified: "a") where the change in the covariate process (L = 1)
-increases risk of death, and "b") where the risk of death does not depend on the change in the covariate process (L = 1).
+depend on anything. The risk of death depend on change in the covariate process (L = 1) through beta_L_D.
 }
 \examples{
 sim_data_setting2(10)

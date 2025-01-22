@@ -24,6 +24,7 @@
 #' for a change in covariate) and A (indicator for change in treatment process).The function returns a vector of 0's
 #' and 1's corresponding to whether individual i is at risk for a particular event.
 #' @param term_deltas Terminal events. Default is set so that event 1 and 2 are terminal events.
+#' @param max_cens A maximum censoring time. By default set to infinity.
 #'
 #' @return Data frame containing the simulated data. There is a column for ID, time of event (Time),
 #' event type (Delta), baseline covariate (L0), additional covariate (L), Baseline Treatment (A0)
@@ -38,7 +39,8 @@ sim_event_data <- function(N,                      # Number of individuals
                            eta = rep(0.1,4),       # Shape parameters
                            nu = rep(1.1,4),        # Scale parameters
                            at_risk = NULL,         # Function defining the setting
-                           term_deltas = c(1,2)    # Terminal events
+                           term_deltas = c(1,2),    # Terminal events
+                           max_cens = Inf
                            )
   {
   ID <- NULL
@@ -76,16 +78,21 @@ sim_event_data <- function(N,                      # Number of individuals
   }
 
   # Inverse summed cumulative hazard function
-  inverse_sc_haz <- function(p, t, i, lower_bound = 10^-15, upper_bound = 100) {
+  inverse_sc_haz <- function(p, t, i, lower_bound = 10^-15, upper_bound = 150) {
     root_function <- function(u) sum_cum_haz(u, t, i) - p
     stats::uniroot(root_function, lower = lower_bound, upper = upper_bound)$root
   }
 
   # Event probabilities
   probs <- function(t, i){
-    probs <- lambda(t, i)
-    summ <- sum(probs)
-    probs / summ
+    if(t > max_cens){
+      probs <- c(0,0,1,0)
+    }
+    else{
+      probs <- lambda(t, i)
+      summ <- sum(probs)
+      probs / summ
+    }
   }
 
   # Draw

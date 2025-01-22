@@ -14,7 +14,7 @@
 
 trans_int_data <- function(data) {
 
-  k <- NULL; ID <- NULL; tstart <- NULL; tstop <- NULL; Time <- NULL;
+  k <- ID <- tstart <- tstop <- Time <- NULL
 
   data <- copy(data)
 
@@ -35,5 +35,9 @@ trans_int_data <- function(data) {
     data_k[[i]][, tstop := Time]
   }
 
-  return(do.call(rbind, data_k))
+  res <- do.call(rbind, data_k)
+
+  setkey(res, ID)
+
+  return(res)
 }
