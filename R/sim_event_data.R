@@ -1,9 +1,9 @@
 #' `sim_event_data` is a function to simulate event data, e.g. observational healthcare data. The number of events
-#' simulated corresponds to the length of the \eqn{eta} and \eqn{nu} vector, and the number of columns in the
-#' \eqn{beta} matrix. By default 4 different types of events are simulated, chosen to represent Operation (0),
+#' simulated corresponds to the length of the \eqn{\eta} and \eqn{\nu} vector, and the number of columns in the
+#' \eqn{\beta} matrix. By default 4 different types of events are simulated, chosen to represent Operation (0),
 #' Death (1), Censoring(2) and Change in Covariate Process(3). Death and Censoring are terminal events and Operation
 #' and Change in Covariate Process can occur once. The intensities of the various events depend upon previous events
-#' and the pre specified \eqn{beta}, \eqn{nu} and \eqn{eta} parameters.
+#' and the pre specified \eqn{\beta}, \eqn{\nu} and \eqn{\eta} parameters.
 #'
 #' Different settings can be specified: Survival setting, competing risk setting and operation setting.
 #' The different settings can be specified by the at_risk function. Default is the operation setting.
@@ -14,10 +14,10 @@
 #' @param beta A matrix of doubles for the effects on the intensities. The columns represent the events. In the
 #' default case Operation, Death, Censoring, and Covariate Change. The rows represent the baseline covariate \eqn{L0},
 #' the indicator for operation \eqn{A}, baseline treatment \eqn{A0}, and the indicator for change in the covariate
-#' process \eqn{L}.The \eqn{beta} matrix is by default set to 0.
+#' process \eqn{L}.The \eqn{\beta} matrix is by default set to 0.
 #' @param eta Vector of shape parameters for the Weibull intensity with parameterization
-#' \deqn{\eta \nu t^{\nu - 1}}. Default is set to 0.1 for all events.
-#' @param nu Vector of scale parameters for the Weibull intensity. Default is set to 0.1 for all events.
+#' \deqn{\eta \nu t^{\nu - 1}} Default is set to 0.1 for all events.
+#' @param nu Vector of scale parameters for the Weibull intensity. Default is set to 1.1 for all events.
 #' @param at_risk At risk function. Default is set to the operation setting. A survival or competing risk
 #' setting can be specified as well. The \code{at_risk} function is an indicator of whether an individual is at risk
 #' for a specific event. The function takes as input i (the index belonging to a particular individual) L (indicator
@@ -54,7 +54,7 @@ sim_event_data <- function(N,                      # Number of individuals
       return(c(
         # You are only at risk for an operation if you have not had an operation yet
         as.numeric(A[i] == 0),
-        # If you have not died yet or been censored yet, you are at risk for dying or being censored
+        # If you have not died or been censored yet, you are at risk for dying or being censored
         1,1,
         # You are only at risk for a change in the covariate process if you have not had a change yet
         as.numeric(L[i] == 0)))
@@ -78,7 +78,7 @@ sim_event_data <- function(N,                      # Number of individuals
   }
 
   # Inverse summed cumulative hazard function
-  inverse_sc_haz <- function(p, t, i, lower_bound = 10^-15, upper_bound = 150) {
+  inverse_sc_haz <- function(p, t, i, lower_bound = 10^-15, upper_bound = 200) {
     root_function <- function(u) sum_cum_haz(u, t, i) - p
     stats::uniroot(root_function, lower = lower_bound, upper = upper_bound)$root
   }

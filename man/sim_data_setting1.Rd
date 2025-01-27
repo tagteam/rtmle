@@ -2,7 +2,7 @@
 % Please edit documentation in R/sim_data_setting1.R
 \name{sim_data_setting1}
 \alias{sim_data_setting1}
-\title{Simulate Operation Data in Setting 1}
+\title{Simulate Operation Data in a setting with a confounder}
 \usage{
 sim_data_setting1(
   N,
@@ -11,40 +11,57 @@ sim_data_setting1(
   beta_A_D = -1,
   eta = rep(0.1, 4),
   nu = rep(1.1, 4),
-  followup = Inf
+  beta_L0_A = 1,
+  followup = Inf,
+  cens = 1,
+  op = 1
 )
 }
 \arguments{
 \item{N}{A double of the number of individuals}
 
-\item{beta_L_A}{The effect ofcovariate L = 1 on the probability of A = 1}
+\item{beta_L_A}{The effect of covariate L = 1 on the probability of A = 1}
 
-\item{beta_L_D}{The effect ofcovariate L = 1 on the probability of D = 1}
+\item{beta_L_D}{The effect of covariate L = 1 on the probability of D = 1}
 
-\item{beta_A_D}{The effect ofcovariate A = 1 on the probability of D = 1}
+\item{beta_A_D}{The effect of operation A = 1 on the probability of D = 1}
 
 \item{eta}{Vector of length 4 of shape parameters for the Weibull intensity with parameterization
 \deqn{\eta \nu t^{\nu - 1}}. Default is set to 0.1 for all events.}
 
 \item{nu}{Vector of scale parameters for the Weibull hazard. Default is set to 0.1 for all events.}
 
-\item{followup}{A censoring time. By default set to infinity.}
+\item{beta_L0_A}{The effect of operation L0 on the probability of A = 1}
+
+\item{followup}{A maximal censoring time. By default set to infinity.}
+
+\item{cens}{Specifies whether you are at risk of being censored}
+
+\item{op}{Specifies whether you are at risk of being operated}
 }
 \value{
 Data frame containing the simulated data. There is a column for ID, time of event (Time),
 event type (Delta), baseline covariate (L0), additional covariate (L) and  Treatment Process (A).
 }
 \description{
-Function to simulate data from an Operation setting. 4 different types of events are simulated, chosen to represent
-Operation (0),Death (1), Censoring(2) and Change in Covariate Process(3). Death and Censoring are terminal events
+Function to simulate data from an Operation with a confounder.
+}
+\details{
+4 different types of events are simulated, chosen to represent Operation (0),Death (1),
+Censoring(2) and Change in Covariate Process(3). Death and Censoring are terminal events
 and Operation and Change in Covariate Process can occur once.
-The intensities of the various events depend upon previous events and the pre specified \eqn{nu} and \eqn{eta}
+
+The intensities of the various events depend upon previous events and the pre specified \eqn{\nu} and \eqn{\eta}
 parameters. The dependence on previous events is controlled by parameters chosen so that a large baseline covariate
-(L0) increases the probability of operation(A = 1) and covariate change (L = 1). A change in the covariate process
-(L= 1) increases the probability of operation (A = 1). Operation (A = 1)decreases the risk of death. A large baseline
-covariate (L0), and a change in the covariate process(L = 1) increase the risk of death. The censoring process does
-not depend on anything.
+(L0) increases the probability of a covariate change (L = 1). A large baseline covariate affects
+the probability of operation by the user specified \code{beta_L0_A}. A change in the covariate process
+(L= 1) affects the probability of operation (A = 1) by the user specified parameter \code{beta_L_A}.
+Operation (A = 1) affects the risk of death by the user specified parameter \code{beta_A_D}. And
+change in the covariate process(L = 1) affects the risk of death by the user specified parameter
+\code{beta_L_D}. A large baseline covariate (L0) increase the risk of death. The censoring
+process does not depend on anything.
 }
 \examples{
 sim_data_setting1(10)
+
 }

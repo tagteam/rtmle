@@ -9,7 +9,10 @@ sim_data_setting2(
   eta = rep(0.1, 4),
   nu = rep(1.1, 4),
   followup = Inf,
+  beta_L0_L = 1,
   beta_L_D = 1,
+  beta_A0_D = 0,
+  beta_A0_L = 0,
   cens = 1
 )
 }
@@ -21,26 +24,31 @@ sim_data_setting2(
 
 \item{nu}{Vector of scale parameters for the Weibull hazard. Default is set to 0.1 for all events.}
 
-\item{followup}{A censoring time. By default set to infinity.}
+\item{followup}{A maximal censoring time. By default set to infinity.}
 
-\item{beta_L_D}{Specifies how change in covariate process affects risk of death. Is by default set to 1.}
+\item{beta_L0_L}{Specifies how change in the covariate process affects risk of death. Is by default set to 1.}
+
+\item{beta_L_D}{Specifies how change in the covariate process affects risk of death. Is by default set to 1.}
+
+\item{beta_A0_D}{Specifies how baseline treatment affects risk of death. Is by default set to 0.}
+
+\item{beta_A0_L}{Specifies how baseline treatment affects risk of T2D. Is by default set to 0.}
 
 \item{cens}{Specifies whether you are at risk of being censored}
 }
 \value{
 Data frame containing the simulated data. There is a column for ID, time of event (Time),
-event type (Delta), baseline covariate (L0), additional covariate (L) and  Treatment Process (A).
+event type (Delta), baseline covariate (L0) and additional covariate (L).
 }
 \description{
-Function to simulate data from an T2D diabetes setting. 3 different types of events are simulated, chosen to represent
+Function to simulate data from a T2D diabetes setting. 3 different types of events are simulated, chosen to represent
 Death (1), Censoring(2) and Change in Covariate Process(3). Death and Censoring are terminal events and Change in
 Covariate Process can occur once.
-The intensities of the various events depend upon previous events and the pre specified \eqn{nu} and \eqn{eta}
+The intensities of the various events depend upon previous events and the pre specified \eqn{\nu} and \eqn{\eta}
 parameters. The dependence on previous events is controlled by parameters chosen so that a large baseline covariate
 (L0) increases the probability of covariate change (L = 1). Initial treatment (A0 = 1) reduces the risk of a change
 in the covariate process (L= 1) and the risk of death. A large baseline covariate (L0) increase the risk of death.
-probability of operation (A = 1). Operation (A = 1) decreases the risk of death. The censoring process does not
-depend on anything. The risk of death depend on change in the covariate process (L = 1) through beta_L_D.
+Censoring does not depend on anything. The risk of death depends on change in the covariate process (L = 1) through beta_L_D.
 }
 \examples{
 sim_data_setting2(10)
