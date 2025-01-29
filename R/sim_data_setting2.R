@@ -1,5 +1,5 @@
 #' Function to simulate data from a T2D diabetes setting. 3 different types of events are simulated, chosen to represent
-#' Death (1), Censoring(2) and Change in Covariate Process(3). Death and Censoring are terminal events and Change in
+#' Censoring(0), Death (1) and Change in Covariate Process(3). Death and Censoring are terminal events and Change in
 #' Covariate Process can occur once.
 #' The intensities of the various events depend upon previous events and the pre specified \eqn{\nu} and \eqn{\eta}
 #' parameters. The dependence on previous events is controlled by parameters chosen so that a large baseline covariate
@@ -33,11 +33,11 @@ sim_data_setting2 <- function(N, eta = rep(0.1,4), nu = rep(1.1,4), followup = I
 
   at_risk <- function(i, L, A) {
     return(c(
-      # You are never at risk for an operation
-      0,
+      cens,
       # If you have not died yet or been censored yet, you are at risk for dying or being censored
       1,
-      cens,
+      # You are never at risk for an operation
+      0,
       # You are only at risk for a change in the covariate process if you have not experienced a change yet
       as.numeric(L[i] == 0)))
   }
@@ -46,23 +46,23 @@ sim_data_setting2 <- function(N, eta = rep(0.1,4), nu = rep(1.1,4), followup = I
   beta <- matrix(ncol = 4, nrow = 4)
 
   # No A
-  beta[2,] <- 0; beta[,1] <- 0
+  beta[4,] <- 0; beta[,3] <- 0
   # How L0 affects the probability of L = 1
   beta[1,4] <- beta_L0_L
   # How A0 = 1 affects the risk of L = 1
-  beta[3,4] <- beta_A0_L
+  beta[2,4] <- beta_A0_L
   # L0 increases the risk of death
   beta[1,2] <- 1
   # How A0 affects the risk of death
-  beta[3,2] <- beta_A0_D
+  beta[2,2] <- beta_A0_D
   # L = 1 does not affect the intensity of L (the event occurs only once)
-  beta[4,4] <- 0
+  beta[3,4] <- 0
 
   # Censorering does not depend on anything
-  beta[,3] <- 0
+  beta[,1] <- 0
 
   # Effect of L = 1 on risk of death
-  beta[4,2] <- beta_L_D
+  beta[3,2] <- beta_L_D
 
   data <- sim_event_data(N, beta = beta, eta = eta, nu = nu, at_risk = at_risk, max_cens = followup)
   data[, A := NULL]

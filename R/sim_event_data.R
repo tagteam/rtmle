@@ -1,9 +1,9 @@
 #' `sim_event_data` is a function to simulate event data, e.g. observational healthcare data. The number of events
 #' simulated corresponds to the length of the \eqn{\eta} and \eqn{\nu} vector, and the number of columns in the
-#' \eqn{\beta} matrix. By default 4 different types of events are simulated, chosen to represent Operation (0),
-#' Death (1), Censoring(2) and Change in Covariate Process(3). Death and Censoring are terminal events and Operation
-#' and Change in Covariate Process can occur once. The intensities of the various events depend upon previous events
-#' and the pre specified \eqn{\beta}, \eqn{\nu} and \eqn{\eta} parameters.
+#' \eqn{\beta} matrix. By default 4 different types of events are simulated, which can be chosen to represent Censoring (0),
+#' Death (1), Operation(2) and Change in Covariate Process(3). Death and Censoring are terminal events and Operation
+#' and Change in Covariate Process can occur once. The intensities of the various events depend upon previous events,
+#' baseline covariates and the pre specified \eqn{\beta}, \eqn{\nu} and \eqn{\eta} parameters.
 #'
 #' Different settings can be specified: Survival setting, competing risk setting and operation setting.
 #' The different settings can be specified by the at_risk function. Default is the operation setting.
@@ -12,9 +12,9 @@
 #'
 #' @param N A double for the number of simulated individuals
 #' @param beta A matrix of doubles for the effects on the intensities. The columns represent the events. In the
-#' default case Operation, Death, Censoring, and Covariate Change. The rows represent the baseline covariate \eqn{L0},
-#' the indicator for operation \eqn{A}, baseline treatment \eqn{A0}, and the indicator for change in the covariate
-#' process \eqn{L}.The \eqn{\beta} matrix is by default set to 0.
+#' default case Censoring, Death, Operation, and Covariate Change. The rows represent the baseline covariate \eqn{L0}
+#' (which can be interpreted as age of participant), baseline treatment \eqn{A0}, the indicator for change
+#' in the covariate process  \eqn{L}, and the indicator for operation \eqn{A}.The \eqn{\beta} matrix is by default set to 0.
 #' @param eta Vector of shape parameters for the Weibull intensity with parameterization
 #' \deqn{\eta \nu t^{\nu - 1}} Default is set to 0.1 for all events.
 #' @param nu Vector of scale parameters for the Weibull intensity. Default is set to 1.1 for all events.
@@ -27,8 +27,8 @@
 #' @param max_cens A maximum censoring time. By default set to infinity.
 #'
 #' @return Data frame containing the simulated data. There is a column for ID, time of event (Time),
-#' event type (Delta), baseline covariate (L0), additional covariate (L), Baseline Treatment (A0)
-#' and Treatment Process (A).
+#' event type (Delta), baseline covariate (L0), indicator for change in covariate process (L), Baseline Treatment (A0)
+#' and indicator for Operation (A).
 #' @export
 #'
 #' @examples
@@ -39,7 +39,7 @@ sim_event_data <- function(N,                      # Number of individuals
                            eta = rep(0.1,4),       # Shape parameters
                            nu = rep(1.1,4),        # Scale parameters
                            at_risk = NULL,         # Function defining the setting
-                           term_deltas = c(1,2),    # Terminal events
+                           term_deltas = c(0,1),    # Terminal events
                            max_cens = Inf
                            )
   {
@@ -52,10 +52,10 @@ sim_event_data <- function(N,                      # Number of individuals
   if(is.null(at_risk)){
     at_risk <- function(i, L, A) {
       return(c(
-        # You are only at risk for an operation if you have not had an operation yet
-        as.numeric(A[i] == 0),
         # If you have not died or been censored yet, you are at risk for dying or being censored
         1,1,
+        # You are only at risk for an operation if you have not had an operation yet
+        as.numeric(A[i] == 0),
         # You are only at risk for a change in the covariate process if you have not had a change yet
         as.numeric(L[i] == 0)))
   }}
@@ -65,7 +65,7 @@ sim_event_data <- function(N,                      # Number of individuals
 
   # Intensities
   phi <- function(i) {
-    exp(L0[i] * beta[1,] + A[i] * beta[2,] + A0[i] * beta[3,] + L[i] * beta[4,])
+    exp(L0[i] * beta[1,] + A0[i] * beta[2,] + L[i] * beta[3,] + A[i] * beta[4,])
   }
 
   lambda <- function(t, i) {
@@ -86,7 +86,7 @@ sim_event_data <- function(N,                      # Number of individuals
   # Event probabilities
   probs <- function(t, i){
     if(t > max_cens){
-      probs <- c(0,0,1,0)
+      probs <- c(1,0,0,0)
     }
     else{
       probs <- lambda(t, i)
@@ -96,7 +96,7 @@ sim_event_data <- function(N,                      # Number of individuals
   }
 
   # Draw
-  L0 <- stats::runif(N)
+  L0 <- stats::runif(N, 0, 1)
   A0 <- stats::rbinom(N, 1, 0.5)
 
   # Initialize
@@ -128,7 +128,7 @@ sim_event_data <- function(N,                      # Number of individuals
     res <- rbind(res, kth_event)
 
     # Update treatment process and covariate change indicators
-    A[alive][Deltas == 0] <- 1
+    A[alive][Deltas == 2] <- 1
     L[alive][Deltas == 3] <- 1
 
     # Who is still alive and uncensored?

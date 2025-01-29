@@ -10,9 +10,9 @@ sim_op_data(N, beta = NULL, eta = rep(0.1, 4), nu = rep(1.1, 4))
 \item{N}{A double of the number of individuals}
 
 \item{beta}{A 4X4 matrix of doubles for the effects on the intensities. The columns represent
-the events Operation, Death, Censoring, and Covariate Change. The rows represent the baseline covariate \eqn{L0},
-the indicator for operation \eqn{A}, baseline treatment \eqn{A0}, and the indicator for change in the covariate process \eqn{L}.
-Default is set to 0.}
+the events Censoring, Death, Operation, and Covariate Change. The rows represent the baseline covariate \eqn{L0},
+baseline treatment \eqn{A0}, the indicator for change in the covariate process \eqn{L}, and the indicator for
+operation \eqn{A}. Default is set to 0.}
 
 \item{eta}{Vector of length 4 of shape parameters for the Weibull intensity with parameterization
 \deqn{\eta \nu t^{\nu - 1}}. Default is set to 0.1 for all events.}
@@ -26,9 +26,9 @@ Treatment Process (A).
 }
 \description{
 Function to simulate data from an Operation setting. 4 different types of events are simulated, chosen to represent
-Operation (0),Death (1), Censoring(2) and Change in Covariate Process(3). Death and Censoring are terminal events
+Censoring (0),Death (1), Operation (2) and Change in Covariate Process(3). Death and Censoring are terminal events
 and Operation and Change in Covariate Process can occur once. The intensities of the various events depend upon
-previous events and the pre specified \eqn{beta}, \eqn{nu} and \eqn{eta} parameters.
+previous events, baseline covariates \eqn{L0} and \eqn{A0} and the pre specified \eqn{\beta}, \eqn{\nu} and \eqn{\eta} parameters.
 }
 \examples{
 sim_op_data(10)

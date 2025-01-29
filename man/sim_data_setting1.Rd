@@ -47,8 +47,8 @@ event type (Delta), baseline covariate (L0), additional covariate (L) and  Treat
 Function to simulate data from an Operation with a confounder.
 }
 \details{
-4 different types of events are simulated, chosen to represent Operation (0),Death (1),
-Censoring(2) and Change in Covariate Process(3). Death and Censoring are terminal events
+4 different types of events are simulated, chosen to represent Censoring (0),Death (1),
+Operation(2) and Change in Covariate Process(3). Death and Censoring are terminal events
 and Operation and Change in Covariate Process can occur once.
 
 The intensities of the various events depend upon previous events and the pre specified \eqn{\nu} and \eqn{\eta}

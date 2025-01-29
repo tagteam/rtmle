@@ -1,7 +1,7 @@
 #' Function to simulate data from an Operation with a confounder.
 #'
-#' 4 different types of events are simulated, chosen to represent Operation (0),Death (1),
-#' Censoring(2) and Change in Covariate Process(3). Death and Censoring are terminal events
+#' 4 different types of events are simulated, chosen to represent Censoring (0),Death (1),
+#' Operation(2) and Change in Covariate Process(3). Death and Censoring are terminal events
 #' and Operation and Change in Covariate Process can occur once.
 #'
 #' The intensities of the various events depend upon previous events and the pre specified \eqn{\nu} and \eqn{\eta}
@@ -70,25 +70,25 @@ sim_data_setting1 <- function(N, beta_L_A = 1, beta_L_D = 1, beta_A_D = -1,
   beta <- matrix(ncol = 4, nrow = 4)
 
   # A0 is 0
-  beta[3,] <- 0
+  beta[2,] <- 0
   # The effect of L0 on the probability of L = 1 and A = 1
-  beta[1,c(1,4)] <- c(1, beta_L0_A)
+  beta[1,c(3,4)] <- c(1, beta_L0_A)
   # The effect of L=1 on the probability of A = 1
-  beta[4,1] <- beta_L_A
-  # The effect of A=1 on the risk of death
-  beta[2,2] <- beta_A_D
-  # The effect of L0,L=1 on the risk of death
-  beta[c(1,4),2] <- c(1, beta_L_D)
+  beta[3,3] <- beta_L_A
+  # The effect of A = 1 on the risk of Death
+  beta[4,2] <- beta_A_D
+  # The effect of L0,L=1 on the risk of Death
+  beta[c(1,3),2] <- c(1, beta_L_D)
   # Censorering does not depend on anything
-  beta[,3] <- 0
+  beta[,1] <- 0
 
   # A = 1 does not affect the intensity of A (the event occurs only once)
-  beta[2,1] <- 0
+  beta[4,3] <- 0
   # L = 1 does not affect the intensity of L (the event occurs only once)
-  beta[4,4] <- 0
+  beta[3,4] <- 0
 
   # My assumption: A = 1 decreases the risk of L = 1
-  beta[2,4] <- -0.5
+  beta[4,4] <- -0.5
 
   data <- sim_event_data(N, beta = beta, eta = eta, nu = nu, max_cens = followup,
                          at_risk = at_risk)

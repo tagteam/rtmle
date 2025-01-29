@@ -10,7 +10,7 @@ sim_event_data(
   eta = rep(0.1, 4),
   nu = rep(1.1, 4),
   at_risk = NULL,
-  term_deltas = c(1, 2),
+  term_deltas = c(0, 1),
   max_cens = Inf
 )
 }
@@ -18,9 +18,9 @@ sim_event_data(
 \item{N}{A double for the number of simulated individuals}
 
 \item{beta}{A matrix of doubles for the effects on the intensities. The columns represent the events. In the
-default case Operation, Death, Censoring, and Covariate Change. The rows represent the baseline covariate \eqn{L0},
-the indicator for operation \eqn{A}, baseline treatment \eqn{A0}, and the indicator for change in the covariate
-process \eqn{L}.The \eqn{\beta} matrix is by default set to 0.}
+default case Censoring, Death, Operation, and Covariate Change. The rows represent the baseline covariate \eqn{L0}
+(which can be interpreted as age of participant), baseline treatment \eqn{A0}, the indicator for change
+in the covariate process  \eqn{L}, and the indicator for operation \eqn{A}.The \eqn{\beta} matrix is by default set to 0.}
 
 \item{eta}{Vector of shape parameters for the Weibull intensity with parameterization
 \deqn{\eta \nu t^{\nu - 1}} Default is set to 0.1 for all events.}
@@ -39,16 +39,16 @@ and 1's corresponding to whether individual i is at risk for a particular event.
 }
 \value{
 Data frame containing the simulated data. There is a column for ID, time of event (Time),
-event type (Delta), baseline covariate (L0), additional covariate (L), Baseline Treatment (A0)
-and Treatment Process (A).
+event type (Delta), baseline covariate (L0), indicator for change in covariate process (L), Baseline Treatment (A0)
+and indicator for Operation (A).
 }
 \description{
 \code{sim_event_data} is a function to simulate event data, e.g. observational healthcare data. The number of events
 simulated corresponds to the length of the \eqn{\eta} and \eqn{\nu} vector, and the number of columns in the
-\eqn{\beta} matrix. By default 4 different types of events are simulated, chosen to represent Operation (0),
-Death (1), Censoring(2) and Change in Covariate Process(3). Death and Censoring are terminal events and Operation
-and Change in Covariate Process can occur once. The intensities of the various events depend upon previous events
-and the pre specified \eqn{\beta}, \eqn{\nu} and \eqn{\eta} parameters.
+\eqn{\beta} matrix. By default 4 different types of events are simulated, which can be chosen to represent Censoring (0),
+Death (1), Operation(2) and Change in Covariate Process(3). Death and Censoring are terminal events and Operation
+and Change in Covariate Process can occur once. The intensities of the various events depend upon previous events,
+baseline covariates and the pre specified \eqn{\beta}, \eqn{\nu} and \eqn{\eta} parameters.
 }
 \details{
 Different settings can be specified: Survival setting, competing risk setting and operation setting.

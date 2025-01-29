@@ -42,7 +42,7 @@ event type (Delta), baseline covariate (L0) and additional covariate (L).
 }
 \description{
 Function to simulate data from a T2D diabetes setting. 3 different types of events are simulated, chosen to represent
-Death (1), Censoring(2) and Change in Covariate Process(3). Death and Censoring are terminal events and Change in
+Censoring(0), Death (1) and Change in Covariate Process(3). Death and Censoring are terminal events and Change in
 Covariate Process can occur once.
 The intensities of the various events depend upon previous events and the pre specified \eqn{\nu} and \eqn{\eta}
 parameters. The dependence on previous events is controlled by parameters chosen so that a large baseline covariate
