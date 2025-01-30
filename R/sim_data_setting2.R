@@ -20,6 +20,9 @@
 #' @param beta_A0_D Specifies how baseline treatment affects risk of death. Is by default set to 0.
 #' @param beta_A0_L Specifies how baseline treatment affects risk of T2D. Is by default set to 0.
 #' @param cens Specifies whether you are at risk of being censored
+#' @param sex A TRUE/FALSE indicating whether there should be an additional binary covariate L1, representing e.g. sex.
+#' If this the case, sex = TRUE, an additional row in the beta matrix specifies what effect the covariate has on the
+#' intensities of the varies events. If this row is not specified the deafualt effect is 0.
 #'
 #' @return  Data frame containing the simulated data. There is a column for ID, time of event (Time),
 #' event type (Delta), baseline covariate (L0) and additional covariate (L).
@@ -29,7 +32,7 @@
 #' sim_data_setting2(10)
 sim_data_setting2 <- function(N, eta = rep(0.1,4), nu = rep(1.1,4), followup = Inf,
                               beta_L0_L = 1, beta_L_D = 1, beta_A0_D = 0,
-                              beta_A0_L = 0, cens = 1){
+                              beta_A0_L = 0, cens = 1, sex = TRUE){
 
   at_risk <- function(i, L, A) {
     return(c(
@@ -43,7 +46,7 @@ sim_data_setting2 <- function(N, eta = rep(0.1,4), nu = rep(1.1,4), followup = I
   }
 
   Time <- ID <- A <- NULL
-  beta <- matrix(ncol = 4, nrow = 4)
+  beta <- matrix(ncol = 4, nrow = 5)
 
   # No A
   beta[4,] <- 0; beta[,3] <- 0
@@ -57,14 +60,15 @@ sim_data_setting2 <- function(N, eta = rep(0.1,4), nu = rep(1.1,4), followup = I
   beta[2,2] <- beta_A0_D
   # L = 1 does not affect the intensity of L (the event occurs only once)
   beta[3,4] <- 0
-
   # Censorering does not depend on anything
   beta[,1] <- 0
-
   # Effect of L = 1 on risk of death
   beta[3,2] <- beta_L_D
+  # Sex has no effect
+  beta[5,] <- 0
 
-  data <- sim_event_data(N, beta = beta, eta = eta, nu = nu, at_risk = at_risk, max_cens = followup)
+  data <- sim_event_data(N, beta = beta, eta = eta, nu = nu, at_risk = at_risk,
+                         max_cens = followup, sex = TRUE)
   data[, A := NULL]
 
   return(data)

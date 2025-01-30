@@ -11,16 +11,19 @@ sim_event_data(
   nu = rep(1.1, 4),
   at_risk = NULL,
   term_deltas = c(0, 1),
-  max_cens = Inf
+  max_cens = Inf,
+  sex = FALSE
 )
 }
 \arguments{
 \item{N}{A double for the number of simulated individuals}
 
-\item{beta}{A matrix of doubles for the effects on the intensities. The columns represent the events. In the
+\item{beta}{A 4 by 4 matrix of doubles for the effects on the intensities. The columns represent the events. In the
 default case Censoring, Death, Operation, and Covariate Change. The rows represent the baseline covariate \eqn{L0}
 (which can be interpreted as age of participant), baseline treatment \eqn{A0}, the indicator for change
-in the covariate process  \eqn{L}, and the indicator for operation \eqn{A}.The \eqn{\beta} matrix is by default set to 0.}
+in the covariate process  \eqn{L}, and the indicator for operation \eqn{A}.The \eqn{\beta} matrix is by default set to 0.
+If sex = TRUE, the specified matrix can be of size 5 by 4, with the effects of the additional covariate L1 on the various
+events in the 5th row.}
 
 \item{eta}{Vector of shape parameters for the Weibull intensity with parameterization
 \deqn{\eta \nu t^{\nu - 1}} Default is set to 0.1 for all events.}
@@ -36,11 +39,15 @@ and 1's corresponding to whether individual i is at risk for a particular event.
 \item{term_deltas}{Terminal events. Default is set so that event 1 and 2 are terminal events.}
 
 \item{max_cens}{A maximum censoring time. By default set to infinity.}
+
+\item{sex}{A TRUE/FALSE indicating whether there should be an additional binary covariate L1, representing e.g. sex.
+If this the case, sex = TRUE, an additional row in the beta matrix specifies what effect the covariate has on the
+intensities of the varies events. If this row is not specified the deafualt effect is 0.}
 }
 \value{
 Data frame containing the simulated data. There is a column for ID, time of event (Time),
-event type (Delta), baseline covariate (L0), indicator for change in covariate process (L), Baseline Treatment (A0)
-and indicator for Operation (A).
+event type (Delta), baseline covariate (L0), indicator for change in covariate process (L), Baseline Treatment (A0),
+indicator for Operation (A), and potentially an additional baseline covariate (L1) representing sex.
 }
 \description{
 \code{sim_event_data} is a function to simulate event data, e.g. observational healthcare data. The number of events
