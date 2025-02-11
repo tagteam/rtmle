@@ -14,7 +14,8 @@ sim_data_setting2(
   beta_A0_D = 0,
   beta_A0_L = 0,
   cens = 1,
-  sex = TRUE
+  sex = TRUE,
+  beta_L0_D = 1
 )
 }
 \arguments{
@@ -40,6 +41,8 @@ sim_data_setting2(
 \item{sex}{A TRUE/FALSE indicating whether there should be an additional binary covariate L1, representing e.g. sex.
 If this the case, sex = TRUE, an additional row in the beta matrix specifies what effect the covariate has on the
 intensities of the varies events. If this row is not specified the deafualt effect is 0.}
+
+\item{beta_L0_D}{Specifies how baseline covariate affects risk of Death. Is by default set to 1.}
 }
 \value{
 Data frame containing the simulated data. There is a column for ID, time of event (Time),

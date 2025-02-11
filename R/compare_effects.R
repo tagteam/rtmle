@@ -10,6 +10,8 @@
 #' @param beta_L_D Parameter for the effect of L on D.
 #' @param beta_A0_D Parameter for the effect of L0 on L. One of the three parameters is
 #' allowed to vary.
+#' @param beta_A0_D Parameter for the effect of L0 on L. One of the three parameters is
+#' allowed to vary.
 #'
 #' @return Plot
 #' @export
@@ -25,7 +27,8 @@
 #'
 #' res1 <- compare_effects(estimator = estimator1, N = 100, beta_L_D = seq(0,1,by = 0.1))
 
-compare_effects <- function(estimator, N = 1000, beta_L0_L = 1, beta_L_D = 1, beta_A0_D = 0) {
+compare_effects <- function(estimator, N = 1000, beta_L0_L = 1, beta_L_D = 1, beta_A0_D = 0,
+                            nu = rep(1.1,4)) {
 
   B <-  max(length(beta_L0_L), length(beta_L_D), length(beta_A0_D))
 
@@ -38,11 +41,11 @@ compare_effects <- function(estimator, N = 1000, beta_L0_L = 1, beta_L_D = 1, be
   for(b in 1:B){
     print(b)
     data0 <- sim_data_setting2(N, beta_L_D = beta_L_D[b], beta_A0_D = beta_A0_D[b],
-                               beta_L0_L = beta_L0_L[b], beta_A0_L = 0)
+                               beta_L0_L = beta_L0_L[b], beta_A0_L = 0, nu = nu)
     data0.5 <- sim_data_setting2(N, beta_L_D = beta_L_D[b], beta_A0_D = beta_A0_D[b],
-                                 beta_L0_L = beta_L0_L[b], beta_A0_L = -0.5)
+                                 beta_L0_L = beta_L0_L[b], beta_A0_L = -0.5, nu = nu)
     data1 <- sim_data_setting2(N, beta_L_D = beta_L_D[b], beta_A0_D = beta_A0_D[b],
-                               beta_L0_L = beta_L0_L[b], beta_A0_L = -1)
+                               beta_L0_L = beta_L0_L[b], beta_A0_L = -1, nu = nu)
 
     estimates[b,c(1,2)] <- estimator(data0, N)
     estimates[b,c(3,4)] <- estimator(data0.5, N)

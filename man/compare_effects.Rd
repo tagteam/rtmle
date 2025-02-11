@@ -9,7 +9,8 @@ compare_effects(
   N = 1000,
   beta_L0_L = 1,
   beta_L_D = 1,
-  beta_A0_D = 0
+  beta_A0_D = 0,
+  nu = rep(1.1, 4)
 )
 }
 \arguments{
@@ -24,6 +25,9 @@ and calculates an estimate.}
 
 \item{beta_A0_D}{Parameter for the effect of L0 on L. One of the three parameters is
 allowed to vary.}
+
+\item{nu}{Vector of length 4 of shape parameters for the Weibull intensity with parameterization
+\deqn{\eta \nu t^{\nu - 1}}. Default is set to 0.1 for all events.}
 }
 \value{
 Plot

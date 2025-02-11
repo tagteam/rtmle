@@ -32,7 +32,8 @@
 #' sim_data_setting2(10)
 sim_data_setting2 <- function(N, eta = rep(0.1,4), nu = rep(1.1,4), followup = Inf,
                               beta_L0_L = 1, beta_L_D = 1, beta_A0_D = 0,
-                              beta_A0_L = 0, cens = 1, sex = TRUE){
+                              beta_A0_L = 0, cens = 1, sex = TRUE,
+                              beta_L0_D = 1,){
 
   at_risk <- function(i, L, A) {
     return(c(
@@ -55,7 +56,7 @@ sim_data_setting2 <- function(N, eta = rep(0.1,4), nu = rep(1.1,4), followup = I
   # How A0 = 1 affects the risk of L = 1
   beta[2,4] <- beta_A0_L
   # L0 increases the risk of death
-  beta[1,2] <- 1
+  beta[1,2] <- beta_L0_D
   # How A0 affects the risk of death
   beta[2,2] <- beta_A0_D
   # L = 1 does not affect the intensity of L (the event occurs only once)

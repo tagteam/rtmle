@@ -45,25 +45,19 @@ sim_data_setting1 <- function(N, beta_L_A = 1, beta_L_D = 1, beta_A_D = -1,
   if(op == 0){
     at_risk <- function(i, L, A) {
       return(c(
-        # You are never at risk for an operation
-        0,
-        # If you have not died yet or been censored yet, you are at risk for dying or being censored
-        1,
-        cens,
-        # You are only at risk for a change in the covariate process if you have not experienced a change yet
-        as.numeric(L[i] == 0)))
+        cens, # You might be at risk for censoring
+        1, # If you have not died yet you are at risk for dying
+        0, # You are never at risk for an operation
+        as.numeric(L[i] == 0))) # You are only at risk for a change in the covariate process if you have not experienced a change yet
     }
   }
   else{
     at_risk <- function(i, L, A) {
       return(c(
-        # You are at risk for an operation if you have not had one yet
-        as.numeric(A[i] == 0),
-        # If you have not died yet or been censored yet, you are at risk for dying or being censored
-        1,
-        cens,
-        # You are only at risk for a change in the covariate process if you have not experienced a change yet
-        as.numeric(L[i] == 0)))
+        cens, # You might be at risk for censoring
+        1, # If you have not died yet you are at risk for dying
+        as.numeric(A[i] == 0), # You are at risk for an operation if you have not had one yet
+        as.numeric(L[i] == 0))) # You are only at risk for a change in the covariate process if you have not experienced a change yet
     }
   }
 
