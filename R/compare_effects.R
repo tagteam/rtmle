@@ -12,6 +12,8 @@
 #' allowed to vary.
 #' @param beta_A0_D Parameter for the effect of L0 on L. One of the three parameters is
 #' allowed to vary.
+#' @param nu Vector of length 4 of shape parameters for the Weibull intensity with parameterization
+#' \deqn{\eta \nu t^{\nu - 1}}. Default is set to 0.1 for all events.
 #'
 #' @return Plot
 #' @export

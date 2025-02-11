@@ -19,6 +19,7 @@
 #' @param beta_L0_L Specifies how change in the covariate process affects risk of death. Is by default set to 1.
 #' @param beta_A0_D Specifies how baseline treatment affects risk of death. Is by default set to 0.
 #' @param beta_A0_L Specifies how baseline treatment affects risk of T2D. Is by default set to 0.
+#' @param beta_L0_D Specifies how baseline covariate affects risk of Death. Is by default set to 1.
 #' @param cens Specifies whether you are at risk of being censored
 #' @param sex A TRUE/FALSE indicating whether there should be an additional binary covariate L1, representing e.g. sex.
 #' If this the case, sex = TRUE, an additional row in the beta matrix specifies what effect the covariate has on the
@@ -33,7 +34,7 @@
 sim_data_setting2 <- function(N, eta = rep(0.1,4), nu = rep(1.1,4), followup = Inf,
                               beta_L0_L = 1, beta_L_D = 1, beta_A0_D = 0,
                               beta_A0_L = 0, cens = 1, sex = TRUE,
-                              beta_L0_D = 1,){
+                              beta_L0_D = 1){
 
   at_risk <- function(i, L, A) {
     return(c(
