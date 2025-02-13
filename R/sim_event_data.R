@@ -61,12 +61,9 @@ sim_event_data <- function(N,                      # Number of individuals
   if(is.null(at_risk)){
     at_risk <- function(i, L, A) {
       return(c(
-        # If you have not died or been censored yet, you are at risk for dying or being censored
-        1,1,
-        # You are only at risk for an operation if you have not had an operation yet
-        as.numeric(A[i] == 0),
-        # You are only at risk for a change in the covariate process if you have not had a change yet
-        as.numeric(L[i] == 0)))
+        1,1, # If you have not died or been censored yet, you are at risk for dying or being censored
+        as.numeric(A[i] == 0), # You are only at risk for an operation if you have not had an operation yet
+        as.numeric(L[i] == 0))) # You are only at risk for a change in the covariate process if you have not had a change yet
   }}
 
   # Events
@@ -81,15 +78,23 @@ sim_event_data <- function(N,                      # Number of individuals
     at_risk(i, L, A) * eta * nu * t ^ (nu - 1) * phi(i)
   }
 
-  # Summed cumulative hazard
-  sum_cum_haz <- function(u, t, i) {
-    sum(at_risk(i, L, A) * eta * phi(i) * ((t + u) ^ nu - t ^ nu))
-  }
+  # If all events have same parameter, the inverse simplifies
+  if(all(nu[1] == nu)){
+    inverse_sc_haz <- function(u, t, i) {
+      denom <- sum(at_risk(i, L, A) * eta * phi(i))
+      (u / denom + t^nu[1])^(1 / nu[1]) - t
+    }
+  } else{
+    # Summed cumulative hazard
+    sum_cum_haz <- function(u, t, i) {
+      sum(at_risk(i, L, A) * eta * phi(i) * ((t + u) ^ nu - t ^ nu))
+    }
 
-  # Inverse summed cumulative hazard function
-  inverse_sc_haz <- function(p, t, i, lower_bound = 10^-15, upper_bound = 200) {
-    root_function <- function(u) sum_cum_haz(u, t, i) - p
-    stats::uniroot(root_function, lower = lower_bound, upper = upper_bound)$root
+    # Inverse summed cumulative hazard function
+    inverse_sc_haz <- function(p, t, i, lower_bound = 10^-15, upper_bound = 200) {
+      root_function <- function(u) sum_cum_haz(u, t, i) - p
+      stats::uniroot(root_function, lower = lower_bound, upper = upper_bound)$root
+    }
   }
 
   # Event probabilities
