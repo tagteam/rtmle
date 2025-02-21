@@ -13,7 +13,7 @@
 #' @param N A double of the number of individuals
 #' @param eta Vector of length 4 of shape parameters for the Weibull intensity with parameterization
 #' \deqn{\eta \nu t^{\nu - 1}}. Default is set to 0.1 for all events.
-#' @param nu Vector of scale parameters for the Weibull hazard. Default is set to 0.1 for all events.
+#' @param nu Vector of scale parameters for the Weibull hazard. Default is set to 1.1 for all events.
 #' @param followup A maximal censoring time. By default set to infinity.
 #' @param beta_L_D Specifies how change in the covariate process affects risk of death. Is by default set to 1.
 #' @param beta_L0_L Specifies how change in the covariate process affects risk of death. Is by default set to 1.

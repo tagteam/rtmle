@@ -24,7 +24,7 @@ sim_data_setting2(
 \item{eta}{Vector of length 4 of shape parameters for the Weibull intensity with parameterization
 \deqn{\eta \nu t^{\nu - 1}}. Default is set to 0.1 for all events.}
 
-\item{nu}{Vector of scale parameters for the Weibull hazard. Default is set to 0.1 for all events.}
+\item{nu}{Vector of scale parameters for the Weibull hazard. Default is set to 1.1 for all events.}
 
 \item{followup}{A maximal censoring time. By default set to infinity.}
 
