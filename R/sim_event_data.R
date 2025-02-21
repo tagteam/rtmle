@@ -110,7 +110,7 @@ sim_event_data <- function(N,                      # Number of individuals
   }
 
   # Draw
-  L0 <- stats::runif(N, 40, 60)
+  L0 <- stats::runif(N, 30, 70)
   L1 <- stats::rbinom(N, 1, 0.5)
   A0 <- stats::rbinom(N, 1, 0.5)
 
