@@ -1,0 +1,109 @@
+---
+title: "R-package rtmle: user cases"
+author: "Alessandra Meddis"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Examples Treatment combinations (draft 1)}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+## About
+
+The **R**-package rtmle implements a class of targeted minimum loss estimators for the analysis of longitudinal register data. 
+We specify the different scenarios this package can be used for:
+
+```{r echo=FALSE}
+cat("
+|--------------|-----------|---------|-----------|
+| Intervention |Exposure(s)| Outcome | Available |
+|--------------|-----------|---------|-----------|
+| Static       |one Binary |   B-S   | Yes       |
+| Dynamic      |one Binary |   B-S   | Yes       |
+| Stochastic   |one Binary |   B-S   | Yes       |
+|--------------|-----------|---------|-----------|
+| Static       | one Categ |   B-S   | soon      |
+| Dynamic      | one Categ |   B-S   | soon      |
+| Stochastic   | one Categ |   B-S   | soon      |
+|--------------|-----------|---------|-----------|
+| Static       | two Binary|   B-S   | soon      |
+| Dynamic      | two Binary|   B-S   | soon      |
+| Stochastic   | two Binary|   B-S   | soon      |
+|--------------|-----------|---------|-----------|
+| Static       | two Categ |   B-S   | No        |
+| Dynamic      | two Categ |   B-S   | No        |
+| Stochastic   | two Categ |   B-S   | No        |
+|--------------|-----------|---------|-----------|
+| Static       | continuous|   B-S   | No        |
+| Dynamic      | continuous|   B-S   | No        |
+| Stochastic   | continuous|   B-S   | No        |
+|--------------|-----------|---------|-----------|
+", sep="n")
+```
+
+## Defining the protocol
+
+The function *protocol* is needed as first step to define the type of intervention of interest.
+Here we specify:
+
+ - *name* : name of the protocol 
+ - *treatment_variables*:  name(s) of the variable(s) that the protocols intervenes upon
+ - *intervention*: the values of the treatment(s) the variables are set to under the intervention.
+ If two treatments this would be either a list or a matrix. 
+ In case of stochastic or dynamic intervention, a function needs to be specified.
+ 
+
+### Examples: 
+
+#### Static Intervention: one Binary exposure (Always treated protocol)
+
+```{r}
+protocol(x) <- list(name = "always A",treatment_variables = "A",
+intervention = 1)
+```
+
+OR 
+
+```{r}
+protocol(x) <- list(name = "always A",treatment_variables = c("A_1","A_2","A_3"),
+intervention = 1)
+```
+
+
+OR 
+
+```{r}
+protocol(x) <- list(name = "always A",treatment_variables = c("A_1","A_2","A_3"),
+intervention = c(1,1,1))
+```
+
+#### Static Intervention: two Binary exposures (A,B)
+
+```{r}
+protocol(x) <- list(name = "always combined",treatment_variables = list("A"=c("A_1","A_2","A_3"),"B"=c("B_1","B_2","B_3")),
+intervention = list("A"=c(1,1,1),"B"=c(1,1,1)))
+```
+
+OR
+
+```{r}
+protocol(x) <- list(name = "always combined",treatment_variables = matrix(c("A_1","A_2","A_3", "B_1","B_2","B_3"),3),
+intervention = matrix(rep(1,6),3))
+```
+
+OR
+
+```{r}
+protocol(x) <- list(name = "always combined", treatment_variables = c("A","B"),
+intervention = c(1,1))
+```
+
+
