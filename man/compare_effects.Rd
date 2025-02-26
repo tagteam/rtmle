@@ -13,7 +13,8 @@ compare_effects(
   beta_L0_D = 0,
   nu = rep(1.1, 4),
   cens = 0,
-  eta = rep(0.1, 4)
+  eta = rep(0.1, 4),
+  setting = 1
 )
 }
 \arguments{
@@ -37,6 +38,8 @@ and calculates an estimate.}
 
 \item{eta}{Vector of length 4 of shape parameters for the Weibull intensity. Default is set to
 0.1 for all events.}
+
+\item{setting}{Setting specifier}
 }
 \value{
 Plot

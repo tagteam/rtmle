@@ -15,6 +15,7 @@
 #' @param eta Vector of length 4 of shape parameters for the Weibull intensity. Default is set to
 #' 0.1 for all events.
 #' @param cens Indicator for whether censoring is present
+#' @param setting Setting specifier
 #'
 #' @return Plot
 #' @export
@@ -38,7 +39,8 @@ compare_effects <- function(estimator,
                             beta_L0_D = 0,
                             nu = rep(1.1,4),
                             cens = 0,
-                            eta = rep(0.1,4)) {
+                            eta = rep(0.1,4),
+                            setting = 1) {
 
   B <-  max(length(beta_L0_L), length(beta_L_D), length(beta_A0_L), length(beta_L0_D))
 
@@ -47,27 +49,52 @@ compare_effects <- function(estimator,
   if(length(beta_A0_L) < B) beta_A0_L <- rep(beta_A0_L, B)
   if(length(beta_L0_D) < B) beta_L0_D <- rep(beta_L0_D, B)
 
-
-  for(b in 1:B){
-    data0 <- sim_data_setting2(N, beta_L_D = beta_L_D[b], beta_A0_L = beta_A0_L[b],
-                               beta_L0_L = beta_L0_L[b], beta_A0_D = 0, nu = nu,
-                               cens = 0, eta = eta, beta_L0_D = beta_L0_D[b])
-    data0.1 <- sim_data_setting2(N, beta_L_D = beta_L_D[b], beta_A0_L = beta_A0_L[b],
-                                 beta_L0_L = beta_L0_L[b], beta_A0_D = -0.1, nu = nu,
+  if(setting == 1){
+    for(b in 1:B){
+      data_a <- sim_data_setting2(N, beta_L_D = beta_L_D[b], beta_A0_L = beta_A0_L[b],
+                                 beta_L0_L = beta_L0_L[b], beta_A0_D = 0, nu = nu,
                                  cens = 0, eta = eta, beta_L0_D = beta_L0_D[b])
-    data0.2 <- sim_data_setting2(N, beta_L_D = beta_L_D[b], beta_A0_L = beta_A0_L[b],
-                                 beta_L0_L = beta_L0_L[b], beta_A0_D = -0.2, nu = nu,
-                                 cens = 0, eta = eta, beta_L0_D = beta_L0_D[b])
+      data_b <- sim_data_setting2(N, beta_L_D = beta_L_D[b], beta_A0_L = beta_A0_L[b],
+                                   beta_L0_L = beta_L0_L[b], beta_A0_D = -0.1, nu = nu,
+                                   cens = 0, eta = eta, beta_L0_D = beta_L0_D[b])
+      data_c <- sim_data_setting2(N, beta_L_D = beta_L_D[b], beta_A0_L = beta_A0_L[b],
+                                   beta_L0_L = beta_L0_L[b], beta_A0_D = -0.2, nu = nu,
+                                   cens = 0, eta = eta, beta_L0_D = beta_L0_D[b])
 
-    if(b == 1){
-      est0 <- estimator(data0, N)
-      est_length <- length(est0)
-      estimates <- matrix(nrow = B, ncol = 3 * est_length)
+      if(b == 1){
+        est0 <- estimator(data_a, N)
+        est_length <- length(est0)
+        estimates <- matrix(nrow = B, ncol = 3 * est_length)
+      }
+
+      estimates[b, 1 : est_length] <- estimator(data_a, N)
+      estimates[b, (est_length + 1) : (2 * est_length)] <- estimator(data_b, N)
+      estimates[b, (2 * est_length + 1) : (3 * est_length)] <- estimator(data_c, N)
     }
-
-    estimates[b, 1 : est_length] <- estimator(data0, N)
-    estimates[b, (est_length + 1) : (2 * est_length)] <- estimator(data0.1, N)
-    estimates[b, (2 * est_length + 1) : (3 * est_length)] <- estimator(data0.2, N)
   }
+  else{
+    for(b in 1:B){
+      data_a <- sim_data_setting2(N, beta_L_D = 0, beta_A0_L = beta_A0_L[b],
+                                 beta_L0_L = beta_L0_L[b], beta_A0_D = 0, nu = nu,
+                                 cens = 0, eta = eta, beta_L0_D = beta_L0_D[b])
+      data_b <- sim_data_setting2(N, beta_L_D = 0.5, beta_A0_L = beta_A0_L[b],
+                                   beta_L0_L = beta_L0_L[b], beta_A0_D = 0, nu = nu,
+                                   cens = 0, eta = eta, beta_L0_D = beta_L0_D[b])
+      data_c <- sim_data_setting2(N, beta_L_D = 1, beta_A0_L = beta_A0_L[b],
+                                   beta_L0_L = beta_L0_L[b], beta_A0_D = 0, nu = nu,
+                                   cens = 0, eta = eta, beta_L0_D = beta_L0_D[b])
+
+      if(b == 1){
+        est0 <- estimator(data_a, N)
+        est_length <- length(est0)
+        estimates <- matrix(nrow = B, ncol = 3 * est_length)
+      }
+
+      estimates[b, 1 : est_length] <- estimator(data_a, N)
+      estimates[b, (est_length + 1) : (2 * est_length)] <- estimator(data_b, N)
+      estimates[b, (2 * est_length + 1) : (3 * est_length)] <- estimator(data_c, N)
+    }
+  }
+
   return(estimates)
 }
