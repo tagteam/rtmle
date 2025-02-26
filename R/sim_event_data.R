@@ -31,7 +31,7 @@
 #' If this the case, sex = TRUE, an additional row in the beta matrix specifies what effect the covariate has on the
 #' intensities of the varies events. If this row is not specified the deafualt effect is 0.
 #'
-#' @return Data frame containing the simulated data. There is a column for ID, time of event (Time),
+#' @return data.table containing the simulated data. There is a column for ID, time of event (Time),
 #' event type (Delta), baseline covariate (L0), indicator for change in covariate process (L), Baseline Treatment (A0),
 #' indicator for Operation (A), and potentially an additional baseline covariate (L1) representing sex.
 #' @export
