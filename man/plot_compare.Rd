@@ -4,16 +4,27 @@
 \alias{plot_compare}
 \title{Plot comparison of estimates.}
 \usage{
-plot_compare(estimates, plot_no = 1, diff_betas = seq(0, 1, by = 0.1))
+plot_compare(
+  estimates,
+  diff_betas = seq(0, 1, by = 0.1),
+  lower = NULL,
+  upper = NULL,
+  groups = c(0, -0.1, -0.2)
+)
 }
 \arguments{
-\item{estimates}{A matrix B times 6 matrix with estimates data where A0 = 0 or 1
-and where the effect of the drug varies from no effect, small effect to large effect.}
-
-\item{plot_no}{For now the possibility is 1 or 2. Plot_no = 1 lets us plot the different
-estimates. While plot_no = 2, lets us plot differences.}
+\item{estimates}{A matrix with estimates. Columns 1,3,... are for A0 = 0 and
+columns 2,4,... for  A0 = 1}
 
 \item{diff_betas}{The values of the varying beta coefficient.}
+
+\item{lower}{A matrix with lower confidence bands. Columns 1,3,... are for A0 = 0 and
+columns 2,4,... for  A0 = 1}
+
+\item{upper}{A matrix with lower confidence bands. Columns 1,3,... are for A0 = 0 and
+columns 2,4,... for  A0 = 1}
+
+\item{groups}{The strata for the different estimates}
 }
 \value{
 Plot

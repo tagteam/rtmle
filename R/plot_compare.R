@@ -2,12 +2,14 @@
 #'
 #' @title Plot comparison of estimates.
 #'
-#' @param estimates A matrix B times 6 matrix with estimates data where A0 = 0 or 1
-#' and where the effect of the drug varies from no effect, small effect to large effect.
-#' @param plot_no For now the possibility is 1 or 2. Plot_no = 1 lets us plot the different
-#' estimates. While plot_no = 2, lets us plot differences.
+#' @param estimates A matrix with estimates. Columns 1,3,... are for A0 = 0 and
+#' columns 2,4,... for  A0 = 1
 #' @param diff_betas The values of the varying beta coefficient.
-#' @param CI Whether CI limits are provided
+#' @param lower A matrix with lower confidence bands. Columns 1,3,... are for A0 = 0 and
+#' columns 2,4,... for  A0 = 1
+#' @param upper A matrix with lower confidence bands. Columns 1,3,... are for A0 = 0 and
+#' columns 2,4,... for  A0 = 1
+#' @param groups The strata for the different estimates
 #'
 #' @return Plot
 #' @export
@@ -29,7 +31,7 @@ plot_compare <- function(estimates, diff_betas = seq(0,1,by = 0.1),
                          upper = NULL,
                          groups = c(0, -0.1, -0.2)) {
 
-  ests <- group <- No_effect <- Effect <- Large_effect <- NULL
+  ests <- A0 <- NULL
 
   B <- length(diff_betas)
   n_cols <- ncol(estimates)
