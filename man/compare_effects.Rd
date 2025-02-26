@@ -7,11 +7,11 @@
 compare_effects(
   estimator,
   N = 1000,
-  beta_L0_L = 1,
+  beta_L0_L = 2,
   beta_L_D = 1,
-  beta_A0_D = 0,
-  nu = rep(1.1, 4),
+  beta_A0_L = 0,
   beta_L0_D = 0,
+  nu = rep(1.1, 4),
   cens = 0,
   eta = rep(0.1, 4)
 )
@@ -26,13 +26,12 @@ and calculates an estimate.}
 
 \item{beta_L_D}{Parameter for the effect of L on D.}
 
-\item{beta_A0_D}{Parameter for the effect of L0 on L. One of the three parameters is
-allowed to vary.}
+\item{beta_A0_L}{Parameter for the effect of L0 on L.}
+
+\item{beta_L0_D}{Parameter for the effect of L0 on D.}
 
 \item{nu}{Vector of length 4 of scale parameters for the Weibull intensity with parameterization
 \deqn{\eta \nu t^{\nu - 1}}. Default is set to 1.1 for all events.}
-
-\item{beta_L0_D}{Parameter for the effect of L0 on D.}
 
 \item{cens}{Indicator for whether censoring is present}
 

@@ -11,7 +11,7 @@
 #' @title Simulate Event Data
 #'
 #' @param N A double for the number of simulated individuals
-#' @param beta A 4 by 4 matrix of doubles for the effects on the intensities. The columns represent the events. In the
+#' @param beta A matrix of doubles for the effects on the intensities. The columns represent the events. In the
 #' default case Censoring, Death, Operation, and Covariate Change. The rows represent the baseline covariate \eqn{L0}
 #' (which can be interpreted as age of participant), baseline treatment \eqn{A0}, the indicator for change
 #' in the covariate process  \eqn{L}, and the indicator for operation \eqn{A}.The \eqn{\beta} matrix is by default set to 0.
@@ -50,11 +50,16 @@ sim_event_data <- function(N,                      # Number of individuals
                            )
   {
   ID <- NULL
+
   if(is.null(beta)){
     beta <- matrix(0, nrow = 4, ncol = 4)
   }
+
+  # Events
+  x <- 1:ncol(beta)
+
   if(!sex){
-    beta <- rbind(beta, rep(0,4))
+    beta <- rbind(beta, rep(0,ncol(beta)))
   }
 
 
@@ -65,9 +70,6 @@ sim_event_data <- function(N,                      # Number of individuals
         as.numeric(A[i] == 0), # You are only at risk for an operation if you have not had an operation yet
         as.numeric(L[i] == 0))) # You are only at risk for a change in the covariate process if you have not had a change yet
   }}
-
-  # Events
-  x <- 1:ncol(beta)
 
   # Intensities
   phi <- function(i) {
@@ -80,9 +82,9 @@ sim_event_data <- function(N,                      # Number of individuals
 
   # If all events have same parameter, the inverse simplifies
   if(all(nu[1] == nu)){
-    inverse_sc_haz <- function(u, t, i) {
+    inverse_sc_haz <- function(p, t, i) {
       denom <- sum(at_risk(i, L, A) * eta * phi(i))
-      (u / denom + t^nu[1])^(1 / nu[1]) - t
+      (p / denom + t^nu[1])^(1 / nu[1]) - t
     }
   } else{
     # Summed cumulative hazard
@@ -91,9 +93,9 @@ sim_event_data <- function(N,                      # Number of individuals
     }
 
     # Inverse summed cumulative hazard function
-    inverse_sc_haz <- function(p, t, i, lower_bound = 10^-15, upper_bound = 200) {
+    inverse_sc_haz <- function(p, t, i) {
       root_function <- function(u) sum_cum_haz(u, t, i) - p
-      stats::uniroot(root_function, lower = lower_bound, upper = upper_bound)$root
+      stats::uniroot(root_function, lower = 10^-15, upper = 200)$root
     }
   }
 

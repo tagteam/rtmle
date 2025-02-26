@@ -7,6 +7,7 @@
 #' @param plot_no For now the possibility is 1 or 2. Plot_no = 1 lets us plot the different
 #' estimates. While plot_no = 2, lets us plot differences.
 #' @param diff_betas The values of the varying beta coefficient.
+#' @param CI Whether CI limits are provided
 #'
 #' @return Plot
 #' @export
@@ -23,7 +24,7 @@
 #' res1 <- compare_effects(estimator = estimator1, N = 100, beta_L_D = seq(0,1,by = 0.1))
 #' plot_compare(res1, diff_betas = seq(0,1,by = 0.1))
 
-plot_compare <- function(estimates, plot_no = 1, diff_betas = seq(0,1,by = 0.1)) {
+plot_compare <- function(estimates, plot_no = 1, diff_betas = seq(0,1,by = 0.1), CI = FALSE) {
 
   ests <- group <- No_effect <- Effect <- Large_effect <- NULL
 
