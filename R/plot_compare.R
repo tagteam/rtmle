@@ -24,32 +24,36 @@
 #' res1 <- compare_effects(estimator = estimator1, N = 100, beta_L_D = seq(0,1,by = 0.1))
 #' plot_compare(res1, diff_betas = seq(0,1,by = 0.1))
 
-plot_compare <- function(estimates, plot_no = 1, diff_betas = seq(0,1,by = 0.1), CI = FALSE) {
+plot_compare <- function(estimates, diff_betas = seq(0,1,by = 0.1),
+                         lower = NULL,
+                         upper = NULL,
+                         groups = c(0, -0.1, -0.2)) {
 
   ests <- group <- No_effect <- Effect <- Large_effect <- NULL
 
-  if(plot_no == 1){
-    plot_data <- data.table(ests = c(estimates),
-                            group = c(rep("A0 = 0, No effect", 11), rep("A0 = 1, No effect", 11),
-                                      rep("A0 = 0, Small effect", 11), rep("A0 = 1, Small effect", 11),
-                                      rep("A0 = 0, Large effect", 11), rep("A0 = 1, Large effect", 11)),
-                            beta = rep(diff_betas,6))
+  B <- length(diff_betas)
+  n_cols <- ncol(estimates)
 
-    p <-  ggplot2::ggplot(plot_data)+
-      ggplot2::geom_line(ggplot2::aes(x = beta, y = ests, colour = group))
+  plot_data <- data.table(ests = c(estimates),
+                          A0 = rep(c(rep("0", B), rep("1", B)), n_cols / 2),
+                          beta = rep(diff_betas, n_cols),
+                          group = c(rep(groups[1], 2 * B), rep(groups[2], 2* B), rep(groups[3], 2* B)))
+
+  if (!is.null(upper) && !is.null(lower)) {
+    plot_data[, upper := c(upper)]
+    plot_data[, lower := c(lower)]
   }
 
-  else if(plot_no == 2){
-    plot_data <- data.table(No_effect = estimates[,2] - estimates[,1],
-               Effect = estimates[,4] - estimates[,3],
-               Large_effect = estimates[,6] - estimates[,5],
-               beta = rep(diff_betas,2))
+  p <-  ggplot2::ggplot(plot_data)+
+    ggplot2::geom_line(ggplot2::aes(x = beta, y = ests, colour = A0))+
+    ggplot2::facet_wrap(~ group)
 
-      p <-  ggplot2::ggplot(plot_data)+
-        ggplot2::geom_line(ggplot2::aes(x = beta, y = No_effect, colour = "No effect of drug on T2D"))+
-        ggplot2::geom_line(ggplot2::aes(x = beta, y = Effect, colour = "Small effect of drug on T2D"))+
-        ggplot2::geom_line(ggplot2::aes(x = beta, y = Large_effect, colour = "Large effect of drug on T2D"))+
-        ggplot2::scale_color_manual(values = c("darkolivegreen", "darkblue", "hotpink"))
+  # Add shading only if both upper and lower are provided
+  if (!is.null(upper) && !is.null(lower)) {
+    p <- p +
+      ggplot2::geom_ribbon(ggplot2::aes(x = beta, ymin = lower, ymax = upper,
+                                        fill = A0), alpha = 0.2)
   }
+
   return(p)
 }

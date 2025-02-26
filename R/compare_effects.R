@@ -49,7 +49,6 @@ compare_effects <- function(estimator,
 
 
   for(b in 1:B){
-    print(b)
     data0 <- sim_data_setting2(N, beta_L_D = beta_L_D[b], beta_A0_L = beta_A0_L[b],
                                beta_L0_L = beta_L0_L[b], beta_A0_D = 0, nu = nu,
                                cens = 0, eta = eta, beta_L0_D = beta_L0_D[b])
