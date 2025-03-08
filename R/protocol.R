@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds & Alessandra
 ## Created: Jul 3 2024 (13:46)
 ## Version:
-## Last-Updated: Feb 18 25
-##           By: Alessandra
-##     Update #: 29
+## Last-Updated: Mar  8 2025 (08:10) 
+##           By: Thomas Alexander Gerds
+##     Update #: 57
 #----------------------------------------------------------------------
 ##
 ### Commentary: We want to change this for 2 treatments, where the intervention is defined on both
@@ -23,13 +23,21 @@
 ##' @param value list with three forced elements:
 ##' \itemize{
 ##' \item \code{name}: the name of the protocol
-##' \item \code{treatment_variables}: A list/Matrix/vector with the name(s) of the variable(s) that the protocols intervenes upon.
-##' If only one treatment, then it would be one value with the name of treatment "A" or the vector with one name for each time
-##' A_0,A_1,----,A_k.  If more than one treatments, then it can be defined as a list of length equal to the number of treatment
-##' where each argument of the list has the vector of the treatment at different times $A: A_0,A_1,...,A_k, $B:B_0,B_1,...B_k
-##' OR it can be a matrix where each column contains the variables names of treatment at different times.
-##' \item \code{intervention}: A list/matrix/vector or a function. If it is a matrix it should contain the values
-##' that the variables are set to under the intervention as columns and one row for each time point.
+##' \item \code{treatment_variable}: A list/Matrix/vector with the
+##' name(s) of the variable(s) that the protocols intervenes upon.
+##' If only one treatment, then it would be one value with the name of treatment
+##' "A" or the vector with one name for each time
+##' A_0,A_1,----,A_k.  If more than one treatments, then it can be defined as a list
+##' of length equal to the number of treatment
+##' where each argument of the list has the vector of the treatment at different times
+##' $A: A_0,A_1,...,A_k, $B:B_0,B_1,...B_k
+##' OR it can be a matrix where each column contains the variables names
+##' of treatment at different times.
+##' \item \code{intervention}: A list/matrix/vector or a function.
+##'
+##' If it is a matrix it should contain the values
+##' that the variables are set to under the intervention as columns
+##' and one row for each time point.
 ##' If the intervened values are the same for all time points it is sufficient to provide a single value per variable.
 ##' See examples. If it is a function, it will be called from \code{intervention_probabilities} with two arguments:
 ##' the current time interval and the current history of all variables. The function determines the value(s)
@@ -38,108 +46,75 @@
 ##' }
 ##' @export
 "protocol<-" <- function(x,...,value) {
+    variable <- NULL
     stopifnot(is.list(value))
-    stopifnot(all(c("name","treatment_variables","intervention") %in% names(value)))
+    stopifnot(all(c("name","intervention") %in% names(value)))
     intervention_times <- x$time[-length(x$time)]
-    tv<-value$treatment_variables
-
-    if(is.list(tv)){
-      varnames <- names(tv) # names of the treatments
-      stopifnot(length(unique(sapply(tv,length)))==1)
-      tv_seq <- do.call(cbind,tv)
-    }
-    else{
-      if(is.matrix(tv)){
-
-        if( dim(tv)[1]>1 & dim(tv)[1] != lengths(intervention_times)){
-          stop(paste0("when using a matrix for the definition of the treatment_variables",
-                      "then each column has to corespond to one treatment",
-                      "and then the number of row needs to be of",length(intervention_times),
-                      ",whic is the number of time points including 0 but minus the last time point. "))}
-        else{
-        tv_seq<-tv
-        varnames <- unique(sub("_[0-9]+$","",tv))
+    intervention_table <- value$intervention
+    if (inherits(intervention_table,"data.frame")){
+        data.table::setDT(intervention_table)
+        treatment_variables <- names(intervention_table)
+        if (any(grepl("_[0-9]+$","",treatment_variables))){
+            stop("Treatment variables should be given without time suffix.")
         }
-      }
-
-      else{ #if it is not a list, nor a matrix then we have only one treatment and
-        # check if they provide as input each time OR only 1 value
-        if (length(grep("_[0-9]+$",tv))>0){
-
-          if (length(grep("_[0-9]+$",tv)) != lengths(intervention_times)){
-            stop(paste0("Argument treatment_variables has the wrong length. You can either provide",
-                        "the name of the treatment variable such as 'A' as a character string without the '_k' subscript,",
-                        "or the vector for all time points such as 'c('A_0', 'A_1', ..., 'A_k') where k=",length(intervention_times),
-                        " is the number of time points including 0 but minus the last time point."))}
-          tv_seq<-tv
-          varnames <- unique(sub("_[0-9]+$","",tv))
+        missing_nodes <- (length(intervention_times)-NROW(intervention_table))
+        if (missing_nodes>0){
+            warning("The object specifies more intervention nodes than there are rows in the provided intervention table.\nApply last value carried forward for now.")
+            intervention_table <- intervention_table[c(1:NROW(intervention_table),rep(NROW(intervention_table),missing_nodes))]
+        }else{
+            if (missing_nodes<0){
+                warning("The object specifies fewer intervention nodes than there are rows in the provided intervention table.\nCutting these for now.")
+                intervention_table <- intervention_table[c(1:length(intervention_times))]
+            }
         }
-        else{
-
-          if(lengths(tv) != 1){
-            stop(paste0("Argument treatment_variables has the wrong length. You can either provide",
-                        "the name of the treatment variable such as 'A' as a character string without the '_k' subscript,",
-                        "or the vector for all time points such as 'c('A_0', 'A_1', ..., 'A_k') where k=",length(intervention_times),
-                        " is the number of time points including 0 but minus the last time point."))}
-
-          varnames <- value$treatment_variables
-          tv_seq <- as.vector(sapply(varnames, FUN=function(s){paste0(s,"_",intervention_times)}))
+        x$names$treatment_options <- lapply(treatment_variables,
+                                            function(v){
+                                                if (is.factor(value$intervention[[v]])){
+                                                    levels(value$intervention[[v]])
+                                                } else{
+                                                    # FIXME: this seems out of control and will not work
+                                                    stop("The treatment variables must be factors") 
+                                                    unique(value$intervention[[v]])
+                                                }
+                                            })
+        names(x$names$treatment_options) <- treatment_variables
+    }else{
+        if ("treatment_variables" %in% names(value) &&
+            length(value$treatment_variables) == 1  &&
+            length(intervention_table) == 1 &&
+            intervention_table %in% c(0,1)){
+            intervention_table <- data.table::as.data.table(factor(intervention_table,levels = c(0,1)))
+            names(intervention_table) <- value$treatment_variables
+            treatment_variables <- value$treatment_variables
+            x$names$treatment_options <- list(c(0,1))
+            names(x$names$treatment_options) <- treatment_variables
+        }else{
+            stop("Intervention must be a data.frame (or data.table or tibble)")
         }
-
-      }
-
-
-
     }
-
-
-
-
-    #---- we look at the intervention now:
-    if(is.list(value$intervention)){
-      intervention <- do.call(cbind,value$intervention)
-      # if we work on the combination--> makes sense to actually provide
-      # the values for A and B for the intervention table
-      # since we will use this for the predict and they might have two separate effects
+    if (!("time" %in% names(intervention_table))){
+        intervention_table <- cbind(time = intervention_times,
+                                    intervention_table)
+    }else{
+        if (!(all(intervention_table[["time"]] == intervention_times))){
+            stop(paste("Intervention times do not match. Object contains:\n",
+                       paste(intervention_times,collapse = ", ")))
+        }
     }
-
-    else{
-
-      if(is.matrix(value$intervention)){
-        # make sure it is the correct dimension:
-        if( dim(tv)[value$intervention]>1 & dim(value$intervention)[1] != lengths(intervention_times)){
-          stop(paste0("when using a matrix for the definition of the intervention",
-                      "then each column has to corespond to one treatment",
-                      "and then the number of row needs to be of",length(intervention_times),
-                      ",whic is the number of time points including 0 but minus the last time point. "))}
-
-        #if it has the correct dimension--> save it like that
-        intervention <- value$intervention
-
-      }
-
-      ## if it is not a list, nor a matrix then there is only one treatment and it is a number or a vector
-      if(length(varnames)>1 | (length(varnames)==1 & length(value$intervention) != length(intervention_times) ) ){
-        stop(paste0("Argument intervention has the wrong length.
-                    You are either specifying the intervention for only one treatment,
-                    while in treatment_variables there are more treatments, OR the length of the vector for the intervention is wrong."))}
-
-      intervention<-ifelse(length(value$intervention)==1, rep(value$intervention, length(intervention_times)), value$intervention)
-
-    }
-
-
-    it <- cbind(data.table(time = intervention_times),
-                variable = tv_seq,
-                data.table(value = intervention ))
-
+    intervention_table <- do.call("rbind",lapply(treatment_variables,function(v){
+        itv <- intervention_table[,c("time",v),with = FALSE]
+        itv[,variable := paste0(v,"_",itv$time)]
+        data.table::setnames(itv,old = v,new = "value")
+        data.table::setcolorder(itv,c("time","variable","value"))
+        itv
+    }))
     if (length(value$intervene_function)>0){
         x$protocols[[value$name]]$intervene_function <- value$intervene_function
     }else{
         x$protocols[[value$name]]$intervene_function <- "intervene"
     }
-    x$protocols[[value$name]]$treatment_variables <- varnames
-    x$protocols[[value$name]]$intervention_table <- it
+    x$protocols[[value$name]]$treatment_variables <- treatment_variables
+    x$protocols[[value$name]]$intervention_table <- intervention_table
     x
 }
 ######################################################################

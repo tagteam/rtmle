@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Oct 17 2024 (09:26) 
 ## Version: 
-## Last-Updated: Dec 13 2024 (08:22) 
+## Last-Updated: Mar  8 2025 (08:13) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 151
+##     Update #: 195
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -21,6 +21,7 @@ intervention_probabilities <- function(x,
                                        time_horizon,
                                        seed,
                                        ...){
+    variable <- NULL
     # FIXME: consider using x$sample_size?
     N <- NROW(x$prepared_data)
     #
@@ -36,7 +37,10 @@ intervention_probabilities <- function(x,
     eval_times <- x$times[-length(x$times)]
     ## if max_time_horizon = 5 then we need propensities up to time 4
     eval_times <- eval_times[eval_times < max_time_horizon]
-    treatment_variables <- x$protocols[[protocol_name]]$intervention_table[time%in%eval_times]$variable
+    ##
+    treatment_variables <- lapply(eval_times,function(this_time){
+        x$protocols[[protocol_name]]$intervention_table[time == this_time]$variable
+    })
     if (length(x$names$censoring)>0){
         censoring_variables <- paste0(x$names$censoring,"_",1:max_time_horizon)
     }else{
@@ -44,10 +48,18 @@ intervention_probabilities <- function(x,
     }
     competing_variables <- paste0(x$names$competing,"_",1:(max_time_horizon-1))
     outcome_variables <- paste0(x$names$outcome,"_",1:max_time_horizon)
+    # order vector of treatment and censoring_variables
+    G_names <- unlist(lapply(eval_times,function(this_time){
+        c(treatment_variables[[this_time+1]],censoring_variables[[this_time+1]])
+    }))
     if (refit || length(x$cumulative_intervention_probs[[protocol_name]]) == 0){
+        # FIXME: the following code should be improved to increase the readability
         intervention_probs <- data.table(ID = x$prepared_data[[x$names$id]])
-        intervention_probs <- cbind(intervention_probs,matrix(1,nrow = N,ncol = length(treatment_variables)+length(censoring_variables)))
-        setnames(intervention_probs,c(x$names$id,c(rbind(treatment_variables,censoring_variables))))
+        intervention_probs <- cbind(intervention_probs,
+                                    matrix(1,
+                                           nrow = N,
+                                           ncol = length(unlist(treatment_variables))+length(censoring_variables)))
+        setnames(intervention_probs,new = c(x$names$id,G_names))
         # predict the propensity score/1-probability of censored
         # intervene according to protocol for targets
         # in the last time interval we do not need propensities/censoring probabilities
@@ -60,10 +72,13 @@ intervention_probabilities <- function(x,
             }
             if (any(outcome_free_and_uncensored)){
                 if (length(censoring_variables[[j+1]])>0){
-                    history_of_variables <- 1:(match(censoring_variables[[j+1]],names(x$prepared_data)))
+                    last_G <- censoring_variables[[j+1]]
                 } else{
-                    history_of_variables <- 1:(match(treatment_variables[[j+1]],names(x$prepared_data)))
+                    # FIXME: this is not easy to read, but when there are multiple treatment variables
+                    #        at time j, such as A_j and B_j then we match on the last
+                    last_G <- rev(treatment_variables[[j+1]])[[1]]
                 }
+                history_of_variables <- 1:(match(last_G,names(x$prepared_data)))
                 # FIXME: would be better to restrict to the variables that occur in the current formula
                 # FIXME: would be better to remove the id variable
                 current_data <- x$prepared_data[outcome_free_and_uncensored,history_of_variables,with = FALSE]
@@ -78,7 +93,7 @@ intervention_probabilities <- function(x,
                                            list(data = current_data,
                                                 intervention_table = intervention_table,
                                                 time = j))
-                for (G in c(treatment_variables[[j+1]],censoring_variables[[j+1]]))
+                for (G in c(treatment_variables[[j+1]],censoring_variables[[j+1]])){
                     # fit the propensity and censoring regression models
                     # and store probabilities as intervention_probs
                     if (refit || length(x$models[[protocol_name]][[G]]$fit) == 0){
@@ -124,12 +139,20 @@ intervention_probabilities <- function(x,
                             data.table::setattr(predicted_values,"fit",NULL)
                             intervention_probs[outcome_free_and_uncensored][[G]] <- predicted_values
                             # FIXME: this hack works but only when there are exactly 2 treatment levels!
+                            ## if (G == "B_1") browser(skipCalls=1L)
+                            ## if (G == "A_1") browser(skipCalls=1L)
                             if (!(G %in% censoring_variables)){ # then G is a treatment variable
-                                if (match(intervention_table[time == j][["value"]],x$names$treatment_levels)<length(x$names$treatment_levels))
-                                    intervention_probs[outcome_free_and_uncensored][[G]] <- 1-intervention_probs[outcome_free_and_uncensored][[G]]
+                                # FIXME: could extract levels from data or (even better) add an association list
+                                #        list(A=c("A_0","A_1","A_2"), B=c("B_0","B_1","B_2"),... to the object x
+                                if (length(levels <- x$names$treatment_options[[sub("_[0-9]+$","",G)]]) == 2){
+                                    if (match(intervention_table[variable == G][["value"]],levels) == 1)
+                                        # probs are 1-probs
+                                        intervention_probs[outcome_free_and_uncensored][[G]] <- 1-intervention_probs[outcome_free_and_uncensored][[G]]
+                                }
                             }
                         }
                     }
+                }
             }
         }
         # FIXME: remove this when not needed anymore
@@ -139,19 +162,28 @@ intervention_probabilities <- function(x,
     }
     #
     # define a matrix which indicates if the intervention is followed
+    # the matrix should have a row for each individual and a column for
+    # each time point 
     #
     if (length(intervention_match <- x$intervention_match[[protocol_name]]) == 0
         ||
         ## the previous run could have produced the matrix but maybe not for all time points
         NCOL(x$intervention_match[[protocol_name]])<length(eval_times)){
-        intervention_match <- matrix(0,ncol = length(treatment_variables),nrow = N)
+        intervention_match <- matrix(0,ncol = length(eval_times),nrow = N)
+        previous <- rep(1,N)
         for(j in eval_times){
-            if (j == 0)
-                intervention_match[,j+1] <- previous <- (x$prepared_data[[intervention_table[j+1]$variable]] %in% c(intervention_table[j+1][["value"]],NA))
-            else
-                intervention_match[,j+1] <- previous <- previous*(x$prepared_data[[intervention_table[j+1]$variable]] %in% c(intervention_table[j+1][["value"]],NA))
+            intervention_variables <- intervention_table[time == j]$variable
+            observed_values <- x$prepared_data[,intervention_variables,with = FALSE]
+            for (v in 1:length(intervention_variables)){
+                # when there are multiple intervention variables
+                # all observed values must match  
+                intervention_values <- intervention_table[time == j & variable == intervention_variables[[v]]]$value
+                intervention_match[,j+1] <- previous <- previous*(observed_values[[intervention_variables[[v]]]] %in% intervention_values)
+            }
         }
-        colnames(intervention_match) <- treatment_variables
+        ## the intervention_match matrix has one column per time point
+        # when there are mulitple treatment variables we paste-collapse the names
+        colnames(intervention_match) <- sapply(treatment_variables,paste,collapse = ",")
         x$intervention_match[[protocol_name]] <- intervention_match
     }
     x

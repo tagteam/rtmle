@@ -21,33 +21,29 @@ knitr::opts_chunk$set(
 The **R**-package rtmle implements a class of targeted minimum loss estimators for the analysis of longitudinal register data. 
 We specify the different scenarios this package can be used for:
 
-```{r echo=FALSE}
-cat("
-|--------------|-----------|---------|-----------|
-| Intervention |Exposure(s)| Outcome | Available |
-|--------------|-----------|---------|-----------|
-| Static       |one Binary |   B-S   | Yes       |
-| Dynamic      |one Binary |   B-S   | Yes       |
-| Stochastic   |one Binary |   B-S   | Yes       |
-|--------------|-----------|---------|-----------|
-| Static       | one Categ |   B-S   | soon      |
-| Dynamic      | one Categ |   B-S   | soon      |
-| Stochastic   | one Categ |   B-S   | soon      |
-|--------------|-----------|---------|-----------|
-| Static       | two Binary|   B-S   | soon      |
-| Dynamic      | two Binary|   B-S   | soon      |
-| Stochastic   | two Binary|   B-S   | soon      |
-|--------------|-----------|---------|-----------|
-| Static       | two Categ |   B-S   | No        |
-| Dynamic      | two Categ |   B-S   | No        |
-| Stochastic   | two Categ |   B-S   | No        |
-|--------------|-----------|---------|-----------|
-| Static       | continuous|   B-S   | No        |
-| Dynamic      | continuous|   B-S   | No        |
-| Stochastic   | continuous|   B-S   | No        |
-|--------------|-----------|---------|-----------|
-", sep="n")
-```
+|--------------|----------------------------|-----------------|-----------|
+| Intervention | Treatment variables        | Outcome         | Available |
+|--------------|----------------------------|-----------------|-----------|
+| Static       | One single binary variable | Binary/Survival | Yes       |
+| Dynamic      | One single binary variable | Binary/Survival | Yes       |
+| Stochastic   | One single binary variable | Binary/Survival | Yes       |
+|--------------|----------------------------|-----------------|-----------|
+| Static       | One categorical variable   | Binary/Survival | soon      |
+| Dynamic      | One categorical variable   | Binary/Survival | soon      |
+| Stochastic   | One categorical variable   | Binary/Survival | soon      |
+|--------------|----------------------------|-----------------|-----------|
+| Static       | Two binary variables       | Binary/Survival | soon      |
+| Dynamic      | Two binary variables       | Binary/Survival | soon      |
+| Stochastic   | Two binary variables       | Binary/Survival | soon      |
+|--------------|----------------------------|-----------------|-----------|
+| Static       | Two categorical variables  | Binary/Survival | No        |
+| Dynamic      | Two categorical variables  | Binary/Survival | No        |
+| Stochastic   | Two categorical variables  | Binary/Survival | No        |
+|--------------|----------------------------|-----------------|-----------|
+| Static       | continuous                 | Binary/Survival | No        |
+| Dynamic      | continuous                 | Binary/Survival | No        |
+| Stochastic   | continuous                 | Binary/Survival | No        |
+|--------------|----------------------------|-----------------|-----------|
 
 ## Defining the protocol
 
@@ -63,7 +59,7 @@ Here we specify:
 
 ### Examples: 
 
-#### Static Intervention: one Binary exposure (Always treated protocol)
+#### Static Intervention: One single binary variable exposure (Always treated protocol)
 
 ```{r}
 protocol(x) <- list(name = "always A",treatment_variables = "A",
@@ -85,7 +81,7 @@ protocol(x) <- list(name = "always A",treatment_variables = c("A_1","A_2","A_3")
 intervention = c(1,1,1))
 ```
 
-#### Static Intervention: two Binary exposures (A,B)
+#### Static Intervention: Two binary variables exposures (A,B)
 
 ```{r}
 protocol(x) <- list(name = "always combined",treatment_variables = list("A"=c("A_1","A_2","A_3"),"B"=c("B_1","B_2","B_3")),

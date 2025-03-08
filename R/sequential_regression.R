@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 30 2024 (14:30) 
 ## Version: 
-## Last-Updated: Dec 13 2024 (08:38) 
+## Last-Updated: Mar  7 2025 (13:51) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 234
+##     Update #: 245
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -147,7 +147,9 @@ sequential_regression <- function(x,
         if (length(x$names$censoring)>0){
             ipos <- censoring_variables[[j]]
         }else{
-            ipos <- treatment_variables[[j]]
+            # FIXME: this is not easy to read, but when there are multiple treatment variables
+            #        at time j, such as A_j and B_j then we match on the last
+            ipos <- rev(treatment_variables[[j]])[[1]]
         }
         if (length(x$targets[[target_name]]$estimator) == 0 || x$targets[[target_name]]$estimator == "tmle"){
             # use only data from subjects who are uncensored in current interval
@@ -156,9 +158,13 @@ sequential_regression <- function(x,
             W_previous[outcome_free_and_uncensored] <- lava::logit(fit_last)
             # FIXME: this test of infinite inverse_probability_weights needs more work
             inverse_probability_weights <- x$cumulative_intervention_probs[[protocol_name]][,ipos]
-            imatch <- (x$intervention_match[[protocol_name]][,intervention_table[time == j-1]$variable]%in% 1)
+            # the column names A_1,B_1,E_1 of the intervention_match table are made with paste
+            # in function intervention_probabilities
+            intervention_node_name <- paste(intervention_table[time == j-1]$variable,collapse = ",")
+            ## if (match(intervention_node_name,colnames(x$intervention_match[[protocol_name]]),nomatch = 0) == 0)
+            ## browser(skipCalls=1L)
+            imatch <- (x$intervention_match[[protocol_name]][,intervention_node_name]%in% 1)
             if (any(inverse_probability_weights[!is.na(Y) & outcome_free_and_uncensored & as.vector(imatch)] == 0)){
-                browser(skipCalls=1L)
                 stop("Exactly zero intervention probabilities encountered at the attempt to run the TMLE-update fluctuation model.\nYou may have to consider changing the target parameter or bounding the intervention probabilities somehow.\nGood luck!")
             }
             if (inherits(try(
@@ -186,7 +192,7 @@ sequential_regression <- function(x,
         if (any(h.g.ratio>10000)) h.g.ratio <- pmin(h.g.ratio,10000)
         if (length(x$names$censoring)>0){
             current_cnode <- as.character(x$prepared_data[[paste0(x$names$censoring,"_",j)]])
-            index <- (current_cnode%in%x$names$uncensored_label) & (intervention_match[,intervention_table[time == j-1]$variable] %in% 1)
+            index <- (current_cnode%in%x$names$uncensored_label) & (intervention_match[,intervention_node_name] %in% 1)
         }else{
             index <- (intervention_match[,intervention_table[time == j-1]$variable] %in% 1)
         }

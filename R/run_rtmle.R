@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul  1 2024 (09:11) 
 ## Version: 
-## Last-Updated: Dec 10 2024 (19:28) 
+## Last-Updated: Mar  8 2025 (08:09) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 371
+##     Update #: 378
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -37,6 +37,24 @@ run_rtmle <- function(x,
     ## sapply(x$prepared_data,function(x)sum(is.na(x)))
     if (!(x$names$id%in%names(x$prepared_data)))
         stop(paste0("Cannot see id variable ",x$names$id," in x$prepared_data."))
+    ## make sure that the treatment variables are factors with levels equal to those specified by the protocols
+    ## FIXME: this could perhaps be done in prepare_data()
+    for (v in names(x$names$treatment_options)){
+        for (v_j in paste0(v,"_",x$times)){
+            if (inherits(x$prepared_data[[v_j]],"factor")){
+                if (!(all.equal(levels(x$prepared_data[[v_j]]),x$names$treatment_options[[v]]))){
+                    stop(paste0("The protocols specify the following treatment options (factor levels) for variable ",v,
+                                paste0(x$names$treatment_options[[v]],collapse = ","),"\nBut, the data have: ",
+                                paste0(levels(x$prepared_data[[v_j]]),collapse = ",")))
+                }
+            }else{
+                ## stop(paste0("The treatment variable ",v_j," is not a factor"))
+                data.table::set(x$prepared_data,
+                                j = v_j,
+                                value = factor(x$prepared_data[[v_j]],levels = x$names$treatment_options[[v]]))
+            }
+        }
+    }
     # for loop across targets
     available_targets <- names(x$targets)
     if (!missing(targets)) {

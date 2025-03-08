@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul  4 2024 (07:40) 
 ## Version: 
-## Last-Updated: Dec 13 2024 (08:15) 
+## Last-Updated: Mar  7 2025 (17:45) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 22
+##     Update #: 24
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -24,23 +24,22 @@ formalize <- function(timepoint,
     form = NULL
     # remove constant variables
     included_baseline_covariates <- setdiff(name_baseline_covariates,constant_variables)
-    included_time_covariates <- setdiff(name_time_covariates,constant_variables)
     # check Markov assumption for time-varying variables
     # and add _time 
-    has_markov=match(included_time_covariates,Markov,nomatch=0)
+    has_markov=match(name_time_covariates,Markov,nomatch=0)
     if (sum(has_markov)>0){
-        markov_time_covariates=sapply(included_time_covariates[has_markov>0],function(v){paste0(v,"_",max(0,timepoint-1))})
+        markov_time_covariates=sapply(name_time_covariates[has_markov>0],function(v){paste0(v,"_",max(0,timepoint-1))})
     } else{
         markov_time_covariates=NULL
     }
     if (any(has_markov==0)){
-        non_markov_time_covariates=sapply(included_time_covariates[has_markov==0],function(v){paste0(v,"_",0:max(0,timepoint-1))})
+        non_markov_time_covariates=sapply(name_time_covariates[has_markov==0],function(v){paste0(v,"_",0:max(0,timepoint-1))})
     }    else{
         non_markov_time_covariates=NULL
     }
     included_vars=c(included_baseline_covariates,
-                    non_markov_time_covariates,
-                    markov_time_covariates)
+                    setdiff(non_markov_time_covariates,constant_variables),
+                    setdiff(markov_time_covariates,constant_variables))
     # remove outcome variable (could be removed in earlier functions)
     included_vars = setdiff(included_vars,name_outcome_variable)
     # remove vars that are not in data

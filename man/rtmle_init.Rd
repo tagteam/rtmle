@@ -11,7 +11,6 @@ rtmle_init(
   name_outcome,
   name_competing,
   name_censoring = "Censored",
-  treatment_levels = c("0", "1"),
   censored_levels = c("uncensored", "censored"),
   censored_label = "censored"
 )
@@ -31,8 +30,6 @@ In the setting where \code{intervals=1} this should be the full name of the outc
 \item{name_competing}{Name of the competing risk variable(s).}
 
 \item{name_censoring}{Name of the censoring variable(s).}
-
-\item{treatment_levels}{Character vector with the treatment levels.}
 
 \item{censored_levels}{Character vector with the censoring levels.}
 
@@ -63,7 +60,6 @@ x <- rtmle_init(intervals=3,
                 name_outcome="cvddeath",
                 name_competing="death",
                 name_censoring="Censored",
-                treatment_levels = c("0","1"),
                 censored_levels = c("1","0"),
                 censored_label="0")
 

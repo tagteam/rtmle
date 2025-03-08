@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 19 2024 (07:23) 
 ## Version: 
-## Last-Updated: Oct  8 2024 (18:26) 
+## Last-Updated: Mar  7 2025 (18:15) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 29
+##     Update #: 32
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -28,7 +28,6 @@
 ##' In the setting where \code{intervals=1} this should be the full name of the outcome variable.
 ##' @param name_competing Name of the competing risk variable(s).
 ##' @param name_censoring Name of the censoring variable(s).
-##' @param treatment_levels Character vector with the treatment levels.
 ##' @param censored_levels Character vector with the censoring levels.
 ##' @param censored_label A single character value. Label of the values of the censoring variable(s) that indicated that
 ##' the data of the subject at this time interval are censored. Must be an element of \code{censored_levels} too.
@@ -48,7 +47,6 @@
 ##'                 name_outcome="cvddeath",
 ##'                 name_competing="death",
 ##'                 name_censoring="Censored",
-##'                 treatment_levels = c("0","1"),
 ##'                 censored_levels = c("1","0"),
 ##'                 censored_label="0")
 ##' 
@@ -60,7 +58,6 @@ rtmle_init <- function(intervals,
                        name_outcome,
                        name_competing,
                        name_censoring = "Censored",
-                       treatment_levels = c("0","1"),
                        censored_levels = c("uncensored","censored"),
                        censored_label = "censored"){
     time_labels = paste0("time_",0:intervals)
@@ -78,7 +75,7 @@ rtmle_init <- function(intervals,
                           "outcome" = name_outcome,
                           "competing" = name_competing,
                           "censoring" = name_censoring,
-                          "treatment_levels" = treatment_levels,
+                          ## "treatment_options" = treatment_options,
                           "censored_levels" = censored_levels,
                           "censored_label" = censored_label,
                           "uncensored_label" = uncensored_label),

@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Nov 16 2024 (17:04) 
 ## Version: 
-## Last-Updated: Dec 13 2024 (08:25) 
+## Last-Updated: Mar  8 2025 (08:05) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 35
+##     Update #: 37
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -67,6 +67,8 @@ test_that("longitudinal data compare rtmle with ltmle",{
     ldata[,id := NULL]
     ldata[,rtmle_predicted_outcome := NULL]
     ldata[,start_followup_date := NULL]
+    ldata[,A_3 := NULL]
+    ldata[,c("A_0","A_1","A_2") := lapply(.SD,function(a){1*(a == 1)}),.SDcols = c("A_0","A_1","A_2")]
     detQ <- function(data, current.node, nodes, called.from.estimate.g){
         death.index <- grep("Dead_",names(data))
         if(length(death.index)==0){
@@ -93,7 +95,9 @@ test_that("longitudinal data compare rtmle with ltmle",{
     for (g in c("A_0","Censored_1","A_1","Censored_2")){
         a <- y2$fit$g[[g]]
         b <- as.matrix(x$models[["Always_A"]][[g]]$fit)
-        b <- b[match(rownames(b),rownames(a)),]
+        rownames(b) <- sub("01","0",rownames(b))
+        rownames(b) <- sub("11","1",rownames(b))
+        b <- b[match(rownames(a),rownames(b)),]
         expect_equal(a,b)
     }
     expect_equal(y2$estimates[["tmle"]],x$estimate$Outcome_risk$Always_A$Estimate[[2]])
