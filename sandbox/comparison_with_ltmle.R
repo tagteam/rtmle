@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 25 2024 (09:50) 
 ## Version: 
-## Last-Updated: Mar  8 2025 (07:27) 
+## Last-Updated: Mar  9 2025 (07:42) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 73
+##     Update #: 74
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -74,7 +74,7 @@ target(x) <- list(name = "Outcome_risk",strategy = "additive",estimator = "tmle"
 x <- run_rtmle(x,refit = TRUE,learner = "learn_glm",time_horizon = tau)
 # Ltmle
 vn <- names(x$prepared_data)
-w_treatment <- x$prepared_data[,c("id",grep("A_|B_",vn,value = TRUE)),with = FALSE]
+w_treatment <- x$prepared_data[,c("id",grep("A_",vn,value = TRUE)),with = FALSE]
 w_treatment[,c("A_0","A_1","A_2") := lapply(.SD,function(a){1*(a == 1)}),.SDcols = c("A_0","A_1","A_2")]
 w_other <- x$prepared_data[,c("id",grep("B_",vn,value = TRUE)),with = FALSE]
 w_other[,c("B_0","B_1","B_2") := lapply(.SD,function(a){1*(a == 1)}),.SDcols = c("B_0","B_1","B_2")]

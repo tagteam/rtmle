@@ -3,12 +3,12 @@
 ## Author: Thomas Alexander Gerds & Alessandra
 ## Created: Jul 3 2024 (13:46)
 ## Version:
-## Last-Updated: Mar  8 2025 (08:10) 
+## Last-Updated: Mar  9 2025 (07:40) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 57
+##     Update #: 61
 #----------------------------------------------------------------------
 ##
-### Commentary: We want to change this for 2 treatments, where the intervention is defined on both
+### Commentary: 
 ##
 ### Change Log:
 #----------------------------------------------------------------------
@@ -23,23 +23,21 @@
 ##' @param value list with three forced elements:
 ##' \itemize{
 ##' \item \code{name}: the name of the protocol
-##' \item \code{treatment_variable}: A list/Matrix/vector with the
-##' name(s) of the variable(s) that the protocols intervenes upon.
-##' If only one treatment, then it would be one value with the name of treatment
-##' "A" or the vector with one name for each time
-##' A_0,A_1,----,A_k.  If more than one treatments, then it can be defined as a list
-##' of length equal to the number of treatment
-##' where each argument of the list has the vector of the treatment at different times
-##' $A: A_0,A_1,...,A_k, $B:B_0,B_1,...B_k
-##' OR it can be a matrix where each column contains the variables names
-##' of treatment at different times.
-##' \item \code{intervention}: A list/matrix/vector or a function.
-##'
-##' If it is a matrix it should contain the values
-##' that the variables are set to under the intervention as columns
-##' and one row for each time point.
-##' If the intervened values are the same for all time points it is sufficient to provide a single value per variable.
-##' See examples. If it is a function, it will be called from \code{intervention_probabilities} with two arguments:
+##' \item \code{treatment_variables}: A vector with the
+##' name(s) of the variable(s) that the protocols intervenes upon. In longitudinal 
+##' settings, when a treatment variable is named "A" then the prepared data will contain
+##' a column for each of the variables A_0,A_1,----,A_k. This argument can be left unspecified
+##' in which case the argument \code{intervention} must be a data.frame with names of treatment variables.
+##' See also details.
+##' \item \code{intervention}: A vector, or a named data.frame (tibble, data.table), or a function.
+##' If it is a vector, it should consist of values 0 and 1 corresponding to what the intervention
+##' would set for the \code{treatment_variables}. If it is a data.frame (tibble, data.table),
+##' the names specify the treatment variables and the argument \code{treatment_variables} is ignored.
+##' Each column must be a factor with levels specifying the treatment options. In longitudinal settings,
+##' there can either be only one row in the data.frame and then it is assumed that the intervention is
+##' static throughout the followup period. The data.frame can also have a column named time and
+##' specify for each time point the values that the intervention sets for the treatment variables.
+##' If it is a function, it will be called from \code{intervention_probabilities} with two arguments:
 ##' the current time interval and the current history of all variables. The function determines the value(s)
 ##' of the treatment variable(s) under the intervention and should return a matrix with as many columns as there are
 ##' treatment variables.
@@ -80,16 +78,17 @@
         names(x$names$treatment_options) <- treatment_variables
     }else{
         if ("treatment_variables" %in% names(value) &&
-            length(value$treatment_variables) == 1  &&
-            length(intervention_table) == 1 &&
-            intervention_table %in% c(0,1)){
-            intervention_table <- data.table::as.data.table(factor(intervention_table,levels = c(0,1)))
-            names(intervention_table) <- value$treatment_variables
+            length(value$treatment_variables) == length(intervention_table) &&
+            all(intervention_table %in% c(0,1))){
             treatment_variables <- value$treatment_variables
-            x$names$treatment_options <- list(c(0,1))
+            intervention_table <- data.table::as.data.table(do.call(cbind,lapply(1:length(treatment_variables),function(v){
+                factor(intervention_table[[v]],levels = c(0,1))
+            })))
+            data.table::setnames(intervention_table,treatment_variables)
+            x$names$treatment_options <- lapply(treatment_variables,function(x)c(0,1))
             names(x$names$treatment_options) <- treatment_variables
         }else{
-            stop("Intervention must be a data.frame (or data.table or tibble)")
+            stop("Intervention must be a vector of 0s and 1s or a data.frame (or data.table or tibble) containing factors.")
         }
     }
     if (!("time" %in% names(intervention_table))){
