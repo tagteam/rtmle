@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 30 2024 (14:30) 
 ## Version: 
-## Last-Updated: Mar  7 2025 (13:51) 
+## Last-Updated: Mar 17 2025 (13:57) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 245
+##     Update #: 249
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -83,7 +83,8 @@ sequential_regression <- function(x,
         else
             learn_variables <- c(history_of_variables,"rtmle_predicted_outcome")
         current_data <- x$prepared_data[outcome_free_and_uncensored,learn_variables,with = FALSE]
-        if (NROW(current_data) == 0) stop("No data available for g-estimation")
+        if (NROW(current_data) == 0)
+            stop("No data available for g-estimation")
         current_constants <- sapply(current_data, function(x){length(unique(x))==1})
         if (any(current_constants)) {
             current_constants <- names(current_constants[current_constants])
