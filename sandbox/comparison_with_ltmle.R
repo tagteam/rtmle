@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 25 2024 (09:50) 
 ## Version: 
-## Last-Updated: Mar 17 2025 (14:06) 
+## Last-Updated: Mar 17 2025 (14:12) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 75
+##     Update #: 76
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -19,7 +19,14 @@ library(rtmle)
 library(data.table)
 library(targets)
 library(prodlim)
-tar_source("~/research/Methods/TMLE_for_breakfast/Ltmle/R/")
+breakfast_code <- "~/research/Methods/TMLE_for_breakfast/Ltmle/R/"
+if (file.exists(breakfast_code)){
+    tar_source(breakfast_code)
+} else{
+    stop(paste0("Please change the variable 'breakfast_code' to point into the",
+                " right folder on your computer.\nYou can always download the folder here:",
+                "https://github.com/tagteam/TMLE_for_breakfast/tree/main/Ltmle"))
+}
 
 # ------------------------------------------------------------------------------------------
 # Intervening on single treatment variable
