@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul  1 2024 (09:11) 
 ## Version: 
-## Last-Updated: Mar  8 2025 (08:09) 
+## Last-Updated: Mar 17 2025 (13:54) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 378
+##     Update #: 380
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -42,7 +42,7 @@ run_rtmle <- function(x,
     for (v in names(x$names$treatment_options)){
         for (v_j in paste0(v,"_",x$times)){
             if (inherits(x$prepared_data[[v_j]],"factor")){
-                if (!(all.equal(levels(x$prepared_data[[v_j]]),x$names$treatment_options[[v]]))){
+                if (!(all.equal(levels(x$prepared_data[[v_j]]),as.character(x$names$treatment_options[[v]])))){
                     stop(paste0("The protocols specify the following treatment options (factor levels) for variable ",v,
                                 paste0(x$names$treatment_options[[v]],collapse = ","),"\nBut, the data have: ",
                                 paste0(levels(x$prepared_data[[v_j]]),collapse = ",")))
