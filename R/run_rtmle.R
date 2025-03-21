@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul  1 2024 (09:11) 
 ## Version: 
-## Last-Updated: Mar 17 2025 (13:54) 
+## Last-Updated: Mar 21 2025 (11:54) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 380
+##     Update #: 389
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -24,6 +24,37 @@
 #' @param refit Logical. If \code{TRUE} ignore any propensity score and censoring models learned in previous calls to this function. Default is \code{FALSE}.
 #' @param seed Seed used for cross-fitting
 #' @param ... Additional arguments passed to the learner function.
+#' @return The modified object contains the fitted nuisance parameter models and the estimate of the target parameter.
+#' @author  Thomas A Gerds \email{tag@@biostat.ku.dk} and Paul Blanche \email{pabl@@sund.ku.dk}
+#' @examples
+#' # ------------------------------------------------------------------------------------------
+#' # Intervening on a single treatment variable
+#' # ------------------------------------------------------------------------------------------
+#'
+#' set.seed(17)
+#' tau <- 3 
+#' ld <- simulate_long_data(n = 91,number_visits = 20,
+#'                          beta = list(A_on_Y = -.2,A0_on_Y = -0.3,A0_on_A = 6),
+#'                          register_format = TRUE)
+#' x <- rtmle_init(intervals = tau,name_id = "id",name_outcome = "Y",name_competing = "Dead",
+#'                 name_censoring = "Censored",censored_label = "censored")
+#' x$long_data <- ld[c("outcome_data","censored_data","competing_data","timevar_data")]
+#' add_baseline_data(x) <- ld$baseline_data[,start_followup_date:=0]
+#' x <- long_to_wide(x,intervals = seq(0,2000,30.45*12))
+#' protocol(x) <- list(name = "Always_A",
+#'                     intervention = data.frame("A" = factor("1",levels = c("0","1"))))
+#' protocol(x) <- list(name = "Never_A",
+#'                     intervention = data.frame("A" = factor("0",levels = c("0","1"))))
+#' prepare_data(x) <- list()
+#' target(x) <- list(name = "Outcome_risk",
+#'                   strategy = "additive",
+#'                   estimator = "tmle",
+#'                   protocols = c("Always_A","Never_A"))
+#' x <- run_rtmle(x,learner = "learn_glmnet",time_horizon = 1:tau)
+#' summary(x)
+#' 
+#' 
+#' 
 #' @export
 run_rtmle <- function(x,
                       targets,
