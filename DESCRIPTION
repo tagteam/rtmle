@@ -25,7 +25,6 @@ Imports:
     survival,
     lava,
     speedglm,
-    Rfast,
     glmnet,
     ranger,
     matrixStats
