@@ -405,17 +405,11 @@ plot.cheap_bootstrap <- function(x, alternate_confidence_interval = NULL, ...) {
 #' summary(x)
 #' cb
 #'
-#' @import CheapSubsampling
 #' @export
 cheap_bootstrap_rtmle <- function(x,
                                   cheap_bootstrap_arguments = list(b=25, type = "subsampling", size = NULL),
                                   rtmle_arguments,
                                   id_name) {
-  ## Require package from Github
-  if (!requireNamespace("CheapSubsampling", quietly = TRUE)) {
-    devtools::install_github("jsohlendorff/CheapSubsampling")
-  }
-
   ## Recursively apply rbind
   recursive_rbind <- function(x) if (inherits(x, "list")) do.call("rbind", lapply(x, recursive_rbind)) else x
 
