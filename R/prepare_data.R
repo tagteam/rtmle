@@ -1,17 +1,11 @@
 ### prepare_data.R ---
 #----------------------------------------------------------------------
 ## Author: Thomas Alexander Gerds
-<<<<<<< HEAD
-## Created: Jul 19 2024 (10:07)
-## Version:
-## Last-Updated: Mar 25 2025 (13:31) 
-=======
 ## Created: Jul 19 2024 (10:07) 
 ## Version: 
-## Last-Updated: Mar 25 2025 (12:17) 
->>>>>>> 5937dca (improved protocol docs)
+## Last-Updated: Mar 25 2025 (13:34) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 208
+##     Update #: 210
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -297,16 +291,6 @@
             }
         }
     }
-<<<<<<< HEAD
-    ##
-    ## persons are still followed ("last_interval") if they are uncensored and free of outcome and free of competing events
-    ## recall that K is the number of time points where the first time point is always 0
-    ##
-    x$followup <- work_data[,c(x$names$id),with = FALSE]
-    set(x$followup,j = "last_interval",value = numeric(NROW(x$followup)))
-    ## if (length(censoring_variables)>0){
-    ## x$followup[,uncensored := numeric(.N)]
-    ## }
     if (continuous_outcome){
         ## Determine the range of the outcome variable across all time points
         ## and set the range to be the same for all time points
