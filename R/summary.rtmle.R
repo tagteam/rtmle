@@ -1,9 +1,9 @@
 ### summary.rtmle.R ---
 #----------------------------------------------------------------------
 ## Author: Thomas Alexander Gerds
-## Created: Jul 29 2024 (10:44) 
-## Version: 
-## Last-Updated: Mar 25 2025 (14:10) 
+## Created: Jul 29 2024 (10:44)
+## Version:
+## Last-Updated: Mar 25 2025 (14:10)
 ##           By: Thomas Alexander Gerds
 ##     Update #: 89
 #----------------------------------------------------------------------
@@ -59,7 +59,7 @@ summary.rtmle <- function(object,targets,reference = NULL,digits = 1,...){
     else {
         stopifnot(all(targets %in% names(object$targets)))
     }
-    
+
     scale <- ifelse(object$continuous_outcome,1,100)
     sum <- do.call(rbind,lapply(targets,function(target_name){
         target <- object$targets[[target_name]]
@@ -82,7 +82,6 @@ summary.rtmle <- function(object,targets,reference = NULL,digits = 1,...){
             }
             contrast <- do.call(rbind,lapply(setdiff(protocols,ref),function(protocol_name){
                 do.call(rbind,lapply(unique(risk$Time_horizon),function(tp){
-                    browser()
                     # FIXME: can the reference be taken out of the loop?
                     reference_estimate <- object$estimate[[target_name]][[ref]][Time_horizon == tp]$Estimate
                     reference_IC <- object$IC[[target_name]][[ref]][[paste0("time_horizon_",tp)]]
