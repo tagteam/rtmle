@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 3 2024 (13:46)
 ## Version:
-## Last-Updated: Dec 12 2024 (18:34)
+## Last-Updated: Mar 25 2025 (13:50) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 32
+##     Update #: 34
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -38,11 +38,6 @@
         exclude_variables <- value[["exclude_variables"]]
     else
         exclude_variables <- NULL
-    if (!is.null(x$continuous_outcome)){
-      continuous_outcome <- x$continuous_outcome
-    } else{
-      continuous_outcome <- FALSE
-    }
     all_treatment_variables <- c(sapply(x$protocols,function(u)u$treatment_variables))
     if (length(value$strategy) == 1 && value$strategy == "additive"){
         # FIXME: some formulas could be shared across protocols
@@ -56,8 +51,7 @@
                                                        protocol = protocol,
                                                        exclude_variables = protocol_exclude_variables,
                                                        include_variables = include_variables,
-                                                       Markov = value$markov,
-                                                       continuous_outcome = continuous_outcome)
+                                                       Markov = value$markov)
             ## model(x) <- list(formalizer = "additive",treatment_variables = x$protocols[[value$protocol]]$treatment_variables)
             x$targets[[value$name]][["strategy"]] <- "additive"
         }

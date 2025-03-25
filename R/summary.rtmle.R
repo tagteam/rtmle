@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 29 2024 (10:44) 
 ## Version: 
-## Last-Updated: Mar 25 2025 (13:32) 
+## Last-Updated: Mar 25 2025 (14:10) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 84
+##     Update #: 89
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -59,6 +59,7 @@ summary.rtmle <- function(object,targets,reference = NULL,digits = 1,...){
     else {
         stopifnot(all(targets %in% names(object$targets)))
     }
+    
     scale <- ifelse(object$continuous_outcome,1,100)
     sum <- do.call(rbind,lapply(targets,function(target_name){
         target <- object$targets[[target_name]]
@@ -81,6 +82,7 @@ summary.rtmle <- function(object,targets,reference = NULL,digits = 1,...){
             }
             contrast <- do.call(rbind,lapply(setdiff(protocols,ref),function(protocol_name){
                 do.call(rbind,lapply(unique(risk$Time_horizon),function(tp){
+                    browser()
                     # FIXME: can the reference be taken out of the loop?
                     reference_estimate <- object$estimate[[target_name]][[ref]][Time_horizon == tp]$Estimate
                     reference_IC <- object$IC[[target_name]][[ref]][[paste0("time_horizon_",tp)]]
@@ -97,15 +99,15 @@ summary.rtmle <- function(object,targets,reference = NULL,digits = 1,...){
                     risk_ratio_lower <- risk_ratio_estimate*exp(-qnorm(.975)*risk_ratio_log_se)
                     risk_ratio_upper <- risk_ratio_estimate*exp(qnorm(.975)*risk_ratio_log_se)
                     if (object$continuous_outcome){
-                      Target_parameter <- c("Weighted mean by death difference", "Weighted mean by death ratio")
+                      Target_parameter <- c("Mean outcome difference among survivors", "Mean outcome ratio among survivors")
                     } else {
                       Target_parameter <- c("Risk_difference", "Risk_ratio")
                     }
                     e <- data.table(Target = rep(target_name,2),
                                     Protocol = rep(protocol_name, 2),
                                     Target_parameter=Target_parameter,
-                                    Time_horizon = tp,
-                                    Estimator = object$estimate[[target_name]][[ref]]$Estimator,
+                                    Time_horizon = rep(tp,2),
+                                    Estimator = rep(object$estimate[[target_name]][[ref]]$Estimator[[1]],2),
                                     Reference = rep(reference, 2),
                                     Estimate = c(risk_difference_estimate, risk_ratio_estimate),
                                     Standard_error = c(risk_difference_se, risk_ratio_log_se),
@@ -116,7 +118,6 @@ summary.rtmle <- function(object,targets,reference = NULL,digits = 1,...){
                     e[Target_parameter == Target_parameter[[2]],"Estimate (CI_95)":= Publish::formatCI(x = Estimate,lower = Lower,upper = Upper,show.x = TRUE,digits = digits)]
                     e[]
                 }))}))
-
             out <- data.table::rbindlist(list(risk,contrast),use.names = TRUE)
             return(out)
         }else{

@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 19 2024 (10:07) 
 ## Version: 
-## Last-Updated: Mar 25 2025 (13:34) 
+## Last-Updated: Mar 25 2025 (13:50) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 210
+##     Update #: 211
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -59,9 +59,9 @@
     stopifnot(max_time_horizon>0)
 
     if (is.null(value$continuous_outcome)){
-      continuous_outcome <- FALSE
+        continuous_outcome <- FALSE
     } else {
-      continuous_outcome <- value$continuous_outcome
+        continuous_outcome <- value$continuous_outcome
     }
     x$continuous_outcome <- continuous_outcome
 

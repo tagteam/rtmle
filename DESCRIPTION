@@ -27,7 +27,8 @@ Imports:
     speedglm,
     glmnet,
     ranger,
-    matrixStats
+    matrixStats,
+    MASS
 Suggests: 
     R.rsp,
     testthat (>= 3.0.0),

@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 30 2024 (14:30) 
 ## Version: 
-## Last-Updated: Mar 25 2025 (13:31) 
+## Last-Updated: Mar 25 2025 (14:08) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 251
+##     Update #: 254
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -68,7 +68,7 @@ sequential_regression <- function(x,
         #        time j? those in current outcome_formula
         # FIXME: remove id variable below here
         history_of_variables <- names(x$prepared_data)[1:(-1+match(outcome_variables[[j]],names(x$prepared_data)))]
-        intervenable_history <- setdiff(history_of_variables,c(if (!x$continuous_outcome) {outcome_variables} else {NULL},censoring_variables,competing_variables))
+        intervenable_history <- setdiff(history_of_variables,c(if (x$continuous_outcome){outcome_variables} else {NULL},censoring_variables,competing_variables))
         intervened_data <- do.call(x$protocol[[protocol_name]]$intervene_function,
                                    list(data = x$prepared_data[,intervenable_history,with = FALSE],
                                         intervention_table = intervention_table,

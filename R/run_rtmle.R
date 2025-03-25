@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul  1 2024 (09:11)
 ## Version:
-## Last-Updated: Mar 21 2025 (11:54)
+## Last-Updated: Mar 25 2025 (14:09) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 389
+##     Update #: 392
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -64,6 +64,11 @@ run_rtmle <- function(x,
                       seed = NULL,
                       ...){
     time <- value <- NULL
+    if (length(x$continuous_outcome) == 0 || x$continuous_outcome == FALSE){
+        x$continuous_outcome <- FALSE
+    }else{
+        x$continuous_outcome <- TRUE
+    }
     # check data
     ## sapply(x$prepared_data,function(x)sum(is.na(x)))
     if (!(x$names$id%in%names(x$prepared_data)))
@@ -126,9 +131,9 @@ run_rtmle <- function(x,
             #
             # initialize estimate
             if (!x$continuous_outcome){
-              Target_parameter <- "Risk"
+                Target_parameter <- "Risk"
             } else {
-              Target_parameter <- "Weighted mean by death"
+                Target_parameter <- "Weighted mean among survivors"
             }
             x$estimate[[target_name]][[protocol_name]] <- data.table(Target = target_name,
                                                                      Protocol = protocol_name,
