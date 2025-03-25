@@ -3,7 +3,7 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 3 2024 (13:46)
 ## Version:
-## Last-Updated: Dec 12 2024 (18:34) 
+## Last-Updated: Dec 12 2024 (18:34)
 ##           By: Thomas Alexander Gerds
 ##     Update #: 32
 #----------------------------------------------------------------------
@@ -13,7 +13,7 @@
 ### Change Log:
 #----------------------------------------------------------------------
 ## ### Code:
-##' Define a target (parameter) of a hypothetical/emulated trial 
+##' Define a target (parameter) of a hypothetical/emulated trial
 ##'
 ##' A target defines a target parameter, an estimator and models
 ##' for the nuisance parameters.
@@ -22,7 +22,7 @@
 ##' @param value list with three forced elements:
 ##' \itemize{
 ##' \item \code{name}: the name of the target parameter.
-##' \item \code{strategy}: the nuisance parameter modeling strategy consists of formulas and libraries for the regression models. 
+##' \item \code{strategy}: the nuisance parameter modeling strategy consists of formulas and libraries for the regression models.
 ##' \item \code{estimator}: the estimator of the target parameter.
 ##' }
 ##' @export
@@ -38,6 +38,11 @@
         exclude_variables <- value[["exclude_variables"]]
     else
         exclude_variables <- NULL
+    if (!is.null(x$continuous_outcome)){
+      continuous_outcome <- x$continuous_outcome
+    } else{
+      continuous_outcome <- FALSE
+    }
     all_treatment_variables <- c(sapply(x$protocols,function(u)u$treatment_variables))
     if (length(value$strategy) == 1 && value$strategy == "additive"){
         # FIXME: some formulas could be shared across protocols
@@ -51,7 +56,8 @@
                                                        protocol = protocol,
                                                        exclude_variables = protocol_exclude_variables,
                                                        include_variables = include_variables,
-                                                       Markov = value$markov)
+                                                       Markov = value$markov,
+                                                       continuous_outcome = continuous_outcome)
             ## model(x) <- list(formalizer = "additive",treatment_variables = x$protocols[[value$protocol]]$treatment_variables)
             x$targets[[value$name]][["strategy"]] <- "additive"
         }

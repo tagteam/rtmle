@@ -1,26 +1,26 @@
-### run_rtmle.R --- 
+### run_rtmle.R ---
 #----------------------------------------------------------------------
 ## Author: Thomas Alexander Gerds
-## Created: Jul  1 2024 (09:11) 
-## Version: 
-## Last-Updated: Mar 21 2025 (11:54) 
+## Created: Jul  1 2024 (09:11)
+## Version:
+## Last-Updated: Mar 21 2025 (11:54)
 ##           By: Thomas Alexander Gerds
 ##     Update #: 389
 #----------------------------------------------------------------------
-## 
-### Commentary: 
-## 
+##
+### Commentary:
+##
 ### Change Log:
 #----------------------------------------------------------------------
-## 
+##
 ### Code:
 #' Sequential regression with TMLE update step for discretized follow-up data
 #'
 #' This function runs the analysis defined in previous steps.
-#' @param x object of class \code{rtmle} 
+#' @param x object of class \code{rtmle}
 #' @param targets Selection of targets to be analysed. If missing all targets in x$targets are analysed.
 #' @param learner A function which is called to fit (learn) the nuisance parameter models.
-#' @param time_horizon The time horizon at which to calculate risks. If it is a vector the analysis will be performed for each element of the vector. 
+#' @param time_horizon The time horizon at which to calculate risks. If it is a vector the analysis will be performed for each element of the vector.
 #' @param refit Logical. If \code{TRUE} ignore any propensity score and censoring models learned in previous calls to this function. Default is \code{FALSE}.
 #' @param seed Seed used for cross-fitting
 #' @param ... Additional arguments passed to the learner function.
@@ -32,7 +32,7 @@
 #' # ------------------------------------------------------------------------------------------
 #'
 #' set.seed(17)
-#' tau <- 3 
+#' tau <- 3
 #' ld <- simulate_long_data(n = 91,number_visits = 20,
 #'                          beta = list(A_on_Y = -.2,A0_on_Y = -0.3,A0_on_A = 6),
 #'                          register_format = TRUE)
@@ -52,9 +52,9 @@
 #'                   protocols = c("Always_A","Never_A"))
 #' x <- run_rtmle(x,learner = "learn_glmnet",time_horizon = 1:tau)
 #' summary(x)
-#' 
-#' 
-#' 
+#'
+#'
+#'
 #' @export
 run_rtmle <- function(x,
                       targets,
@@ -64,7 +64,7 @@ run_rtmle <- function(x,
                       seed = NULL,
                       ...){
     time <- value <- NULL
-    # check data 
+    # check data
     ## sapply(x$prepared_data,function(x)sum(is.na(x)))
     if (!(x$names$id%in%names(x$prepared_data)))
         stop(paste0("Cannot see id variable ",x$names$id," in x$prepared_data."))
@@ -121,13 +121,18 @@ run_rtmle <- function(x,
                                             time_horizon = time_horizon,
                                             seed = seed,
                                             ...)
-            # 
+            #
             # Q-part: loop backwards in time through iterative condtional expectations
             #
             # initialize estimate
+            if (!x$continuous_outcome){
+              Target_parameter <- "Risk"
+            } else {
+              Target_parameter <- "Weighted mean by death"
+            }
             x$estimate[[target_name]][[protocol_name]] <- data.table(Target = target_name,
                                                                      Protocol = protocol_name,
-                                                                     Target_parameter = "Risk",
+                                                                     Target_parameter = Target_parameter,
                                                                      Time_horizon = time_horizon,
                                                                      Estimator = x$targets[[target_name]]$estimator,
                                                                      Estimate = numeric(length(time_horizon)),

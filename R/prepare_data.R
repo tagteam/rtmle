@@ -1,18 +1,18 @@
-### prepare_data.R --- 
+### prepare_data.R ---
 #----------------------------------------------------------------------
 ## Author: Thomas Alexander Gerds
-## Created: Jul 19 2024 (10:07) 
-## Version: 
-## Last-Updated: Mar  7 2025 (18:25) 
+## Created: Jul 19 2024 (10:07)
+## Version:
+## Last-Updated: Mar  7 2025 (18:25)
 ##           By: Thomas Alexander Gerds
 ##     Update #: 188
 #----------------------------------------------------------------------
-## 
-### Commentary: 
-## 
+##
+### Commentary:
+##
 ### Change Log:
 #----------------------------------------------------------------------
-## 
+##
 ### Code:
 ##' If the object contains data in long format these are
 ##' transformed to wide format. The wide format data are sorted and
@@ -21,7 +21,7 @@
 ##' As a wanted side effect the function identifies the variables
 ##' for the intervention variables (A_variables), the time dependent covariates (B_variables)
 ##' the outcome variables (outcome_variables), the competing risk variables (competing_variables) and the
-##' censoring variables (censoring_variables) and adds them to the object. 
+##' censoring variables (censoring_variables) and adds them to the object.
 ##' @title Preparing a targeted minimum loss based analysis
 ##' @param x Object which contains long format or wide format data
 ##' @param ... not used
@@ -45,8 +45,8 @@
 #' x <- long_to_wide(x,intervals=seq(0,2000,30.45*6))
 #' prepare_data(x) <- list()
 #' x$prepared_data
-#' 
-##' @export 
+#'
+##' @export
 ##' @author Thomas A. Gerds <tag@@biostat.ku.dk>
 "prepare_data<-" <- function(x,...,value){
     ## if (length(x$protocols) == 0) stop("Object contains no protocols yet. Need at least one protocol to prepare treatment variables.")
@@ -79,12 +79,19 @@
     ## setnames(subset_dt,"ID",x$names$id)
     ## work_data = work_data$data[subset_dt,on = x$names$id]
     ## }else{
+    if (is.null(value$continuous_outcome)){
+      continuous_outcome <- FALSE
+    } else {
+      continuous_outcome <- value$continuous_outcome
+    }
+    x$continuous_outcome <- continuous_outcome
+
     work_data <- x$data$outcome_data
     ##
     ## analysis of the outcome, competing and censoring variables
     ##
     outcome_variables = paste0(x$names$outcome, "_", 1:max_time_horizon)
-    if(length(x$names$competing)>0){    
+    if(length(x$names$competing)>0){
         competing_variables = paste0(x$names$competing, "_", 1:(max_time_horizon-1))
     }else{
         competing_variables <- NULL
@@ -144,19 +151,21 @@
     }
     # sorting of variables should not be necessary because the formulas define the dependencies
     # but sorting is still be convenient for data inspections
-    # and also our data manipulation below where we set values to NA after censoring still depends on the order 
+    # and also our data manipulation below where we set values to NA after censoring still depends on the order
     work_data <- work_data[,c(x$names$id, intersect(c(name_baseline_covariates,unlist(sapply(x$times, function(timepoint){
         if(timepoint == 0){
             paste0(name_time_covariates,"_",timepoint)
         } else{
             if(timepoint != x$times[K]){
                 paste0(c(x$names$censoring, x$names$outcome, x$names$competing, name_time_covariates),"_",timepoint)
+            } else if (continuous_outcome){
+              paste0(c(x$names$censoring, x$names$outcome, x$names$competing),"_",timepoint)
             } else {
                 paste0(c(x$names$censoring, x$names$outcome),"_",timepoint)
             }
         }
     }))), names(work_data))), with = FALSE]
-    # now the number of columns are final and we can search for the outcome variables 
+    # now the number of columns are final and we can search for the outcome variables
     outcome_variables_position = match(outcome_variables, names(work_data))
     if (any(this_out <- is.na(outcome_variables_position))){
         stop(paste0("Cannot find outcome variable(s):\n",paste0(outcome_variables[this_out],collapse = ", "),"\n in x$data$outcome_data"))
@@ -167,7 +176,7 @@
             stop(paste0("Cannot find censoring variable(s):\n",paste0(censoring_variables[this_out],collapse = ", "),"\n in x$data$outcome_data"))
         }
     }
-    if(length(x$names$competing)>0){    
+    if(length(x$names$competing)>0){
         competing_variables_position = match(competing_variables, names(work_data))
         if (any(this_out <- is.na(competing_variables_position))){
             stop(paste0("Cannot find competing risk variable(s):\n",paste0(competing_variables[this_out],collapse = ", "),"\n in x$data$outcome_data"))
@@ -180,9 +189,9 @@
     } else{
         constant_variables <- NULL}
     name_baseline_covariates <- intersect(name_baseline_covariates,names(work_data))
-    # FIXME: remove or elaborate this sanity check 
+    # FIXME: remove or elaborate this sanity check
     stopifnot(nrow(work_data)>0)
-    ## make sure that the order of the censoring variables are factors with ordered labels 
+    ## make sure that the order of the censoring variables are factors with ordered labels
     ## such that we estimate the probability of being uncensored and not the probability being censored
     if(length(x$names$censoring)>0){
         for(col in censoring_variables){
@@ -194,7 +203,7 @@
     ##
     ## due to the discretization of time it may happen that a person who has an event or dies in the interval
     ## appears also as censored in the interval. in this case we change the label of the censoring variable
-    ## to uncensored 
+    ## to uncensored
     ##
     if (length(x$names$censoring)>0){
         for(j in 1:(max_time_horizon)){
@@ -215,7 +224,7 @@
     }
     ## All variables (except outcome and competing risk) should be NA after an event (outcome or death)
     ## outcome should be 1 and competing risk should be 0 after an outcome event
-    ## outcome should be 0 and competing risk should be 1 after a competing event 
+    ## outcome should be 0 and competing risk should be 1 after a competing event
     if(max_time_horizon!= 1){
         ## The last outcome_variable is the very last variable and hence no action needed
         for(k in outcome_variables_position[-(K-1)]){
@@ -254,7 +263,7 @@
             }
         }
     }else{
-        # 
+        #
         # max_time_horizon = 1 we set the outcome to NA in case of censored
         #                  and same for competing risks
         #
@@ -267,18 +276,40 @@
             }
         }
     }
-    ## 
+    ##
     ## persons are still followed ("last_interval") if they are uncensored and free of outcome and free of competing events
     ## recall that K is the number of time points where the first time point is always 0
-    ##  
+    ##
     x$followup <- work_data[,c(x$names$id),with = FALSE]
     set(x$followup,j = "last_interval",value = numeric(NROW(x$followup)))
     ## if (length(censoring_variables)>0){
     ## x$followup[,uncensored := numeric(.N)]
     ## }
+    if (continuous_outcome){
+      ## Determine the range of the outcome variable across all time points
+      ## and set the range to be the same for all time points
+      outcome_range <- range(na.omit(unlist(work_data[,paste0(x$names$outcome,"_",1:max_time_horizon),with=FALSE])))
+      x$outcome_range <- outcome_range
+
+      ## Scale outcome to be between 0 and 1 according to Mark van der Laan (A Targeted Maximum Likelihood Estimator of a Causal Effect on a Bounded Continuous Outcome)
+      work_data[,paste0(x$names$outcome,"_",1:max_time_horizon) := lapply(.SD,function(x){(x-outcome_range[1])/(outcome_range[2]-outcome_range[1])}),
+                .SDcols = paste0(x$names$outcome,"_",1:max_time_horizon)]
+
+      ## Those who bave a competing event should have outcome set to 0
+      competing_variables <- c(competing_variables,paste0(x$names$competing,"_",max_time_horizon))
+      if(length(x$names$competing)>0){
+        for (j in 1:(max_time_horizon)){
+          work_data[work_data[[competing_variables[[j]]]] %in% "1",paste0(x$names$outcome,"_",j) := 0]
+        }
+      }
+    }
     if (max_time_horizon>1){
         for (j in 0:(max_time_horizon-2)){
-            vital <- 1*(work_data[[outcome_variables[[j+1]]]] %in% "0")
+            if (!continuous_outcome){
+              vital <- 1*(work_data[[outcome_variables[[j+1]]]] %in% "0")
+            } else {
+              vital <- rep(1,NROW(work_data))
+            }
             if (length(censoring_variables)>0){
                 vital <- vital * 1*(work_data[[censoring_variables[[j+1]]]] %in% x$names$uncensored_label)
                 ## UC <- 1*(work_data[[censoring_variables[[j+1]]]] %in% x$names$uncensored_label)

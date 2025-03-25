@@ -1,28 +1,28 @@
-### summary.rtmle.R --- 
+### summary.rtmle.R ---
 #----------------------------------------------------------------------
 ## Author: Thomas Alexander Gerds
-## Created: Jul 29 2024 (10:44) 
-## Version: 
-## Last-Updated: Mar 21 2025 (09:56) 
+## Created: Jul 29 2024 (10:44)
+## Version:
+## Last-Updated: Mar 21 2025 (09:56)
 ##           By: Thomas Alexander Gerds
 ##     Update #: 82
 #----------------------------------------------------------------------
-## 
-### Commentary: 
-## 
+##
+### Commentary:
+##
 ### Change Log:
 #----------------------------------------------------------------------
-## 
+##
 ### Code:
 #' For each target in the object the risk estimates are summarized in a table with their
 #' 95% confidence limits.
 #'
 #' If a target includes multiple protocols the results includes risk differences.
-#' @title Summarizing the results of a register data analysis with the targeted minimum loss estimator 
+#' @title Summarizing the results of a register data analysis with the targeted minimum loss estimator
 #' @param object Object to be summarized
 #' @param digits Number of decimals for the confidence intervals
 #' @param targets Names of targets for which to compute the summary. Defaults to all targets in the object.
-#' @param reference (Optional) Named list of reference protocols, one for each target. 
+#' @param reference (Optional) Named list of reference protocols, one for each target.
 #' @param ... not used
 #' @examples
 #'
@@ -44,9 +44,9 @@
 #'                   estimator = "tmle",protocols = c("Always_A","Never_A"))
 #' x <- run_rtmle(x,time_horizon=1:2)
 #' summary(x)
-#' 
+#'
 #' @export
-#' @method summary rtmle                 
+#' @method summary rtmle
 summary.rtmle <- function(object,targets,reference = NULL,digits = 1,...){
     Estimate <- Upper <- Lower <- Target_parameter <- Time_horizon <- x <- NULL
     if (length(object$estimate) == 0) {
@@ -59,13 +59,14 @@ summary.rtmle <- function(object,targets,reference = NULL,digits = 1,...){
     else {
         stopifnot(all(targets %in% names(object$targets)))
     }
+    scale <- ifelse(object$continuous_outcome,1,100)
     sum <- do.call(rbind,lapply(targets,function(target_name){
         target <- object$targets[[target_name]]
         protocols <- target$protocols
         risk <- do.call(rbind,lapply(protocols,function(protocol_name){
             # to avoid the internal selfdetect problem we take a copy
             e <- data.table::copy(object$estimate[[target_name]][[protocol_name]])
-            e[,"Estimate (CI_95)":= Publish::formatCI(x = 100*Estimate,lower = 100*Lower,upper = 100*Upper,show.x = TRUE,digits = digits)]
+            e[,"Estimate (CI_95)":= Publish::formatCI(x = scale*e$Estimate,lower = scale*e$Lower,upper = scale*e$Upper,show.x = TRUE,digits = digits)]
             e[]
         }))
         ## for (nix in c("Estimate","Standard_error","Lower","Upper"))
@@ -95,9 +96,14 @@ summary.rtmle <- function(object,targets,reference = NULL,digits = 1,...){
                     risk_ratio_log_se <- sd(this_IC/this_estimate - reference_IC/reference_estimate)/sqrt(N)
                     risk_ratio_lower <- risk_ratio_estimate*exp(-qnorm(.975)*risk_ratio_log_se)
                     risk_ratio_upper <- risk_ratio_estimate*exp(qnorm(.975)*risk_ratio_log_se)
+                    if (object$continuous_outcome){
+                      Target_parameter <- c("Weighted mean by death difference", "Weighted mean by death ratio")
+                    } else {
+                      Target_parameter <- c("Risk_difference", "Risk_ratio")
+                    }
                     e <- data.table(Target = rep(target_name,2),
                                     Protocol = rep(protocol_name, 2),
-                                    Target_parameter=c("Risk_difference", "Risk_ratio"),
+                                    Target_parameter=Target_parameter,
                                     Time_horizon = tp,
                                     Estimator = object$estimate[[target_name]][[ref]]$Estimator,
                                     Reference = rep(reference, 2),
@@ -106,11 +112,11 @@ summary.rtmle <- function(object,targets,reference = NULL,digits = 1,...){
                                     Lower = c(risk_difference_lower, risk_ratio_lower),
                                     Upper = c(risk_difference_upper, risk_ratio_upper),
                                     P_value = c(2*pnorm(-abs(risk_difference_estimate/risk_difference_se)), 2*pnorm(-abs(log(risk_ratio_estimate)/risk_ratio_log_se))))
-                    e[Target_parameter == "Risk_difference","Estimate (CI_95)":= Publish::formatCI(x = 100*Estimate,lower = 100*Lower,upper = 100*Upper,show.x = TRUE,digits = digits)]
-                    e[Target_parameter == "Risk_ratio","Estimate (CI_95)":= Publish::formatCI(x = Estimate,lower = Lower,upper = Upper,show.x = TRUE,digits = digits)]
+                    e[Target_parameter == Target_parameter[[1]],"Estimate (CI_95)":= Publish::formatCI(x = scale*Estimate,lower = scale*Lower,upper = scale*Upper,show.x = TRUE,digits = digits)]
+                    e[Target_parameter == Target_parameter[[2]],"Estimate (CI_95)":= Publish::formatCI(x = Estimate,lower = Lower,upper = Upper,show.x = TRUE,digits = digits)]
                     e[]
                 }))}))
-            
+
             out <- data.table::rbindlist(list(risk,contrast),use.names = TRUE)
             return(out)
         }else{

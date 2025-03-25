@@ -1,30 +1,33 @@
-### additive_formalizer.R --- 
+### additive_formalizer.R ---
 #----------------------------------------------------------------------
 ## Author: Thomas Alexander Gerds
-## Created: Jul  3 2024 (11:13) 
-## Version: 
-## Last-Updated: Mar  7 2025 (17:42) 
+## Created: Jul  3 2024 (11:13)
+## Version:
+## Last-Updated: Mar  7 2025 (17:42)
 ##           By: Thomas Alexander Gerds
 ##     Update #: 90
 #----------------------------------------------------------------------
-## 
-### Commentary: 
-## 
+##
+### Commentary:
+##
 ### Change Log:
 #----------------------------------------------------------------------
-## 
+##
 ### Code:
 additive_formalizer <- function(x,
                                 protocol,
                                 treatment_variables,
                                 include_variables = NULL,
                                 exclude_variables = NULL,
-                                Markov = NULL){
+                                Markov = NULL,
+                                continuous_outcome = FALSE) {
     # FIXME: improve the stopping message
     if (missing(treatment_variables))
         treatment_variables <- x$protocols[[protocol]]$treatment_variables
     stopifnot(length(treatment_variables)>0)
     name_time_covariates <- setdiff(x$names$name_time_covariates,exclude_variables)
+    if (continuous_outcome)
+      name_time_covariates <- c(x$names$name_time_covariates, x$names$outcome)
     name_baseline_covariates <- setdiff(x$names$name_baseline_covariates,exclude_variables)
     name_constant_variables <- x$names$name_constant_variables
     if (length(name_time_covariates)>0){
@@ -66,7 +69,7 @@ additive_formalizer <- function(x,
                   work_data = x$prepared_data,
                   name_outcome_variable = paste0(x$names$outcome,"_",tk),
                   name_baseline_covariates = name_baseline_covariates,
-                  name_time_covariates  = name_time_covariates, 
+                  name_time_covariates  = name_time_covariates,
                   Markov = Markov, constant_variables = name_constant_variables)
     }))
     names(outcome_formulas)=paste0(x$names$outcome,"_",x$times[-1])

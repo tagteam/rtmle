@@ -1,18 +1,18 @@
-### sequential_regression.R --- 
+### sequential_regression.R ---
 #----------------------------------------------------------------------
 ## Author: Thomas Alexander Gerds
-## Created: Sep 30 2024 (14:30) 
-## Version: 
-## Last-Updated: Mar 17 2025 (13:57) 
+## Created: Sep 30 2024 (14:30)
+## Version:
+## Last-Updated: Mar 17 2025 (13:57)
 ##           By: Thomas Alexander Gerds
 ##     Update #: 249
 #----------------------------------------------------------------------
-## 
-### Commentary: 
-## 
+##
+### Commentary:
+##
 ### Change Log:
 #----------------------------------------------------------------------
-## 
+##
 ### Code:
 sequential_regression <- function(x,
                                   target_name,
@@ -57,7 +57,7 @@ sequential_regression <- function(x,
             # FIXME: protocols could share the outcome formula?
             interval_outcome_formula = x$models[[protocol_name]][[outcome_variables[[j]]]]$formula
         } else {
-            outcome_name <- "rtmle_predicted_outcome" 
+            outcome_name <- "rtmle_predicted_outcome"
             interval_outcome_formula <- stats::update(stats::formula(x$models[[protocol_name]][[outcome_variables[[j]]]]$formula),"rtmle_predicted_outcome~.")
         }
         ## HERE
@@ -68,7 +68,7 @@ sequential_regression <- function(x,
         #        time j? those in current outcome_formula
         # FIXME: remove id variable below here
         history_of_variables <- names(x$prepared_data)[1:(-1+match(outcome_variables[[j]],names(x$prepared_data)))]
-        intervenable_history <- setdiff(history_of_variables,c(outcome_variables,censoring_variables,competing_variables))
+        intervenable_history <- setdiff(history_of_variables,c(if (!x$continuous_outcome) {outcome_variables} else {NULL},censoring_variables,competing_variables))
         intervened_data <- do.call(x$protocol[[protocol_name]]$intervene_function,
                                    list(data = x$prepared_data[,intervenable_history,with = FALSE],
                                         intervention_table = intervention_table,
@@ -100,7 +100,7 @@ sequential_regression <- function(x,
         # remove constant predictor variables
         interval_outcome_formula_vars <- all.vars(stats::formula(interval_outcome_formula))
         if (length(current_constants)>0){
-            # FIXME: table warnings and show number of times per warning 
+            # FIXME: table warnings and show number of times per warning
             ## x$warnings <- paste0("Removing constant variables at time ",j,":\n",paste0(current_constants,collapse = ", "))
             interval_outcome_formula <- delete_variables_from_formula(character_formula = interval_outcome_formula,delete_vars = current_constants)
         }
@@ -177,10 +177,17 @@ sequential_regression <- function(x,
             ),"try-error"))
                 stop(paste0("Fluctuation model used in the TMLE update step failed",
                             " in the attempt to run function tmle_update at time point: ",j))
-            ## FIXME: why do we not need the following? 
+            ## FIXME: why do we not need the following?
             ## W[!outcome_free_and_uncensored] <- Y[!outcome_free_and_uncensored]
         }else{
             W <- fit_last
+        }
+        if (x$continuous_outcome){
+          Y_scale <- Y*(x$outcome_range[2]-x$outcome_range[1])+x$outcome_range[1]
+          W_scale <- W*(x$outcome_range[2]-x$outcome_range[1])+x$outcome_range[1]
+        } else {
+          Y_scale <- Y
+          W_scale <- W
         }
         # FIXME: we do not need to save the following
         if (FALSE){
@@ -198,7 +205,7 @@ sequential_regression <- function(x,
             index <- (intervention_match[,intervention_table[time == j-1]$variable] %in% 1)
         }
         if (any(h.g.ratio[index] != 0)) {
-            x$IC[[target_name]][[protocol_name]][[label_time_horizon]][index] <- x$IC[[target_name]][[protocol_name]][[label_time_horizon]][index] + (Y[index] - W[index]) * h.g.ratio[index]
+            x$IC[[target_name]][[protocol_name]][[label_time_horizon]][index] <- x$IC[[target_name]][[protocol_name]][[label_time_horizon]][index] + (Y_scale[index] - W_scale[index]) * h.g.ratio[index]
         }
         ## curIC <- CalcIC(Qstar.kplus1, Qstar, update.list$h.g.ratio,
         ## uncensored, intervention.match, regimes.with.positive.weight)
@@ -214,12 +221,19 @@ sequential_regression <- function(x,
             # fixme j or j-1?
             value = x$prepared_data[[paste0(x$names$outcome,"_",j)]][which(!(outcome_free_and_uncensored))])
     }
+    # rescale rtmle_predicted_outcome if continuous outcome
+    if (x$continuous_outcome){
+        x$prepared_data$rtmle_predicted_outcome <- (x$prepared_data$rtmle_predicted_outcome*(x$outcome_range[2]-x$outcome_range[1]))+x$outcome_range[1]
+        target_parameter <- "Weighted mean by death"
+    } else {
+        target_parameter <- "Risk"
+    }
     # g-formula and tmle estimator
-    x$estimate[[target_name]][[protocol_name]][Time_horizon == time_horizon & Target_parameter == "Risk", Estimate := mean(x$prepared_data$rtmle_predicted_outcome)]
+    x$estimate[[target_name]][[protocol_name]][Time_horizon == time_horizon & Target_parameter == target_parameter, Estimate := mean(x$prepared_data$rtmle_predicted_outcome)]
     ic <- x$IC[[target_name]][[protocol_name]][[label_time_horizon]] + x$prepared_data$rtmle_predicted_outcome - mean(x$prepared_data$rtmle_predicted_outcome)
-    x$estimate[[target_name]][[protocol_name]][Time_horizon == time_horizon & Target_parameter == "Risk", Standard_error := sqrt(stats::var(ic)/N)]
-    x$estimate[[target_name]][[protocol_name]][Time_horizon == time_horizon & Target_parameter == "Risk", Lower := Estimate-stats::qnorm(.975)*Standard_error]
-    x$estimate[[target_name]][[protocol_name]][Time_horizon == time_horizon & Target_parameter == "Risk", Upper := Estimate+stats::qnorm(.975)*Standard_error]
+    x$estimate[[target_name]][[protocol_name]][Time_horizon == time_horizon & Target_parameter == target_parameter, Standard_error := sqrt(stats::var(ic)/N)]
+    x$estimate[[target_name]][[protocol_name]][Time_horizon == time_horizon & Target_parameter == target_parameter, Lower := Estimate-stats::qnorm(.975)*Standard_error]
+    x$estimate[[target_name]][[protocol_name]][Time_horizon == time_horizon & Target_parameter == target_parameter, Upper := Estimate+stats::qnorm(.975)*Standard_error]
     x$IC[[target_name]][[protocol_name]][[label_time_horizon]] <- ic
     return(x[])
 }
