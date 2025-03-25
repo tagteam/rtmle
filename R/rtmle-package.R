@@ -16,5 +16,6 @@
 #' @importFrom survival Surv
 #' @importFrom utils setTxtProgressBar txtProgressBar
 #' @importFrom parallel detectCores makeCluster parSapply stopCluster
+#' @importFrom pbmcapply pbmclapply
 ## usethis namespace: end
 NULL
