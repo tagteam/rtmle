@@ -13,8 +13,6 @@ cheap_bootstrap(
   estimate_column_name = "estimate",
   parameter_column_names = "parameter",
   alpha = 0.05,
-  parallelize = FALSE,
-  cores = 1,
   keep_estimates = TRUE
 )
 }
@@ -38,10 +36,6 @@ Defaults to "subsampling".}
 
 \item{alpha}{Significance level. Defaults to 0.05.}
 
-\item{parallelize}{Logical. Should the computation be parallelized?}
-
-\item{cores}{Number of cores to be used for parallel computation.}
-
 \item{keep_estimates}{Logical. Should the bootstrapped estimates be kept?}
 }
 \value{
@@ -58,7 +52,6 @@ this function computes confidence intervals using
 the cheap subsampling method.
 }
 \examples{
-\dontrun{
 utils::data(anorexia, package = "MASS")
 ## example with a function call
 set.seed(123)
@@ -76,18 +69,5 @@ cs <- cheap_bootstrap(fun = fun,
 cs
 summary(cs)
 plot(cs)
-}
-## example with a function call and parallel computation
-\dontrun{
-set.seed(123)
-## note the function needs to load the packages needed
-## for the computation if parallelized
-cs <- cheap_bootstrap(fun = fun,
-                      b = 20,
-                      data = anorexia,
-                      estimate_column_name = "estimate",
-                      parameter_column_names = "term",
-                      parallelize = TRUE,
-                      cores = 2)
-}
+
 }

@@ -52,11 +52,10 @@ target(x) <- list(name = "Outcome_risk",
                   protocols = c("Always_A","Never_A"))
 cb <- cheap_bootstrap_rtmle(
  x = x,
- rtmle_arguments = list(learner = "learn_glm",time_horizon = tau),
- id_name = "id",
- cheap_bootstrap_arguments = list(b = 3, type = "subsampling", size = NULL)
+rtmle_arguments = list(learner = "learn_glm",time_horizon = 1:tau),
+  id_name = "id"
 )
-x <- run_rtmle(x,learner = "learn_glm",time_horizon = tau)
+x <- run_rtmle(x,learner = "learn_glm",time_horizon = 1:tau)
 summary(x)
 cb
 
