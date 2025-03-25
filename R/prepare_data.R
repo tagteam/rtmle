@@ -1,9 +1,9 @@
 ### prepare_data.R ---
 #----------------------------------------------------------------------
 ## Author: Thomas Alexander Gerds
-## Created: Jul 19 2024 (10:07) 
-## Version: 
-## Last-Updated: Mar 25 2025 (13:50) 
+## Created: Jul 19 2024 (10:07)
+## Version:
+## Last-Updated: Mar 25 2025 (13:50)
 ##           By: Thomas Alexander Gerds
 ##     Update #: 211
 #----------------------------------------------------------------------
@@ -50,9 +50,9 @@
 ##' @author Thomas A. Gerds <tag@@biostat.ku.dk>
 "prepare_data<-" <- function(x,...,value){
 
-    # check value 
+    # check value
     stopifnot(is.list(value))
-    
+
     # check object x
     K = length(x$times)
     max_time_horizon = max(x$times)
@@ -106,7 +106,7 @@
         check_id(data = x$data$timevar_data[[nn]], id = x$names$id,name = paste0("x$data$timevar_data$",nn))
     })
     rm(nix)
-    # initialize dataset with outcome data 
+    # initialize dataset with outcome data
     prepared_data <- x$data$outcome_data
     # sort by id
     data.table::setDT(prepared_data)
@@ -166,7 +166,7 @@
     }
     # sorting of variables should not be necessary because the formulas define the dependencies
     # but sorting is still be convenient for data inspections
-    # and also our data manipulation below where we set values to NA after censoring still depends on the order 
+    # and also our data manipulation below where we set values to NA after censoring still depends on the order
     prepared_data <- prepared_data[,c(x$names$id, intersect(c(name_baseline_covariates,unlist(sapply(x$times, function(timepoint){
         if(timepoint == 0){
             paste0(name_time_covariates,"_",timepoint)
@@ -180,7 +180,7 @@
             }
         }
     }))), names(prepared_data))), with = FALSE]
-    # now the number of columns are final and we can search for the outcome variables 
+    # now the number of columns are final and we can search for the outcome variables
     outcome_variables_position = match(outcome_variables, names(prepared_data))
     if (any(this_out <- is.na(outcome_variables_position))){
         stop(paste0("Cannot find outcome variable(s):\n",paste0(outcome_variables[this_out],collapse = ", "),"\n in x$data$outcome_data"))
@@ -191,7 +191,7 @@
             stop(paste0("Cannot find censoring variable(s):\n",paste0(censoring_variables[this_out],collapse = ", "),"\n in x$data$outcome_data"))
         }
     }
-    if(length(x$names$competing)>0){    
+    if(length(x$names$competing)>0){
         competing_variables_position = match(competing_variables, names(prepared_data))
         if (any(this_out <- is.na(competing_variables_position))){
             stop(paste0("Cannot find competing risk variable(s):\n",paste0(competing_variables[this_out],collapse = ", "),"\n in x$data$outcome_data"))
@@ -204,9 +204,9 @@
     } else{
         constant_variables <- NULL}
     name_baseline_covariates <- intersect(name_baseline_covariates,names(prepared_data))
-    # FIXME: remove or elaborate this sanity check 
+    # FIXME: remove or elaborate this sanity check
     stopifnot(nrow(prepared_data)>0)
-    ## make sure that the order of the censoring variables are factors with ordered labels 
+    ## make sure that the order of the censoring variables are factors with ordered labels
     ## such that we estimate the probability of being uncensored and not the probability being censored
     if(length(x$names$censoring)>0){
         for(col in censoring_variables){
@@ -316,7 +316,8 @@
                         outcome_variables,
                         censoring_variables,
                         competing_variables,
-                        max_time_horizon = max_time_horizon)
+                        max_time_horizon = max_time_horizon,
+                        continuous_outcome = continuous_outcome)
     x$prepared_data <- prepared_data[]
     x$names$name_time_covariates <- name_time_covariates
     x$names$name_baseline_covariates <- name_baseline_covariates

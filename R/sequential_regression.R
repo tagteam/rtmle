@@ -1,9 +1,9 @@
 ### sequential_regression.R ---
 #----------------------------------------------------------------------
 ## Author: Thomas Alexander Gerds
-## Created: Sep 30 2024 (14:30) 
-## Version: 
-## Last-Updated: Mar 25 2025 (14:08) 
+## Created: Sep 30 2024 (14:30)
+## Version:
+## Last-Updated: Mar 25 2025 (14:08)
 ##           By: Thomas Alexander Gerds
 ##     Update #: 254
 #----------------------------------------------------------------------
@@ -68,7 +68,7 @@ sequential_regression <- function(x,
         #        time j? those in current outcome_formula
         # FIXME: remove id variable below here
         history_of_variables <- names(x$prepared_data)[1:(-1+match(outcome_variables[[j]],names(x$prepared_data)))]
-        intervenable_history <- setdiff(history_of_variables,c(if (x$continuous_outcome){outcome_variables} else {NULL},censoring_variables,competing_variables))
+        intervenable_history <- setdiff(history_of_variables,c(if (!x$continuous_outcome){outcome_variables} else {NULL},censoring_variables,competing_variables))
         intervened_data <- do.call(x$protocol[[protocol_name]]$intervene_function,
                                    list(data = x$prepared_data[,intervenable_history,with = FALSE],
                                         intervention_table = intervention_table,
@@ -224,7 +224,7 @@ sequential_regression <- function(x,
     # rescale rtmle_predicted_outcome if continuous outcome
     if (x$continuous_outcome){
         x$prepared_data$rtmle_predicted_outcome <- (x$prepared_data$rtmle_predicted_outcome*(x$outcome_range[2]-x$outcome_range[1]))+x$outcome_range[1]
-        target_parameter <- "Weighted mean by death"
+        target_parameter <- "Weighted mean among survivors"
     } else {
         target_parameter <- "Risk"
     }
