@@ -1,11 +1,11 @@
 ### sequential_regression.R ---
 #----------------------------------------------------------------------
 ## Author: Thomas Alexander Gerds
-## Created: Sep 30 2024 (14:30)
-## Version:
-## Last-Updated: Mar 17 2025 (13:57)
+## Created: Sep 30 2024 (14:30) 
+## Version: 
+## Last-Updated: Mar 25 2025 (13:31) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 249
+##     Update #: 251
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -140,7 +140,7 @@ sequential_regression <- function(x,
         # avoid missing values due to logit
         if (x$targets[[target_name]]$estimator == "tmle"){
             if (any(fit_last[!is.na(fit_last)] <= 0)) fit_last <- pmax(fit_last,0.0001)
-            if (any(fit_last[!is.na(fit_last)] > 1)) fit_last <- pmin(fit_last,0.9999)
+            if (any(fit_last[!is.na(fit_last)] >= 1)) fit_last <- pmin(fit_last,0.9999)
         }
         ## y <- pmax(pmin(y,0.99999),0.00001)
         ## y <- pmax(pmin(y,0.9999),0.0001)
