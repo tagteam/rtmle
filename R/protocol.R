@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds & Alessandra
 ## Created: Jul 3 2024 (13:46)
 ## Version:
-## Last-Updated: Mar 21 2025 (11:51) 
+## Last-Updated: Mar 25 2025 (13:21) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 65
+##     Update #: 68
 #----------------------------------------------------------------------
 ##
 ### Commentary: 
@@ -42,6 +42,35 @@
 ##' of the treatment variable(s) under the intervention and should return a matrix with as many columns as there are
 ##' treatment variables.
 ##' }
+#' @return The modified object contains the treatment variables and the intervention_table
+#'         as list elemens of \code{x$protocols[[name]]} where name is given by \code{value$name}
+#' @author  Thomas A Gerds \email{tag@@biostat.ku.dk} and Paul Blanche \email{pabl@@sund.ku.dk}
+#' @examples
+#' # ------------------------------------------------------------------------------------------
+#' # Intervening on a single treatment variable
+#' # ------------------------------------------------------------------------------------------
+#' x <- rtmle_init(intervals = 3,name_id = "id",name_outcome = "Y",name_competing = "Dead",
+#'                 name_censoring = "Censored",censored_label = "censored")
+#' protocol(x) <- list(name = "Always_A",
+#'                     intervention = data.frame("A" = factor("1",levels = c("0","1"))))
+#' protocol(x) <- list(name = "Never_A",
+#'                     intervention = data.frame("A" = factor("0",levels = c("0","1"))))
+#' protocol(x) <- list(name = "Initiate_A_then_stop",
+#'                     intervention = data.frame("A" = factor(c("1","0","0"),levels = c("0","1"))))
+#' x$protocols
+#' # ------------------------------------------------------------------------------------------
+#' # Intervening on a more than one treatment variable
+#' # ------------------------------------------------------------------------------------------
+#' x <- rtmle_init(intervals = 3,name_id = "id",name_outcome = "Y",name_competing = "Dead",
+#'                 name_censoring = "Censored",censored_label = "censored")
+#' protocol(x) <- list(name = "Always_A_never_B",
+#'                     intervention = data.frame("A" = factor("1",levels = c("0","1")),
+#'                                               "B" = factor("0",levels = c("0","1"))))
+#' protocol(x) <- list(name = "Always_A_and_B_never_C",
+#'                     intervention = data.frame("A" = factor("1",levels = c("0","1")),
+#'                                               "B" = factor("1",levels = c("0","1")),
+#'                                               "C" = factor("0",levels = c("0","1"))))
+#' x$protocols
 ##' @export
 "protocol<-" <- function(x,...,value) {
     variable <- NULL
@@ -81,9 +110,9 @@
             length(value$treatment_variables) == length(intervention_table) &&
             all(intervention_table %in% c(0,1))){
             treatment_variables <- value$treatment_variables
-            intervention_table <- data.table::as.data.table(do.call(cbind,lapply(1:length(treatment_variables),function(v){
+            intervention_table <- data.table::as.data.table(lapply(1:length(treatment_variables),function(v){
                 factor(intervention_table[[v]],levels = c(0,1))
-            })))
+            }))
             data.table::setnames(intervention_table,treatment_variables)
             x$names$treatment_options <- lapply(treatment_variables,function(x)c(0,1))
             names(x$names$treatment_options) <- treatment_variables

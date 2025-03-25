@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 11 2024 (13:24) 
 ## Version: 
-## Last-Updated: Nov 20 2024 (11:53) 
+## Last-Updated: Mar 25 2025 (12:35) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 268
+##     Update #: 274
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -135,10 +135,12 @@ simulate_long_data <- function(n,
                                   reventtime(n = nrow(people_atrisk),breaks = time,cumhazard = Baseline_Rate[["Y"]],hazardratio = people_atrisk$hazard_ratio_Y,entrytime = people_atrisk$entrytime,decimals = 2),
                                   reventtime(n = nrow(people_atrisk),breaks = time,cumhazard = Baseline_Rate[["D"]],hazardratio = people_atrisk$hazard_ratio_D,entrytime = people_atrisk$entrytime,decimals = 2))
                       )
-        mins = Rfast::rowMins(ttt,value = FALSE)
+        
+        ## old:         mins=Rfast::rowMins(ttt,value=FALSE)
+        mins = apply(ttt,1,function(row){which.min(row)})
         people_atrisk[,event := factor(mins,levels = 1:5,labels = c("V","L","C","Y","D"))]
-        people_atrisk[,time := Rfast::rowMins(ttt,value = TRUE)]
-        ## print(people_atrisk[id == 10,data.table::data.table(j = j,entrytime,time)])
+        ## old:         people_atrisk[,time := Rfast::rowMins(ttt,value=TRUE)]
+        people_atrisk[,time := apply(ttt,1,min)]
         # censor at max_fup
         people_atrisk[time>max_fup,event := "C"]
         people_atrisk[time>max_fup,time := max_fup]
@@ -188,9 +190,11 @@ simulate_long_data <- function(n,
                                   reventtime(n = nrow(p),breaks = time,cumhazard = Baseline_Rate[["Y"]],hazardratio = p$hazard_ratio_Y,entrytime = people_atrisk$entrytime,decimals = 2),
                                   reventtime(n = nrow(p),breaks = time,cumhazard = Baseline_Rate[["D"]],hazardratio = p$hazard_ratio_D,entrytime = people_atrisk$entrytime,decimals = 2))
                       )
-        mins = Rfast::rowMins(ttt,value = FALSE)
+        ## old:     mins = Rfast::rowMins(ttt,value = FALSE)
+        mins=apply(ttt,1,function(row){which.min(row)})
         p[,terminal_event := factor(mins,levels = 1:3,labels = c("C","Y","D"))]
-        p[,terminal_time := Rfast::rowMins(ttt,value = TRUE)]
+        ## old:     p[,terminal_time := Rfast::rowMins(ttt,value = TRUE)]
+        p[,terminal_time := apply(ttt,1,min)]
         pop[is.na(terminal_event),`:=`(terminal_time = 10*365,terminal_event = "C")]
     }
     setkey(pop,id,time,event)

@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 12 2024 (09:38) 
 ## Version: 
-## Last-Updated: Oct  2 2024 (16:03) 
+## Last-Updated: Mar 25 2025 (12:33) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 69
+##     Update #: 72
 #----------------------------------------------------------------------
 ## 
 ### Comaxtimeentary: 
@@ -21,7 +21,9 @@ reventtime <- function(n,
                        entrytime = NULL,
                        decimals = NULL){
     if (missing(n)) stop("Please specify sample size 'n'")
-    if (any(hazardratio == 0)) stop("Hazardratios cannot contain zeros")
+    if (any(hazardratio == 0)) {
+        stop("Hazard ratios cannot contain zeros.")
+    }
     if (all(breaks>0)) {
         breaks <- c(0,breaks)
         cumhazard <- c(0,cumhazard)
