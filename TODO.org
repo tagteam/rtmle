@@ -4,3 +4,5 @@
 ** How to set up the data: multiple lines per subject?
 ** How to summarize the history: for sum(bar L) the range of the variable increases with time
 ** What is the correct loss function? patients should be similar wrt outcome risk not propensity!?
+* import Hely's programs
+

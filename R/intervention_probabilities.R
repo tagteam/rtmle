@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Oct 17 2024 (09:26) 
 ## Version: 
-## Last-Updated: Mar 25 2025 (13:14) 
+## Last-Updated: Mar 25 2025 (19:12) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 198
+##     Update #: 200
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -78,6 +78,7 @@ intervention_probabilities <- function(x,
                     #        at time j, such as A_j and B_j then we match on the last
                     last_G <- rev(treatment_variables[[j+1]])[[1]]
                 }
+                # FIXME: this requires that the data are chronologically ordered
                 history_of_variables <- 1:(match(last_G,names(x$prepared_data)))
                 # FIXME: would be better to restrict to the variables that occur in the current formula
                 # FIXME: would be better to remove the id variable
