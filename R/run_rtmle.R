@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul  1 2024 (09:11)
 ## Version:
-## Last-Updated: Mar 25 2025 (14:09) 
+## Last-Updated: Mar 28 2025 (13:53) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 392
+##     Update #: 393
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -25,7 +25,7 @@
 #' @param seed Seed used for cross-fitting
 #' @param ... Additional arguments passed to the learner function.
 #' @return The modified object contains the fitted nuisance parameter models and the estimate of the target parameter.
-#' @author  Thomas A Gerds \email{tag@@biostat.ku.dk} and Paul Blanche \email{pabl@@sund.ku.dk}
+#' @author  Thomas A Gerds \email{tag@@biostat.ku.dk} 
 #' @examples
 #' # ------------------------------------------------------------------------------------------
 #' # Intervening on a single treatment variable

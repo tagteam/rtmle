@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds & Alessandra
 ## Created: Jul 3 2024 (13:46)
 ## Version:
-## Last-Updated: Mar 25 2025 (13:21) 
+## Last-Updated: Mar 28 2025 (13:53) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 68
+##     Update #: 69
 #----------------------------------------------------------------------
 ##
 ### Commentary: 
@@ -44,7 +44,7 @@
 ##' }
 #' @return The modified object contains the treatment variables and the intervention_table
 #'         as list elemens of \code{x$protocols[[name]]} where name is given by \code{value$name}
-#' @author  Thomas A Gerds \email{tag@@biostat.ku.dk} and Paul Blanche \email{pabl@@sund.ku.dk}
+#' @author  Thomas A Gerds \email{tag@@biostat.ku.dk} 
 #' @examples
 #' # ------------------------------------------------------------------------------------------
 #' # Intervening on a single treatment variable

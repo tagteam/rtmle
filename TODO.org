@@ -4,5 +4,11 @@
 ** How to set up the data: multiple lines per subject?
 ** How to summarize the history: for sum(bar L) the range of the variable increases with time
 ** What is the correct loss function? patients should be similar wrt outcome risk not propensity!?
-* import Hely's programs
+* Import various Hely-programs
 
+https://github.com/helenecharlotte
+
+- Dropin
+- TMLE for baseline treatment and baseline covariate event history analysis
+- TMLE for recurrent events (repeated measures)
+- continuous time longitudinal causal inference

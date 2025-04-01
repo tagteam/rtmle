@@ -66,5 +66,5 @@ summary(x)
 
 }
 \author{
-Thomas A Gerds \email{tag@biostat.ku.dk} and Paul Blanche \email{pabl@sund.ku.dk}
+Thomas A Gerds \email{tag@biostat.ku.dk} 
 }
