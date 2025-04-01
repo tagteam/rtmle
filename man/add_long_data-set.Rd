@@ -2,7 +2,7 @@
 % Please edit documentation in R/add_long_data.R
 \name{add_long_data<-}
 \alias{add_long_data<-}
-\title{Adding register data to a rtmle object}
+\title{Adding long format data}
 \usage{
 add_long_data(x, ...) <- value
 }
@@ -11,12 +11,24 @@ add_long_data(x, ...) <- value
 
 \item{...}{Not used (not yet)}
 
-\item{value}{Named list of data.frames or data.tables or tibbles. Each data.frame
+\item{value}{Named list of data.frames (or data.tables or tibbles). Each data.frame
 has to contain a subject identifier variable which must have the same name as defined
 by \code{x$names$id}. However, not all subjects must have a row in the data.frame.
 Each data.frame should also have a time or date variable which must have the same name
 as defined by \code{x$names$time}.}
 }
+\value{
+The modified object.
+}
 \description{
+Adding long format data to a rtmle object
+}
+\details{
 This function adds a list of datasets with dates and values in long format (multiple lines per subject) to an existing rtmle object
+}
+\seealso{
+\link[rtmle]{add_baseline_data}, \link[rtmle]{add_wide_data}
+}
+\author{
+Thomas A. Gerds \href{mailto:tag@biostat.ku.dk}{tag@biostat.ku.dk}
 }

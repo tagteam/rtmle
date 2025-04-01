@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 19 2024 (08:31) 
 ## Version: 
-## Last-Updated: Oct 14 2024 (07:07) 
+## Last-Updated: Apr  1 2025 (09:52) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 32
+##     Update #: 34
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -29,7 +29,8 @@ print.rtmle <- function(x,...){
     cat("  The outcome, competing risk and censoring variables are named '",x$names$outcome,"', '",x$names$competing,"', and '",x$names$censoring,"', respectively.\n",sep = "")
     has_data <- length(x$data)>0
     if (!has_data)
-        cat("TODO: The object contains no data yet. Add them with the functions 'add_long_data<-' and 'add_data<-'.\n",sep = "")
+        cat("TODO: The object contains no data yet.\nAdd the baseline data (if any) with the function 'add_baseline_data<-'\nAdd the outcome data and the longitudinal data (covariates and treatment) with one of the functions\n: 'add_long_data<-' or 'add_wide_data<-'.\n",
+            sep = "")
     else{
         for (name in c("baseline_data","timevar_data","outcome_data")){
             if (length(x$data[[name]]) == 0 && length(x$long_data[[name]]) == 0) {

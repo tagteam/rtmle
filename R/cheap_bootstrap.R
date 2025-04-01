@@ -51,23 +51,7 @@ confidence_interval <- function(est,
 ##' the point estimates and confidence intervals.
 ##' @export
 ##' @examples
-##' utils::data(anorexia, package = "MASS")
 ##' ## example with a function call
-##' set.seed(123)
-##' library(broom)
-##' library(dplyr)
-##' fun <- function(data) {
-##'   lm(formula = Postwt ~ Prewt + Treat + offset(Prewt), data = data) %>%
-##'   tidy()
-##' }
-##' cs <- cheap_bootstrap(fun = fun,
-##'                       b = 20,
-##'                       data = anorexia,
-##'                       estimate_column_name = "estimate",
-##'                       parameter_column_names = "term")
-##' cs
-##' summary(cs)
-##' plot(cs)
 ##'
 cheap_bootstrap <- function(fun,
                             data,

@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds & Alessandra
 ## Created: Jul 3 2024 (13:46)
 ## Version:
-## Last-Updated: Mar 28 2025 (13:53) 
+## Last-Updated: Apr  1 2025 (08:24) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 69
+##     Update #: 71
 #----------------------------------------------------------------------
 ##
 ### Commentary: 
@@ -86,11 +86,11 @@
         }
         missing_nodes <- (length(intervention_times)-NROW(intervention_table))
         if (missing_nodes>0){
-            warning("The object specifies more intervention nodes than there are rows in the provided intervention table.\nApply last value carried forward for now.")
+            message("The object specifies more intervention nodes than there are rows in the provided intervention table.\nApply last value carried forward for now, 'x$protocol$intervention_table'.")
             intervention_table <- intervention_table[c(1:NROW(intervention_table),rep(NROW(intervention_table),missing_nodes))]
         }else{
             if (missing_nodes<0){
-                warning("The object specifies fewer intervention nodes than there are rows in the provided intervention table.\nCutting these for now.")
+                message("The object specifies fewer intervention nodes than there are rows in the provided intervention table.\nCutting these for now, but please check 'x$protocol$intervention_table'.")
                 intervention_table <- intervention_table[c(1:length(intervention_times))]
             }
         }

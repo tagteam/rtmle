@@ -1,6 +1,6 @@
 Package: rtmle
 Title: Analysing Longitudinal Observational and Randomized Data with the Targeted Minimum Loss Estimator
-Version: 2025.03.25
+Version: 2025.04.01
 Authors@R: c(
     person("Helene Charlotti Wiese", "Rytgaard", , "hely@sund.ku.dk", role = c("aut", "cre")),
     person("Thomas Alexander", "Gerds", , "tag@biostat.ku.dk", role = c("aut"),
