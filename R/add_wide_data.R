@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Apr  1 2025 (08:18) 
 ## Version: 
-## Last-Updated: Apr  1 2025 (09:52) 
+## Last-Updated: Apr  1 2025 (09:58) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 2
+##     Update #: 3
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -22,7 +22,7 @@
 #' @param ... Not used (not yet)
 #' @param value Named list of data.frames (or data.tables or tibbles). Two possible names 'outcome_data' and 'timevar_data'.
 #' @return The modified object.
-##' @seealso \link[rtmle]{add_baseline_data}, \link[rtmle]{add_long_data}
+##' @seealso \link[rtmle]{add_baseline_data<-}, \link[rtmle]{add_long_data<-}
 ##' @examples
 ##' ## FIXME
 ##' @export 

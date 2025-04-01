@@ -26,7 +26,7 @@ This function adds a list of datasets in wide format (one line per subject) to a
 ## FIXME
 }
 \seealso{
-\link[rtmle]{add_baseline_data}, \link[rtmle]{add_long_data}
+\link[rtmle]{add_baseline_data<-}, \link[rtmle]{add_long_data<-}
 }
 \author{
 Thomas A. Gerds \href{mailto:tag@biostat.ku.dk}{tag@biostat.ku.dk}

@@ -361,6 +361,7 @@ plot.cheap_bootstrap <- function(x, alternate_confidence_interval = NULL, ...) {
 #'
 #' @examples
 #'
+#' \dontrun{
 #' set.seed(17)
 #' tau <- 3
 #' ld <- simulate_long_data(n = 100,number_visits = 20,
@@ -388,6 +389,7 @@ plot.cheap_bootstrap <- function(x, alternate_confidence_interval = NULL, ...) {
 #' x <- run_rtmle(x,learner = "learn_glm",time_horizon = 1:tau)
 #' summary(x)
 #' cb
+#' }
 #'
 #' @export
 cheap_bootstrap_rtmle <- function(x,

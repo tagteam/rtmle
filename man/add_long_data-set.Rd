@@ -27,7 +27,7 @@ Adding long format data to a rtmle object
 This function adds a list of datasets with dates and values in long format (multiple lines per subject) to an existing rtmle object
 }
 \seealso{
-\link[rtmle]{add_baseline_data}, \link[rtmle]{add_wide_data}
+\link[rtmle]{add_baseline_data<-}, \link[rtmle]{add_wide_data<-}
 }
 \author{
 Thomas A. Gerds \href{mailto:tag@biostat.ku.dk}{tag@biostat.ku.dk}

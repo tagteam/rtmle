@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 25 2024 (11:24)
 ## Version:
-## Last-Updated: Apr  1 2025 (09:52) 
+## Last-Updated: Apr  1 2025 (09:59) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 18
+##     Update #: 20
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -24,7 +24,7 @@
 #' by \code{x$names$id}. However, not all subjects must have a row in the data.frame.
 #' Each data.frame should also have a time or date variable which must have the same name
 #' as defined by \code{x$names$time}.
-##' @seealso \link[rtmle]{add_baseline_data}, \link[rtmle]{add_wide_data}
+##' @seealso \link[rtmle]{add_baseline_data<-}, \link[rtmle]{add_wide_data<-}
 #' @return The modified object.
 #' @author Thomas A. Gerds <tag@@biostat.ku.dk>
 #' @export
