@@ -9,22 +9,28 @@ widen_outcome <- function(outcome_name,
     # -----------------------------------------------------------------------
     # death and right censored
     # -----------------------------------------------------------------------
-    wide=map_grid(grid=grid,
-                       data=competing_data,
-                       name="Dead",
-                       rollforward=Inf,
-                       id = id)
-    # naturally, NA values mean censored. hence: fill=1
-    w=map_grid(grid=grid,
-                    data=censored_data,
-                    name="Censored",
-                    rollforward=Inf,
-                    values=c("censored","uncensored"),
-                    fun.aggregate = fun.aggregate,
-                    fill="censored",
-                    X.factor=TRUE,
-                    id = id)
-    wide=wide[w]
+    if (length(x$names$competing)>0 & length(x$long_data$competing_data)>0){
+        wide=map_grid(grid=grid,
+                      data=competing_data,
+                      name="Dead",
+                      rollforward=Inf,
+                      id = id)
+    }else{
+        wide <- NULL
+    }
+    if (length(x$names$censoring)>0 & length(x$long_data$censored_data)>0){
+        # naturally, NA values mean censored. hence: fill=1
+        w=map_grid(grid=grid,
+                   data=censored_data,
+                   name="Censored",
+                   rollforward=Inf,
+                   values=c("censored","uncensored"),
+                   fun.aggregate = fun.aggregate,
+                   fill="censored",
+                   X.factor=TRUE,
+                   id = id)
+        if (length(wide)>0) wide <- wide[w] else wide <- w
+    }
     # -----------------------------------------------------------------------
     # only interested in new outcomes with onset after index
     # but want to tag patients who are in hospital with the outcome
@@ -37,7 +43,7 @@ widen_outcome <- function(outcome_name,
     w=map_grid(grid=grid,data=outcome_data,name=outcome_name,rollforward=Inf,id = id)
     # when outcome occurs at baseline re-set to value 2
     ## set(w,i=which(wide$id%in%admitted_index),j=paste0(outcome,"_0"),value=2)
-    wide=wide[w]
+    if (length(wide)>0) wide <- wide[w] else wide <- w
     #
     # Notes:
     #       a) when outcome or death has occurred the value 1 persists, i.e.,

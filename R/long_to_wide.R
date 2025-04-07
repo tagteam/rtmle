@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 22 2024 (14:07) 
 ## Version: 
-## Last-Updated: Oct 24 2024 (07:00) 
+## Last-Updated: Apr  7 2025 (12:45) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 22
+##     Update #: 34
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -42,13 +42,22 @@ long_to_wide <- function(x,
     #
     # outcome, censored and competing risk define end-of-followup
     #
-    if (length(x$long_data$outcome_data)>0)
-        if (!("competing_date" %in% names(x$long_data$competing_data)))
-            setnames(x$long_data$competing_data,"date","competing_date")
-    pop <- x$long_data$competing_data[pop,on = x$names$id]
-    if (!("censored_date" %in% names(x$long_data$censored_data)))
-        setnames(x$long_data$censored_data,"date","censored_date")
-    pop <- x$long_data$censored_data[pop,on = x$names$id]
+    if (length(x$names$competing)>0 & length(x$long_data$competing_data)>0){
+        if (length(x$long_data$outcome_data)>0){
+            if (!("competing_date" %in% names(x$long_data$competing_data)))
+                setnames(x$long_data$competing_data,"date","competing_date")
+        }
+        pop <- x$long_data$competing_data[pop,on = x$names$id]
+    }else{
+        pop[,competing_date := as.Date(Inf)]
+    }
+    if (length(x$names$censoring)>0 & length(x$long_data$censored_data)>0){
+        if (!("censored_date" %in% names(x$long_data$censored_data)))
+            setnames(x$long_data$censored_data,"date","censored_date")
+        pop <- x$long_data$censored_data[pop,on = x$names$id]
+    }else{
+        pop[,censored_date := as.Date(Inf)]
+    }
     if (!("outcome_date" %in% names(x$long_data$outcome_data)))
         setnames(x$long_data$outcome_data,"date","outcome_date")
     pop <- x$long_data$outcome_data[pop,on = x$names$id]
@@ -59,8 +68,12 @@ long_to_wide <- function(x,
     grid <- pop[,.SD,.SDcols = c(x$names$id)][grid,on = eval(as.character(x$names$id))]
     length_interval=unique(round(diff(intervals),0))
     # now awkwardly reset the names
-    setnames(x$long_data$competing_data,"competing_date","date")
-    setnames(x$long_data$censored_data,"censored_date","date")
+    if (length(x$names$competing)>0 & length(x$long_data$competing_data)>0){
+        setnames(x$long_data$competing_data,"competing_date","date")
+    }
+    if (length(x$names$censoring)>0 & length(x$long_data$censored_data)>0){
+        setnames(x$long_data$censored_data,"censored_date","date")
+    }
     setnames(x$long_data$outcome_data,"outcome_date","date")
     # FIXME: check for data after the end of followup?
     ## grid <- grid[date<=end+length_interval]
