@@ -19,6 +19,10 @@ name(s) of the variable(s) that the protocols intervenes upon. In longitudinal
 settings, when a treatment variable is named "A" then the prepared data will contain
 a column for each of the variables A_0,A_1,----,A_k. This argument can be left unspecified
 in which case the argument \code{intervention} must be a data.frame with names of treatment variables.
+An optional argument is
+\itemize{
+\item \code{verbose}: if FALSE suppress messages
+}
 See also details.
 \item \code{intervention}: A vector, or a named data.frame (tibble, data.table), or a function.
 If it is a vector, it should consist of values 0 and 1 corresponding to what the intervention

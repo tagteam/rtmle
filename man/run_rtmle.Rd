@@ -11,26 +11,47 @@ run_rtmle(
   time_horizon,
   refit = FALSE,
   seed = NULL,
+  subsets = NULL,
+  verbose = TRUE,
   ...
 )
 }
 \arguments{
 \item{x}{object of class \code{rtmle}}
 
-\item{targets}{Selection of targets to be analysed. If missing all targets in x$targets are analysed.}
+\item{targets}{Selection of targets to be analysed. If missing all
+targets in x$targets are analysed.}
 
-\item{learner}{A function which is called to fit (learn) the nuisance parameter models.}
+\item{learner}{A function which is called to fit (learn) the
+nuisance parameter models.}
 
-\item{time_horizon}{The time horizon at which to calculate risks. If it is a vector the analysis will be performed for each element of the vector.}
+\item{time_horizon}{The time horizon at which to calculate
+risks. If it is a vector the analysis will be performed for
+each element of the vector.}
 
-\item{refit}{Logical. If \code{TRUE} ignore any propensity score and censoring models learned in previous calls to this function. Default is \code{FALSE}.}
+\item{refit}{Logical. If \code{TRUE} ignore any propensity score
+and censoring models learned in previous calls to this
+function. Default is \code{FALSE}.}
 
 \item{seed}{Seed used for cross-fitting}
+
+\item{subsets}{A list structure for subset analyses. Each element is a list
+which requires a label, to name the subset, and a subset of the values
+of the variable \code{x$names$id} in the data \code{x$prepared_data} to
+identify the subset. The results of the subset analysis are stored
+in \code{x$estimate[[subsets[[sub]]label]]}. An optional element of each
+subset-list is called \code{append}
+which should be logical: if \code{TRUE} append the estimates to the existing
+estimates with rbind. This may be used for stratified analyses, to study seed dependence (Monte-Carlo error)
+and bootstrap. See examples.}
+
+\item{verbose}{Logical. If \code{FALSE} suppress all messages.}
 
 \item{...}{Additional arguments passed to the learner function.}
 }
 \value{
-The modified object contains the fitted nuisance parameter models and the estimate of the target parameter.
+The modified object contains the fitted nuisance parameter
+models and the estimate of the target parameter.
 }
 \description{
 This function runs the analysis defined in previous steps.
@@ -61,6 +82,15 @@ target(x) <- list(name = "Outcome_risk",
                   protocols = c("Always_A","Never_A"))
 x <- run_rtmle(x,learner = "learn_glmnet",time_horizon = 1:tau)
 summary(x)
+\dontrun{
+# stratified analyses
+x <- run_rtmle(x,learner = "learn_glmnet",time_horizon = tau,
+               verbose=FALSE,
+               subsets=list(list(label="Sex",variable="Sex",
+                                 value="Female",id=x$prepared_data[sex==0,id]),
+                       list(label="Sex",variable="Sex",
+                                 value="Male",id=x$prepared_data[sex==1,id])))
+}
 
 
 

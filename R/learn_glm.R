@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 23 2024 (12:49) 
 ## Version: 
-## Last-Updated: Mar  7 2025 (18:46) 
+## Last-Updated: Apr  9 2025 (15:34) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 108
+##     Update #: 114
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -99,7 +99,8 @@ learn_glm <- function(character_formula,
         }
     }
     fit$terms <- tf
-    predicted_values <- predict(fit,type = "response",newdata = intervened_data,se = FALSE)
+    # FIXME: need to collect these warnings instead of preventing them
+    suppressWarnings(predicted_values <- predict(fit,type = "response",newdata = intervened_data,se = FALSE))
     data.table::setattr(predicted_values,"fit",coef(summary(fit)))
     return(predicted_values)
 }

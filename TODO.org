@@ -1,3 +1,6 @@
+* Do this soon
+** Check if outcome is constant before running anything
+** allow subsets to define Strata as a vector of values (requires that the variable is in the prepare_data) 
 * Describe extensions
 * Find alternative estimators and corresponding R-packages
 * Pooled logistic regression for g-part (censoring/propensity)

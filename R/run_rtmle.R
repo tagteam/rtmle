@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul  1 2024 (09:11)
 ## Version:
-## Last-Updated: Mar 28 2025 (13:53) 
+## Last-Updated: Apr  9 2025 (15:43) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 393
+##     Update #: 468
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -18,14 +18,31 @@
 #'
 #' This function runs the analysis defined in previous steps.
 #' @param x object of class \code{rtmle}
-#' @param targets Selection of targets to be analysed. If missing all targets in x$targets are analysed.
-#' @param learner A function which is called to fit (learn) the nuisance parameter models.
-#' @param time_horizon The time horizon at which to calculate risks. If it is a vector the analysis will be performed for each element of the vector.
-#' @param refit Logical. If \code{TRUE} ignore any propensity score and censoring models learned in previous calls to this function. Default is \code{FALSE}.
+#' @param targets Selection of targets to be analysed. If missing all
+#'     targets in x$targets are analysed.
+#' @param learner A function which is called to fit (learn) the
+#'     nuisance parameter models.
+#' @param time_horizon The time horizon at which to calculate
+#'     risks. If it is a vector the analysis will be performed for
+#'     each element of the vector.
+#' @param refit Logical. If \code{TRUE} ignore any propensity score
+#'     and censoring models learned in previous calls to this
+#'     function. Default is \code{FALSE}.
 #' @param seed Seed used for cross-fitting
+#' @param subsets A list structure for subset analyses. Each element is a list 
+#'                which requires a label, to name the subset, and a subset of the values
+#'                of the variable \code{x$names$id} in the data \code{x$prepared_data} to
+#'                identify the subset. The results of the subset analysis are stored
+#'                in \code{x$estimate[[subsets[[sub]]label]]}. An optional element of each
+#'                subset-list is called \code{append}
+#'                which should be logical: if \code{TRUE} append the estimates to the existing
+#'                estimates with rbind. This may be used for stratified analyses, to study seed dependence (Monte-Carlo error)
+#'                and bootstrap. See examples.
+#' @param verbose Logical. If \code{FALSE} suppress all messages.
 #' @param ... Additional arguments passed to the learner function.
-#' @return The modified object contains the fitted nuisance parameter models and the estimate of the target parameter.
-#' @author  Thomas A Gerds \email{tag@@biostat.ku.dk} 
+#' @return The modified object contains the fitted nuisance parameter
+#'     models and the estimate of the target parameter.
+#' @author Thomas A Gerds \email{tag@@biostat.ku.dk}
 #' @examples
 #' # ------------------------------------------------------------------------------------------
 #' # Intervening on a single treatment variable
@@ -52,6 +69,15 @@
 #'                   protocols = c("Always_A","Never_A"))
 #' x <- run_rtmle(x,learner = "learn_glmnet",time_horizon = 1:tau)
 #' summary(x)
+#' \dontrun{
+#' # stratified analyses
+#' x <- run_rtmle(x,learner = "learn_glmnet",time_horizon = tau,
+#'                verbose=FALSE,
+#'                subsets=list(list(label="Sex",variable="Sex",
+#'                                  value="Female",id=x$prepared_data[sex==0,id]),
+#'                        list(label="Sex",variable="Sex",
+#'                                  value="Male",id=x$prepared_data[sex==1,id])))
+#' }
 #'
 #'
 #'
@@ -62,109 +88,164 @@ run_rtmle <- function(x,
                       time_horizon,
                       refit = FALSE,
                       seed = NULL,
+                      subsets = NULL,
+                      verbose = TRUE,
                       ...){
     time <- value <- NULL
-    if (length(x$continuous_outcome) == 0 || x$continuous_outcome == FALSE){
-        x$continuous_outcome <- FALSE
-    }else{
-        x$continuous_outcome <- TRUE
-    }
-    # check data
-    ## sapply(x$prepared_data,function(x)sum(is.na(x)))
-    if (!(x$names$id%in%names(x$prepared_data)))
-        stop(paste0("Cannot see id variable ",x$names$id," in x$prepared_data."))
-    ## make sure that the treatment variables are factors with levels equal to those specified by the protocols
-    ## FIXME: this could perhaps be done in prepare_data()
-    for (v in names(x$names$treatment_options)){
-        for (v_j in paste0(v,"_",x$times)){
-            if (inherits(x$prepared_data[[v_j]],"factor")){
-                if (!(all.equal(levels(x$prepared_data[[v_j]]),as.character(x$names$treatment_options[[v]])))){
-                    stop(paste0("The protocols specify the following treatment options (factor levels) for variable ",v,
-                                paste0(x$names$treatment_options[[v]],collapse = ","),"\nBut, the data have: ",
-                                paste0(levels(x$prepared_data[[v_j]]),collapse = ",")))
-                }
+    if (length(subsets)>0){
+        for (sub in subsets){
+            stopifnot(is.character(sub$label[[1]]))
+            ## FIXME: is this check useful? stopifnot(all(sub$id %in% x$prepared_data[[x$names$id]]))
+            xs <- data.table::copy(x[c("targets","names","times","protocols","continuous_outcome","models")])
+            xs$prepared_data <- x$prepared_data[x$prepared_data[[x$names$id]] %in% sub$id]
+            if (NROW(xs$prepared_data) == 0) stop(paste0("No data in subset: ",label))
+            # FIXME: should check if someone is at risk at the maximal time_horizons
+            #        and that there is still variation in the outcome at that time
+            xs$followup <- x$followup[x$followup[[x$names$id]] %in% sub$id]
+            xs <- run_rtmle(xs,targets = targets,time_horizon = time_horizon,seed = seed,learner = learner,refit = TRUE,sub = NULL,verbose = verbose)
+            subset_result <- xs$estimate[["Main_analysis"]]
+            # add the subset identifying information, such as age="40-60"
+            if (length(sub$variable)>0){
+                if (length(sub$value)>0) v <- sub$value else v = ""
+                addthis <- data.table::data.table(v)
+                data.table::setnames(addthis,sub$variable[[1]])
+                subset_result <- cbind(addthis,subset_result)
+            }
+            if (length(x$estimate[[sub$label[[1]]]]) == 0 ||
+                (length(sub$append) == 0) ||
+                sub$append[[1]] == FALSE){
+                x$estimate[[sub$label[[1]]]] <- subset_result
             }else{
-                ## stop(paste0("The treatment variable ",v_j," is not a factor"))
-                data.table::set(x$prepared_data,
-                                j = v_j,
-                                value = factor(x$prepared_data[[v_j]],levels = x$names$treatment_options[[v]]))
+                # cases stratified, Monte-Carlo error, bootstrap
+                # results are appended
+                x$estimate[[sub$label[[1]]]] <- rbind(x$estimate[[sub$label[[1]]]],subset_result,fill = TRUE)
             }
         }
-    }
-    # for loop across targets
-    available_targets <- names(x$targets)
-    if (!missing(targets)) {
-        if (!(all(targets %in% available_targets)))
-            stop(paste0("Requested targets: \n",paste(targets,collapse = ","),"\n\navailable targets:\n",paste(available_targets,collapse = ",")))
-        run_these_targets <- intersect(targets,available_targets)
+        return(x)
     }else{
-        run_these_targets <- available_targets
-    }
-    if (missing(time_horizon)) {
-        time_horizon <- max(x$times)
-    } else {
-        stopifnot(all(time_horizon <= max(x$times) & time_horizon>0))
-    }
-    if (length(learner)>1){
-        learners <- parse_learners(learner)
-    }
-    for (target_name in run_these_targets){
-        message("Running target: ",target_name)
-        x$sequential_outcome_regression[[target_name]] <- vector(mode = "list",3)
-        names(x$sequential_outcome_regression[[target_name]]) <- c("predicted_values","fit","intervened_data")
-        ## protocols <- names(x$protocols)
-        protocols <- x$targets[[target_name]]$protocols
-        for (protocol_name in protocols){
-            message("Current protocol: ",protocol_name)
-            #
-            # G-part: fit nuisance parameter models for propensity and censoring
-            #
-            x <- intervention_probabilities(x,
-                                            protocol_name = protocol_name,
-                                            refit = refit,
-                                            learner = learner,
-                                            time_horizon = time_horizon,
-                                            seed = seed,
-                                            ...)
-            #
-            # Q-part: loop backwards in time through iterative condtional expectations
-            #
-            # initialize estimate
-            if (!x$continuous_outcome){
-                Target_parameter <- "Risk"
-            } else {
-                Target_parameter <- "Weighted mean among survivors"
-            }
-            x$estimate[[target_name]][[protocol_name]] <- data.table(Target = target_name,
-                                                                     Protocol = protocol_name,
-                                                                     Target_parameter = Target_parameter,
-                                                                     Time_horizon = time_horizon,
-                                                                     Estimator = x$targets[[target_name]]$estimator,
-                                                                     Estimate = numeric(length(time_horizon)),
-                                                                     P_value = NA)
-            label_time_horizon <- paste0("time_horizon_",time_horizon)
-            x$sequential_outcome_regression <- vector(mode = "list",length(run_these_targets))
-            names(x$sequential_outcome_regression) = run_these_targets
-            # initialize influence curve vector
-            for (th in 1:length(time_horizon)){
-                # FIXME: sample size
-                x$IC[[target_name]][[protocol_name]][[label_time_horizon[[th]]]] <- numeric(NROW(x$prepared_data))
-            }
-            # loop across time-horizons
-            for (th in time_horizon){
-                x <- sequential_regression(x = x,
-                                           target_name = target_name,
-                                           protocol_name = protocol_name,
-                                           time_horizon = th,
-                                           learner = learner,
-                                           seed = seed,
-                                           ...)
+        # check data
+        if (length(x$continuous_outcome) == 0 || x$continuous_outcome == FALSE){
+            x$continuous_outcome <- FALSE
+        }else{
+            x$continuous_outcome <- TRUE
+        }
+        if (!x$continuous_outcome){
+            Target_parameter <- "Risk"
+        } else {
+            Target_parameter <- "Weighted mean among survivors"
+        }
+        available_targets <- names(x$targets)
+        if (!missing(targets) && length(targets)>0) {
+            if (!(all(targets %in% available_targets)))
+                stop(paste0("Requested targets: \n",paste(targets,collapse = ","),"\n\navailable targets:\n",paste(available_targets,collapse = ",")))
+            run_these_targets <- intersect(targets,available_targets)
+        }else{
+            run_these_targets <- available_targets
+        }
+        if (missing(time_horizon)) {
+            time_horizon <- max(x$times)
+        } else {
+            stopifnot(all(time_horizon <= max(x$times) & time_horizon>0))
+        }
+        if (length(learner)>1){
+            learners <- parse_learners(learner)
+        }
+        ## sapply(x$prepared_data,function(x)sum(is.na(x)))
+        if (!(x$names$id%in%names(x$prepared_data)))
+            stop(paste0("Cannot see id variable ",x$names$id," in x$prepared_data."))
+        ## make sure that the treatment variables are factors with levels equal to those specified by the protocols
+        ## FIXME: this could perhaps be done in prepare_data()
+        for (v in names(x$names$treatment_options)){
+            for (v_j in paste0(v,"_",x$times)){
+                if (inherits(x$prepared_data[[v_j]],"factor")){
+                    if (!(all.equal(levels(x$prepared_data[[v_j]]),as.character(x$names$treatment_options[[v]])))){
+                        stop(paste0("The protocols specify the following treatment options (factor levels) for variable ",v,
+                                    paste0(x$names$treatment_options[[v]],collapse = ","),"\nBut, the data have: ",
+                                    paste0(levels(x$prepared_data[[v_j]]),collapse = ",")))
+                    }
+                }else{
+                    ## stop(paste0("The treatment variable ",v_j," is not a factor"))
+                    data.table::set(x$prepared_data,
+                                    j = v_j,
+                                    value = factor(x$prepared_data[[v_j]],levels = x$names$treatment_options[[v]]))
+                }
             }
         }
+        # initialize object to receive estimates and IC 
+        label_time_horizon <- paste0("time_horizon_",time_horizon)
+        x$sequential_outcome_regression <- vector(mode = "list",length(run_these_targets))
+        names(x$sequential_outcome_regression) = run_these_targets
+        # initialize influence curve vector
+        x$IC <- stats::setNames(lapply(run_these_targets,function(target_name){
+            stats::setNames(lapply(x$targets[[target_name]]$protocols,function(protocol_name){
+                stats::setNames(lapply(1:length(time_horizon),function(th){
+                    numeric(NROW(x$prepared_data))
+                }),label_time_horizon)
+            }),x$targets[[target_name]]$protocols)}),run_these_targets)
+        # initialize estimate table
+        empty_estimate <- rbindlist(lapply(run_these_targets,function(target_name){
+            rbindlist(lapply(x$targets[[target_name]]$protocols,function(protocol_name){
+                expand.grid(Target = target_name,
+                            Protocol = protocol_name,
+                            Target_parameter = Target_parameter,
+                            Time_horizon = time_horizon,
+                            Estimator = x$targets[[target_name]]$estimator,
+                            Estimate = numeric(1),
+                            P_value = 1,
+                            Standard_error = numeric(1),
+                            Lower = numeric(1),
+                            Upper = numeric(1))
+            }))}))
+        if (length(x$estimate[["Main_analysis"]]) == 0){
+            x$estimate[["Main_analysis"]] <- empty_estimate
+        }else{
+            # initialize new targets, new protocols and new time_horizons
+            e <- rbind(x$estimate[["Main_analysis"]],empty_estimate)
+            e <- e[e[,.I[1],by = c("Target","Protocol","Time_horizon")]$V1]
+            x$estimate[["Main_analysis"]] <- e
+        }
+        # for loop across targets
+        for (target_name in run_these_targets){
+            if (verbose[[1]]){
+                message("Running target: ",
+                        target_name,
+                        "... Set argument verbose = FALSE to suppress this message.")
+            }
+            x$sequential_outcome_regression[[target_name]] <- vector(mode = "list",3)
+            names(x$sequential_outcome_regression[[target_name]]) <- c("predicted_values","fit","intervened_data")
+            for (protocol_name in x$targets[[target_name]]$protocols){
+                if (verbose[[1]]){
+                    message("Current protocol: ",protocol_name," ... Set argument verbose = FALSE to suppress this message.")
+                }
+                #
+                # G-part: fit nuisance parameter models for propensity and censoring
+                #
+                x <- intervention_probabilities(x,
+                                                protocol_name = protocol_name,
+                                                refit = refit,
+                                                learner = learner,
+                                                time_horizon = time_horizon,
+                                                seed = seed,
+                                                ...)
+                #
+                # Q-part: loop backwards in time through iterative condtional expectations
+                #
+                # loop across time-horizons
+                for (th in time_horizon){
+                    x <- sequential_regression(x = x,
+                                               target_name = target_name,
+                                               protocol_name = protocol_name,
+                                               time_horizon = th,
+                                               learner = learner,
+                                               seed = seed,
+                                               ...)
+                }
+            }
+        }
+        # FIXME: where did x loose its class?
+        class(x) <- "rtmle"
+        return(x)
     }
-    # FIXME: where did x loose its class?
-    class(x) <- "rtmle"
-    x
 }
 ######################################################################
 ### run_rtmle.R ends here

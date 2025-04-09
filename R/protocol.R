@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds & Alessandra
 ## Created: Jul 3 2024 (13:46)
 ## Version:
-## Last-Updated: Apr  1 2025 (08:24) 
+## Last-Updated: Apr  9 2025 (09:33) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 71
+##     Update #: 74
 #----------------------------------------------------------------------
 ##
 ### Commentary: 
@@ -28,6 +28,10 @@
 ##' settings, when a treatment variable is named "A" then the prepared data will contain
 ##' a column for each of the variables A_0,A_1,----,A_k. This argument can be left unspecified
 ##' in which case the argument \code{intervention} must be a data.frame with names of treatment variables.
+##' An optional argument is
+##' \itemize{
+##' \item \code{verbose}: if FALSE suppress messages
+##' }
 ##' See also details.
 ##' \item \code{intervention}: A vector, or a named data.frame (tibble, data.table), or a function.
 ##' If it is a vector, it should consist of values 0 and 1 corresponding to what the intervention
@@ -76,6 +80,7 @@
     variable <- NULL
     stopifnot(is.list(value))
     stopifnot(all(c("name","intervention") %in% names(value)))
+    if (length(value$verbose) == 0) value$verbose <- TRUE
     intervention_times <- x$time[-length(x$time)]
     intervention_table <- value$intervention
     if (inherits(intervention_table,"data.frame")){
@@ -86,11 +91,15 @@
         }
         missing_nodes <- (length(intervention_times)-NROW(intervention_table))
         if (missing_nodes>0){
-            message("The object specifies more intervention nodes than there are rows in the provided intervention table.\nApply last value carried forward for now, 'x$protocol$intervention_table'.")
+            if (value$verbose[[1]] == TRUE){
+                message("The object specifies more intervention nodes than there are rows in the provided intervention table.\nApply last value carried forward for now, 'x$protocol$intervention_table'.")
+            }
             intervention_table <- intervention_table[c(1:NROW(intervention_table),rep(NROW(intervention_table),missing_nodes))]
         }else{
             if (missing_nodes<0){
-                message("The object specifies fewer intervention nodes than there are rows in the provided intervention table.\nCutting these for now, but please check 'x$protocol$intervention_table'.")
+                if (value$verbose[[1]] == TRUE){
+                    message("The object specifies fewer intervention nodes than there are rows in the provided intervention table.\nCutting these for now, but please check 'x$protocol$intervention_table'.")
+                }
                 intervention_table <- intervention_table[c(1:length(intervention_times))]
             }
         }

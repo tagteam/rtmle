@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 29 2024 (10:44) 
 ## Version: 
-## Last-Updated: Mar 25 2025 (15:58) 
+## Last-Updated: Apr  9 2025 (12:06) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 91
+##     Update #: 94
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -59,15 +59,15 @@ summary.rtmle <- function(object,targets,reference = NULL,digits = 1,...){
     else {
         stopifnot(all(targets %in% names(object$targets)))
     }
-
-    scale <- ifelse(object$continuous_outcome,1,100)
+    outcome_scale <- function(x){x}
+    if (object$continuous_outcome == FALSE) outcome_scale <- function(x){pmin(pmax(0,100*x),100)}
     sum <- do.call(rbind,lapply(targets,function(target_name){
         target <- object$targets[[target_name]]
         protocols <- target$protocols
         risk <- do.call(rbind,lapply(protocols,function(protocol_name){
             # to avoid the internal selfdetect problem we take a copy
-            e <- data.table::copy(object$estimate[[target_name]][[protocol_name]])
-            e[,"Estimate (CI_95)":= Publish::formatCI(x = scale*e$Estimate,lower = scale*e$Lower,upper = scale*e$Upper,show.x = TRUE,digits = digits)]
+            e <- data.table::copy(object$estimate[["Main_analysis"]][Target == target_name & Protocol == protocol_name])
+            e[,"Estimate (CI_95)":= Publish::formatCI(x = outcome_scale(e$Estimate),lower = outcome_scale(e$Lower),upper = outcome_scale(e$Upper),show.x = TRUE,digits = digits)]
             e[]
         }))
         ## for (nix in c("Estimate","Standard_error","Lower","Upper"))
@@ -83,10 +83,10 @@ summary.rtmle <- function(object,targets,reference = NULL,digits = 1,...){
             contrast <- do.call(rbind,lapply(setdiff(protocols,ref),function(protocol_name){
                 do.call(rbind,lapply(unique(risk$Time_horizon),function(tp){
                     # FIXME: can the reference be taken out of the loop?
-                    reference_estimate <- object$estimate[[target_name]][[ref]][Time_horizon == tp]$Estimate
+                    reference_estimate <- object$estimate[["Main_analysis"]][Target == target_name & Protocol == ref & Time_horizon == tp]$Estimate
                     reference_IC <- object$IC[[target_name]][[ref]][[paste0("time_horizon_",tp)]]
                     N <- NROW(reference_IC)
-                    this_estimate <- object$estimate[[target_name]][[protocol_name]][Time_horizon == tp]$Estimate
+                    this_estimate <- object$estimate[["Main_analysis"]][Target == target_name & Protocol == protocol_name & Time_horizon == tp]$Estimate
                     this_IC <- object$IC[[target_name]][[protocol_name]][[paste0("time_horizon_",tp)]]
                     # risk difference
                     risk_difference_estimate = this_estimate - reference_estimate
@@ -106,14 +106,14 @@ summary.rtmle <- function(object,targets,reference = NULL,digits = 1,...){
                                     Protocol = rep(protocol_name, 2),
                                     Target_parameter=Target_parameter,
                                     Time_horizon = rep(tp,2),
-                                    Estimator = rep(object$estimate[[target_name]][[ref]]$Estimator[[1]],2),
+                                    Estimator = rep(object$estimate[["Main_analysis"]][Target == target_name & Protocol == ref]$Estimator[[1]],2),
                                     Reference = rep(reference, 2),
                                     Estimate = c(risk_difference_estimate, risk_ratio_estimate),
                                     Standard_error = c(risk_difference_se, risk_ratio_log_se),
                                     Lower = c(risk_difference_lower, risk_ratio_lower),
                                     Upper = c(risk_difference_upper, risk_ratio_upper),
                                     P_value = c(2*pnorm(-abs(risk_difference_estimate/risk_difference_se)), 2*pnorm(-abs(log(risk_ratio_estimate)/risk_ratio_log_se))))
-                    e[Target_parameter == Target_parameter[[1]],"Estimate (CI_95)":= Publish::formatCI(x = scale*Estimate,lower = scale*Lower,upper = scale*Upper,show.x = TRUE,digits = digits)]
+                    e[Target_parameter == Target_parameter[[1]],"Estimate (CI_95)":= Publish::formatCI(x = outcome_scale(Estimate),lower = outcome_scale(Lower),upper = outcome_scale(Upper),show.x = TRUE,digits = digits)]
                     e[Target_parameter == Target_parameter[[2]],"Estimate (CI_95)":= Publish::formatCI(x = Estimate,lower = Lower,upper = Upper,show.x = TRUE,digits = digits)]
                     e[]
                 }))}))

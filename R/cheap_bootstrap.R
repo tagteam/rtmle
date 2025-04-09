@@ -1,31 +1,3 @@
-## Retrieve cheap subsampling confidence interval
-confidence_interval <- function(est,
-                                est_boot,
-                                size,
-                                sample_size,
-                                alpha,
-                                type = "subsampling") {
-  b_max <- length(est_boot)
-  res <- list()
-  for (b in seq_len(b_max)) {
-    b_est <- est_boot[seq_len(b)]
-    if (type == "subsampling") {
-      sub_factor <- sqrt((size) / (sample_size - size))
-    } else {
-      sub_factor <- 1
-    }
-    s_val <- sqrt(mean((est - b_est)^2))
-    tq <- stats::qt(1 - alpha / 2, df = b)
-    res[[b]] <- data.frame(
-      estimate = est,
-      cheap_lower = est - tq * sub_factor * s_val,
-      cheap_upper = est + tq * sub_factor * s_val,
-      b = b
-    )
-  }
-  do.call(rbind, res)
-}
-
 ##' Method implementing the cheap subsampling method for confidence intervals
 ##'
 ##' Given a model object or a function that returns a vector of coefficients
@@ -33,334 +5,29 @@ confidence_interval <- function(est,
 ##' this function computes confidence intervals using
 ##' the cheap subsampling method.
 ##'
-##' @title Cheap subsampling
-##' @param fun A function that returns a data.frame
-## 'with the point estimates given
-##' in estimate_column_name and the corresponding parameter names in parameter_column_names.
-##' @param data Data set to be used for the computation.
-##' @param parameter_column_names Character. Column names of the parameters.
-##' @param estimate_column_name Character. Column name of the point estimates.
-##' @param b Number of bootstrap samples.
-##' @param size Subsample size. Defaults to 0.632 * nrow(data).
-##' @param alpha Significance level. Defaults to 0.05.
-##' @param type Character. Type of bootstrap method.
-##' Can be either "subsampling" or "non_parametric".
-##' Defaults to "subsampling".
-##' @param keep_estimates Logical. Should the bootstrapped estimates be kept?
-##' @return An object of class "cheap_bootstrap" containing
-##' the point estimates and confidence intervals.
-##' @export
-##' @examples
-##' ## example with a function call
-##'
-cheap_bootstrap <- function(fun,
-                            data,
-                            size = NULL,
-                            type = "subsampling",
-                            b = 20,
-                            estimate_column_name = "estimate",
-                            parameter_column_names = "parameter",
-                            alpha = 0.05,
-                            keep_estimates = TRUE) {
-  estimate <- b_est <- NULL
-  ## Check if the data is a data.frame
-  if (!inherits(data, "data.frame")) {
-    stop("data must inherit data.frame")
-  }
-  sample_size <- nrow(data)
-
-
-  ## Check that all relevant arguments are of length 1
-  arguments_check <- c(
-    "b",
-    "alpha",
-    "type",
-    "keep_estimates"
-  )
-  for (variable_name in arguments_check) {
-    if (length(get(eval(variable_name))) != 1) {
-      stop(paste(variable_name, "must be of length 1"))
-    }
-  }
-
-  if (is.null(size) && type == "subsampling") {
-    size <- round(0.632 * sample_size)
-  } else if (type == "non_parametric") {
-    size <- sample_size
-  }
-
-  est <- tryCatch(
-    {
-      fun(data)
-    },
-    error = function(e) {
-      stop(
-        "function fun failed with error on the original dataset: ",
-        conditionMessage(e)
-      )
-    }
-  )
-  ## Check that est inherits data.frame
-  if (!inherits(est, "data.frame")) {
-    stop("function fun/derived from fun must return a data.frame")
-  }
-
-  est <- data.table::as.data.table(est)
-  original_value <- est
-
-  ## Check that estimate_column_name and parameter_column_names
-  ## are in the names of columns of est
-  if (!(estimate_column_name %in% colnames(est)) ||
-    !(all(parameter_column_names %in% colnames(est)))) {
-    stop("estimate_column_name and parameter_column_names
-         must be in the names of columns of est")
-  }
-
-  ## Check that that the column specified by estimate_column_name is numeric
-  if (!all(sapply(est[[estimate_column_name]], is.numeric))) {
-    stop("The column specified by estimate_column_name must be numeric")
-  }
-
-  ## Check that the column specified by parameter_column_names is character or factor
-  if (sum(est[, sapply(.SD, function(x) !is.character(x) && !is.factor(x)),
-    .SDcols = parameter_column_names
-  ]) > 0) {
-    stop("The column specified by parameter_column_names must be character or factor")
-  }
-  est <- est[, c(parameter_column_names, estimate_column_name), with = FALSE]
-
-  boot_fun <- function(i) {
-    set.seed(seeds[i])
-    tryCatch(
-      {
-        x <-
-          fun(data[sample(1:sample_size, size, replace = (type == "non_parametric")), ,
-            drop = FALSE
-          ])
-        x$b <- i
-        x
-      },
-      error = function(e) {
-        stop(
-          "Bootstrap computation failed with error: ",
-          conditionMessage(e),
-          " for iteration ", i, " with the seed ", seeds[i]
-        )
-      }
-    )
-  }
-
-  ## sample b seeds
-  seeds <- sample.int(1e+09, b)
-
-  results <- lapply(seq_len(b), boot_fun)
-  tryCatch(
-  {
-      boot_est <- data.table::as.data.table(do.call("rbind", results))[, c(parameter_column_names, estimate_column_name, "b"), with = FALSE]
-  },
-  error = function(e) {
-      stop("Could not bind the results.
-            Did you return a data.frame in the function fun?")
-  }
-  )
-
-  ## Rename the column by estimate_column_name to b_est
-  ## and rename the column from est to estimate
-  data.table::setnames(boot_est, estimate_column_name, "b_est")
-  data.table::setnames(est, estimate_column_name, "estimate")
-
-  ## Merge boot_est with by parameter_column_names
-  boot_est <- merge(est,
-    boot_est,
-    by = parameter_column_names,
-    all.x = TRUE
-  )
-
-  boot_est[, c("size", "sample_size", "alpha", "type") := list(size, sample_size, alpha, type)]
-
-  tryCatch(
-    {
-      ## Apply confidence_interval for each column specified by parameter_column_names
-      res <- boot_est[, confidence_interval(
-        est = estimate[1],
-        est_boot = b_est,
-        size = size[1],
-        sample_size = sample_size[1],
-        alpha = alpha[1],
-        type = type[1]
-      ),
-      by = parameter_column_names
-      ]
-    },
-    error = function(e) {
-      stop(
-        "Computation of confidence intervals failed with error: ",
-        conditionMessage(e),
-        ". Does your function return a data.frame?"
-      )
-    }
-  )
-
-  res <- list(
-    res = res,
-    b = b,
-    size = size,
-    type = type,
-    alpha = alpha,
-    n = sample_size,
-    parameter_column_names = parameter_column_names,
-    original_value = original_value,
-    seeds = seeds
-  )
-  if (keep_estimates) {
-    res <- c(res, list(boot_estimates = boot_est))
-  }
-  class(res) <- "cheap_bootstrap"
-  res
-}
-
-##' Summary method for cheap_subsampling objects
-##'
-##' @title Summary method for cheap_subsampling objects
-##' @param object An object of class "cheap_subsampling"
-##' @param print Logical. Should the summary be printed? Defaults to TRUE.
-##' @param ... Not applicable.
-##' @return Summary table with the point estimates and confidence intervals.
-##' @export
-summary.cheap_bootstrap <- function(object, print = TRUE, ...) {
-  if (print[[1]] == TRUE) {
-    print(object, ...)
-  }
-  invisible(object$res)
-}
-
-##' Print method for cheap_bootstrap objects
-##'
-##' @title Print method for cheap_bootstrap objects
-##' @param x An object of class "cheap_bootstrap"
-##' @param ... Not applicable.
-##' Prints the point estimates and confidence intervals.
-##' @export
-print.cheap_bootstrap <- function(x, ...) {
-  if (x$type == "subsampling") {
-    cat(
-      paste0(
-        "Cheap subsampling results for subsample size m = ",
-        x$size,
-        " and ",
-        x$b,
-        " bootstrap samples\n"
-      )
-    )
-  } else {
-    cat(
-      paste0(
-        "Cheap (non-parametric) bootstrap results for ",
-        x$b,
-        " bootstrap samples\n"
-      )
-    )
-  }
-  print(x$res, ...)
-  invisible(x)
-}
-
-##' Plot method for cheap_bootstrap objects
-##'
-##' @title Plot method for cheap_bootstrap objects
-##' @param x An object of class "cheap_bootstrap"
-##' @param alternate_confidence_interval Numeric.
-##' Additional confidence interval to be added to the plot.
-##' Must be a data.frame consisting of the columns specified by parameter_column_names
-##' and two additional columns of type numeric.
-##' for each parameter.
-##' @param ... Not applicable.
-##' Plots the point estimates and confidence intervals
-##' as a function of the number of bootstrap samples.
-##' @export
-plot.cheap_bootstrap <- function(x, alternate_confidence_interval = NULL, ...) {
-  form_par_wrap <- stats::as.formula(paste0("~", paste0(x$parameter_column_names, collapse = "+")))
-  b <- estimate <- cheap_lower <- cheap_upper <- lower <- upper <- NULL
-  if (!is.null(alternate_confidence_interval)) {
-    if (!inherits(alternate_confidence_interval, "data.frame")) {
-      stop("alternate_confidence_interval must be a data.frame")
-    }
-    alternate_confidence_interval <- data.table::as.data.table(alternate_confidence_interval)
-
-    names_extra <- colnames(alternate_confidence_interval)
-    names_lower_upper <- setdiff(names_extra, x$parameter_column_names)
-    ## Check that x$parameter_column_names is in the names of alternate_confidence_interval and that
-    ## two additional columns are available and of numeric type
-    if (!(all(x$parameter_column_names %in% names_extra)) ||
-      !(all(sapply(
-        alternate_confidence_interval[, names_lower_upper, with = FALSE],
-        is.numeric
-      )))) {
-      stop("alternate_confidence_interval must contain the columns specified by parameter_column_names
-           and two additional columns of type numeric")
-    }
-
-    ## Merge alternate_confidence_interval with x$res by parameter_column_names
-    x$res <- merge(x$res, alternate_confidence_interval, by = x$parameter_column_names, all.x = TRUE)
-
-    data.table::setnames(x$res, names_lower_upper, c("lower", "upper"))
-  }
-
-  p <- ggplot2::ggplot(
-    data = x$res,
-    ggplot2::aes(x = b, y = estimate)
-  ) +
-    ggplot2::geom_line() +
-    ggplot2::geom_ribbon(
-      alpha = 0.2,
-      ggplot2::aes(
-        ymin = cheap_lower,
-        ymax = cheap_upper
-      )
-    ) +
-    ggplot2::facet_wrap(form_par_wrap,
-      scales = "free_y",
-      labeller = ggplot2::label_both
-    ) +
-    ggplot2::theme_bw() +
-    ggplot2::labs(x = "Number of bootstrap samples") +
-    ggplot2::ggtitle(
-      paste0(
-        "Cheap ",
-        ifelse(x$type == "subsampling", "Subsampling", "Bootstrap"),
-        " confidence intervals compared to IC based intervals
-        (subsample of size m = ",
-        x$size,
-        " out of n = ",
-        x$n,
-        " observations (",
-        round(x$size / x$n * 100),
-        "%)))"
-      )
-    ) +
-    ggplot2::ylab("")
-  if (!is.null(alternate_confidence_interval)) {
-    p <- p +
-      ggplot2::geom_hline(aes(yintercept = lower)) +
-      ggplot2::geom_hline(aes(yintercept = upper))
-  }
-  p
-}
-#' Perform the Cheap Subsampling Procedure for LTMLE
-#'
-#' This function applies a bootstrap resampling technique using the `CheapSubsampling` package.
-#' It modifies the provided dataset `x` by resampling observations and then applies LTMLE.
-#'
-#' @param x An object contaiining a prepared `rtmle` object
-#' @param cheap_bootstrap_arguments A list specifying bootstrap parameters given to the `cheap_bootstrap` function.
-#'   - `b` (integer): Number of bootstrap samples (default: 25).
-#'   - `type` (character): Type of resampling method, e.g., "subsampling".
-#'   - `size` (integer, optional): Size of each subsample
-#' @param rtmle_arguments A list of arguments passed to the `run_rtmle` function.
-#' @param id_name A character string specifying the name of the identifier column used for personal ids.
-#'
+##' @title Cheap subsampling bootstrap
+#' @param x object of class \code{rtmle}
+#' @param B Number of bootstrap samples.
+#' @param M Size of the bootstrap samples. If argument \code{replace}
+#'     is \code{FALSE} this defaults to \code{0.632 *
+#'     NROW(x$prepared_data)} and if argument \code{replace} is
+#'     \code{TRUE} this defaults to \code{NROW(x$prepared_data)}.
+#' @param replace Logical. Default is \code{FALSE}. If \code{FALSE}
+#'     bootstrap samples are obtained by sampling without
+#'     replacement. In this case the value of argument \code{M} must
+#'     be smaller than \code{NROW(x$prepared_data)}.  # If \code{TRUE}
+#'     bootstrap samples are obtained by sampling with replacement. In
+#'     this case argument, by default \code{M} will be set equal to
+#'     \code{NROW(x$prepared_data)} # Defaults to "subsampling".
+#' @param seeds A vector of random seeds for controlling the
+#'     randomness while drawing the bootstrap samples.
+#' @param alpha Significance level. Defaults to 0.05.
+#' @param verbose Logical. Passed to run_rtmle to control verbosity.
+##' @return The modified object
+##' @author Johan Sebastian Ohlendorff
+##'     \email{johan.ohlendorff@@sund.ku.dk} and Thomas A Gerds
+##'     \email{tag@@biostat.ku.dk}
 #' @examples
-#'
 #' \dontrun{
 #' set.seed(17)
 #' tau <- 3
@@ -381,54 +48,49 @@ plot.cheap_bootstrap <- function(x, alternate_confidence_interval = NULL, ...) {
 #'                   strategy = "additive",
 #'                   estimator = "tmle",
 #'                   protocols = c("Always_A","Never_A"))
-#' cb <- cheap_bootstrap_rtmle(
-#'  x = x,
-#' rtmle_arguments = list(learner = "learn_glm",time_horizon = 1:tau),
-#'   id_name = "id"
-#' )
-#' x <- run_rtmle(x,learner = "learn_glm",time_horizon = 1:tau)
-#' summary(x)
+#'  x <- run_rtmle(x,learner = "learn_glm",time_horizon = 1:tau)
+#'  x <- cheap_bootstrap(x,B=5,time_horizon=1:tau)
+#'  summary(x)
 #' cb
 #' }
 #'
 #' @export
-cheap_bootstrap_rtmle <- function(x,
-                                  cheap_bootstrap_arguments = list(b=25, type = "subsampling", size = NULL),
-                                  rtmle_arguments,
-                                  id_name) {
-  ## Recursively apply rbind
-  recursive_rbind <- function(x) if (inherits(x, "list")) do.call("rbind", lapply(x, recursive_rbind)) else x
-
-  fun <- function(data) {
-    ## Assume that the ids across x$followup and x$prepared_data are ordered the same way
-    matched_ids <- match(data[[id_name]], x$prepared_data[[id_name]])
-
-    ## Subset data according to the resampled data]
-    x$prepared_data <- x$prepared_data[matched_ids]
-    x$followup <- x$followup[matched_ids]
-
-    ## Run rtmle and suppress messages
-    suppressMessages(res <- recursive_rbind(unique(summary(do.call(
-      "run_rtmle",
-      append(list(x = x), rtmle_arguments)
-    )))))
-
-    ## For correct usage of CheapSubsampling package, no numerics are allowed in paramater_column_names
-    ## Thus Time_horizon should be changed to, say, a factor
-    res$Time_horizon <- as.factor(res$Time_horizon)
-    res[, c("Target", "Protocol", "Target_parameter", "Time_horizon", "Estimator","Estimate")]
-  }
-
-  do.call(
-    "cheap_bootstrap",
-    append(
-      list(
-        fun = fun,
-        estimate_column_name = "Estimate",
-        parameter_column_names = c("Target", "Protocol", "Target_parameter", "Time_horizon", "Estimator"),
-        data = x$prepared_data
-      ),
-      cheap_bootstrap_arguments
-    )
-  )
+cheap_bootstrap <- function(x,
+                            B = 20,
+                            M,
+                            replace = FALSE,
+                            seeds,
+                            alpha = 0.05,
+                            verbose = FALSE){
+    if (missing(seeds)) seeds <- sample.int(1e+09, B)
+    N <- NROW(x$prepared_data)
+    for (b in 1:B){
+        set.seed(seeds[[b]])
+        if (replace[[1]] == TRUE) {
+            inbag <- sample(1:N,size = N,replace = TRUE)
+        }else{
+            if(M >= N) stop(paste0("When replace = FALSE, the subsample size M (specified is M=",M,") must be lower than the sample size N (which is N=",N,")"))
+            inbag <- sample(1:N,size = M,replace = FALSE)
+        }
+        x <- run_rtmle(x = x, verbose = verbose,
+                       subsets = list(list(label = "Cheap_bootstrap",id = x$prepared_data[[x$names$id]][inbag],append = TRUE,variable = "B",value = b)))
+    }
+    # calculate the cheap lower and upper confidence limits
+    # when there readily are bootstrap results we append to them
+    if("Main"%in%names(x$estimate$Cheap_bootstrap)){
+        data.table::set(x$estimate$Cheap_bootstrap,j = "Main",value = NULL)
+    }
+    cb <- x$estimate[["Main_analysis"]][,.(Target,Protocol,Time_horizon,Main = Estimate)][x$estimate$Cheap_bootstrap,on = c("Target","Protocol","Time_horizon")]
+    if (replace == FALSE) {
+        cheap_scale <- sqrt(M / (N - M))
+    } else {
+        cheap_scale <- 1
+    }
+    # t-distribution 
+    cb[,tq := stats::qt(1 - alpha / 2, df = B)]
+    cb[,cheap_variance := cumsum((Main-Estimate)^2)/seq_len(.N),by = c("Target","Protocol","Time_horizon")]
+    cb[,cheap_lower := Estimate - tq * cheap_scale * cheap_variance]
+    cb[,cheap_upper := Estimate + tq * cheap_scale * cheap_variance]
+    x$estimate$Cheap_bootstrap <- cb
+    x
 }

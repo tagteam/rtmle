@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 30 2024 (14:30)
 ## Version:
-## Last-Updated: Mar 25 2025 (14:08)
+## Last-Updated: Apr  9 2025 (15:39) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 254
+##     Update #: 273
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -183,11 +183,11 @@ sequential_regression <- function(x,
             W <- fit_last
         }
         if (x$continuous_outcome){
-          Y_scale <- Y*(x$outcome_range[2]-x$outcome_range[1])+x$outcome_range[1]
-          W_scale <- W*(x$outcome_range[2]-x$outcome_range[1])+x$outcome_range[1]
+            Y_scale <- Y*(x$outcome_range[2]-x$outcome_range[1])+x$outcome_range[1]
+            W_scale <- W*(x$outcome_range[2]-x$outcome_range[1])+x$outcome_range[1]
         } else {
-          Y_scale <- Y
-          W_scale <- W
+            Y_scale <- Y
+            W_scale <- W
         }
         # FIXME: we do not need to save the following
         if (FALSE){
@@ -229,11 +229,13 @@ sequential_regression <- function(x,
         target_parameter <- "Risk"
     }
     # g-formula and tmle estimator
-    x$estimate[[target_name]][[protocol_name]][Time_horizon == time_horizon & Target_parameter == target_parameter, Estimate := mean(x$prepared_data$rtmle_predicted_outcome)]
     ic <- x$IC[[target_name]][[protocol_name]][[label_time_horizon]] + x$prepared_data$rtmle_predicted_outcome - mean(x$prepared_data$rtmle_predicted_outcome)
-    x$estimate[[target_name]][[protocol_name]][Time_horizon == time_horizon & Target_parameter == target_parameter, Standard_error := sqrt(stats::var(ic)/N)]
-    x$estimate[[target_name]][[protocol_name]][Time_horizon == time_horizon & Target_parameter == target_parameter, Lower := Estimate-stats::qnorm(.975)*Standard_error]
-    x$estimate[[target_name]][[protocol_name]][Time_horizon == time_horizon & Target_parameter == target_parameter, Upper := Estimate+stats::qnorm(.975)*Standard_error]
+    SE = sqrt(stats::var(ic)/N)
+    x$estimate[["Main_analysis"]][Target == target_name & Protocol ==  protocol_name & Time_horizon == time_horizon & Target_parameter == target_parameter,
+                                  `:=`(Estimate = mean(x$prepared_data$rtmle_predicted_outcome),
+                                       Standard_error = SE,
+                                       Lower = Estimate-stats::qnorm(.975)*SE,
+                                       Upper = Estimate+stats::qnorm(.975)*SE)]
     x$IC[[target_name]][[protocol_name]][[label_time_horizon]] <- ic
     return(x[])
 }

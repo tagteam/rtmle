@@ -2,45 +2,45 @@
 % Please edit documentation in R/cheap_bootstrap.R
 \name{cheap_bootstrap}
 \alias{cheap_bootstrap}
-\title{Cheap subsampling}
+\title{Cheap subsampling bootstrap}
 \usage{
 cheap_bootstrap(
-  fun,
-  data,
-  size = NULL,
-  type = "subsampling",
-  b = 20,
-  estimate_column_name = "estimate",
-  parameter_column_names = "parameter",
+  x,
+  B = 20,
+  M,
+  replace = FALSE,
+  seeds,
   alpha = 0.05,
-  keep_estimates = TRUE
+  verbose = FALSE
 )
 }
 \arguments{
-\item{fun}{A function that returns a data.frame
-in estimate_column_name and the corresponding parameter names in parameter_column_names.}
+\item{x}{object of class \code{rtmle}}
 
-\item{data}{Data set to be used for the computation.}
+\item{B}{Number of bootstrap samples.}
 
-\item{size}{Subsample size. Defaults to 0.632 * nrow(data).}
+\item{M}{Size of the bootstrap samples. If argument \code{replace}
+is \code{FALSE} this defaults to \code{0.632 *
+    NROW(x$prepared_data)} and if argument \code{replace} is
+\code{TRUE} this defaults to \code{NROW(x$prepared_data)}.}
 
-\item{type}{Character. Type of bootstrap method.
-Can be either "subsampling" or "non_parametric".
-Defaults to "subsampling".}
+\item{replace}{Logical. Default is \code{FALSE}. If \code{FALSE}
+bootstrap samples are obtained by sampling without
+replacement. In this case the value of argument \code{M} must
+be smaller than \code{NROW(x$prepared_data)}.  # If \code{TRUE}
+bootstrap samples are obtained by sampling with replacement. In
+this case argument, by default \code{M} will be set equal to
+\code{NROW(x$prepared_data)} # Defaults to "subsampling".}
 
-\item{b}{Number of bootstrap samples.}
-
-\item{estimate_column_name}{Character. Column name of the point estimates.}
-
-\item{parameter_column_names}{Character. Column names of the parameters.}
+\item{seeds}{A vector of random seeds for controlling the
+randomness while drawing the bootstrap samples.}
 
 \item{alpha}{Significance level. Defaults to 0.05.}
 
-\item{keep_estimates}{Logical. Should the bootstrapped estimates be kept?}
+\item{verbose}{Logical. Passed to run_rtmle to control verbosity.}
 }
 \value{
-An object of class "cheap_bootstrap" containing
-the point estimates and confidence intervals.
+The modified object
 }
 \description{
 Method implementing the cheap subsampling method for confidence intervals
@@ -52,6 +52,35 @@ this function computes confidence intervals using
 the cheap subsampling method.
 }
 \examples{
-## example with a function call
+\dontrun{
+set.seed(17)
+tau <- 3
+ld <- simulate_long_data(n = 100,number_visits = 20,
+                         beta = list(A_on_Y = -.2,A0_on_Y = -0.3,A0_on_A = 6),
+                         register_format = TRUE)
+x <- rtmle_init(intervals = tau,name_id = "id",name_outcome = "Y",name_competing = "Dead",
+                name_censoring = "Censored",censored_label = "censored")
+x$long_data <- ld[c("outcome_data","censored_data","competing_data","timevar_data")]
+add_baseline_data(x) <- ld$baseline_data[,start_followup_date:=0]
+x <- long_to_wide(x,intervals = seq(0,2000,30.45*12))
+protocol(x) <- list(name = "Always_A",
+                    intervention = data.frame("A" = factor("1",levels = c("0","1"))))
+protocol(x) <- list(name = "Never_A",
+                    intervention = data.frame("A" = factor("0",levels = c("0","1"))))
+prepare_data(x) <- list()
+target(x) <- list(name = "Outcome_risk",
+                  strategy = "additive",
+                  estimator = "tmle",
+                  protocols = c("Always_A","Never_A"))
+ x <- run_rtmle(x,learner = "learn_glm",time_horizon = 1:tau)
+ x <- cheap_bootstrap(x,B=5,time_horizon=1:tau)
+ summary(x)
+cb
+}
 
+}
+\author{
+Johan Sebastian Ohlendorff
+\email{johan.ohlendorff@sund.ku.dk} and Thomas A Gerds
+\email{tag@biostat.ku.dk}
 }
