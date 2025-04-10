@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Apr  9 2025 (10:02) 
 ## Version: 
-## Last-Updated: Apr  9 2025 (15:47) 
+## Last-Updated: Apr 10 2025 (10:20) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 5
+##     Update #: 8
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -15,7 +15,8 @@
 ## 
 ### Code:
 library(testthat)
-
+library(data.table)
+library(rtmle)
 test_that("Cheap bootstrap confidence intervals",{
     tau <- 2
     set.seed(37)
@@ -28,8 +29,9 @@ test_that("Cheap bootstrap confidence intervals",{
     protocol(x) <- list(name = "Never_A",intervention = data.frame("A" = factor("0",levels = c("0","1"))),verbose = FALSE)
     prepare_data(x) <- list()
     target(x) <- list(name = "Outcome_risk",strategy = "additive",estimator = "tmle",protocols = c("Always_A","Never_A"))
+    x <- run_rtmle(x,learner = "learn_glmnet",time_horizon = 1,verbose = FALSE)
     x <- run_rtmle(x,learner = "learn_glmnet",time_horizon = 1:tau,verbose = FALSE)
-    x <- cheap_bootstrap(x,B = 25,replace = FALSE,M = 71)
+    x <- cheap_bootstrap(x,B = 2,replace = FALSE,M = 71)
 })
 
 

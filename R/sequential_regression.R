@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 30 2024 (14:30)
 ## Version:
-## Last-Updated: Apr  9 2025 (15:39) 
+## Last-Updated: Apr 10 2025 (10:19) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 273
+##     Update #: 286
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -41,6 +41,7 @@ sequential_regression <- function(x,
     label_time_horizon <- paste0("time_horizon_",time_horizon)
     reverse_time_scale <- rev(seq(1,time_horizon,1))
     for (j in reverse_time_scale){
+
         # subjects that are outcome-free and uncensored at the BEGINNING of the interval are 'atrisk'
         if (j == 1){
             outcome_free_and_uncensored <- rep(TRUE,N)
@@ -85,6 +86,7 @@ sequential_regression <- function(x,
         current_data <- x$prepared_data[outcome_free_and_uncensored,learn_variables,with = FALSE]
         if (NROW(current_data) == 0)
             stop("No data available for g-estimation")
+        
         current_constants <- sapply(current_data, function(x){length(unique(x))==1})
         if (any(current_constants)) {
             current_constants <- names(current_constants[current_constants])
@@ -107,6 +109,8 @@ sequential_regression <- function(x,
         args <- list(character_formula = interval_outcome_formula,
                      data = current_data[,!(names(current_data)%in%current_constants),with = FALSE],
                      intervened_data = intervened_data[outcome_free_and_uncensored],...)
+        
+        
         if (length(learner)>1){
             if (j == time_horizon)
                 args <- c(args,list(learners = learner,outcome_variable = outcome_variables[[j]], id_variable = x$names$id))
@@ -138,6 +142,7 @@ sequential_regression <- function(x,
         # note that we can still predict those who are censored at C_j but uncensored at C_{j-1}
         ## y <- riskRegression::predictRisk(fit_last,newdata = intervened_data)
         # avoid missing values due to logit
+        
         if (x$targets[[target_name]]$estimator == "tmle"){
             if (any(fit_last[!is.na(fit_last)] <= 0)) fit_last <- pmax(fit_last,0.0001)
             if (any(fit_last[!is.na(fit_last)] >= 1)) fit_last <- pmin(fit_last,0.9999)
@@ -152,6 +157,7 @@ sequential_regression <- function(x,
             #        at time j, such as A_j and B_j then we match on the last
             ipos <- rev(treatment_variables[[j]])[[1]]
         }
+        
         if (length(x$targets[[target_name]]$estimator) == 0 || x$targets[[target_name]]$estimator == "tmle"){
             # use only data from subjects who are uncensored in current interval
             # construction of clever covariates
@@ -163,7 +169,6 @@ sequential_regression <- function(x,
             # in function intervention_probabilities
             intervention_node_name <- paste(intervention_table[time == j-1]$variable,collapse = ",")
             ## if (match(intervention_node_name,colnames(x$intervention_match[[protocol_name]]),nomatch = 0) == 0)
-            ## browser(skipCalls=1L)
             imatch <- (x$intervention_match[[protocol_name]][,intervention_node_name]%in% 1)
             if (any(inverse_probability_weights[!is.na(Y) & outcome_free_and_uncensored & as.vector(imatch)] == 0)){
                 stop("Exactly zero intervention probabilities encountered at the attempt to run the TMLE-update fluctuation model.\nYou may have to consider changing the target parameter or bounding the intervention probabilities somehow.\nGood luck!")
@@ -204,6 +209,7 @@ sequential_regression <- function(x,
         }else{
             index <- (intervention_match[,intervention_table[time == j-1]$variable] %in% 1)
         }
+        
         if (any(h.g.ratio[index] != 0)) {
             x$IC[[target_name]][[protocol_name]][[label_time_horizon]][index] <- x$IC[[target_name]][[protocol_name]][[label_time_horizon]][index] + (Y_scale[index] - W_scale[index]) * h.g.ratio[index]
         }
@@ -237,7 +243,8 @@ sequential_regression <- function(x,
                                        Lower = Estimate-stats::qnorm(.975)*SE,
                                        Upper = Estimate+stats::qnorm(.975)*SE)]
     x$IC[[target_name]][[protocol_name]][[label_time_horizon]] <- ic
-    return(x[])
+    # NOTE if we would return x[] instead of x then x looses its class!
+    return(x)
 }
 
 

@@ -80,7 +80,7 @@ cheap_bootstrap <- function(x,
     if("Main"%in%names(x$estimate$Cheap_bootstrap)){
         data.table::set(x$estimate$Cheap_bootstrap,j = "Main",value = NULL)
     }
-    cb <- x$estimate[["Main_analysis"]][,.(Target,Protocol,Time_horizon,Main = Estimate)][x$estimate$Cheap_bootstrap,on = c("Target","Protocol","Time_horizon")]
+    cb <- x$estimate[["Main_analysis"]][,data.table::data.table(Target,Protocol,Time_horizon,Main = Estimate)][x$estimate$Cheap_bootstrap,on = c("Target","Protocol","Time_horizon")]
     if (replace == FALSE) {
         cheap_scale <- sqrt(M / (N - M))
     } else {
@@ -91,6 +91,18 @@ cheap_bootstrap <- function(x,
     cb[,cheap_variance := cumsum((Main-Estimate)^2)/seq_len(.N),by = c("Target","Protocol","Time_horizon")]
     cb[,cheap_lower := Estimate - tq * cheap_scale * cheap_variance]
     cb[,cheap_upper := Estimate + tq * cheap_scale * cheap_variance]
-    x$estimate$Cheap_bootstrap <- cb
-    x
+    x$estimate$Cheap_bootstrap <- cb[,data.table::data.table(B,
+                                        Target,
+                                        Protocol,
+                                        Time_horizon,
+                                        Target_parameter,
+                                        Estimator,
+                                        Estimate = Main,
+                                        Bootstrap_estimate = Estimate,
+                                        Bootstrap_standard_error = sqrt(cheap_variance),
+                                        Bootstrap_lower = cheap_lower,
+                                        Bootstrap_upper = cheap_upper)]
+    x$estimate[["Main_analysis"]] <- x$estimate$Cheap_bootstrap[.N,data.table::data.table(Target,Protocol,Time_horizon,Bootstrap_lower,Bootstrap_upper)][x$estimate[["Main_analysis"]],on = c("Target","Protocol","Time_horizon")]
+    # NOTE if we would return x[] instead of x then x looses its class!
+    return(x)
 }

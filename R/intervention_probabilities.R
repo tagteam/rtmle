@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Oct 17 2024 (09:26) 
 ## Version: 
-## Last-Updated: Mar 25 2025 (19:12) 
+## Last-Updated: Apr 10 2025 (09:59) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 200
+##     Update #: 204
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -52,7 +52,7 @@ intervention_probabilities <- function(x,
     G_names <- unlist(lapply(eval_times,function(this_time){
         c(treatment_variables[[this_time+1]],censoring_variables[[this_time+1]])
     }))
-    if (refit || length(x$cumulative_intervention_probs[[protocol_name]]) == 0){
+    if (refit || NCOL(x$cumulative_intervention_probs[[protocol_name]]) < length(G_names)){
         # FIXME: the following code should be improved to increase the readability
         intervention_probs <- data.table(ID = x$prepared_data[[x$names$id]])
         intervention_probs <- cbind(intervention_probs,

@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul  1 2024 (09:11)
 ## Version:
-## Last-Updated: Apr  9 2025 (15:43) 
+## Last-Updated: Apr 10 2025 (09:53) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 468
+##     Update #: 479
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -239,11 +239,11 @@ run_rtmle <- function(x,
                                                learner = learner,
                                                seed = seed,
                                                ...)
+                    # FIXME: why does x loose its class in this loop?
+                    class(x) <- "rtmle"
                 }
             }
         }
-        # FIXME: where did x loose its class?
-        class(x) <- "rtmle"
         return(x)
     }
 }
