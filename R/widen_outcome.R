@@ -1,4 +1,5 @@
-widen_outcome <- function(outcome_name,
+widen_outcome <- function(x,
+                          outcome_name,
                           outcome_data,
                           competing_data,
                           censored_data,
@@ -10,17 +11,17 @@ widen_outcome <- function(outcome_name,
     # death and right censored
     # -----------------------------------------------------------------------
     if (length(x$names$competing)>0 & length(x$long_data$competing_data)>0){
-        wide=map_grid(grid=grid,
-                      data=competing_data,
-                      name="Dead",
-                      rollforward=Inf,
-                      id = id)
+        wide <- map_grid(grid=grid,
+                         data=competing_data,
+                         name="Dead",
+                         rollforward=Inf,
+                         id = id)
     }else{
         wide <- NULL
     }
     if (length(x$names$censoring)>0 & length(x$long_data$censored_data)>0){
         # naturally, NA values mean censored. hence: fill=1
-        w=map_grid(grid=grid,
+        w <- map_grid(grid=grid,
                    data=censored_data,
                    name="Censored",
                    rollforward=Inf,
@@ -40,7 +41,7 @@ widen_outcome <- function(outcome_name,
     ## outcome_data=outcome_data[date>start]
     ## only interested in first new outcome
     ## outcome_data=outcome_data[outcome_data[,.I[1],by=id]$V1]
-    w=map_grid(grid=grid,data=outcome_data,name=outcome_name,rollforward=Inf,id = id)
+    w <- map_grid(grid=grid,data=outcome_data,name=outcome_name,rollforward=Inf,id = id)
     # when outcome occurs at baseline re-set to value 2
     ## set(w,i=which(wide$id%in%admitted_index),j=paste0(outcome,"_0"),value=2)
     if (length(wide)>0) wide <- wide[w] else wide <- w

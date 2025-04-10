@@ -8,5 +8,5 @@
 
 library(testthat)
 library(rtmle)
-
-test_check("rtmle")
+## targets::tar_source("tests/testthat/")
+test_check(package = "rtmle")

@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 22 2024 (14:07) 
 ## Version: 
-## Last-Updated: Apr  7 2025 (12:45) 
+## Last-Updated: Apr 10 2025 (11:06) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 34
+##     Update #: 37
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -78,7 +78,8 @@ long_to_wide <- function(x,
     # FIXME: check for data after the end of followup?
     ## grid <- grid[date<=end+length_interval]
     # mapping outcome information to discrete time scale
-    x$data$outcome_data <- widen_outcome(outcome_name = x$names$outcome,
+    x$data$outcome_data <- widen_outcome(x,
+                                         outcome_name = x$names$outcome,
                                          outcome_data = x$long_data$outcome_data,
                                          competing_data = x$long_data$competing_data,
                                          censored_data = x$long_data$censored_data,

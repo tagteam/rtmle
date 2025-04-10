@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Apr  8 2025 (14:47) 
 ## Version: 
-## Last-Updated: Apr  9 2025 (11:30) 
+## Last-Updated: Apr 10 2025 (11:05) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 14
+##     Update #: 17
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -15,6 +15,7 @@
 ## 
 ### Code:
 library(testthat)
+library(rtmle)
 test_that("run rtmle on a subset",{
     tau <- 2
     set.seed(17)
@@ -22,6 +23,7 @@ test_that("run rtmle on a subset",{
     x <- rtmle_init(intervals = tau,name_id = "id",name_outcome = "Y",name_competing = "Dead",name_censoring = "Censored",censored_label = "censored")
     x$long_data <- ld[c("outcome_data","censored_data","competing_data","timevar_data")]
     add_baseline_data(x) <- ld$baseline_data[,start_followup_date:=0]
+    print(class(x))
     x <- long_to_wide(x,intervals = seq(0,2000,30.45*12))
     protocol(x) <- list(name = "Always_A",intervention = data.frame("A" = factor("1",levels = c("0","1"))),verbose = FALSE)
     protocol(x) <- list(name = "Never_A",intervention = data.frame("A" = factor("0",levels = c("0","1"))),verbose = FALSE)
@@ -48,7 +50,7 @@ test_that("run rtmle on a subset",{
     x1 <- run_rtmle(x1,learner = "learn_glmnet",time_horizon = 2,verbose = FALSE)
     x79 <- run_rtmle(x,learner = "learn_glmnet",time_horizon = 2,subsets = list(S = list(label = "S79",id = 1:79)),verbose = FALSE)
     ## rbind(x1$estimate[[1]][[1]],x79$estimate$S79[[1]][[1]])
-    expect_equal(x1$estimate,x79$estimate$S79)
+    expect_equal(x1$estimate$Main_analysis,x79$estimate$S79)
 })
 
 test_that("stratified analyses",{

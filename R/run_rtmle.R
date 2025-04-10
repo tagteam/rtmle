@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul  1 2024 (09:11)
 ## Version:
-## Last-Updated: Apr 10 2025 (09:53) 
+## Last-Updated: Apr 10 2025 (10:24) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 479
+##     Update #: 481
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -183,8 +183,8 @@ run_rtmle <- function(x,
                 }),label_time_horizon)
             }),x$targets[[target_name]]$protocols)}),run_these_targets)
         # initialize estimate table
-        empty_estimate <- rbindlist(lapply(run_these_targets,function(target_name){
-            rbindlist(lapply(x$targets[[target_name]]$protocols,function(protocol_name){
+        empty_estimate <- data.table::rbindlist(lapply(run_these_targets,function(target_name){
+            data.table::rbindlist(lapply(x$targets[[target_name]]$protocols,function(protocol_name){
                 expand.grid(Target = target_name,
                             Protocol = protocol_name,
                             Target_parameter = Target_parameter,

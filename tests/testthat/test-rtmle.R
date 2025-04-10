@@ -13,8 +13,8 @@ test_that("run rtmle on simulated data",{
     prepare_data(x) <- list(reset = TRUE)
     target(x) <- list(name = "Outcome_risk",strategy = "additive",estimator = "tmle",protocols = "Always_A")
     suppressWarnings(x <- run_rtmle(x))
-    expect_equal(x$estimate$Outcome_risk$Always_A$Estimate,0.220619,tolerance = 0.001)
-    expect_equal(x$estimate$Outcome_risk$Always_A$Standard_error,0.01502242,tolerance = 0.001)
+    expect_equal(x$estimate$Main_analysis$Estimate,0.220619,tolerance = 0.001)
+    expect_equal(x$estimate$Main_analysis$Standard_error,0.01502242,tolerance = 0.001)
 })
 
 test_that("run rtmle on without competing risks",{
