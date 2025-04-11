@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 29 2024 (10:44) 
 ## Version: 
-## Last-Updated: Apr 11 2025 (11:51) 
+## Last-Updated: Apr 11 2025 (14:14) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 157
+##     Update #: 168
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -102,7 +102,7 @@ summary.rtmle <- function(object,analysis = "Main_analysis",targets,reference = 
                     reference_estimate <- object$estimate[[analysis]][Target == target_name & Protocol == ref & Time_horizon == tp]$Estimate
                     if (analysis == "Main_analysis"){
                         analysis_levels <- 1
-                        reference_IC <- object$IC[[target_name]][[ref]][[paste0("time_horizon_",tp)]]
+                        reference_IC <- list(object$IC[[target_name]][[ref]][[paste0("time_horizon_",tp)]])
                     }else{
                         ## subset_levels <- attr(object$estimate[[analysis]],which = "levels")
                         subset_IC <- attr(object$estimate[[analysis]],which = "IC")
@@ -112,13 +112,13 @@ summary.rtmle <- function(object,analysis = "Main_analysis",targets,reference = 
                         })
                         names(reference_IC) <- names(subset_IC)
                     }
+                    N <- NROW(reference_IC[[1]])
                     if (analysis == "Main_analysis"&&length(object$estimate$Cheap_bootstrap)>0){
                         reference_boot <- object$estimate[["Cheap_bootstrap"]][Target == target_name & Protocol == ref & Time_horizon == tp]$Bootstrap_estimate
                     }
-                    N <- NROW(reference_IC)
                     this_estimate <- object$estimate[[analysis]][Target == target_name & Protocol == protocol_name & Time_horizon == tp]$Estimate
                     if (analysis == "Main_analysis"){
-                        this_IC <- object$IC[[target_name]][[protocol_name]][[paste0("time_horizon_",tp)]]
+                        list(this_IC <- object$IC[[target_name]][[protocol_name]][[paste0("time_horizon_",tp)]])
                     }else{
                         this_IC <- lapply(analysis_levels,function(level){
                             subset_IC[[level]][[target_name]][[protocol_name]][[paste0("time_horizon_",tp)]]                        
@@ -146,32 +146,36 @@ summary.rtmle <- function(object,analysis = "Main_analysis",targets,reference = 
                                          Lower = c(risk_difference_lower, risk_ratio_lower),
                                          Upper = c(risk_difference_upper, risk_ratio_upper),
                                          P_value = c(2*pnorm(-abs(risk_difference_estimate/risk_difference_se)), 2*pnorm(-abs(log(risk_ratio_estimate)/risk_ratio_log_se))))
+                        if (analysis == "Main_analysis" && length(object$estimate$Cheap_bootstrap)>0){
+                            this_boot <- object$estimate[["Cheap_bootstrap"]][Target == target_name & Protocol == protocol_name & Time_horizon == tp]$Bootstrap_estimate
+                            boot_difference <- this_boot-reference_boot
+                            boot_ratio <- this_boot/reference_boot
+                            cheap_scale <- attr(object$estimate[["Cheap_bootstrap"]],"cheap_scale")
+                            tq <- attr(object$estimate[["Cheap_bootstrap"]],"tq")
+                            cheap_variance <- mean((risk_difference_estimate-boot_difference)^2)
+                            risk_difference_boot_lower <- risk_difference_estimate - tq * cheap_scale * cheap_variance
+                            risk_difference_boot_upper <- risk_difference_estimate + tq * cheap_scale * cheap_variance
+                            cheap_log_variance <- mean((log(risk_ratio_estimate)-log(boot_ratio))^2)
+                            risk_ratio_boot_lower <- exp(log(risk_ratio_estimate) - tq * cheap_scale * cheap_log_variance)
+                            risk_ratio_boot_upper <- exp(log(risk_ratio_estimate) + tq * cheap_scale * cheap_log_variance)
+                            data.table::set(e1,j = "Bootstrap_lower",value = c(risk_difference_boot_lower,risk_ratio_boot_lower))
+                            data.table::set(e1,j = "Bootstrap_upper",value = c(risk_difference_boot_upper,risk_ratio_boot_upper))
+                            data.table::set(e1,j = "Bootstrap_standard_error",value = c(sqrt(cheap_variance),sqrt(cheap_log_variance)))
+                        }
                         if (analysis != "Main_analysis"){
                             data.table::set(e1,j = subset_variable,value = analysis_levels[[level]])
                             data.table::setcolorder(e1,subset_variable)
                         }
+                        print(e1)
                         e1
                     }))
-                    if (analysis == "Main_analysis" && length(object$estimate$Cheap_bootstrap)>0){
-                        this_boot <- object$estimate[["Cheap_bootstrap"]][Target == target_name & Protocol == protocol_name & Time_horizon == tp]$Bootstrap_estimate
-                        boot_difference <- this_boot-reference_boot
-                        boot_ratio <- this_boot/reference_boot
-                        cheap_scale <- attr(object$estimate[["Cheap_bootstrap"]],"cheap_scale")
-                        tq <- attr(object$estimate[["Cheap_bootstrap"]],"tq")
-                        cheap_variance <- mean((risk_difference_estimate-boot_difference)^2)
-                        risk_difference_boot_lower <- risk_difference_estimate - tq * cheap_scale * cheap_variance
-                        risk_difference_boot_lower <- risk_difference_estimate + tq * cheap_scale * cheap_variance
-                        cheap_log_variance <- mean((log(risk_ratio_estimate)-log(boot_ratio))^2)
-                        risk_ratio_boot_lower <- exp(log(risk_ratio_estimate) - tq * cheap_scale * cheap_log_variance)
-                        risk_ratio_boot_lower <- exp(log(risk_ratio_estimate) + tq * cheap_scale * cheap_log_variance)
-                    }
                     # risk difference
                     e[Target_parameter == Target_parameter_label[[1]],"Estimate (CI_95)":= Publish::formatCI(x = outcome_scale(Estimate),lower = outcome_scale(Lower),upper = outcome_scale(Upper),show.x = TRUE,digits = digits)]
                     # risk ratio
                     e[Target_parameter == Target_parameter_label[[2]],"Estimate (CI_95)":= Publish::formatCI(x = Estimate,lower = Lower,upper = Upper,show.x = TRUE,digits = digits)]
                     e[]
                 }))}))
-            out <- data.table::rbindlist(list(risk,contrast),
+           out <- data.table::rbindlist(list(risk,contrast),
                                          use.names = TRUE,
                                          fill = TRUE)
             out[is.na(Reference),Reference := ""][]
