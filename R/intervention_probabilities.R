@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Oct 17 2024 (09:26) 
 ## Version: 
-## Last-Updated: Apr 10 2025 (09:59) 
+## Last-Updated: Apr 11 2025 (16:39) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 204
+##     Update #: 206
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -120,6 +120,7 @@ intervention_probabilities <- function(x,
                                     args <- c(args,
                                               list(learners = learner,
                                                    outcome_variable = G,
+                                                   outcome_target_level = levels(current_data[[G]])[[2]],
                                                    id_variable = x$names$id))
                                     if (inherits(try(
                                         predicted_values <- do.call("superlearn",c(args,list(seed = seed))),silent = FALSE),

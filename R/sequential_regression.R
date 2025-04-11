@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 30 2024 (14:30)
 ## Version:
-## Last-Updated: Apr 11 2025 (11:57) 
+## Last-Updated: Apr 11 2025 (16:41) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 291
+##     Update #: 293
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -113,13 +113,18 @@ sequential_regression <- function(x,
         
         if (length(learner)>1){
             if (j == time_horizon)
-                args <- c(args,list(learners = learner,outcome_variable = outcome_variables[[j]], id_variable = x$names$id))
+                args <- c(args,list(learners = learner,
+                                    outcome_variable = outcome_variables[[j]],
+                                    outcome_target_level = NULL,
+                                    id_variable = x$names$id))
             else
-                args <- c(args,list(learners = learner,outcome_variable = "rtmle_predicted_outcome", id_variable = x$names$id))
+                args <- c(args,list(learners = learner,
+                                    outcome_variable = "rtmle_predicted_outcome",
+                                    outcome_target_level = NULL,
+                                    id_variable = x$names$id))
             if (inherits(try(
                 fit_last <- do.call("superlearn",c(args,list(seed = seed))),silent = FALSE),
                 "try-error")) {
-                ## browser(skipCalls=1L)
                 stop(paste0("Sequential regression fit failed with formula:\n",interval_outcome_formula))
             }
         }else{

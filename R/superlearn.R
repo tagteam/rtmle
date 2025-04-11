@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Oct 31 2024 (07:29) 
 ## Version: 
-## Last-Updated: Dec  4 2024 (14:39) 
+## Last-Updated: Apr 11 2025 (16:40) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 105
+##     Update #: 114
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -67,6 +67,7 @@ superlearn <- function(folds,
                        learners,
                        character_formula,
                        outcome_variable,
+                       outcome_target_level,
                        id_variable,
                        data,
                        intervened_data,
@@ -91,8 +92,8 @@ superlearn <- function(folds,
         # when there is no variation in the outcome variable then the predicted risk of all learners
         # is set to this unique value of the outcome variable
         if (length(unival <- unique(na.omit(learn_data[[outcome_variable]]))) == 1){
-            if (length(grep("Censored_",outcome_variable)>0)) {
-                predicted_k <- rep(1*("uncensored" == unival),sum(split != k))
+            if (!is.null(outcome_target_level)){
+                predicted_k <- rep(1*(outcome_target_level == unival),sum(split != k))
             }else {
                 predicted_k <- rep(unival,sum(split != k))
             }
@@ -132,14 +133,16 @@ superlearn <- function(folds,
     }
     # discrete super learner (for now)
     # choose the minimizer of the Brier score
-    if (length(grep("Censored_",outcome_variable)>0)){
+    
+    if (!is.null(outcome_target_level)){
         x <- sapply(names(learners), function(this_learner_name){
-            mean(((1*(level_one_data[[outcome_variable]] == "uncensored"))-level_one_data[[this_learner_name]])^2)
+            mean(((1*(level_one_data[[outcome_variable]] == outcome_target_level))-level_one_data[[this_learner_name]])^2)
         })
     } else{
         # FIXME: NA values of the outcome should not make it until here
         x <- sapply(names(learners),function(this_learner_name){
-            mean((level_one_data[[outcome_variable]]-level_one_data[[this_learner_name]])^2,na.rm = TRUE)})
+            outcome <- level_one_data[[outcome_variable]]
+            mean((outcome-level_one_data[[this_learner_name]])^2,na.rm = TRUE)})
     }
     winner <- names(x)[which.min(x)]
     ## print(winner)

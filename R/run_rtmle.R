@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul  1 2024 (09:11)
 ## Version:
-## Last-Updated: Apr 11 2025 (11:29) 
+## Last-Updated: Apr 11 2025 (16:16) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 508
+##     Update #: 509
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -40,7 +40,7 @@
 #'                and bootstrap. See examples.
 #' @param keep_influence Logical: if \code{TRUE} store the estimated influence function of the estimator in the object.
 #'                       Currently this argument is only used when argument \code{subsets} is also specified.
-#' @param verbose Logical. If \code{FALSE} suppress all messages.
+#' @param verbose Logical. If \code{FALSE} suppress all messages. \code{FALSE} is the default.
 #' @param ... Additional arguments passed to the learner function.
 #' @return The modified object contains the fitted nuisance parameter
 #'     models and the estimate of the target parameter.
@@ -92,7 +92,7 @@ run_rtmle <- function(x,
                       seed = NULL,
                       subsets = NULL,
                       keep_influence = TRUE,
-                      verbose = TRUE,
+                      verbose = FALSE,
                       ...){
     time <- label <- level <- NULL
     if (length(subsets)>0){
