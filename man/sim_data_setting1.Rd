@@ -54,11 +54,11 @@ and Operation and Change in Covariate Process can occur once.
 The intensities of the various events depend upon previous events and the pre specified \eqn{\nu} and \eqn{\eta}
 parameters. The dependence on previous events is controlled by parameters chosen so that a large baseline covariate
 (L0) increases the probability of a covariate change (L = 1). A large baseline covariate affects
-the probability of operation by the user specified \code{beta_L0_A}. A change in the covariate process
-(L= 1) affects the probability of operation (A = 1) by the user specified parameter \code{beta_L_A}.
-Operation (A = 1) affects the risk of death by the user specified parameter \code{beta_A_D}. And
+the probability of operation by the user specified `beta_L0_A`. A change in the covariate process
+(L= 1) affects the probability of operation (A = 1) by the user specified parameter `beta_L_A`.
+Operation (A = 1) affects the risk of death by the user specified parameter `beta_A_D`. And
 change in the covariate process(L = 1) affects the risk of death by the user specified parameter
-\code{beta_L_D}. A large baseline covariate (L0) increase the risk of death. The censoring
+`beta_L_D`. A large baseline covariate (L0) increase the risk of death. The censoring
 process does not depend on anything.
 }
 \examples{

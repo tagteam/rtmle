@@ -6,22 +6,28 @@
 \usage{
 cheap_bootstrap(
   x,
+  time_horizon,
   B = 20,
   M,
   replace = FALSE,
   seeds,
   alpha = 0.05,
+  add = TRUE,
   verbose = FALSE
 )
 }
 \arguments{
 \item{x}{object of class \code{rtmle}}
 
+\item{time_horizon}{The time horizon at which to calculate
+the bootstrap confidence intervals. If it is a vector the analysis will be performed for
+each element of the vector.}
+
 \item{B}{Number of bootstrap samples.}
 
 \item{M}{Size of the bootstrap samples. If argument \code{replace}
 is \code{FALSE} this defaults to \code{0.632 *
-    NROW(x$prepared_data)} and if argument \code{replace} is
+NROW(x$prepared_data)} and if argument \code{replace} is
 \code{TRUE} this defaults to \code{NROW(x$prepared_data)}.}
 
 \item{replace}{Logical. Default is \code{FALSE}. If \code{FALSE}
@@ -36,6 +42,8 @@ this case argument, by default \code{M} will be set equal to
 randomness while drawing the bootstrap samples.}
 
 \item{alpha}{Significance level. Defaults to 0.05.}
+
+\item{add}{Logical. If \code{TRUE} add new bootstrap results to the existing bootstrap results}
 
 \item{verbose}{Logical. Passed to run_rtmle to control verbosity.}
 }
@@ -81,6 +89,6 @@ cb
 }
 \author{
 Johan Sebastian Ohlendorff
-\email{johan.ohlendorff@sund.ku.dk} and Thomas A Gerds
-\email{tag@biostat.ku.dk}
+    \email{johan.ohlendorff@sund.ku.dk} and Thomas A Gerds
+    \email{tag@biostat.ku.dk}
 }

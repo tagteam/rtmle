@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul  1 2024 (09:11)
 ## Version:
-## Last-Updated: Apr 10 2025 (10:24) 
+## Last-Updated: Apr 11 2025 (11:29) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 481
+##     Update #: 508
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -30,14 +30,16 @@
 #'     function. Default is \code{FALSE}.
 #' @param seed Seed used for cross-fitting
 #' @param subsets A list structure for subset analyses. Each element is a list 
-#'                which requires a label, to name the subset, and a subset of the values
-#'                of the variable \code{x$names$id} in the data \code{x$prepared_data} to
+#'                which requires a label, to name the subset, and a subset of the 
+#'                variable \code{x$names$id} in the data \code{x$prepared_data} to
 #'                identify the subset. The results of the subset analysis are stored
-#'                in \code{x$estimate[[subsets[[sub]]label]]}. An optional element of each
+#'                in \code{x$estimate[[subsets[[label]]}. An optional element of each
 #'                subset-list is called \code{append}
 #'                which should be logical: if \code{TRUE} append the estimates to the existing
 #'                estimates with rbind. This may be used for stratified analyses, to study seed dependence (Monte-Carlo error)
 #'                and bootstrap. See examples.
+#' @param keep_influence Logical: if \code{TRUE} store the estimated influence function of the estimator in the object.
+#'                       Currently this argument is only used when argument \code{subsets} is also specified.
 #' @param verbose Logical. If \code{FALSE} suppress all messages.
 #' @param ... Additional arguments passed to the learner function.
 #' @return The modified object contains the fitted nuisance parameter
@@ -74,9 +76,9 @@
 #' x <- run_rtmle(x,learner = "learn_glmnet",time_horizon = tau,
 #'                verbose=FALSE,
 #'                subsets=list(list(label="Sex",variable="Sex",
-#'                                  value="Female",id=x$prepared_data[sex==0,id]),
+#'                                  level="Female",id=x$prepared_data[sex==0,id]),
 #'                        list(label="Sex",variable="Sex",
-#'                                  value="Male",id=x$prepared_data[sex==1,id])))
+#'                                  level="Male",id=x$prepared_data[sex==1,id])))
 #' }
 #'
 #'
@@ -89,9 +91,10 @@ run_rtmle <- function(x,
                       refit = FALSE,
                       seed = NULL,
                       subsets = NULL,
+                      keep_influence = TRUE,
                       verbose = TRUE,
                       ...){
-    time <- value <- NULL
+    time <- label <- level <- NULL
     if (length(subsets)>0){
         for (sub in subsets){
             stopifnot(is.character(sub$label[[1]]))
@@ -102,23 +105,45 @@ run_rtmle <- function(x,
             # FIXME: should check if someone is at risk at the maximal time_horizons
             #        and that there is still variation in the outcome at that time
             xs$followup <- x$followup[x$followup[[x$names$id]] %in% sub$id]
-            xs <- run_rtmle(xs,targets = targets,time_horizon = time_horizon,seed = seed,learner = learner,refit = TRUE,sub = NULL,verbose = verbose)
+            xs <- run_rtmle(xs,targets = targets,time_horizon = time_horizon,seed = seed,learner = learner,refit = TRUE,subsets = NULL,verbose = verbose)
             subset_result <- xs$estimate[["Main_analysis"]]
             # add the subset identifying information, such as age="40-60"
             if (length(sub$variable)>0){
-                if (length(sub$value)>0) v <- sub$value else v = ""
+                if (length(sub$level)>0) v <- sub$level else v = ""
                 addthis <- data.table::data.table(v)
                 data.table::setnames(addthis,sub$variable[[1]])
                 subset_result <- cbind(addthis,subset_result)
+                data.table::setattr(subset_result,"variable",sub$variable)
+                ## data.table::setattr(subset_result,"level",sub$level)
             }
+            # add the estimate of the influence function
+            if (keep_influence) {
+                vic <- list(xs$IC)
+                names(vic) <- if (length(sub$level)>0) sub$level else ""
+                data.table::setattr(subset_result,"IC",vic)
+            }
+            # set or replace existing results
             if (length(x$estimate[[sub$label[[1]]]]) == 0 ||
                 (length(sub$append) == 0) ||
                 sub$append[[1]] == FALSE){
                 x$estimate[[sub$label[[1]]]] <- subset_result
             }else{
+                # append results
                 # cases stratified, Monte-Carlo error, bootstrap
-                # results are appended
-                x$estimate[[sub$label[[1]]]] <- rbind(x$estimate[[sub$label[[1]]]],subset_result,fill = TRUE)
+                sub_IC <- attr(x$estimate[[sub$label[[1]]]],"IC")
+                sub_variable <- attr(x$estimate[[sub$label[[1]]]],"variable")
+                ## sub_level <- attr(x$estimate[[sub$label[[1]]]],"level")
+                x$estimate[[sub$label[[1]]]] <- rbind(x$estimate[[sub$label[[1]]]],
+                                                      subset_result,
+                                                      fill = TRUE)
+                data.table::setattr(x$estimate[[sub$label[[1]]]],
+                                    "IC",
+                                    c(sub_IC, attr(subset_result,"IC")))
+                data.table::setattr(x$estimate[[sub$label[[1]]]],
+                                    "variable",sub_variable)# assumed equal to attr(subset,"variable")
+                ## data.table::setattr(x$estimate[[sub$label[[1]]]],
+                                    ## "level",
+                                    ## c(sub_level, attr(subset_result,"level")))
             }
         }
         return(x)

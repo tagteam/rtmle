@@ -50,5 +50,5 @@ x$prepared_data
 rtmle_init
 }
 \author{
-Thomas A. Gerds \href{mailto:tag@biostat.ku.dk}{tag@biostat.ku.dk}
+Thomas A. Gerds <tag@biostat.ku.dk>
 }

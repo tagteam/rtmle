@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 30 2024 (14:30)
 ## Version:
-## Last-Updated: Apr 10 2025 (10:19) 
+## Last-Updated: Apr 11 2025 (11:57) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 286
+##     Update #: 291
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -21,7 +21,7 @@ sequential_regression <- function(x,
                                   learner,
                                   seed = seed,
                                   ...){
-    time = Time_horizon = Estimate = Target_parameter = Standard_error = Lower = Upper = NULL
+    time = Target = Protocol = Time_horizon = Estimate = Target_parameter = Standard_error = Lower = Upper = NULL
     N <- NROW(x$prepared_data)
     # FIXME: inconsistent listing:
     intervention_table <- x$protocols[[protocol_name]]$intervention_table
@@ -157,7 +157,9 @@ sequential_regression <- function(x,
             #        at time j, such as A_j and B_j then we match on the last
             ipos <- rev(treatment_variables[[j]])[[1]]
         }
-        
+        # the column names A_1,B_1,E_1 of the intervention_match table are made with paste
+        # in function intervention_probabilities
+        intervention_node_name <- paste(intervention_table[time == j-1]$variable,collapse = ",")
         if (length(x$targets[[target_name]]$estimator) == 0 || x$targets[[target_name]]$estimator == "tmle"){
             # use only data from subjects who are uncensored in current interval
             # construction of clever covariates
@@ -165,10 +167,6 @@ sequential_regression <- function(x,
             W_previous[outcome_free_and_uncensored] <- lava::logit(fit_last)
             # FIXME: this test of infinite inverse_probability_weights needs more work
             inverse_probability_weights <- x$cumulative_intervention_probs[[protocol_name]][,ipos]
-            # the column names A_1,B_1,E_1 of the intervention_match table are made with paste
-            # in function intervention_probabilities
-            intervention_node_name <- paste(intervention_table[time == j-1]$variable,collapse = ",")
-            ## if (match(intervention_node_name,colnames(x$intervention_match[[protocol_name]]),nomatch = 0) == 0)
             imatch <- (x$intervention_match[[protocol_name]][,intervention_node_name]%in% 1)
             if (any(inverse_probability_weights[!is.na(Y) & outcome_free_and_uncensored & as.vector(imatch)] == 0)){
                 stop("Exactly zero intervention probabilities encountered at the attempt to run the TMLE-update fluctuation model.\nYou may have to consider changing the target parameter or bounding the intervention probabilities somehow.\nGood luck!")
@@ -238,8 +236,9 @@ sequential_regression <- function(x,
     ic <- x$IC[[target_name]][[protocol_name]][[label_time_horizon]] + x$prepared_data$rtmle_predicted_outcome - mean(x$prepared_data$rtmle_predicted_outcome)
     SE = sqrt(stats::var(ic)/N)
     x$estimate[["Main_analysis"]][Target == target_name & Protocol ==  protocol_name & Time_horizon == time_horizon & Target_parameter == target_parameter,
-                                  `:=`(Estimate = mean(x$prepared_data$rtmle_predicted_outcome),
-                                       Standard_error = SE,
+                                  Estimate := mean(x$prepared_data$rtmle_predicted_outcome)]
+    x$estimate[["Main_analysis"]][Target == target_name & Protocol ==  protocol_name & Time_horizon == time_horizon & Target_parameter == target_parameter,
+                                  `:=`(Standard_error = SE,
                                        Lower = Estimate-stats::qnorm(.975)*SE,
                                        Upper = Estimate+stats::qnorm(.975)*SE)]
     x$IC[[target_name]][[protocol_name]][[label_time_horizon]] <- ic

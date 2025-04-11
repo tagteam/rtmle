@@ -50,7 +50,7 @@ event type (Delta), baseline covariate (L0), indicator for change in covariate p
 indicator for Operation (A), and potentially an additional baseline covariate (L1) representing sex.
 }
 \description{
-\code{sim_event_data} is a function to simulate event data, e.g. observational healthcare data. The number of events
+`sim_event_data` is a function to simulate event data, e.g. observational healthcare data. The number of events
 simulated corresponds to the length of the \eqn{\eta} and \eqn{\nu} vector, and the number of columns in the
 \eqn{\beta} matrix. By default 4 different types of events are simulated, which can be chosen to represent Censoring (0),
 Death (1), Operation(2) and Change in Covariate Process(3). Death and Censoring are terminal events and Operation

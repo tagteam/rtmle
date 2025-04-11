@@ -40,5 +40,5 @@ This can be useful to avoid too many parameters in the model.
 \code{link{superlearn}}, \code{link{learn_ranger}}, \code{link{learn_glmnet}}
 }
 \author{
-Thomas A. Gerds \href{mailto:tag@biostat.ku.dk}{tag@biostat.ku.dk}
+Thomas A. Gerds <tag@biostat.ku.dk>
 }

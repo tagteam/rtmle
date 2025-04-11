@@ -7,6 +7,9 @@
 ##'
 ##' @title Cheap subsampling bootstrap
 #' @param x object of class \code{rtmle}
+#' @param time_horizon  The time horizon at which to calculate
+#'     the bootstrap confidence intervals. If it is a vector the analysis will be performed for
+#'     each element of the vector.
 #' @param B Number of bootstrap samples.
 #' @param M Size of the bootstrap samples. If argument \code{replace}
 #'     is \code{FALSE} this defaults to \code{0.632 *
@@ -22,6 +25,7 @@
 #' @param seeds A vector of random seeds for controlling the
 #'     randomness while drawing the bootstrap samples.
 #' @param alpha Significance level. Defaults to 0.05.
+#' @param add Logical. If \code{TRUE} add new bootstrap results to the existing bootstrap results
 #' @param verbose Logical. Passed to run_rtmle to control verbosity.
 ##' @return The modified object
 ##' @author Johan Sebastian Ohlendorff
@@ -56,15 +60,28 @@
 #'
 #' @export
 cheap_bootstrap <- function(x,
+                            time_horizon,
                             B = 20,
                             M,
                             replace = FALSE,
                             seeds,
                             alpha = 0.05,
+                            add = TRUE,
                             verbose = FALSE){
-    if (missing(seeds)) seeds <- sample.int(1e+09, B)
+    if (length(x$estimate$Main_analysis) == 0){
+        stop("The object lacks the main analysis. Please apply run_rtmle() before calling cheap_bootstrap.")
+    }
+    Target_parameter <- Main_estimate <- Bootstrap_estimate <- Bootstrap_lower <- Bootstrap_upper <- Main <- cheap_lower <- cheap_upper <- cheap_variance <- Estimate <- Estimator <- tq <- Time_horizon <- Protocol <- Target <- NULL
+    # add to existing bootstrap results if any
+    if (add[[1]] == TRUE && length(x$estimate$Cheap_bootstrap)>0){
+        B_offset <- max(x$estimate$Cheap_bootstrap$B)
+    }else{
+        x$estimate$Cheap_bootstrap <- NULL
+        B_offset <- 0
+    }
+    if (missing(seeds)) seeds <- sample.int(1e+09, B+B_offset)
     N <- NROW(x$prepared_data)
-    for (b in 1:B){
+    for (b in (1:B)+B_offset){
         set.seed(seeds[[b]])
         if (replace[[1]] == TRUE) {
             inbag <- sample(1:N,size = N,replace = TRUE)
@@ -72,15 +89,25 @@ cheap_bootstrap <- function(x,
             if(M >= N) stop(paste0("When replace = FALSE, the subsample size M (specified is M=",M,") must be lower than the sample size N (which is N=",N,")"))
             inbag <- sample(1:N,size = M,replace = FALSE)
         }
-        x <- run_rtmle(x = x, verbose = verbose,
-                       subsets = list(list(label = "Cheap_bootstrap",id = x$prepared_data[[x$names$id]][inbag],append = TRUE,variable = "B",value = b)))
+        if (missing(time_horizon)){
+            time_horizon <- sort(unique(x$estimate$Main_analysis$Time_horizon))
+        }
+        x <- run_rtmle(x = x,
+                       verbose = verbose,
+                       time_horizon = time_horizon,
+                       subsets = list(list(label = "Cheap_bootstrap",
+                                           id = x$prepared_data[[x$names$id]][inbag],
+                                           append = TRUE,
+                                           variable = "B",
+                                           level = b)))
     }
     # calculate the cheap lower and upper confidence limits
     # when there readily are bootstrap results we append to them
     if("Main"%in%names(x$estimate$Cheap_bootstrap)){
         data.table::set(x$estimate$Cheap_bootstrap,j = "Main",value = NULL)
     }
-    cb <- x$estimate[["Main_analysis"]][,data.table::data.table(Target,Protocol,Time_horizon,Main = Estimate)][x$estimate$Cheap_bootstrap,on = c("Target","Protocol","Time_horizon")]
+    data.table::setnames(x$estimate$Cheap_bootstrap,"Estimate","Bootstrap_estimate")
+    cb <- x$estimate[["Main_analysis"]][,data.table::data.table(Target,Protocol,Time_horizon,Main_estimate = Estimate)][x$estimate$Cheap_bootstrap,on = c("Target","Protocol","Time_horizon")]
     if (replace == FALSE) {
         cheap_scale <- sqrt(M / (N - M))
     } else {
@@ -88,21 +115,36 @@ cheap_bootstrap <- function(x,
     }
     # t-distribution 
     cb[,tq := stats::qt(1 - alpha / 2, df = B)]
-    cb[,cheap_variance := cumsum((Main-Estimate)^2)/seq_len(.N),by = c("Target","Protocol","Time_horizon")]
-    cb[,cheap_lower := Estimate - tq * cheap_scale * cheap_variance]
-    cb[,cheap_upper := Estimate + tq * cheap_scale * cheap_variance]
+    cb[,cheap_variance := cumsum((Main_estimate-Bootstrap_estimate)^2)/seq_len(.N),by = c("Target","Protocol","Time_horizon")]
+    cb[,cheap_lower := Main_estimate - tq * cheap_scale * cheap_variance]
+    cb[,cheap_upper := Main_estimate + tq * cheap_scale * cheap_variance]
     x$estimate$Cheap_bootstrap <- cb[,data.table::data.table(B,
-                                        Target,
-                                        Protocol,
-                                        Time_horizon,
-                                        Target_parameter,
-                                        Estimator,
-                                        Estimate = Main,
-                                        Bootstrap_estimate = Estimate,
-                                        Bootstrap_standard_error = sqrt(cheap_variance),
-                                        Bootstrap_lower = cheap_lower,
-                                        Bootstrap_upper = cheap_upper)]
-    x$estimate[["Main_analysis"]] <- x$estimate$Cheap_bootstrap[.N,data.table::data.table(Target,Protocol,Time_horizon,Bootstrap_lower,Bootstrap_upper)][x$estimate[["Main_analysis"]],on = c("Target","Protocol","Time_horizon")]
+                                                             Target,
+                                                             Protocol,
+                                                             Time_horizon,
+                                                             Target_parameter,
+                                                             Estimator,
+                                                             Main_Estimate = Main_estimate,
+                                                             Bootstrap_estimate = Bootstrap_estimate,
+                                                             Bootstrap_standard_error = sqrt(cheap_variance),
+                                                             Bootstrap_lower = pmax(0,cheap_lower),
+                                                             Bootstrap_upper = pmin(1,cheap_upper))]
+    max_B <- B+B_offset
+    data.table::setattr(x$estimate$Cheap_bootstrap,
+                        "cheap_scale",cheap_scale)
+    data.table::setattr(x$estimate$Cheap_bootstrap,
+                        "tq",unique(cb[B == max_B,tq]))
+    # merge the bootstrap confidence limits
+    # first remove what is there already
+    if ("Bootstrap_lower" %in% names(x$estimate[["Main_analysis"]])){
+        for (v in c("Bootstrap_lower","Bootstrap_upper","Bootstrap_standard_error")){
+            data.table::set(x$estimate[["Main_analysis"]],j = v,value = NULL)
+        }
+    }
+    cb <- cb[B == max_B,data.table::data.table(Bootstrap_standard_error = sqrt(cheap_variance),
+                                               Bootstrap_lower = cheap_lower,
+                                               Bootstrap_upper = cheap_upper),by = c("Target","Protocol","Time_horizon")]
+    x$estimate[["Main_analysis"]] <- cb[x$estimate[["Main_analysis"]],on = c("Target","Protocol","Time_horizon")]
     # NOTE if we would return x[] instead of x then x looses its class!
     return(x)
 }

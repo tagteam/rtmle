@@ -29,5 +29,5 @@ This function adds a list of datasets in wide format (one line per subject) to a
 \link[rtmle]{add_baseline_data<-}, \link[rtmle]{add_long_data<-}
 }
 \author{
-Thomas A. Gerds \href{mailto:tag@biostat.ku.dk}{tag@biostat.ku.dk}
+Thomas A. Gerds <tag@biostat.ku.dk>
 }

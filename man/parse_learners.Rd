@@ -13,7 +13,7 @@ parse_learners(learners)
 List of learners
 }
 \description{
-Parsing list of learners for function superlearn. Available names are
+Parsing list of learners for function superlearn. Available names are 
 substituted for missing learner_fun elements and available elements learner_fun
 are substituted for missing names.
 }
@@ -31,5 +31,5 @@ parse_learners(c(list("learn_glmnet",
 \code{\link{superlearn}}, \code{\link{run_rtmle}}
 }
 \author{
-Thomas A. Gerds \href{mailto:tag@biostat.ku.dk}{tag@biostat.ku.dk}
+Thomas A. Gerds <tag@biostat.ku.dk>
 }

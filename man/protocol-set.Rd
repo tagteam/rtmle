@@ -15,7 +15,7 @@ protocol(x, ...) <- value
 \itemize{
 \item \code{name}: the name of the protocol
 \item \code{treatment_variables}: A vector with the
-name(s) of the variable(s) that the protocols intervenes upon. In longitudinal
+name(s) of the variable(s) that the protocols intervenes upon. In longitudinal 
 settings, when a treatment variable is named "A" then the prepared data will contain
 a column for each of the variables A_0,A_1,----,A_k. This argument can be left unspecified
 in which case the argument \code{intervention} must be a data.frame with names of treatment variables.
@@ -40,7 +40,7 @@ treatment variables.
 }
 \value{
 The modified object contains the treatment variables and the intervention_table
-as list elemens of \code{x$protocols[[name]]} where name is given by \code{value$name}
+        as list elemens of \code{x$protocols[[name]]} where name is given by \code{value$name}
 }
 \description{
 This function adds a protocol to an existing object.

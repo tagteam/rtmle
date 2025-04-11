@@ -29,5 +29,5 @@ Hyperparameters are set via ...
 \code{link{superlearn}}, \code{link{learn_glm}}, \code{link{learn_glmnet}}
 }
 \author{
-Thomas A. Gerds \href{mailto:tag@biostat.ku.dk}{tag@biostat.ku.dk}
+Thomas A. Gerds <tag@biostat.ku.dk>
 }

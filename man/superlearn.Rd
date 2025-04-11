@@ -24,7 +24,7 @@ superlearn(
 
 \item{learners}{List of learners. Each learner can either be a character string or a list. If the learner is a
 character string it must be the name of a learner function, such as \code{\link{learn_glm}},
-\code{\link{learn_glmnet}},  \code{\link{learn_ranger}}. If the learner is a list then either the name of the learner
+ \code{\link{learn_glmnet}},  \code{\link{learn_ranger}}. If the learner is a list then either the name of the learner
 is a learner function or the list has an element \code{learner_fun} which is the name of a learner function. The other elements of the list are
 passed on as additional arguments to the learner function.}
 
@@ -50,7 +50,7 @@ The level-one data column of the discrete superlearner.
 Super learning nuisance parameter models for longitudinal TMLE analyses
 }
 \details{
-The function collaborates with \code{run_rtmle}. It
+The function collaborates with \code{run_rtmle}. It 
 It uses cross-fitting to produce level-one data, where the predicted probability of each learner
 is a column which can be compared with the outcome. The discrete super learner chooses the
 learner lowest quadratic prediction error. The ensemble super learner combines the learners.
@@ -81,5 +81,5 @@ fit <- superlearn(folds = 2,seed = 8,
 \code{\link{run_rtmle}}, \code{learn_glm}, \code{learn_glmnet}, \code{learn_ranger}
 }
 \author{
-Thomas A. Gerds \href{mailto:tag@biostat.ku.dk}{tag@biostat.ku.dk}
+Thomas A. Gerds <tag@biostat.ku.dk>
 }

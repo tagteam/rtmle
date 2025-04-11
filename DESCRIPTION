@@ -1,6 +1,6 @@
 Package: rtmle
 Title: Analysing Longitudinal Observational and Randomized Data with the Targeted Minimum Loss Estimator
-Version: 2025.04.10
+Version: 2025.04.11
 Authors@R: c(
     person("Helene Charlotti Wiese", "Rytgaard", , "hely@sund.ku.dk", role = c("aut", "cre")),
     person("Thomas Alexander", "Gerds", , "tag@biostat.ku.dk", role = c("aut"),
@@ -12,8 +12,8 @@ Description: Flexible implementation of the targeted minimum loss estimators.
              Some of the functions are readily optimized for large-scale register data. 
 License: GPL (>= 3)
 Encoding: UTF-8
-Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
+VignetteBuilder: R.rsp
 Imports:
     stats,
     utils,	
@@ -36,3 +36,5 @@ Suggests:
     knitr,
     rmarkdown
 Config/testthat/edition: 3
+URL: https://github.com/tagteam/rtmle
+BugReports: https://github.com/tagteam/rtmle/issues

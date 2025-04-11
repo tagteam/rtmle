@@ -30,10 +30,8 @@ ld <- simulate_long_data(n = 10000,number_visits = 20,beta = list(sum_A_on_Y = -
 ld
 #+END_SRC
 
-#+RESULTS[(2024-10-03 16:28:18) c882943695f57f545c4d35bcaa06c480ca36b3a8]:
+#+RESULTS[(2025-04-10 11:48:17) fbea64b41ce76f4479ef4368ff8f2f1cda31c3b2]:
 :results:
-riskRegression version 2024.10.21
-data.table 1.15.4 using 4 threads (see ?getDTthreads).  Latest news: r-datatable.com
 $baseline_data
           id   sex      age
        <int> <int>    <num>
@@ -139,13 +137,16 @@ x <- rtmle_init(intervals = 3,name_id = "id",name_outcome = "Y",name_competing =
 x
 #+END_SRC
 
-#+RESULTS[(2024-10-03 16:28:18) 8b507b232db5bb073a8147380c6d781f9e76f9f1]:
+#+RESULTS[(2025-04-10 11:48:17) 8b507b232db5bb073a8147380c6d781f9e76f9f1]:
 :results:
 Targeted minimum loss analysis of register data.
   Initialized to 3 time intervals (starting at time zero).
   The name of the subject id variable is 'id'.
   The outcome, competing risk and censoring variables are named 'Y', 'Dead', and 'Censored', respectively.
-TODO: The object contains no data yet. Add them with the functions 'add_long_data<-' and 'add_data<-'.
+TODO: The object contains no data yet.
+Add the baseline data (if any) with the function 'add_baseline_data<-'
+Add the outcome data and the longitudinal data (covariates and treatment) with one of the functions
+: 'add_long_data<-' or 'add_wide_data<-'.
 TODO: The object contains no protocols. Add them with the function 'protocol<-'.
 TODO: The object contains no targets yet. Add them with the function 'target<-'.
 :end:
@@ -160,7 +161,7 @@ add_baseline_data(x) <- ld$baseline_data[,start_followup_date:=0]
 x
 #+END_SRC
 
-#+RESULTS[(2024-10-03 16:28:18) baab07cfaaf782a112f2659e6a4ba4dd791d5050]:
+#+RESULTS[(2025-04-10 11:48:17) 49bdcfec7b8159dc23005a1d326989b56a4547c1]:
 :results:
 Targeted minimum loss analysis of register data.
   Initialized to 3 time intervals (starting at time zero).
@@ -180,7 +181,7 @@ prepare_data(x) <- list()
 x$prepared_data
 #+END_SRC
 
-#+RESULTS[(2024-11-24 08:01:22) 824e49ea434194f42fc103b764371428d538b5fb]:
+#+RESULTS[(2025-04-10 11:48:18) 824e49ea434194f42fc103b764371428d538b5fb]:
 :results:
 id   sex      age start_followup_date   L_0   A_0 Censored_1   Y_1 Dead_1   L_1   A_1 Censored_2   Y_2 Dead_2   L_2   A_2 Censored_3
        <int> <int>    <num>               <num> <num> <num>     <fctr> <num>  <num> <num> <num>     <fctr> <num>  <num> <num> <num>     <fctr>
@@ -220,7 +221,7 @@ protocol(x) <- list(name = "never A",treatment_variables = "A",intervention = 0)
 x
 #+END_SRC
 
-#+RESULTS[(2024-10-03 16:28:20) b573ac1575eb7a69bf7d0c058328d423181f467f]:
+#+RESULTS[(2025-04-10 11:48:18) c33c12a3fb685d3e26c9888a929f778ad970845e]:
 :results:
 Targeted minimum loss analysis of register data.
   Initialized to 3 time intervals (starting at time zero).
@@ -235,11 +236,10 @@ TODO: The object contains no targets yet. Add them with the function 'target<-'.
 #+ATTR_LATEX: :options otherkeywords={}, deletekeywords={}
 #+BEGIN_SRC R  :results output verbatim drawer  :exports both  :session *R* :cache yes  
 target(x) <- list(name = "Outcome_risk",strategy = "additive",estimator = "tmle",time_horizon = 3,protocols = c("always A","never A"))
-target(x) <- list(name = "Outcome_risk_g",strategy = "additive",estimator = "g",time_horizon = 3,protocols = c("always A","never A"))
 x
 #+END_SRC
 
-#+RESULTS[(2024-10-03 16:28:20) e10547eb4a9d4e196a8b46472920dd0a1fd24c68]:
+#+RESULTS[(2025-04-10 11:48:18) 9e87d956cc3fa23e94cb0e46e5c41ada18451329]:
 :results:
 Targeted minimum loss analysis of register data.
   Initialized to 3 time intervals (starting at time zero).
@@ -247,30 +247,44 @@ Targeted minimum loss analysis of register data.
   The outcome, competing risk and censoring variables are named 'Y', 'Dead', and 'Censored', respectively.
 :end:
 
-
 ** Sequential regression with and without TMLE update step
 
 #+ATTR_LATEX: :options otherkeywords={}, deletekeywords={}
 #+BEGIN_SRC R  :results output verbatim drawer :exports both  :session *R* :cache yes
 x <- run_rtmle(x,learn = "learn_glm")
+#+END_SRC
+
+#+RESULTS[(2025-04-10 11:48:19) f4b6ba5c87a4fcdc5adb0f95cc42bbc7a591718f]:
+:results:
+Running target: Outcome_risk... Set argument verbose = FALSE to suppress this message.
+Current protocol: always A ... Set argument verbose = FALSE to suppress this message.
+Current protocol: never A ... Set argument verbose = FALSE to suppress this message.
+Warning messages:
+1: In tmle_update(Y = Y, offset = W_previous, intervention_probs = inverse_probability_weights,  :
+  No TMLE update because no subject has positive weight
+2: In tmle_update(Y = Y, offset = W_previous, intervention_probs = inverse_probability_weights,  :
+  No TMLE update because no subject has positive weight
+:end:
+
+#+ATTR_LATEX: :options otherkeywords={}, deletekeywords={}
+#+BEGIN_SRC R  :results output verbatim drawer :exports both  :session *R* :cache yes
 summary(x)
 #+END_SRC
 
-#+RESULTS[(2024-10-03 16:28:21) 2ba32a24f4c0bcf2c0fd1e66163ca03fff3cfca9]:
+#+RESULTS[(2025-04-10 11:48:19) ed7f60068378803177c2f5dd0741b7b6f64e7766]:
 :results:
-Running target: Outcome_risk
-Current protocol: always A
-Current protocol: never A
-Running target: Outcome_risk_g
-Current protocol: always A
-Current protocol: never A
-Warning messages:
-1: In tmle_update(Y = Y, offset = Wold, intervention_probs = inverse_probability_weights,  :
-  No TMLE update because no subject has positive weight
-2: In tmle_update(Y = Y, offset = Wold, intervention_probs = inverse_probability_weights,  :
-  No TMLE update because no subject has positive weight
-Error in object$estimate[[target_name]][[ref]]$Estimate[[tp]] (from summary.rtmle.R#84) : 
-  subscript out of bounds
+         Target Protocol Target_parameter Time_horizon Estimator   Estimate     P_value Standard_error        Lower       Upper
+         <fctr>   <fctr>           <fctr>        <int>    <fctr>      <num>       <num>          <num>        <num>       <num>
+1: Outcome_risk always A             Risk            3      tmle 0.33494029 1.000000000    0.004767184 -0.009343509 0.009343509
+2: Outcome_risk  never A             Risk            3      tmle 0.35940602 1.000000000    0.007959865 -0.015601048 0.015601048
+3: Outcome_risk  never A  Risk_difference            3      tmle 0.02446573 0.008367565    0.009278332  0.006280530 0.042650922
+4: Outcome_risk  never A       Risk_ratio            3      tmle 1.07304504 0.007408370    0.026326689  1.019080828 1.129866854
+   Estimate (CI_95)
+             <char>
+1:   33.5 [0.0;0.9]
+2:   35.9 [0.0;1.6]
+3:    2.4 [0.6;4.3]
+4:    1.1 [1.0;1.1]
 :end:
 
 

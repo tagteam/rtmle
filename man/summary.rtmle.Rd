@@ -4,7 +4,14 @@
 \alias{summary.rtmle}
 \title{Summarizing the results of a register data analysis with the targeted minimum loss estimator}
 \usage{
-\method{summary}{rtmle}(object, targets, reference = NULL, digits = 1, ...)
+\method{summary}{rtmle}(
+  object,
+  analysis = "Main_analysis",
+  targets,
+  reference = NULL,
+  digits = 1,
+  ...
+)
 }
 \arguments{
 \item{object}{Object to be summarized}
@@ -16,10 +23,12 @@
 \item{digits}{Number of decimals for the confidence intervals}
 
 \item{...}{not used}
+
+\item{analyis}{Name of the analysis to be summarized}
 }
 \description{
 For each target in the object the risk estimates are summarized in a table with their
-95\% confidence limits.
+95% confidence limits.
 }
 \details{
 If a target includes multiple protocols the results includes risk differences.

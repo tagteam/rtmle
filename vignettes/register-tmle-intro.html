@@ -3,7 +3,7 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2024-09-30 Mon 10:07 -->
+<!-- 2025-04-10 Thu 11:48 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Introduction to the R-package rtmle</title>
@@ -200,8 +200,8 @@
 </div>
 <div id="content" class="content">
 <h1 class="title">Introduction to the R-package rtmle</h1>
-<div id="outline-container-org21f84b8" class="outline-2">
-<h2 id="org21f84b8"><span class="section-number-2">1.</span> About</h2>
+<div id="outline-container-org0f8e937" class="outline-2">
+<h2 id="org0f8e937"><span class="section-number-2">1.</span> About</h2>
 <div class="outline-text-2" id="text-1">
 <p>
 The R-package <code>rtmle</code> implements a class of targeted minimum loss
@@ -223,26 +223,26 @@ following features and focus points:
 </ul>
 </div>
 </div>
-<div id="outline-container-org393793d" class="outline-2">
-<h2 id="org393793d"><span class="section-number-2">2.</span> Data structures</h2>
+<div id="outline-container-org24dc5b5" class="outline-2">
+<h2 id="org24dc5b5"><span class="section-number-2">2.</span> Data structures</h2>
 <div class="outline-text-2" id="text-2">
 <p>
 We consider register data in the following format.
 </p>
 
 <div class="org-src-container">
-<pre class="src src-R"><span style="color: #008b8b;">library</span>(rtmle)
-<span style="color: #008b8b;">library</span>(prodlim)
-<span style="color: #008b8b;">library</span>(riskRegression)
-<span style="color: #008b8b;">library</span>(data.table)
+<pre class="src src-R"><span style="color: #BFEBBF;">library</span>(rtmle)
+<span style="color: #BFEBBF;">library</span>(prodlim)
+<span style="color: #BFEBBF;">library</span>(riskRegression)
+<span style="color: #BFEBBF;">library</span>(data.table)
 set.seed(118)
-ld <span style="color: #008b8b;">&lt;-</span> simulate_long_data(n = 10000,number_visits = 20,beta = list(sum_A_on_Y = -.1,A0_on_Y = 0),register_format = <span style="color: #228b22;">TRUE</span>)
+ld <span style="color: #BFEBBF;">&lt;-</span> simulate_long_data(n = 10000,number_visits = 20,beta = list(sum_A_on_Y = -.1,A0_on_Y = 0),register_format = <span style="color: #7CB8BB;">TRUE</span>)
 ld
 </pre>
 </div>
 
-<pre class="example" id="org5fce428">
-$baseline_data
+<p>
+$baseline<sub>data</sub>
           id   sex      age
        &lt;int&gt; &lt;int&gt;    &lt;num&gt;
     1:     1     0 59.44409
@@ -250,15 +250,17 @@ $baseline_data
     3:     3     0 78.26086
     4:     4     1 66.53408
     5:     5     0 62.35921
-   ---                     
+   &#x2014;                     
  9996:  9996     0 43.90035
  9997:  9997     1 41.32339
  9998:  9998     0 65.08893
  9999:  9999     1 42.23665
 10000: 10000     1 57.38959
+</p>
 
-$timevar_data
-$timevar_data$L
+<p>
+$timevar<sub>data</sub>
+$timevar<sub>data</sub>$L
          id   date
       &lt;int&gt;  &lt;num&gt;
    1:     1   0.00
@@ -266,14 +268,16 @@ $timevar_data$L
    3:     5   0.00
    4:     8   0.00
    5:    14   0.00
-  ---             
+  &#x2014;             
 5119:  9988 421.80
 5120:  9992 355.43
 5121:  9995 246.33
 5122:  9998 377.86
 5123:  9998 483.76
+</p>
 
-$timevar_data$A
+<p>
+$timevar<sub>data</sub>$A
          id  date
       &lt;int&gt; &lt;num&gt;
    1:     1     0
@@ -281,15 +285,17 @@ $timevar_data$A
    3:     5     0
    4:     7     0
    5:     9     0
-  ---            
+  &#x2014;            
 5249:  9590   365
 5250:  9671   365
 5251:  9694   365
 5252:  9859   365
 5253:  9984   730
+</p>
 
 
-$outcome_data
+<p>
+$outcome<sub>data</sub>
          id    date
       &lt;int&gt;   &lt;num&gt;
    1:     1 1076.89
@@ -297,14 +303,16 @@ $outcome_data
    3:     6  140.84
    4:     7  402.61
    5:    11  481.58
-  ---              
+  &#x2014;              
 3341:  9979   60.41
 3342:  9990   31.30
 3343:  9993   19.82
 3344:  9998  609.26
 3345:  9999    8.99
+</p>
 
-$competing_data
+<p>
+$competing<sub>data</sub>
          id   date
       &lt;int&gt;  &lt;num&gt;
    1:     4  89.71
@@ -312,14 +320,16 @@ $competing_data
    3:    10 545.28
    4:    13 446.94
    5:    14 459.49
-  ---             
+  &#x2014;             
 3360:  9987  30.28
 3361:  9988 476.90
 3362:  9994 311.22
 3363:  9996  71.81
 3364:  9997 179.60
+</p>
 
-$censored_data
+<p>
+$censored<sub>data</sub>
          id    date
       &lt;int&gt;   &lt;num&gt;
    1:     2  260.64
@@ -327,136 +337,187 @@ $censored_data
    3:     9  209.74
    4:    25  298.93
    5:    33  341.00
-  ---              
+  &#x2014;              
 3287:  9989   53.65
 3288:  9991  392.38
 3289:  9992 1046.23
 3290:  9995  758.63
 3291: 10000  140.10
-</pre>
+</p>
 </div>
 </div>
-<div id="outline-container-org8826256" class="outline-2">
-<h2 id="org8826256"><span class="section-number-2">3.</span> Example</h2>
+<div id="outline-container-org52ebc6e" class="outline-2">
+<h2 id="org52ebc6e"><span class="section-number-2">3.</span> Example</h2>
 <div class="outline-text-2" id="text-3">
 </div>
-<div id="outline-container-org74256cd" class="outline-3">
-<h3 id="org74256cd"><span class="section-number-3">3.1.</span> Initializing</h3>
+<div id="outline-container-org6edc491" class="outline-3">
+<h3 id="org6edc491"><span class="section-number-3">3.1.</span> Initializing</h3>
 <div class="outline-text-3" id="text-3-1">
 <div class="org-src-container">
-<pre class="src src-R">x <span style="color: #008b8b;">&lt;-</span> rtmle_init(intervals = 3,name_id = <span style="color: #8b2252;">"id"</span>,name_outcome = <span style="color: #8b2252;">"Y"</span>,name_competing = <span style="color: #8b2252;">"Dead"</span>,name_censoring = <span style="color: #8b2252;">"Censored"</span>,censored_label = <span style="color: #8b2252;">"censored"</span>)
+<pre class="src src-R">x <span style="color: #BFEBBF;">&lt;-</span> rtmle_init(intervals = 3,name_id = <span style="color: #CC9393;">"id"</span>,name_outcome = <span style="color: #CC9393;">"Y"</span>,name_competing = <span style="color: #CC9393;">"Dead"</span>,name_censoring = <span style="color: #CC9393;">"Censored"</span>,censored_label = <span style="color: #CC9393;">"censored"</span>)
 x
 </pre>
 </div>
 
-<pre class="example">
+<p>
 Targeted minimum loss analysis of register data.
   Initialized to 3 time intervals (starting at time zero).
   The name of the subject id variable is 'id'.
   The outcome, competing risk and censoring variables are named 'Y', 'Dead', and 'Censored', respectively.
-TODO: The object contains no data yet. Add them with the functions 'add_long_data&lt;-' and 'add_data&lt;-'.
+TODO: The object contains no data yet.
+Add the baseline data (if any) with the function 'add<sub>baseline</sub><sub>data</sub>&lt;-'
+Add the outcome data and the longitudinal data (covariates and treatment) with one of the functions
+</p>
+<pre class="example">
+'add_long_data&lt;-' or 'add_wide_data&lt;-'.
+</pre>
+
+<p>
 TODO: The object contains no protocols. Add them with the function 'protocol&lt;-'.
 TODO: The object contains no targets yet. Add them with the function 'target&lt;-'.
-</pre>
+</p>
 </div>
 </div>
-<div id="outline-container-orgc85ad80" class="outline-3">
-<h3 id="orgc85ad80"><span class="section-number-3">3.2.</span> Adding the data</h3>
+<div id="outline-container-org0c12ac2" class="outline-3">
+<h3 id="org0c12ac2"><span class="section-number-3">3.2.</span> Adding the data</h3>
 <div class="outline-text-3" id="text-3-2">
 <div class="org-src-container">
-<pre class="src src-R">x$long_data <span style="color: #008b8b;">&lt;-</span> ld[c(<span style="color: #8b2252;">"outcome_data"</span>,<span style="color: #8b2252;">"censored_data"</span>,<span style="color: #8b2252;">"competing_data"</span>,<span style="color: #8b2252;">"timevar_data"</span>)]
-add_baseline_data(x) <span style="color: #008b8b;">&lt;-</span> ld$baseline_data[,start_followup_date:=0]
+<pre class="src src-R">x$long_data <span style="color: #BFEBBF;">&lt;-</span> ld[c(<span style="color: #CC9393;">"outcome_data"</span>,<span style="color: #CC9393;">"censored_data"</span>,<span style="color: #CC9393;">"competing_data"</span>,<span style="color: #CC9393;">"timevar_data"</span>)]
+add_baseline_data(x) <span style="color: #BFEBBF;">&lt;-</span> ld$baseline_data[,start_followup_date:=0]
 x
 </pre>
 </div>
 
-<pre class="example">
+<p>
 Targeted minimum loss analysis of register data.
   Initialized to 3 time intervals (starting at time zero).
   The name of the subject id variable is 'id'.
   The outcome, competing risk and censoring variables are named 'Y', 'Dead', and 'Censored', respectively.
 TODO: The object contains no protocols. Add them with the function 'protocol&lt;-'.
 TODO: The object contains no targets yet. Add them with the function 'target&lt;-'.
-</pre>
+</p>
 </div>
 </div>
-<div id="outline-container-org536f9db" class="outline-3">
-<h3 id="org536f9db"><span class="section-number-3">3.3.</span> Preparing the data</h3>
+<div id="outline-container-org28f7bd3" class="outline-3">
+<h3 id="org28f7bd3"><span class="section-number-3">3.3.</span> Preparing the data</h3>
 <div class="outline-text-3" id="text-3-3">
 <div class="org-src-container">
-<pre class="src src-R">x <span style="color: #008b8b;">&lt;-</span> long_to_wide(x,intervals = seq(0,2000,30.45*6))
-prepare_data(x) <span style="color: #008b8b;">&lt;-</span> list()
+<pre class="src src-R">x <span style="color: #BFEBBF;">&lt;-</span> long_to_wide(x,intervals = seq(0,2000,30.45*6))
+prepare_data(x) <span style="color: #BFEBBF;">&lt;-</span> list()
+x$prepared_data
 </pre>
 </div>
+
+<p>
+id   sex      age start<sub>followup</sub><sub>date</sub>   L<sub>0</sub>   A<sub>0</sub> Censored<sub>1</sub>   Y<sub>1</sub> Dead<sub>1</sub>   L<sub>1</sub>   A<sub>1</sub> Censored<sub>2</sub>   Y<sub>2</sub> Dead<sub>2</sub>   L<sub>2</sub>   A<sub>2</sub> Censored<sub>3</sub>
+       &lt;int&gt; &lt;int&gt;    &lt;num&gt;               &lt;num&gt; &lt;num&gt; &lt;num&gt;     &lt;fctr&gt; &lt;num&gt;  &lt;num&gt; &lt;num&gt; &lt;num&gt;     &lt;fctr&gt; &lt;num&gt;  &lt;num&gt; &lt;num&gt; &lt;num&gt;     &lt;fctr&gt;
+    1:     1     0 59.44409                   0     1     1 uncensored     0      0     0     0 uncensored     0      0     0     0 uncensored
+    2:     2     1 73.01360                   0     0     0 uncensored     0      0     0     0   censored    NA     NA    NA    NA       &lt;NA&gt;
+    3:     3     0 78.26086                   0     1     1 uncensored     1      0    NA    NA       &lt;NA&gt;     1      0    NA    NA       &lt;NA&gt;
+    4:     4     1 66.53408                   0     0     0 uncensored     0      1    NA    NA       &lt;NA&gt;     0      1    NA    NA       &lt;NA&gt;
+    5:     5     0 62.35921                   0     1     1   censored    NA     NA    NA    NA       &lt;NA&gt;    NA     NA    NA    NA       &lt;NA&gt;
+   &#x2014;                                                                                                                                        
+ 9996:  9996     0 43.90035                   0     0     0 uncensored     0      1    NA    NA       &lt;NA&gt;     0      1    NA    NA       &lt;NA&gt;
+ 9997:  9997     1 41.32339                   0     0     0 uncensored     0      1    NA    NA       &lt;NA&gt;     0      1    NA    NA       &lt;NA&gt;
+ 9998:  9998     0 65.08893                   0     1     1 uncensored     0      0     0     0 uncensored     0      0     0     0 uncensored
+ 9999:  9999     1 42.23665                   0     0     1 uncensored     1      0    NA    NA       &lt;NA&gt;     1      0    NA    NA       &lt;NA&gt;
+10000: 10000     1 57.38959                   0     1     0   censored    NA     NA    NA    NA       &lt;NA&gt;    NA     NA    NA    NA       &lt;NA&gt;
+         Y<sub>3</sub>
+       &lt;num&gt;
+    1:     0
+    2:    NA
+    3:     1
+    4:     0
+    5:    NA
+   &#x2014;      
+ 9996:     0
+ 9997:     0
+ 9998:     0
+ 9999:     1
+10000:    NA
+</p>
 </div>
 </div>
-<div id="outline-container-org25c2cf1" class="outline-3">
-<h3 id="org25c2cf1"><span class="section-number-3">3.4.</span> Defining the protocols</h3>
+<div id="outline-container-orge16f121" class="outline-3">
+<h3 id="orge16f121"><span class="section-number-3">3.4.</span> Defining the protocols</h3>
 <div class="outline-text-3" id="text-3-4">
 <div class="org-src-container">
-<pre class="src src-R">protocol(x) <span style="color: #008b8b;">&lt;-</span> list(name = <span style="color: #8b2252;">"always A"</span>,treatment_variables = <span style="color: #8b2252;">"A"</span>,intervention = 1)
-protocol(x) <span style="color: #008b8b;">&lt;-</span> list(name = <span style="color: #8b2252;">"never A"</span>,treatment_variables = <span style="color: #8b2252;">"A"</span>,intervention = 0)
+<pre class="src src-R">protocol(x) <span style="color: #BFEBBF;">&lt;-</span> list(name = <span style="color: #CC9393;">"always A"</span>,treatment_variables = <span style="color: #CC9393;">"A"</span>,intervention = 1)
+protocol(x) <span style="color: #BFEBBF;">&lt;-</span> list(name = <span style="color: #CC9393;">"never A"</span>,treatment_variables = <span style="color: #CC9393;">"A"</span>,intervention = 0)
 x
 </pre>
 </div>
 
-<pre class="example">
+<p>
 Targeted minimum loss analysis of register data.
   Initialized to 3 time intervals (starting at time zero).
   The name of the subject id variable is 'id'.
   The outcome, competing risk and censoring variables are named 'Y', 'Dead', and 'Censored', respectively.
 TODO: The object contains no targets yet. Add them with the function 'target&lt;-'.
-</pre>
+</p>
 </div>
 </div>
-<div id="outline-container-orgdee0b0c" class="outline-3">
-<h3 id="orgdee0b0c"><span class="section-number-3">3.5.</span> Defining the targets</h3>
+<div id="outline-container-org092ce0e" class="outline-3">
+<h3 id="org092ce0e"><span class="section-number-3">3.5.</span> Defining the targets</h3>
 <div class="outline-text-3" id="text-3-5">
 <div class="org-src-container">
-<pre class="src src-R">target(x) <span style="color: #008b8b;">&lt;-</span> list(name = <span style="color: #8b2252;">"Outcome_risk"</span>,strategy = <span style="color: #8b2252;">"additive"</span>,estimator = <span style="color: #8b2252;">"tmle"</span>,time_horizon = 3,protocols = c(<span style="color: #8b2252;">"always A"</span>,<span style="color: #8b2252;">"never A"</span>))
-target(x) <span style="color: #008b8b;">&lt;-</span> list(name = <span style="color: #8b2252;">"Outcome_risk_g"</span>,strategy = <span style="color: #8b2252;">"additive"</span>,estimator = <span style="color: #8b2252;">"g"</span>,time_horizon = 3,protocols = c(<span style="color: #8b2252;">"always A"</span>,<span style="color: #8b2252;">"never A"</span>))
+<pre class="src src-R">target(x) <span style="color: #BFEBBF;">&lt;-</span> list(name = <span style="color: #CC9393;">"Outcome_risk"</span>,strategy = <span style="color: #CC9393;">"additive"</span>,estimator = <span style="color: #CC9393;">"tmle"</span>,time_horizon = 3,protocols = c(<span style="color: #CC9393;">"always A"</span>,<span style="color: #CC9393;">"never A"</span>))
 x
 </pre>
 </div>
 
-<pre class="example">
+<p>
 Targeted minimum loss analysis of register data.
   Initialized to 3 time intervals (starting at time zero).
   The name of the subject id variable is 'id'.
   The outcome, competing risk and censoring variables are named 'Y', 'Dead', and 'Censored', respectively.
-</pre>
+</p>
 </div>
 </div>
-<div id="outline-container-org0a6cc81" class="outline-3">
-<h3 id="org0a6cc81"><span class="section-number-3">3.6.</span> Sequential regression with and without TMLE update step</h3>
+<div id="outline-container-orgab32e58" class="outline-3">
+<h3 id="orgab32e58"><span class="section-number-3">3.6.</span> Sequential regression with and without TMLE update step</h3>
 <div class="outline-text-3" id="text-3-6">
 <div class="org-src-container">
-<pre class="src src-R">x <span style="color: #008b8b;">&lt;-</span> run_rtmle(x,learn = <span style="color: #8b2252;">"learn_glm"</span>)
-summary(x)
+<pre class="src src-R">x <span style="color: #BFEBBF;">&lt;-</span> run_rtmle(x,learn = <span style="color: #CC9393;">"learn_glm"</span>)
 </pre>
 </div>
 
-<pre class="example" id="orga6f5f3f">
-Running target: Outcome_risk
-Current protocol: always A
-Current protocol: never A
-Running target: Outcome_risk_g
-Current protocol: always A
-Current protocol: never A
-There were 17 warnings (use warnings() to see them)
-Target Protocol  Estimate               std.err                      Estimate (CI_95)
-           &lt;char&gt;   &lt;char&gt;     &lt;num&gt;                 &lt;num&gt;                                &lt;char&gt;
-1:   Outcome_risk always A 0.3349403           0.004767184                      0.33 [0.33;0.34]
-2:   Outcome_risk  never A 0.3596512 32412113987.867225647 0.36 [-63526576078.67;63526576079.39]
-3: Outcome_risk_g always A 0.3349413           0.004767184                      0.33 [0.33;0.34]
-4: Outcome_risk_g  never A 0.3594489 32411831082.687652588 0.36 [-63526021594.70;63526021595.42]
+<p>
+Running target: Outcome<sub>risk</sub>&#x2026; Set argument verbose = FALSE to suppress this message.
+Current protocol: always A &#x2026; Set argument verbose = FALSE to suppress this message.
+Current protocol: never A &#x2026; Set argument verbose = FALSE to suppress this message.
+Warning messages:
+1: In tmle<sub>update</sub>(Y = Y, offset = W<sub>previous</sub>, intervention<sub>probs</sub> = inverse<sub>probability</sub><sub>weights</sub>,  :
+  No TMLE update because no subject has positive weight
+2: In tmle<sub>update</sub>(Y = Y, offset = W<sub>previous</sub>, intervention<sub>probs</sub> = inverse<sub>probability</sub><sub>weights</sub>,  :
+  No TMLE update because no subject has positive weight
+</p>
+
+<div class="org-src-container">
+<pre class="src src-R">summary(x)
 </pre>
+</div>
+
+<p>
+         Target Protocol Target<sub>parameter</sub> Time<sub>horizon</sub> Estimator   Estimate     P<sub>value</sub> Standard<sub>error</sub>        Lower       Upper
+         &lt;fctr&gt;   &lt;fctr&gt;           &lt;fctr&gt;        &lt;int&gt;    &lt;fctr&gt;      &lt;num&gt;       &lt;num&gt;          &lt;num&gt;        &lt;num&gt;       &lt;num&gt;
+1: Outcome<sub>risk</sub> always A             Risk            3      tmle 0.33494029 1.000000000    0.004767184 -0.009343509 0.009343509
+2: Outcome<sub>risk</sub>  never A             Risk            3      tmle 0.35940602 1.000000000    0.007959865 -0.015601048 0.015601048
+3: Outcome<sub>risk</sub>  never A  Risk<sub>difference</sub>            3      tmle 0.02446573 0.008367565    0.009278332  0.006280530 0.042650922
+4: Outcome<sub>risk</sub>  never A       Risk<sub>ratio</sub>            3      tmle 1.07304504 0.007408370    0.026326689  1.019080828 1.129866854
+   Estimate (CI<sub>95</sub>)
+             &lt;char&gt;
+1:   33.5 [0.0;0.9]
+2:   35.9 [0.0;1.6]
+3:    2.4 [0.6;4.3]
+4:    1.1 [1.0;1.1]
+</p>
 </div>
 </div>
 </div>
 </div>
 <div id="postamble" class="status">
-Last update: 30 Sep 2024 by Thomas Alexander Gerds.
+Last update: 10 Apr 2025 by Thomas Alexander Gerds.
 </div>
 </body>
 </html>

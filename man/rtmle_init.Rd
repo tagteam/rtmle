@@ -68,5 +68,5 @@ x <- rtmle_init(intervals=3,
 run_rtmle
 }
 \author{
-Thomas A. Gerds \href{mailto:tag@biostat.ku.dk}{tag@biostat.ku.dk}
+Thomas A. Gerds <tag@biostat.ku.dk>
 }

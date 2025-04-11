@@ -12,6 +12,7 @@ run_rtmle(
   refit = FALSE,
   seed = NULL,
   subsets = NULL,
+  keep_influence = TRUE,
   verbose = TRUE,
   ...
 )
@@ -35,15 +36,18 @@ function. Default is \code{FALSE}.}
 
 \item{seed}{Seed used for cross-fitting}
 
-\item{subsets}{A list structure for subset analyses. Each element is a list
-which requires a label, to name the subset, and a subset of the values
-of the variable \code{x$names$id} in the data \code{x$prepared_data} to
+\item{subsets}{A list structure for subset analyses. Each element is a list 
+which requires a label, to name the subset, and a subset of the 
+variable \code{x$names$id} in the data \code{x$prepared_data} to
 identify the subset. The results of the subset analysis are stored
-in \code{x$estimate[[subsets[[sub]]label]]}. An optional element of each
+in \code{x$estimate[[subsets[[label]]}. An optional element of each
 subset-list is called \code{append}
 which should be logical: if \code{TRUE} append the estimates to the existing
 estimates with rbind. This may be used for stratified analyses, to study seed dependence (Monte-Carlo error)
 and bootstrap. See examples.}
+
+\item{keep_influence}{Logical: if \code{TRUE} store the estimated influence function of the estimator in the object.
+Currently this argument is only used when argument \code{subsets} is also specified.}
 
 \item{verbose}{Logical. If \code{FALSE} suppress all messages.}
 
@@ -51,7 +55,7 @@ and bootstrap. See examples.}
 }
 \value{
 The modified object contains the fitted nuisance parameter
-models and the estimate of the target parameter.
+    models and the estimate of the target parameter.
 }
 \description{
 This function runs the analysis defined in previous steps.
@@ -87,9 +91,9 @@ summary(x)
 x <- run_rtmle(x,learner = "learn_glmnet",time_horizon = tau,
                verbose=FALSE,
                subsets=list(list(label="Sex",variable="Sex",
-                                 value="Female",id=x$prepared_data[sex==0,id]),
+                                 level="Female",id=x$prepared_data[sex==0,id]),
                        list(label="Sex",variable="Sex",
-                                 value="Male",id=x$prepared_data[sex==1,id])))
+                                 level="Male",id=x$prepared_data[sex==1,id])))
 }
 
 

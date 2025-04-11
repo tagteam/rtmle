@@ -45,7 +45,7 @@ and calculates an estimate.}
 Plot
 }
 \description{
-\code{compare_effects} is a function for computing a user specified estimate for three
+`compare_effects` is a function for computing a user specified estimate for three
 different effects of A0 on the intensity of L, and for a varying parameter.
 }
 \examples{

@@ -30,7 +30,7 @@ columns 2,4,... for  A0 = 1}
 Plot
 }
 \description{
-\code{plot_compare} is a function for plotting an estimates. It takes a matrix of estimates, and plots.
+`plot_compare` is a function for plotting an estimates. It takes a matrix of estimates, and plots.
 }
 \examples{
 # First we define an estimator

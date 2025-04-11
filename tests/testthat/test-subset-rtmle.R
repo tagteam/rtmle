@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Apr  8 2025 (14:47) 
 ## Version: 
-## Last-Updated: Apr 10 2025 (11:05) 
+## Last-Updated: Apr 11 2025 (11:54) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 17
+##     Update #: 20
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -23,7 +23,6 @@ test_that("run rtmle on a subset",{
     x <- rtmle_init(intervals = tau,name_id = "id",name_outcome = "Y",name_competing = "Dead",name_censoring = "Censored",censored_label = "censored")
     x$long_data <- ld[c("outcome_data","censored_data","competing_data","timevar_data")]
     add_baseline_data(x) <- ld$baseline_data[,start_followup_date:=0]
-    print(class(x))
     x <- long_to_wide(x,intervals = seq(0,2000,30.45*12))
     protocol(x) <- list(name = "Always_A",intervention = data.frame("A" = factor("1",levels = c("0","1"))),verbose = FALSE)
     protocol(x) <- list(name = "Never_A",intervention = data.frame("A" = factor("0",levels = c("0","1"))),verbose = FALSE)
@@ -50,6 +49,7 @@ test_that("run rtmle on a subset",{
     x1 <- run_rtmle(x1,learner = "learn_glmnet",time_horizon = 2,verbose = FALSE)
     x79 <- run_rtmle(x,learner = "learn_glmnet",time_horizon = 2,subsets = list(S = list(label = "S79",id = 1:79)),verbose = FALSE)
     ## rbind(x1$estimate[[1]][[1]],x79$estimate$S79[[1]][[1]])
+    data.table::setattr(x79$estimate$S79,"IC",NULL)
     expect_equal(x1$estimate$Main_analysis,x79$estimate$S79)
 })
 
@@ -67,8 +67,8 @@ test_that("stratified analyses",{
     target(x) <- list(name = "Outcome_risk",strategy = "additive",estimator = "tmle",protocols = c("Always_A","Never_A"))
     x <- run_rtmle(x,learner = "learn_glmnet",time_horizon = 1:tau,verbose = FALSE)
     # stratified analyses
-    sex_strata <- list(list(label="Sex",append = TRUE,variable="Sex",value="Female",id=x$prepared_data[sex==0,id]),
-                                list(label="Sex",append = TRUE,variable="Sex",value="Male",id=x$prepared_data[sex==1,id]))
+    sex_strata <- list(list(label="Sex",append = TRUE,variable="Sex",level="Female",id=x$prepared_data[sex==0,id]),
+                                list(label="Sex",append = TRUE,variable="Sex",level="Male",id=x$prepared_data[sex==1,id]))
     x <- run_rtmle(x,learner = "learn_glmnet",time_horizon = tau,verbose=FALSE,subsets=sex_strata)
 })
 

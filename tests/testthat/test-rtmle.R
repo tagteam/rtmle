@@ -12,7 +12,7 @@ test_that("run rtmle on simulated data",{
     protocol(x) <- list(name = "Always_A",treatment_variables = "A",intervention = 1)
     prepare_data(x) <- list(reset = TRUE)
     target(x) <- list(name = "Outcome_risk",strategy = "additive",estimator = "tmle",protocols = "Always_A")
-    suppressWarnings(x <- run_rtmle(x))
+    suppressWarnings(x <- run_rtmle(x,verbose = FALSE))
     expect_equal(x$estimate$Main_analysis$Estimate,0.220619,tolerance = 0.001)
     expect_equal(x$estimate$Main_analysis$Standard_error,0.01502242,tolerance = 0.001)
 })
@@ -29,7 +29,7 @@ test_that("run rtmle on without competing risks",{
     protocol(x) <- list(name = "Always_A",treatment_variables = "A",intervention = 1)
     prepare_data(x) <- list(reset = TRUE)
     target(x) <- list(name = "Outcome_risk",strategy = "additive",estimator = "tmle",protocols = "Always_A")
-    suppressWarnings(x <- run_rtmle(x))
+    suppressWarnings(x <- run_rtmle(x,verbose = FALSE))
     summary(x)
 })
 

@@ -8,6 +8,14 @@
 \description{
 Flexible implementation of the targeted minimum loss estimators. Some of the functions are readily optimized for large-scale register data.
 }
+\seealso{
+Useful links:
+\itemize{
+  \item \url{https://github.com/tagteam/rtmle}
+  \item Report bugs at \url{https://github.com/tagteam/rtmle/issues}
+}
+
+}
 \author{
 \strong{Maintainer}: Helene Charlotti Wiese Rytgaard \email{hely@sund.ku.dk}
 

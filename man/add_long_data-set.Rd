@@ -30,5 +30,5 @@ This function adds a list of datasets with dates and values in long format (mult
 \link[rtmle]{add_baseline_data<-}, \link[rtmle]{add_wide_data<-}
 }
 \author{
-Thomas A. Gerds \href{mailto:tag@biostat.ku.dk}{tag@biostat.ku.dk}
+Thomas A. Gerds <tag@biostat.ku.dk>
 }
