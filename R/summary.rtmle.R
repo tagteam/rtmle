@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 29 2024 (10:44) 
 ## Version: 
-## Last-Updated: Apr 11 2025 (14:14) 
+## Last-Updated: Apr 11 2025 (14:18) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 168
+##     Update #: 169
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -20,7 +20,7 @@
 #' If a target includes multiple protocols the results includes risk differences.
 #' @title Summarizing the results of a register data analysis with the targeted minimum loss estimator
 #' @param object Object to be summarized
-#' @param analyis Name of the analysis to be summarized
+#' @param analysis Name of the analysis to be summarized
 #' @param digits Number of decimals for the confidence intervals
 #' @param targets Names of targets for which to compute the summary. Defaults to all targets in the object.
 #' @param reference (Optional) Named list of reference protocols, one for each target.

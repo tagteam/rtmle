@@ -16,6 +16,8 @@
 \arguments{
 \item{object}{Object to be summarized}
 
+\item{analysis}{Name of the analysis to be summarized}
+
 \item{targets}{Names of targets for which to compute the summary. Defaults to all targets in the object.}
 
 \item{reference}{(Optional) Named list of reference protocols, one for each target.}
@@ -23,8 +25,6 @@
 \item{digits}{Number of decimals for the confidence intervals}
 
 \item{...}{not used}
-
-\item{analyis}{Name of the analysis to be summarized}
 }
 \description{
 For each target in the object the risk estimates are summarized in a table with their

@@ -149,6 +149,9 @@ Target Protocol Target_parameter Time_horizon Estimator Reference  Estimate Stan
 
 * TODO Diagnostic features
 ** Monte-Carlo error
+
+
+
 ** Bounding the inverse probability weights
 
 #+TITLE: Features of the R-package rtmle
