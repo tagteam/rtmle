@@ -1,0 +1,385 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<!-- 2025-04-11 Fri 14:16 -->
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Features of the R-package rtmle</title>
+<meta name="generator" content="Org Mode" />
+<style type="text/css">
+  #content { max-width: 60em; margin: auto; }
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #e6e6e6;
+    border-radius: 3px;
+    background-color: #f2f2f2;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: auto;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    top: -8px;
+    right: 12px;
+    padding: 3px;
+    color: #555;
+    background-color: #f2f2f299;
+  }
+  pre.src:hover:before { display: inline; margin-top: 14px;}
+  /* Languages per Org manual */
+  pre.src-asymptote:before { content: 'Asymptote'; }
+  pre.src-awk:before { content: 'Awk'; }
+  pre.src-authinfo::before { content: 'Authinfo'; }
+  pre.src-C:before { content: 'C'; }
+  /* pre.src-C++ doesn't work in CSS */
+  pre.src-clojure:before { content: 'Clojure'; }
+  pre.src-css:before { content: 'CSS'; }
+  pre.src-D:before { content: 'D'; }
+  pre.src-ditaa:before { content: 'ditaa'; }
+  pre.src-dot:before { content: 'Graphviz'; }
+  pre.src-calc:before { content: 'Emacs Calc'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-fortran:before { content: 'Fortran'; }
+  pre.src-gnuplot:before { content: 'gnuplot'; }
+  pre.src-haskell:before { content: 'Haskell'; }
+  pre.src-hledger:before { content: 'hledger'; }
+  pre.src-java:before { content: 'Java'; }
+  pre.src-js:before { content: 'Javascript'; }
+  pre.src-latex:before { content: 'LaTeX'; }
+  pre.src-ledger:before { content: 'Ledger'; }
+  pre.src-lisp:before { content: 'Lisp'; }
+  pre.src-lilypond:before { content: 'Lilypond'; }
+  pre.src-lua:before { content: 'Lua'; }
+  pre.src-matlab:before { content: 'MATLAB'; }
+  pre.src-mscgen:before { content: 'Mscgen'; }
+  pre.src-ocaml:before { content: 'Objective Caml'; }
+  pre.src-octave:before { content: 'Octave'; }
+  pre.src-org:before { content: 'Org mode'; }
+  pre.src-oz:before { content: 'OZ'; }
+  pre.src-plantuml:before { content: 'Plantuml'; }
+  pre.src-processing:before { content: 'Processing.js'; }
+  pre.src-python:before { content: 'Python'; }
+  pre.src-R:before { content: 'R'; }
+  pre.src-ruby:before { content: 'Ruby'; }
+  pre.src-sass:before { content: 'Sass'; }
+  pre.src-scheme:before { content: 'Scheme'; }
+  pre.src-screen:before { content: 'Gnu Screen'; }
+  pre.src-sed:before { content: 'Sed'; }
+  pre.src-sh:before { content: 'shell'; }
+  pre.src-sql:before { content: 'SQL'; }
+  pre.src-sqlite:before { content: 'SQLite'; }
+  /* additional languages in org.el's org-babel-load-languages alist */
+  pre.src-forth:before { content: 'Forth'; }
+  pre.src-io:before { content: 'IO'; }
+  pre.src-J:before { content: 'J'; }
+  pre.src-makefile:before { content: 'Makefile'; }
+  pre.src-maxima:before { content: 'Maxima'; }
+  pre.src-perl:before { content: 'Perl'; }
+  pre.src-picolisp:before { content: 'Pico Lisp'; }
+  pre.src-scala:before { content: 'Scala'; }
+  pre.src-shell:before { content: 'Shell Script'; }
+  pre.src-ebnf2ps:before { content: 'ebfn2ps'; }
+  /* additional language identifiers per "defun org-babel-execute"
+       in ob-*.el */
+  pre.src-cpp:before  { content: 'C++'; }
+  pre.src-abc:before  { content: 'ABC'; }
+  pre.src-coq:before  { content: 'Coq'; }
+  pre.src-groovy:before  { content: 'Groovy'; }
+  /* additional language identifiers from org-babel-shell-names in
+     ob-shell.el: ob-shell is the only babel language using a lambda to put
+     the execution function name together. */
+  pre.src-bash:before  { content: 'bash'; }
+  pre.src-csh:before  { content: 'csh'; }
+  pre.src-ash:before  { content: 'ash'; }
+  pre.src-dash:before  { content: 'dash'; }
+  pre.src-ksh:before  { content: 'ksh'; }
+  pre.src-mksh:before  { content: 'mksh'; }
+  pre.src-posh:before  { content: 'posh'; }
+  /* Additional Emacs modes also supported by the LaTeX listings package */
+  pre.src-ada:before { content: 'Ada'; }
+  pre.src-asm:before { content: 'Assembler'; }
+  pre.src-caml:before { content: 'Caml'; }
+  pre.src-delphi:before { content: 'Delphi'; }
+  pre.src-html:before { content: 'HTML'; }
+  pre.src-idl:before { content: 'IDL'; }
+  pre.src-mercury:before { content: 'Mercury'; }
+  pre.src-metapost:before { content: 'MetaPost'; }
+  pre.src-modula-2:before { content: 'Modula-2'; }
+  pre.src-pascal:before { content: 'Pascal'; }
+  pre.src-ps:before { content: 'PostScript'; }
+  pre.src-prolog:before { content: 'Prolog'; }
+  pre.src-simula:before { content: 'Simula'; }
+  pre.src-tcl:before { content: 'tcl'; }
+  pre.src-tex:before { content: 'TeX'; }
+  pre.src-plain-tex:before { content: 'Plain TeX'; }
+  pre.src-verilog:before { content: 'Verilog'; }
+  pre.src-vhdl:before { content: 'VHDL'; }
+  pre.src-xml:before { content: 'XML'; }
+  pre.src-nxml:before { content: 'XML'; }
+  /* add a generic configuration mode; LaTeX export needs an additional
+     (add-to-list 'org-latex-listings-langs '(conf " ")) in .emacs */
+  pre.src-conf:before { content: 'Configuration File'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .equation-container {
+    display: table;
+    text-align: center;
+    width: 100%;
+  }
+  .equation {
+    vertical-align: middle;
+  }
+  .equation-label {
+    display: table-cell;
+    text-align: right;
+    vertical-align: middle;
+  }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  .org-svg { }
+</style>
+<link rel="stylesheet" type="text/css" href="https://publicifsv.sund.ku.dk/~tag/styles/practicals.css" />
+</head>
+<body>
+<div id="preamble" class="status">
+<br>Thomas Alexander Gerds
+</div>
+<div id="content" class="content">
+<h1 class="title">Features of the R-package rtmle</h1>
+<div id="outline-container-org9a2ba0b" class="outline-2">
+<h2 id="org9a2ba0b"><span class="section-number-2">1.</span> About</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+The R-package <code>rtmle</code> implements a class of targeted minimum loss
+estimators for the analysis of longitudinal register data. The
+functionality is similar to the established R-package <code>ltmle</code>.  In
+this document we illustrate some of the features of <code>rtmle</code>.
+</p>
+</div>
+</div>
+<div id="outline-container-orgaf35d3a" class="outline-2">
+<h2 id="orgaf35d3a"><span class="section-number-2">2.</span> Analytic features</h2>
+<div class="outline-text-2" id="text-2">
+</div>
+<div id="outline-container-org3899d68" class="outline-3">
+<h3 id="org3899d68"><span class="section-number-3">2.1.</span> Sub-group analyses</h3>
+<div class="outline-text-3" id="text-2-1">
+<div class="org-src-container">
+<pre class="src src-R"><span style="color: #BFEBBF;">library</span>(rtmle)
+tau <span style="color: #BFEBBF;">&lt;-</span> 2
+set.seed(17)
+ld <span style="color: #BFEBBF;">&lt;-</span> simulate_long_data(n = 91,number_visits = 20,beta = list(A_on_Y = -.2,A0_on_Y = -0.3,A0_on_A = 6),register_format = <span style="color: #7CB8BB;">TRUE</span>)
+x <span style="color: #BFEBBF;">&lt;-</span> rtmle_init(intervals = tau,name_id = <span style="color: #CC9393;">"id"</span>,name_outcome = <span style="color: #CC9393;">"Y"</span>,name_competing = <span style="color: #CC9393;">"Dead"</span>,name_censoring = <span style="color: #CC9393;">"Censored"</span>,censored_label = <span style="color: #CC9393;">"censored"</span>)
+x$long_data <span style="color: #BFEBBF;">&lt;-</span> ld[c(<span style="color: #CC9393;">"outcome_data"</span>,<span style="color: #CC9393;">"censored_data"</span>,<span style="color: #CC9393;">"competing_data"</span>,<span style="color: #CC9393;">"timevar_data"</span>)]
+add_baseline_data(x) <span style="color: #BFEBBF;">&lt;-</span> ld$baseline_data[,start_followup_date:=0]
+x <span style="color: #BFEBBF;">&lt;-</span> long_to_wide(x,intervals = seq(0,2000,30.45*12))
+protocol(x) <span style="color: #BFEBBF;">&lt;-</span> list(name = <span style="color: #CC9393;">"Always_A"</span>,intervention = data.frame(<span style="color: #CC9393;">"A"</span> = factor(<span style="color: #CC9393;">"1"</span>,levels = c(<span style="color: #CC9393;">"0"</span>,<span style="color: #CC9393;">"1"</span>))),verbose = <span style="color: #7CB8BB;">FALSE</span>)
+protocol(x) <span style="color: #BFEBBF;">&lt;-</span> list(name = <span style="color: #CC9393;">"Never_A"</span>,intervention = data.frame(<span style="color: #CC9393;">"A"</span> = factor(<span style="color: #CC9393;">"0"</span>,levels = c(<span style="color: #CC9393;">"0"</span>,<span style="color: #CC9393;">"1"</span>))),verbose = <span style="color: #7CB8BB;">FALSE</span>)
+prepare_data(x) <span style="color: #BFEBBF;">&lt;-</span> list()
+target(x) <span style="color: #BFEBBF;">&lt;-</span> list(name = <span style="color: #CC9393;">"Outcome_risk"</span>,strategy = <span style="color: #CC9393;">"additive"</span>,estimator = <span style="color: #CC9393;">"tmle"</span>,protocols = c(<span style="color: #CC9393;">"Always_A"</span>,<span style="color: #CC9393;">"Never_A"</span>))
+<span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">the overall analysis is stored as estimate$Main_analysis</span>
+x <span style="color: #BFEBBF;">&lt;-</span> run_rtmle(x,learner = <span style="color: #CC9393;">"learn_glmnet"</span>,time_horizon = 1:tau,verbose = <span style="color: #7CB8BB;">FALSE</span>)
+<span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">subset analysis</span>
+x <span style="color: #BFEBBF;">&lt;-</span> run_rtmle(x,
+               learner = <span style="color: #CC9393;">"learn_glmnet"</span>,
+               time_horizon = tau,
+               verbose=<span style="color: #7CB8BB;">FALSE</span>,
+               subsets=list(list(label = <span style="color: #CC9393;">"Old_age"</span>,
+                                 id = x$prepared_data[age&gt;50,id],
+                                 variable = <span style="color: #CC9393;">"subset"</span>,
+                                 value = <span style="color: #CC9393;">"age &gt; 50"</span>)))
+summary(x,analysis = <span style="color: #CC9393;">"Old_age"</span>)
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-org799426b" class="outline-3">
+<h3 id="org799426b"><span class="section-number-3">2.2.</span> Strata defined by sex</h3>
+<div class="outline-text-3" id="text-2-2">
+<div class="org-src-container">
+<pre class="src src-R"><span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">stratified analyses</span>
+sex_strata <span style="color: #BFEBBF;">&lt;-</span> list(list(label=<span style="color: #CC9393;">"Sex"</span>,append = <span style="color: #7CB8BB;">TRUE</span>,variable=<span style="color: #CC9393;">"Sex"</span>,level=<span style="color: #CC9393;">"Female"</span>,id=x$prepared_data[sex==0,id]),
+                   list(label=<span style="color: #CC9393;">"Sex"</span>,append = <span style="color: #7CB8BB;">TRUE</span>,variable=<span style="color: #CC9393;">"Sex"</span>,level=<span style="color: #CC9393;">"Male"</span>,id=x$prepared_data[sex==1,id]))
+x$estimate$Sex <span style="color: #BFEBBF;">&lt;-</span> <span style="color: #7CB8BB;">NULL</span>
+x <span style="color: #BFEBBF;">&lt;-</span> run_rtmle(x,learner = <span style="color: #CC9393;">"learn_glmnet"</span>,time_horizon = tau,verbose=<span style="color: #7CB8BB;">FALSE</span>,subsets=sex_strata,keep_influence = <span style="color: #7CB8BB;">TRUE</span>)
+summary(x,analysis =<span style="color: #CC9393;">"Sex"</span>)
+</pre>
+</div>
+
+<p>
+subset       Target Protocol Target<sub>parameter</sub> Time<sub>horizon</sub> Estimator Reference  Estimate Standard<sub>error</sub> Lower Upper P<sub>value</sub>
+   &lt;char&gt;       &lt;char&gt;   &lt;char&gt;           &lt;char&gt;        &lt;num&gt;    &lt;fctr&gt;    &lt;char&gt;     &lt;num&gt;          &lt;num&gt; &lt;num&gt; &lt;num&gt;   &lt;num&gt;
+1:        Outcome<sub>risk</sub>  Never<sub>A</sub>  Risk<sub>difference</sub>            2      tmle  Always<sub>A</sub> 0.2769242             NA    NA    NA      NA
+2:        Outcome<sub>risk</sub>  Never<sub>A</sub>       Risk<sub>ratio</sub>            2      tmle  Always<sub>A</sub> 2.5308787             NA    NA    NA      NA
+   subset       Target Protocol Target<sub>parameter</sub> Time<sub>horizon</sub> Estimator  Estimate P<sub>value</sub> Standard<sub>error</sub>      Lower     Upper Estimate (CI<sub>95</sub>)
+   &lt;char&gt;       &lt;fctr&gt;   &lt;fctr&gt;           &lt;fctr&gt;        &lt;num&gt;    &lt;fctr&gt;     &lt;num&gt;   &lt;num&gt;          &lt;num&gt;      &lt;num&gt;     &lt;num&gt;           &lt;char&gt;
+1:        Outcome<sub>risk</sub> Always<sub>A</sub>             Risk            2      tmle 0.1808923       1     0.08365928 0.01692313 0.3448615  18.1 [1.7;34.5]
+2:        Outcome<sub>risk</sub>  Never<sub>A</sub>             Risk            2      tmle 0.4578165       1     0.09533059 0.27097199 0.6446610 45.8 [27.1;64.5]
+3:        Outcome<sub>risk</sub>  Never<sub>A</sub>  Risk<sub>difference</sub>            2      tmle 0.2769242      NA             NA         NA        NA     27.7 [NA;NA]
+4:        Outcome<sub>risk</sub>  Never<sub>A</sub>       Risk<sub>ratio</sub>            2      tmle 2.5308787      NA             NA         NA        NA      2.5 [NA;NA]
+   Reference
+      &lt;char&gt;
+1:          
+2:          
+3:  Always<sub>A</sub>
+4:  Always<sub>A</sub>
+Sex       Target Protocol Target<sub>parameter</sub> Time<sub>horizon</sub> Estimator Reference  Estimate Standard<sub>error</sub>      Lower      Upper    P<sub>value</sub>
+   &lt;char&gt;       &lt;char&gt;   &lt;char&gt;           &lt;char&gt;        &lt;num&gt;    &lt;fctr&gt;    &lt;char&gt;     &lt;num&gt;          &lt;num&gt;      &lt;num&gt;      &lt;num&gt;      &lt;num&gt;
+1: Female Outcome<sub>risk</sub>  Never<sub>A</sub>  Risk<sub>difference</sub>            2      tmle  Always<sub>A</sub> 0.3544266      0.1415425 0.07700836  0.6318449 0.01227879
+2: Female Outcome<sub>risk</sub>  Never<sub>A</sub>       Risk<sub>ratio</sub>            2      tmle  Always<sub>A</sub> 3.2159465      0.5788303 1.03420729 10.0002309 0.04358366
+      Sex       Target Protocol Target<sub>parameter</sub> Time<sub>horizon</sub> Estimator Reference  Estimate Standard<sub>error</sub>      Lower     Upper   P<sub>value</sub>
+   &lt;char&gt;       &lt;char&gt;   &lt;char&gt;           &lt;char&gt;        &lt;num&gt;    &lt;fctr&gt;    &lt;char&gt;     &lt;num&gt;          &lt;num&gt;      &lt;num&gt;     &lt;num&gt;     &lt;num&gt;
+1:   Male Outcome<sub>risk</sub>  Never<sub>A</sub>  Risk<sub>difference</sub>            2      tmle  Always<sub>A</sub> 0.0667422      0.1248143 -0.1778894 0.3113738 0.5928352
+2:   Male Outcome<sub>risk</sub>  Never<sub>A</sub>       Risk<sub>ratio</sub>            2      tmle  Always<sub>A</sub> 1.2771494      0.4571470  0.5213357 3.1287146 0.5925638
+      Sex       Target Protocol Target<sub>parameter</sub> Time<sub>horizon</sub> Estimator  Estimate    P<sub>value</sub> Standard<sub>error</sub>       Lower      Upper
+   &lt;char&gt;       &lt;fctr&gt;   &lt;fctr&gt;           &lt;fctr&gt;        &lt;num&gt;    &lt;fctr&gt;     &lt;num&gt;      &lt;num&gt;          &lt;num&gt;       &lt;num&gt;      &lt;num&gt;
+1: Female Outcome<sub>risk</sub> Always<sub>A</sub>             Risk            2      tmle 0.1599437 1.00000000     0.08571434 -0.00805336  0.3279407
+2: Female Outcome<sub>risk</sub>  Never<sub>A</sub>             Risk            2      tmle 0.5143703 1.00000000     0.11269172  0.29349856  0.7352420
+3: Female Outcome<sub>risk</sub>  Never<sub>A</sub>  Risk<sub>difference</sub>            2      tmle 0.3544266 0.01227879     0.14154252  0.07700836  0.6318449
+4: Female Outcome<sub>risk</sub>  Never<sub>A</sub>       Risk<sub>ratio</sub>            2      tmle 3.2159465 0.04358366     0.57883027  1.03420729 10.0002309
+5:   Male Outcome<sub>risk</sub> Always<sub>A</sub>             Risk            2      tmle 0.2408167 1.00000000     0.09987795  0.04505952  0.4365739
+6:   Male Outcome<sub>risk</sub>  Never<sub>A</sub>             Risk            2      tmle 0.3075589 1.00000000     0.11581949  0.08055688  0.5345609
+7:   Male Outcome<sub>risk</sub>  Never<sub>A</sub>  Risk<sub>difference</sub>            2      tmle 0.0667422 0.59283523     0.12481432 -0.17788936  0.3113738
+8:   Male Outcome<sub>risk</sub>  Never<sub>A</sub>       Risk<sub>ratio</sub>            2      tmle 1.2771494 0.59256381     0.45714703  0.52133567  3.1287146
+   Estimate (CI<sub>95</sub>) Reference
+             &lt;char&gt;    &lt;char&gt;
+1:  16.0 [0.0;32.8]          
+2: 51.4 [29.3;73.5]          
+3:  35.4 [7.7;63.2]  Always<sub>A</sub>
+4:   3.2 [1.0;10.0]  Always<sub>A</sub>
+5:  24.1 [4.5;43.7]          
+6:  30.8 [8.1;53.5]          
+7:   6.7 [0.0;31.1]  Always<sub>A</sub>
+8:    1.3 [0.5;3.1]  Always<sub>A</sub>
+</p>
+</div>
+</div>
+<div id="outline-container-org2635271" class="outline-3">
+<h3 id="org2635271"><span class="section-number-3">2.3.</span> Cheap bootstrap confidence intervals</h3>
+<div class="outline-text-3" id="text-2-3">
+<p>
+The cheap bootstrap confidence intervals have good coverage already
+with few bootstrap data sets, see <a href="https://arxiv.org/abs/2501.10289">https://arxiv.org/abs/2501.10289</a>
+Note: The cheap bootstrap confidence intervals are currently only
+computed for the main analysis.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-R">tau <span style="color: #BFEBBF;">&lt;-</span> 2
+set.seed(17)
+ld <span style="color: #BFEBBF;">&lt;-</span> simulate_long_data(n = 91,number_visits = 20,beta = list(A_on_Y = -.2,A0_on_Y = -0.3,A0_on_A = 6),register_format = <span style="color: #7CB8BB;">TRUE</span>)
+x <span style="color: #BFEBBF;">&lt;-</span> rtmle_init(intervals = tau,name_id = <span style="color: #CC9393;">"id"</span>,name_outcome = <span style="color: #CC9393;">"Y"</span>,name_competing = <span style="color: #CC9393;">"Dead"</span>,name_censoring = <span style="color: #CC9393;">"Censored"</span>,censored_label = <span style="color: #CC9393;">"censored"</span>)
+x$long_data <span style="color: #BFEBBF;">&lt;-</span> ld[c(<span style="color: #CC9393;">"outcome_data"</span>,<span style="color: #CC9393;">"censored_data"</span>,<span style="color: #CC9393;">"competing_data"</span>,<span style="color: #CC9393;">"timevar_data"</span>)]
+add_baseline_data(x) <span style="color: #BFEBBF;">&lt;-</span> ld$baseline_data[,start_followup_date:=0]
+x <span style="color: #BFEBBF;">&lt;-</span> long_to_wide(x,intervals = seq(0,2000,30.45*12))
+protocol(x) <span style="color: #BFEBBF;">&lt;-</span> list(name = <span style="color: #CC9393;">"Always_A"</span>,intervention = data.frame(<span style="color: #CC9393;">"A"</span> = factor(<span style="color: #CC9393;">"1"</span>,levels = c(<span style="color: #CC9393;">"0"</span>,<span style="color: #CC9393;">"1"</span>))),verbose = <span style="color: #7CB8BB;">FALSE</span>)
+protocol(x) <span style="color: #BFEBBF;">&lt;-</span> list(name = <span style="color: #CC9393;">"Never_A"</span>,intervention = data.frame(<span style="color: #CC9393;">"A"</span> = factor(<span style="color: #CC9393;">"0"</span>,levels = c(<span style="color: #CC9393;">"0"</span>,<span style="color: #CC9393;">"1"</span>))),verbose = <span style="color: #7CB8BB;">FALSE</span>)
+prepare_data(x) <span style="color: #BFEBBF;">&lt;-</span> list()
+target(x) <span style="color: #BFEBBF;">&lt;-</span> list(name = <span style="color: #CC9393;">"Outcome_risk"</span>,strategy = <span style="color: #CC9393;">"additive"</span>,estimator = <span style="color: #CC9393;">"tmle"</span>,protocols = c(<span style="color: #CC9393;">"Always_A"</span>,<span style="color: #CC9393;">"Never_A"</span>))
+<span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">the overall analysis is stored as estimate$Main_analysis</span>
+x <span style="color: #BFEBBF;">&lt;-</span> run_rtmle(x,learner = <span style="color: #CC9393;">"learn_glmnet"</span>,time_horizon = tau,verbose = <span style="color: #7CB8BB;">FALSE</span>)
+<span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">the bootstrap results are stored as estimate$Cheap_bootstrap</span>
+x$estimate$Cheap_bootstrap <span style="color: #BFEBBF;">&lt;-</span> <span style="color: #7CB8BB;">NULL</span>
+x <span style="color: #BFEBBF;">&lt;-</span> cheap_bootstrap(x,add = <span style="color: #7CB8BB;">FALSE</span>,B = 5,M = 0.632*NROW(x$prepared_data))
+summary(x)
+</pre>
+</div>
+
+<p>
+Target Protocol Target<sub>parameter</sub> Time<sub>horizon</sub> Estimator Reference  Estimate Standard<sub>error</sub>      Lower     Upper     P<sub>value</sub>
+         &lt;char&gt;   &lt;char&gt;           &lt;char&gt;        &lt;num&gt;    &lt;fctr&gt;    &lt;char&gt;     &lt;num&gt;          &lt;num&gt;      &lt;num&gt;     &lt;num&gt;       &lt;num&gt;
+1: Outcome<sub>risk</sub>  Never<sub>A</sub>  Risk<sub>difference</sub>            2      tmle  Always<sub>A</sub> 0.2127392      0.0709929 0.07359572 0.3518828 0.002729844
+2: Outcome<sub>risk</sub>  Never<sub>A</sub>       Risk<sub>ratio</sub>            2      tmle  Always<sub>A</sub> 2.0777129      0.3596420 1.02673349 4.2044902 0.042020065
+   Bootstrap<sub>lower</sub> Bootstrap<sub>upper</sub> Bootstrap<sub>standard</sub><sub>error</sub>
+             &lt;num&gt;           &lt;num&gt;                    &lt;num&gt;
+1:       0.1935653       0.2319132               0.07544362
+2:       1.6632658       2.5954306               0.25699049
+         Target Protocol Time<sub>horizon</sub> Bootstrap<sub>standard</sub><sub>error</sub> Bootstrap<sub>lower</sub> Bootstrap<sub>upper</sub> Target<sub>parameter</sub> Estimator  Estimate     P<sub>value</sub>
+         &lt;fctr&gt;   &lt;fctr&gt;        &lt;num&gt;                    &lt;num&gt;           &lt;num&gt;           &lt;num&gt;           &lt;fctr&gt;    &lt;fctr&gt;     &lt;num&gt;       &lt;num&gt;
+1: Outcome<sub>risk</sub> Always<sub>A</sub>            2               0.05335699       0.1878081       0.2069895             Risk      tmle 0.1973988 1.000000000
+2: Outcome<sub>risk</sub>  Never<sub>A</sub>            2               0.09994665       0.3764867       0.4437894             Risk      tmle 0.4101380 1.000000000
+3: Outcome<sub>risk</sub>  Never<sub>A</sub>            2               0.07544362       0.1935653       0.2319132  Risk<sub>difference</sub>      tmle 0.2127392 0.002729844
+4: Outcome<sub>risk</sub>  Never<sub>A</sub>            2               0.25699049       1.6632658       2.5954306       Risk<sub>ratio</sub>      tmle 2.0777129 0.042020065
+   Standard<sub>error</sub>      Lower     Upper Estimate (CI<sub>95</sub>) Reference
+            &lt;num&gt;      &lt;num&gt;     &lt;num&gt;           &lt;char&gt;    &lt;char&gt;
+1:     0.07099290 0.05825528 0.3365423  19.7 [5.8;33.7]          
+2:     0.08700837 0.23960478 0.5806713 41.0 [24.0;58.1]          
+3:     0.07099290 0.07359572 0.3518828  21.3 [7.4;35.2]  Always<sub>A</sub>
+4:     0.35964198 1.02673349 4.2044902    2.1 [1.0;4.2]  Always<sub>A</sub>
+</p>
+</div>
+</div>
+</div>
+<div id="outline-container-org419a638" class="outline-2">
+<h2 id="org419a638"><span class="section-number-2">3.</span> <span class="todo TODO">TODO</span> Diagnostic features</h2>
+<div class="outline-text-2" id="text-3">
+</div>
+<div id="outline-container-org99977ca" class="outline-3">
+<h3 id="org99977ca"><span class="section-number-3">3.1.</span> Monte-Carlo error</h3>
+</div>
+<div id="outline-container-org2fac643" class="outline-3">
+<h3 id="org2fac643"><span class="section-number-3">3.2.</span> Bounding the inverse probability weights</h3>
+<div class="outline-text-3" id="text-3-2">
+</div>
+</div>
+</div>
+</div>
+<div id="postamble" class="status">
+Last update: 11 Apr 2025 by Thomas Alexander Gerds.
+</div>
+</body>
+</html>

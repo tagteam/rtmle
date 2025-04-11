@@ -1,0 +1,165 @@
+* About
+
+The R-package =rtmle= implements a class of targeted minimum loss
+estimators for the analysis of longitudinal register data. The
+functionality is similar to the established R-package =ltmle=.  In
+this document we illustrate some of the features of =rtmle=.
+
+* Analytic features
+
+** Sub-group analyses
+
+#+ATTR_LATEX: :options otherkeywords={}, deletekeywords={}
+#+BEGIN_SRC R  :results output raw drawer  :exports both  :session *R* :cache yes  
+library(rtmle)
+tau <- 2
+set.seed(17)
+ld <- simulate_long_data(n = 91,number_visits = 20,beta = list(A_on_Y = -.2,A0_on_Y = -0.3,A0_on_A = 6),register_format = TRUE)
+x <- rtmle_init(intervals = tau,name_id = "id",name_outcome = "Y",name_competing = "Dead",name_censoring = "Censored",censored_label = "censored")
+x$long_data <- ld[c("outcome_data","censored_data","competing_data","timevar_data")]
+add_baseline_data(x) <- ld$baseline_data[,start_followup_date:=0]
+x <- long_to_wide(x,intervals = seq(0,2000,30.45*12))
+protocol(x) <- list(name = "Always_A",intervention = data.frame("A" = factor("1",levels = c("0","1"))),verbose = FALSE)
+protocol(x) <- list(name = "Never_A",intervention = data.frame("A" = factor("0",levels = c("0","1"))),verbose = FALSE)
+prepare_data(x) <- list()
+target(x) <- list(name = "Outcome_risk",strategy = "additive",estimator = "tmle",protocols = c("Always_A","Never_A"))
+# the overall analysis is stored as estimate$Main_analysis
+x <- run_rtmle(x,learner = "learn_glmnet",time_horizon = 1:tau,verbose = FALSE)
+# subset analysis
+x <- run_rtmle(x,
+               learner = "learn_glmnet",
+               time_horizon = tau,
+               verbose=FALSE,
+               subsets=list(list(label = "Old_age",
+                                 id = x$prepared_data[age>50,id],
+                                 variable = "subset",
+                                 value = "age > 50")))
+summary(x,analysis = "Old_age")
+#+END_SRC
+** Strata defined by sex
+
+#+BEGIN_SRC R  :results output raw drawer  :exports both  :session *R* :cache yes  
+# stratified analyses
+sex_strata <- list(list(label="Sex",append = TRUE,variable="Sex",level="Female",id=x$prepared_data[sex==0,id]),
+                   list(label="Sex",append = TRUE,variable="Sex",level="Male",id=x$prepared_data[sex==1,id]))
+x$estimate$Sex <- NULL
+x <- run_rtmle(x,learner = "learn_glmnet",time_horizon = tau,verbose=FALSE,subsets=sex_strata,keep_influence = TRUE)
+summary(x,analysis ="Sex")
+#+END_SRC
+
+#+RESULTS:
+:results:
+subset       Target Protocol Target_parameter Time_horizon Estimator Reference  Estimate Standard_error Lower Upper P_value
+   <char>       <char>   <char>           <char>        <num>    <fctr>    <char>     <num>          <num> <num> <num>   <num>
+1:        Outcome_risk  Never_A  Risk_difference            2      tmle  Always_A 0.2769242             NA    NA    NA      NA
+2:        Outcome_risk  Never_A       Risk_ratio            2      tmle  Always_A 2.5308787             NA    NA    NA      NA
+   subset       Target Protocol Target_parameter Time_horizon Estimator  Estimate P_value Standard_error      Lower     Upper Estimate (CI_95)
+   <char>       <fctr>   <fctr>           <fctr>        <num>    <fctr>     <num>   <num>          <num>      <num>     <num>           <char>
+1:        Outcome_risk Always_A             Risk            2      tmle 0.1808923       1     0.08365928 0.01692313 0.3448615  18.1 [1.7;34.5]
+2:        Outcome_risk  Never_A             Risk            2      tmle 0.4578165       1     0.09533059 0.27097199 0.6446610 45.8 [27.1;64.5]
+3:        Outcome_risk  Never_A  Risk_difference            2      tmle 0.2769242      NA             NA         NA        NA     27.7 [NA;NA]
+4:        Outcome_risk  Never_A       Risk_ratio            2      tmle 2.5308787      NA             NA         NA        NA      2.5 [NA;NA]
+   Reference
+      <char>
+1:          
+2:          
+3:  Always_A
+4:  Always_A
+Sex       Target Protocol Target_parameter Time_horizon Estimator Reference  Estimate Standard_error      Lower      Upper    P_value
+   <char>       <char>   <char>           <char>        <num>    <fctr>    <char>     <num>          <num>      <num>      <num>      <num>
+1: Female Outcome_risk  Never_A  Risk_difference            2      tmle  Always_A 0.3544266      0.1415425 0.07700836  0.6318449 0.01227879
+2: Female Outcome_risk  Never_A       Risk_ratio            2      tmle  Always_A 3.2159465      0.5788303 1.03420729 10.0002309 0.04358366
+      Sex       Target Protocol Target_parameter Time_horizon Estimator Reference  Estimate Standard_error      Lower     Upper   P_value
+   <char>       <char>   <char>           <char>        <num>    <fctr>    <char>     <num>          <num>      <num>     <num>     <num>
+1:   Male Outcome_risk  Never_A  Risk_difference            2      tmle  Always_A 0.0667422      0.1248143 -0.1778894 0.3113738 0.5928352
+2:   Male Outcome_risk  Never_A       Risk_ratio            2      tmle  Always_A 1.2771494      0.4571470  0.5213357 3.1287146 0.5925638
+      Sex       Target Protocol Target_parameter Time_horizon Estimator  Estimate    P_value Standard_error       Lower      Upper
+   <char>       <fctr>   <fctr>           <fctr>        <num>    <fctr>     <num>      <num>          <num>       <num>      <num>
+1: Female Outcome_risk Always_A             Risk            2      tmle 0.1599437 1.00000000     0.08571434 -0.00805336  0.3279407
+2: Female Outcome_risk  Never_A             Risk            2      tmle 0.5143703 1.00000000     0.11269172  0.29349856  0.7352420
+3: Female Outcome_risk  Never_A  Risk_difference            2      tmle 0.3544266 0.01227879     0.14154252  0.07700836  0.6318449
+4: Female Outcome_risk  Never_A       Risk_ratio            2      tmle 3.2159465 0.04358366     0.57883027  1.03420729 10.0002309
+5:   Male Outcome_risk Always_A             Risk            2      tmle 0.2408167 1.00000000     0.09987795  0.04505952  0.4365739
+6:   Male Outcome_risk  Never_A             Risk            2      tmle 0.3075589 1.00000000     0.11581949  0.08055688  0.5345609
+7:   Male Outcome_risk  Never_A  Risk_difference            2      tmle 0.0667422 0.59283523     0.12481432 -0.17788936  0.3113738
+8:   Male Outcome_risk  Never_A       Risk_ratio            2      tmle 1.2771494 0.59256381     0.45714703  0.52133567  3.1287146
+   Estimate (CI_95) Reference
+             <char>    <char>
+1:  16.0 [0.0;32.8]          
+2: 51.4 [29.3;73.5]          
+3:  35.4 [7.7;63.2]  Always_A
+4:   3.2 [1.0;10.0]  Always_A
+5:  24.1 [4.5;43.7]          
+6:  30.8 [8.1;53.5]          
+7:   6.7 [0.0;31.1]  Always_A
+8:    1.3 [0.5;3.1]  Always_A
+:end:
+
+** Cheap bootstrap confidence intervals
+
+The cheap bootstrap confidence intervals have good coverage already
+with few bootstrap data sets, see https://arxiv.org/abs/2501.10289
+Note: The cheap bootstrap confidence intervals are currently only
+computed for the main analysis.
+
+#+ATTR_LATEX: :options otherkeywords={}, deletekeywords={}
+#+BEGIN_SRC R  :results output raw drawer  :exports both  :session *R* :cache yes  
+tau <- 2
+set.seed(17)
+ld <- simulate_long_data(n = 91,number_visits = 20,beta = list(A_on_Y = -.2,A0_on_Y = -0.3,A0_on_A = 6),register_format = TRUE)
+x <- rtmle_init(intervals = tau,name_id = "id",name_outcome = "Y",name_competing = "Dead",name_censoring = "Censored",censored_label = "censored")
+x$long_data <- ld[c("outcome_data","censored_data","competing_data","timevar_data")]
+add_baseline_data(x) <- ld$baseline_data[,start_followup_date:=0]
+x <- long_to_wide(x,intervals = seq(0,2000,30.45*12))
+protocol(x) <- list(name = "Always_A",intervention = data.frame("A" = factor("1",levels = c("0","1"))),verbose = FALSE)
+protocol(x) <- list(name = "Never_A",intervention = data.frame("A" = factor("0",levels = c("0","1"))),verbose = FALSE)
+prepare_data(x) <- list()
+target(x) <- list(name = "Outcome_risk",strategy = "additive",estimator = "tmle",protocols = c("Always_A","Never_A"))
+# the overall analysis is stored as estimate$Main_analysis
+x <- run_rtmle(x,learner = "learn_glmnet",time_horizon = tau,verbose = FALSE)
+# the bootstrap results are stored as estimate$Cheap_bootstrap
+x$estimate$Cheap_bootstrap <- NULL
+x <- cheap_bootstrap(x,add = FALSE,B = 5,M = 0.632*NROW(x$prepared_data))
+summary(x)
+#+END_SRC
+
+#+RESULTS[(2025-04-11 14:14:56) ecfdcf469c9ca559fc4397712b0096e47b109a2d]:
+:results:
+Target Protocol Target_parameter Time_horizon Estimator Reference  Estimate Standard_error      Lower     Upper     P_value
+         <char>   <char>           <char>        <num>    <fctr>    <char>     <num>          <num>      <num>     <num>       <num>
+1: Outcome_risk  Never_A  Risk_difference            2      tmle  Always_A 0.2127392      0.0709929 0.07359572 0.3518828 0.002729844
+2: Outcome_risk  Never_A       Risk_ratio            2      tmle  Always_A 2.0777129      0.3596420 1.02673349 4.2044902 0.042020065
+   Bootstrap_lower Bootstrap_upper Bootstrap_standard_error
+             <num>           <num>                    <num>
+1:       0.1935653       0.2319132               0.07544362
+2:       1.6632658       2.5954306               0.25699049
+         Target Protocol Time_horizon Bootstrap_standard_error Bootstrap_lower Bootstrap_upper Target_parameter Estimator  Estimate     P_value
+         <fctr>   <fctr>        <num>                    <num>           <num>           <num>           <fctr>    <fctr>     <num>       <num>
+1: Outcome_risk Always_A            2               0.05335699       0.1878081       0.2069895             Risk      tmle 0.1973988 1.000000000
+2: Outcome_risk  Never_A            2               0.09994665       0.3764867       0.4437894             Risk      tmle 0.4101380 1.000000000
+3: Outcome_risk  Never_A            2               0.07544362       0.1935653       0.2319132  Risk_difference      tmle 0.2127392 0.002729844
+4: Outcome_risk  Never_A            2               0.25699049       1.6632658       2.5954306       Risk_ratio      tmle 2.0777129 0.042020065
+   Standard_error      Lower     Upper Estimate (CI_95) Reference
+            <num>      <num>     <num>           <char>    <char>
+1:     0.07099290 0.05825528 0.3365423  19.7 [5.8;33.7]          
+2:     0.08700837 0.23960478 0.5806713 41.0 [24.0;58.1]          
+3:     0.07099290 0.07359572 0.3518828  21.3 [7.4;35.2]  Always_A
+4:     0.35964198 1.02673349 4.2044902    2.1 [1.0;4.2]  Always_A
+:end:
+
+* TODO Diagnostic features
+** Monte-Carlo error
+** Bounding the inverse probability weights
+
+#+TITLE: Features of the R-package rtmle
+#+Author: Thomas Alexander Gerds
+#+Date: 
+#+EMAIL: tag@biostat.ku.dk
+#+LaTeX_CLASS: org-article
+#+OPTIONS: H:3 num:t toc:nil \n:nil @:t ::t |:t ^:t -:t f:t *:t <:t
+#+OPTIONS: TeX:t LaTeX:t skip:nil d:t todo:t pri:nil tags:not-in-toc author:nil
+#+LaTeX_HEADER:\usepackage{authblk}
+#+LaTeX_HEADER:\usepackage{natbib}
+#+LaTeX_HEADER:\author{Thomas Alexander Gerds}
+#+LaTeX_HEADER:\affil{Department of Biostatistics, University of Copenhagen}
+#+set: superman-org-export-target: html
