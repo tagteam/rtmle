@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 29 2024 (10:44) 
 ## Version: 
-## Last-Updated: Apr 11 2025 (14:31) 
+## Last-Updated: Apr 11 2025 (16:43) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 173
+##     Update #: 174
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -168,7 +168,6 @@ summary.rtmle <- function(object,analysis = "Main_analysis",targets,reference = 
                             data.table::set(e1,j = subset_variable,value = analysis_levels[[level]])
                             data.table::setcolorder(e1,subset_variable)
                         }
-                        print(e1)
                         e1
                     }))
                     # risk difference
