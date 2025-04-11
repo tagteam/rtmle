@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 29 2024 (10:44) 
 ## Version: 
-## Last-Updated: Apr 11 2025 (14:18) 
+## Last-Updated: Apr 11 2025 (14:31) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 169
+##     Update #: 173
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -107,6 +107,7 @@ summary.rtmle <- function(object,analysis = "Main_analysis",targets,reference = 
                         ## subset_levels <- attr(object$estimate[[analysis]],which = "levels")
                         subset_IC <- attr(object$estimate[[analysis]],which = "IC")
                         analysis_levels <- names(subset_IC)
+                        if (all(analysis_levels == "")) analysis_levels <- 1:length(analysis_levels)
                         reference_IC <- lapply(analysis_levels,function(level){
                             subset_IC[[level]][[target_name]][[ref]][[paste0("time_horizon_",tp)]]                        
                         })
@@ -146,6 +147,7 @@ summary.rtmle <- function(object,analysis = "Main_analysis",targets,reference = 
                                          Lower = c(risk_difference_lower, risk_ratio_lower),
                                          Upper = c(risk_difference_upper, risk_ratio_upper),
                                          P_value = c(2*pnorm(-abs(risk_difference_estimate/risk_difference_se)), 2*pnorm(-abs(log(risk_ratio_estimate)/risk_ratio_log_se))))
+
                         if (analysis == "Main_analysis" && length(object$estimate$Cheap_bootstrap)>0){
                             this_boot <- object$estimate[["Cheap_bootstrap"]][Target == target_name & Protocol == protocol_name & Time_horizon == tp]$Bootstrap_estimate
                             boot_difference <- this_boot-reference_boot

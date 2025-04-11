@@ -10,7 +10,7 @@ this document we illustrate some of the features of =rtmle=.
 ** Sub-group analyses
 
 #+ATTR_LATEX: :options otherkeywords={}, deletekeywords={}
-#+BEGIN_SRC R  :results output raw drawer  :exports both  :session *R* :cache yes  
+#+BEGIN_SRC R  :results output verbatim   :exports both  :session *R* :cache yes  
 library(rtmle)
 tau <- 2
 set.seed(17)
@@ -30,15 +30,36 @@ x <- run_rtmle(x,
                learner = "learn_glmnet",
                time_horizon = tau,
                verbose=FALSE,
-               subsets=list(list(label = "Old_age",
-                                 id = x$prepared_data[age>50,id],
-                                 variable = "subset",
-                                 value = "age > 50")))
+               subsets=list(list(label = "Old_age",id = x$prepared_data[age>50,id],
+                                 variable = "Age",
+                                 level = "age > 50")))
 summary(x,analysis = "Old_age")
 #+END_SRC
+
+#+RESULTS[(2025-04-11 14:33:36) 752a6d6be693e63926cf3a8e3faff98dfb78dc18]:
+#+begin_example
+Age       Target Protocol Target_parameter Time_horizon Estimator Reference  Estimate Standard_error      Lower     Upper    P_value
+     <char>       <char>   <char>           <char>        <num>    <fctr>    <char>     <num>          <num>      <num>     <num>      <num>
+1: age > 50 Outcome_risk  Never_A  Risk_difference            2      tmle  Always_A 0.2769242      0.1259042 0.03015656 0.5236918 0.02784353
+2: age > 50 Outcome_risk  Never_A       Risk_ratio            2      tmle  Always_A 2.5308787      0.5043919 0.94174254 6.8015904 0.06562705
+        Age       Target Protocol Target_parameter Time_horizon Estimator  Estimate    P_value Standard_error      Lower     Upper
+     <char>       <fctr>   <fctr>           <fctr>        <num>    <fctr>     <num>      <num>          <num>      <num>     <num>
+1: age > 50 Outcome_risk Always_A             Risk            2      tmle 0.1808923 1.00000000     0.08365928 0.01692313 0.3448615
+2: age > 50 Outcome_risk  Never_A             Risk            2      tmle 0.4578165 1.00000000     0.09533059 0.27097199 0.6446610
+3: age > 50 Outcome_risk  Never_A  Risk_difference            2      tmle 0.2769242 0.02784353     0.12590416 0.03015656 0.5236918
+4: age > 50 Outcome_risk  Never_A       Risk_ratio            2      tmle 2.5308787 0.06562705     0.50439188 0.94174254 6.8015904
+   Estimate (CI_95) Reference
+             <char>    <char>
+1:  18.1 [1.7;34.5]          
+2: 45.8 [27.1;64.5]          
+3:  27.7 [3.0;52.4]  Always_A
+4:    2.5 [0.9;6.8]  Always_A
+#+end_example
+
+
 ** Strata defined by sex
 
-#+BEGIN_SRC R  :results output raw drawer  :exports both  :session *R* :cache yes  
+#+BEGIN_SRC R  :results output verbatim  :exports both  :session *R* :cache yes  
 # stratified analyses
 sex_strata <- list(list(label="Sex",append = TRUE,variable="Sex",level="Female",id=x$prepared_data[sex==0,id]),
                    list(label="Sex",append = TRUE,variable="Sex",level="Male",id=x$prepared_data[sex==1,id]))
@@ -47,24 +68,8 @@ x <- run_rtmle(x,learner = "learn_glmnet",time_horizon = tau,verbose=FALSE,subse
 summary(x,analysis ="Sex")
 #+END_SRC
 
-#+RESULTS:
-:results:
-subset       Target Protocol Target_parameter Time_horizon Estimator Reference  Estimate Standard_error Lower Upper P_value
-   <char>       <char>   <char>           <char>        <num>    <fctr>    <char>     <num>          <num> <num> <num>   <num>
-1:        Outcome_risk  Never_A  Risk_difference            2      tmle  Always_A 0.2769242             NA    NA    NA      NA
-2:        Outcome_risk  Never_A       Risk_ratio            2      tmle  Always_A 2.5308787             NA    NA    NA      NA
-   subset       Target Protocol Target_parameter Time_horizon Estimator  Estimate P_value Standard_error      Lower     Upper Estimate (CI_95)
-   <char>       <fctr>   <fctr>           <fctr>        <num>    <fctr>     <num>   <num>          <num>      <num>     <num>           <char>
-1:        Outcome_risk Always_A             Risk            2      tmle 0.1808923       1     0.08365928 0.01692313 0.3448615  18.1 [1.7;34.5]
-2:        Outcome_risk  Never_A             Risk            2      tmle 0.4578165       1     0.09533059 0.27097199 0.6446610 45.8 [27.1;64.5]
-3:        Outcome_risk  Never_A  Risk_difference            2      tmle 0.2769242      NA             NA         NA        NA     27.7 [NA;NA]
-4:        Outcome_risk  Never_A       Risk_ratio            2      tmle 2.5308787      NA             NA         NA        NA      2.5 [NA;NA]
-   Reference
-      <char>
-1:          
-2:          
-3:  Always_A
-4:  Always_A
+#+RESULTS[(2025-04-11 14:33:37) 1863aef966058ec7f7717ac52c26bd86284d3ed4]:
+#+begin_example
 Sex       Target Protocol Target_parameter Time_horizon Estimator Reference  Estimate Standard_error      Lower      Upper    P_value
    <char>       <char>   <char>           <char>        <num>    <fctr>    <char>     <num>          <num>      <num>      <num>      <num>
 1: Female Outcome_risk  Never_A  Risk_difference            2      tmle  Always_A 0.3544266      0.1415425 0.07700836  0.6318449 0.01227879
@@ -93,7 +98,7 @@ Sex       Target Protocol Target_parameter Time_horizon Estimator Reference  Est
 6:  30.8 [8.1;53.5]          
 7:   6.7 [0.0;31.1]  Always_A
 8:    1.3 [0.5;3.1]  Always_A
-:end:
+#+end_example
 
 ** Cheap bootstrap confidence intervals
 
@@ -103,7 +108,7 @@ Note: The cheap bootstrap confidence intervals are currently only
 computed for the main analysis.
 
 #+ATTR_LATEX: :options otherkeywords={}, deletekeywords={}
-#+BEGIN_SRC R  :results output raw drawer  :exports both  :session *R* :cache yes  
+#+BEGIN_SRC R  :results output verbatim  :exports both  :session *R* :cache yes  
 tau <- 2
 set.seed(17)
 ld <- simulate_long_data(n = 91,number_visits = 20,beta = list(A_on_Y = -.2,A0_on_Y = -0.3,A0_on_A = 6),register_format = TRUE)
@@ -123,8 +128,8 @@ x <- cheap_bootstrap(x,add = FALSE,B = 5,M = 0.632*NROW(x$prepared_data))
 summary(x)
 #+END_SRC
 
-#+RESULTS[(2025-04-11 14:14:56) ecfdcf469c9ca559fc4397712b0096e47b109a2d]:
-:results:
+#+RESULTS[(2025-04-11 14:33:37) 5b3f3dbf8e2a479ad250e32bc0dab19a3dd005b8]:
+#+begin_example
 Target Protocol Target_parameter Time_horizon Estimator Reference  Estimate Standard_error      Lower     Upper     P_value
          <char>   <char>           <char>        <num>    <fctr>    <char>     <num>          <num>      <num>     <num>       <num>
 1: Outcome_risk  Never_A  Risk_difference            2      tmle  Always_A 0.2127392      0.0709929 0.07359572 0.3518828 0.002729844
@@ -145,7 +150,8 @@ Target Protocol Target_parameter Time_horizon Estimator Reference  Estimate Stan
 2:     0.08700837 0.23960478 0.5806713 41.0 [24.0;58.1]          
 3:     0.07099290 0.07359572 0.3518828  21.3 [7.4;35.2]  Always_A
 4:     0.35964198 1.02673349 4.2044902    2.1 [1.0;4.2]  Always_A
-:end:
+#+end_example
+
 
 * TODO Diagnostic features
 ** Monte-Carlo error
