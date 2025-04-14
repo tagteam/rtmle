@@ -10,6 +10,7 @@ superlearn(
   learners,
   character_formula,
   outcome_variable,
+  outcome_target_level,
   id_variable,
   data,
   intervened_data,
@@ -31,6 +32,8 @@ passed on as additional arguments to the learner function.}
 \item{character_formula}{A formula (passed as a character string!) to parse the outcome and the predictor variables.}
 
 \item{outcome_variable}{The name of the outcome variable (same as \code{all.vars(formula(character_formula))[[1]]} provided to avoid overhead in the parsing of the formula.}
+
+\item{outcome_target_level}{The level of the binary outcome variable for which the superlearner predicts the risk.}
 
 \item{id_variable}{The name of the subject id variable.}
 
@@ -72,6 +75,7 @@ fit <- superlearn(folds = 2,seed = 8,
                                   "learn_glmnet" = list(alpha = 1)),
                   character_formula = "A_0~L_0+sex+age",
                   outcome_variable = "A_0",
+                  outcome_target_level="1",
                   id_variable = "id",
                   data = ld[!duplicated(id)],
                   intervened_data = ld[!duplicated(id)])

@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Oct 31 2024 (07:29) 
 ## Version: 
-## Last-Updated: Apr 11 2025 (16:40) 
+## Last-Updated: Apr 14 2025 (08:43) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 114
+##     Update #: 115
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -31,6 +31,7 @@
 ##' passed on as additional arguments to the learner function.
 ##' @param character_formula A formula (passed as a character string!) to parse the outcome and the predictor variables. 
 ##' @param outcome_variable The name of the outcome variable (same as \code{all.vars(formula(character_formula))[[1]]} provided to avoid overhead in the parsing of the formula.
+##' @param outcome_target_level The level of the binary outcome variable for which the superlearner predicts the risk.  
 ##' @param id_variable The name of the subject id variable.
 ##' @param data The data for learning.
 ##' @param intervened_data The data were all intervention variables are readily set according to the intervention protocol.
@@ -56,6 +57,7 @@
 ##'                                   "learn_glmnet" = list(alpha = 1)),
 ##'                   character_formula = "A_0~L_0+sex+age",
 ##'                   outcome_variable = "A_0",
+##'                   outcome_target_level="1",
 ##'                   id_variable = "id",
 ##'                   data = ld[!duplicated(id)],
 ##'                   intervened_data = ld[!duplicated(id)])

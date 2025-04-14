@@ -13,7 +13,7 @@ run_rtmle(
   seed = NULL,
   subsets = NULL,
   keep_influence = TRUE,
-  verbose = TRUE,
+  verbose = FALSE,
   ...
 )
 }
@@ -49,7 +49,7 @@ and bootstrap. See examples.}
 \item{keep_influence}{Logical: if \code{TRUE} store the estimated influence function of the estimator in the object.
 Currently this argument is only used when argument \code{subsets} is also specified.}
 
-\item{verbose}{Logical. If \code{FALSE} suppress all messages.}
+\item{verbose}{Logical. If \code{FALSE} suppress all messages. \code{FALSE} is the default.}
 
 \item{...}{Additional arguments passed to the learner function.}
 }
