@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Apr  9 2025 (10:02) 
 ## Version: 
-## Last-Updated: Apr 10 2025 (10:20) 
+## Last-Updated: Apr 24 2025 (12:24) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 8
+##     Update #: 9
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -32,6 +32,11 @@ test_that("Cheap bootstrap confidence intervals",{
     x <- run_rtmle(x,learner = "learn_glmnet",time_horizon = 1,verbose = FALSE)
     x <- run_rtmle(x,learner = "learn_glmnet",time_horizon = 1:tau,verbose = FALSE)
     x <- cheap_bootstrap(x,B = 2,replace = FALSE,M = 71)
+    a = x$estimate$Main_analysis[,.(Time_horizon,Protocol,Bootstrap_lower,Bootstrap_upper)]
+    b = x$estimate$Cheap_bootstrap[B == 2][,.(Time_horizon,Protocol,Bootstrap_lower,Bootstrap_upper)]
+    setkey(a,Time_horizon,Protocol)
+    setkey(b,Time_horizon,Protocol)
+    expect_equal(a,b)
 })
 
 

@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Apr  1 2025 (08:18) 
 ## Version: 
-## Last-Updated: Apr  1 2025 (09:58) 
+## Last-Updated: Apr 24 2025 (15:31) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 3
+##     Update #: 8
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -60,18 +60,27 @@
         }
     }
     if ("timevar_data" %in% nv){
-        varlist <- value[["timevar_data"]]
-        # check if varlist is a list of data.frames
-        if (!is.list(varlist) ||
-            any(sapply(varlist,is.data.frame) == FALSE)){
-            stop("value[['timevar_data']] must be a list of data.frames (or data.tables or tibbles).")
-        }
-        for (name in names(varlist)){
-            d <- data.table::copy(varlist[[name]])
+        if (is.data.frame(value[["timevar_data"]])){
+            d <- data.table::copy(value[["timevar_data"]])
             if (!(x$names$id %in% names(d))){
                 warning(paste0("Element 'timevar_data[['",name,"']] does not have a variable called ",x$names$id," and is not added."))
             } else{
                 x$data$timevar_data[[name]] <- d
+            }
+        }else{            
+            varlist <- value[["timevar_data"]]
+            # check if varlist is a list of data.frames
+            if (!is.list(varlist) ||
+                any(sapply(varlist,is.data.frame) == FALSE)){
+                stop("value[['timevar_data']] must be a list of data.frames (or data.tables or tibbles).")
+            }
+            for (name in names(varlist)){
+                d <- data.table::copy(varlist[[name]])
+                if (!(x$names$id %in% names(d))){
+                    warning(paste0("Element 'timevar_data[['",name,"']] does not have a variable called ",x$names$id," and is not added."))
+                } else{
+                    x$data$timevar_data[[name]] <- d
+                }
             }
         }
     }

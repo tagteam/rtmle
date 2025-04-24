@@ -116,8 +116,8 @@ cheap_bootstrap <- function(x,
     # t-distribution 
     cb[,tq := stats::qt(1 - alpha / 2, df = B)]
     cb[,cheap_variance := cumsum((Main_estimate-Bootstrap_estimate)^2)/seq_len(.N),by = c("Target","Protocol","Time_horizon")]
-    cb[,cheap_lower := Main_estimate - tq * cheap_scale * cheap_variance]
-    cb[,cheap_upper := Main_estimate + tq * cheap_scale * cheap_variance]
+    cb[,cheap_lower := Main_estimate - tq * cheap_scale * sqrt(cheap_variance)]
+    cb[,cheap_upper := Main_estimate + tq * cheap_scale * sqrt(cheap_variance)]
     x$estimate$Cheap_bootstrap <- cb[,data.table::data.table(B,
                                                              Target,
                                                              Protocol,
@@ -142,8 +142,8 @@ cheap_bootstrap <- function(x,
         }
     }
     cb <- cb[B == max_B,data.table::data.table(Bootstrap_standard_error = sqrt(cheap_variance),
-                                               Bootstrap_lower = cheap_lower,
-                                               Bootstrap_upper = cheap_upper),by = c("Target","Protocol","Time_horizon")]
+                                               Bootstrap_lower = pmax(0,cheap_lower),
+                                               Bootstrap_upper = pmin(1,cheap_upper)),by = c("Target","Protocol","Time_horizon")]
     x$estimate[["Main_analysis"]] <- cb[x$estimate[["Main_analysis"]],on = c("Target","Protocol","Time_horizon")]
     # NOTE if we would return x[] instead of x then x looses its class!
     return(x)

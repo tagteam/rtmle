@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Oct 28 2024 (09:26) 
 ## Version: 
-## Last-Updated: Nov 20 2024 (11:45) 
+## Last-Updated: Apr 24 2025 (15:32) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 54
+##     Update #: 55
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -71,7 +71,6 @@ learn_ranger <- function(character_formula,data,intervened_data,...){
         }
     }
     data.table::setattr(predicted_values,"fit",NULL)
-    if (length(predicted_values) != NROW(intervened_data))browser(skipCalls=1L)
     return(predicted_values)
 }
 
