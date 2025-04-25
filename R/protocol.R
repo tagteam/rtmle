@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds & Alessandra
 ## Created: Jul 3 2024 (13:46)
 ## Version:
-## Last-Updated: Apr  9 2025 (09:33) 
+## Last-Updated: Apr 25 2025 (10:27) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 74
+##     Update #: 76
 #----------------------------------------------------------------------
 ##
 ### Commentary: 
@@ -86,7 +86,8 @@
     if (inherits(intervention_table,"data.frame")){
         data.table::setDT(intervention_table)
         treatment_variables <- names(intervention_table)
-        if (any(grepl("_[0-9]+$","",treatment_variables))){
+        if (any(grepl(pattern = "_[0-9]+$",
+                      x = treatment_variables))){
             stop("Treatment variables should be given without time suffix.")
         }
         missing_nodes <- (length(intervention_times)-NROW(intervention_table))
