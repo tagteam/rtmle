@@ -27,7 +27,11 @@ Imports:
     speedglm,
     glmnet,
     ranger,
-    matrixStats
+    matrixStats,
+    Rcpp,
+    lubridate
+LinkingTo: 
+    Rcpp
 Suggests: 
     R.rsp,
     testthat (>= 3.0.0),
