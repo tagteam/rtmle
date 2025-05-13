@@ -27,9 +27,9 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// splitDate
-List splitDate(NumericVector inn, NumericVector out, IntegerVector event, IntegerVector mergevar, IntegerVector seq, IntegerVector varname);
-RcppExport SEXP _rtmle_splitDate(SEXP innSEXP, SEXP outSEXP, SEXP eventSEXP, SEXP mergevarSEXP, SEXP seqSEXP, SEXP varnameSEXP) {
+// splitdate
+List splitdate(NumericVector inn, NumericVector out, IntegerVector event, IntegerVector mergevar, IntegerVector seq, IntegerVector varname);
+RcppExport SEXP _rtmle_splitdate(SEXP innSEXP, SEXP outSEXP, SEXP eventSEXP, SEXP mergevarSEXP, SEXP seqSEXP, SEXP varnameSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -39,13 +39,13 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< IntegerVector >::type mergevar(mergevarSEXP);
     Rcpp::traits::input_parameter< IntegerVector >::type seq(seqSEXP);
     Rcpp::traits::input_parameter< IntegerVector >::type varname(varnameSEXP);
-    rcpp_result_gen = Rcpp::wrap(splitDate(inn, out, event, mergevar, seq, varname));
+    rcpp_result_gen = Rcpp::wrap(splitdate(inn, out, event, mergevar, seq, varname));
     return rcpp_result_gen;
 END_RCPP
 }
-// splitFT
-List splitFT(IntegerVector pnrnum, NumericVector inn, NumericVector out, IntegerVector event, IntegerVector mergevar, IntegerVector Spnrnum, std::vector<std::string> val, NumericVector start, NumericVector end, IntegerVector num, int numcov, String default_);
-RcppExport SEXP _rtmle_splitFT(SEXP pnrnumSEXP, SEXP innSEXP, SEXP outSEXP, SEXP eventSEXP, SEXP mergevarSEXP, SEXP SpnrnumSEXP, SEXP valSEXP, SEXP startSEXP, SEXP endSEXP, SEXP numSEXP, SEXP numcovSEXP, SEXP default_SEXP) {
+// splitft
+List splitft(IntegerVector pnrnum, NumericVector inn, NumericVector out, IntegerVector event, IntegerVector mergevar, IntegerVector Spnrnum, std::vector<std::string> val, NumericVector start, NumericVector end, IntegerVector num, int numcov, String default_);
+RcppExport SEXP _rtmle_splitft(SEXP pnrnumSEXP, SEXP innSEXP, SEXP outSEXP, SEXP eventSEXP, SEXP mergevarSEXP, SEXP SpnrnumSEXP, SEXP valSEXP, SEXP startSEXP, SEXP endSEXP, SEXP numSEXP, SEXP numcovSEXP, SEXP default_SEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -61,15 +61,15 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< IntegerVector >::type num(numSEXP);
     Rcpp::traits::input_parameter< int >::type numcov(numcovSEXP);
     Rcpp::traits::input_parameter< String >::type default_(default_SEXP);
-    rcpp_result_gen = Rcpp::wrap(splitFT(pnrnum, inn, out, event, mergevar, Spnrnum, val, start, end, num, numcov, default_));
+    rcpp_result_gen = Rcpp::wrap(splitft(pnrnum, inn, out, event, mergevar, Spnrnum, val, start, end, num, numcov, default_));
     return rcpp_result_gen;
 END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
     {"_rtmle_split2", (DL_FUNC) &_rtmle_split2, 7},
-    {"_rtmle_splitDate", (DL_FUNC) &_rtmle_splitDate, 6},
-    {"_rtmle_splitFT", (DL_FUNC) &_rtmle_splitFT, 12},
+    {"_rtmle_splitdate", (DL_FUNC) &_rtmle_splitdate, 6},
+    {"_rtmle_splitft", (DL_FUNC) &_rtmle_splitft, 12},
     {NULL, NULL, 0}
 };
 

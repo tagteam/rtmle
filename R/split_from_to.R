@@ -1,6 +1,6 @@
-#' @title splitFromTo
+#' @title split_from_to
 #' @description 
-#' splitFromTo is devised to split a series of records in multiple records based
+#' split_from_to is devised to split a series of records in multiple records based
 #' on entry/exit dates provided from another splitting guide dataset. The function
 #' can handle multiple different events with each type of event characterized by
 #' the variable "value".
@@ -18,10 +18,8 @@
 #' When no value is provided by the splitting guide the "default" is used. If
 #' this is not provided the value is set to "0" 
 #' 
-#' The function further implements a simplification where only a single "name"
-#' and no "value" is provided.
 #' @usage
-#' splitFromTo(indat,splitdat,invars,splitvars,default="0",datacheck=TRUE)
+#' split_from_to(indat,splitdat,invars,splitvars,default="0",datacheck=TRUE)
 #' @author Christian Torp-Pedersen
 #' @param indat - base data with id, start, end and other data - possibly 
 #' already split
@@ -69,23 +67,13 @@
 #' #Show the dataset:
 #' dat[]
 #' split[]                   
-#' temp <- splitFromTo(dat # inddato with id/in/out/event
+#' temp <- split_from_to(dat # inddato with id/in/out/event
 #'                    ,split # Data with id and dates
 #'                    ,c("id","start","end") #names of id/in/out/event - in that order
 #'                   ,c("id","start","end","value","name")) #Names var date-vars to split by
 #' temp[]                   
-#' # Short splittingguide with only id/start/end
-#' split2 <- data.table (id=c("A","A","B","D"),
-#'                     start=as.Date(c(0,50,110,150),origin='1970-01-01'),
-#'                     end= as.Date(c(25,75,120,250),origin='1970-01-01'))
-#'                     
-#' temp2 <- splitFromTo(dat # inddato with id/in/out/event
-#'                    ,split2 # Data with id and dates
-#'                    ,c("id","start","end") #names of id/in/out - in that order
-#'                   ,c("id","start","end")) #Names var date-vars to split by   
-#' temp2[]                                   
 #' @export
-splitFromTo <- function(indat # inddato with id/in/out/event - and possibly other variables
+split_from_to <- function(indat # inddato with id/in/out/event - and possibly other variables
                        ,splitdat # Data with from/to/Value
                        ,invars #names of id/in/out/event - in that order
                        ,splitvars #Names in splitdat with pnr/from/to/value/name
@@ -147,7 +135,7 @@ splitFromTo <- function(indat # inddato with id/in/out/event - and possibly othe
   setcolorder(csplit,c("pnrnum","start","slut","num"))
   csplit[,':='(start=as.integer(start),slut=as.integer(slut))] # integers need for change to matrix
   setkeyv(csplit,c("pnrnum","start","slut","num")) # sorted with increasing dates
-  # OUT <- .Call('_heaven_splitFT',PACKAGE = 'rtmle',
+  # OUT <- .Call('_heaven_splitft',PACKAGE = 'rtmle',
   #              INDAT[,pnrnum], # PNR as sequence number - base data
   #              INDAT[,inn], # Starttimes - base data
   #              INDAT[,out], # Endtimes - base data
@@ -161,7 +149,7 @@ splitFromTo <- function(indat # inddato with id/in/out/event - and possibly othe
   #              length(nams),
   #              default) # Number of covariate to split by) # Call c++
   INDAT[,event:=0] # Dummy to fit c++ function
-  OUT<- splitFT(INDAT[,pnrnum], # PNR as sequence number - base data
+  OUT<- splitft(INDAT[,pnrnum], # PNR as sequence number - base data
                 INDAT[,inn], # Starttimes - base data
                 INDAT[,out], # Endtimes - base data
                 INDAT[,event], # Dummy

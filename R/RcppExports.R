@@ -2,15 +2,15 @@
 # Generator token: 10BE3573-1514-4C36-9D1C-5A225CD40393
 
 split2 <- function(pnrnum, inn, out, event, mergevar, split, numcov) {
-    .Call('_rtmle_split2', PACKAGE = 'rtmle', pnrnum, inn, out, event, mergevar, split, numcov)
+    .Call(`_rtmle_split2`, pnrnum, inn, out, event, mergevar, split, numcov)
 }
 
 #' @export
-splitDate <- function(inn, out, event, mergevar, seq, varname) {
-    .Call('_rtmle_splitDate', PACKAGE = 'rtmle', inn, out, event, mergevar, seq, varname)
+splitdate <- function(inn, out, event, mergevar, seq, varname) {
+    .Call(`_rtmle_splitdate`, inn, out, event, mergevar, seq, varname)
 }
 
-splitFT <- function(pnrnum, inn, out, event, mergevar, Spnrnum, val, start, end, num, numcov, default_) {
-    .Call('_rtmle_splitFT', PACKAGE = 'rtmle', pnrnum, inn, out, event, mergevar, Spnrnum, val, start, end, num, numcov, default_)
+splitft <- function(pnrnum, inn, out, event, mergevar, Spnrnum, val, start, end, num, numcov, default_) {
+    .Call(`_rtmle_splitft`, pnrnum, inn, out, event, mergevar, Spnrnum, val, start, end, num, numcov, default_)
 }
 

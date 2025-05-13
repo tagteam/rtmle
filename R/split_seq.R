@@ -1,6 +1,6 @@
-#' @title lexisSeq
+#' @title split_seq
 #' @description 
-#' splitSeq is a function which can split records according to a vector of
+#' split_seq is a function which can split records according to a vector of
 #' selected times.  At the outset each record has two variables representing
 #' start and end on a time scale. A vector of time points is supplied and each
 #' record is replaced by as many records as the number of times points from the
@@ -37,7 +37,7 @@
 #' by one as each value of the splitting vector is reached.
 #' 
 #' @usage
-#' splitSeq(indat,invars,varname=NULL,splitvector,format,value="value",
+#' split_seq(indat,invars,varname=NULL,splitvector,format,value="value",
 #' datacheck=TRUE)
 #' @author Christian Torp-Pedersen
 #' @param indat base data with id, start, end and other data - possibly 
@@ -93,18 +93,18 @@
 #'                 end=as.Date(c(100,200,100,200,100,200,100,200),origin="1970-01-01"),
 #'                 Bdate=as.Date(c(-5000,-5000,-2000,-2000,0,0,100,100),origin="1970-01-01"))
 #' #Example 1 - Splitting on a vector with 3 values to be added to "Bdate"                 
-#' out <- splitSeq(indat=dat,invars=c("ptid","start","end"),
+#' out <- split_seq(indat=dat,invars=c("ptid","start","end"),
 #'                varname="Bdate",
 #'                splitvector=as.Date(c(0,150,5000),origin="1970-01-01"),
 #'                format="vector")
 #' out[]
 #' #Example 2 - splitting on a from-to-by sequence with no adding (calender time?)
-#' out2 <- splitSeq(indat=dat,invars=c("ptid","start","end"),
+#' out2 <- split_seq(indat=dat,invars=c("ptid","start","end"),
 #'                  varname=NULL,splitvector=c(0,200,50),
 #'                  format="seq",value="myvalue")
 #' out2[]
 #' @export
-splitSeq <- function(indat,
+split_seq <- function(indat,
                      invars,
                      varname = NULL,
                      splitvector,
@@ -164,7 +164,7 @@ splitSeq <- function(indat,
     }
   }
   splitdat[,event:=0] # Dummy to fit c++ function
-  out <- splitdat[,splitDate(inn, out, event, pnrnum, splitguide, varname)]  
+  out <- splitdat[,splitdate(inn, out, event, pnrnum, splitguide, varname)]  
   setDT(out)
   out[,event:=NULL] # Dummy removed
   setkeyv(out, c("pnrnum", "inn"))

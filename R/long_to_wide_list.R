@@ -1,4 +1,4 @@
-#' @title longToWideList
+#' @title long_to_wide_list
 #' @description
 #' This function is designed for the RTMLE package where time dependent 
 #' covariates are reqiored to be a list of data.tables. The input is a
@@ -6,12 +6,10 @@
 #' The output is a named list of wide data.tables as required by RTMLE.
 #' 
 #' @usage
-#' longToWideList(data,ID,variables)
+#' long_to_wide_list(data,ID,variables)
 #' @author Christian Torp-Pedersen
 #' @param data is a dataframe or data.table with the input
 #' @param ID is the variable defining the individual
-#' @param invars vector of column names for id/entry/exit - in that 
-#' order, example: c("id","start","end")
 #' @param variables is a vector of variable names to be managed
 #' @return
 #' The function returns a named list of data.tables.  Each element corresponds
@@ -36,9 +34,9 @@
 #' dat <- data.table(pnr=c(as.character(rep(1:3,3))),
 #'                     A=c(0,1), B=c(1,0))
 #' #setkey(dat,"pnr")
-#' out <- longToWideList(dat,"pnr",c("A","B"))                
+#' out <- long_to_wide_list(dat,"pnr",c("A","B"))                
 #' @export
-longToWideList <- function(data,ID,variables){
+long_to_wide_list <- function(data,ID,variables){
   setDT(data)
   out <- melt(data,ID,variables)
   out[,num:=(0:(.N-1)),by=c(ID,"variable")]

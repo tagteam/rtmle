@@ -1,4 +1,4 @@
-#' @title splitTwo
+#' @title split_two
 #' @description
 #' This function can split records from a dataset in two records using
 #' information from a "splitting-guide". At start 
@@ -30,7 +30,7 @@
 #' Output is identical to that provide with the wide format.
 #' 
 #' @usage
-#' splitTwo(indat,splitdat,invars,splitvars,format="wide",datacheck=TRUE)
+#' split_two(indat,splitdat,invars,splitvars,format="wide",datacheck=TRUE)
 #' @author Christian Torp-Pedersen
 #' @param indat A data.table or data.frame whose first 3 columns are:
 #' \itemize{
@@ -119,7 +119,7 @@
 #' #Show the datasets:
 #' dat[]
 #' split[]
-#' splitTwo(dat # inddato with id/in/out
+#' split_two(dat # inddato with id/in/out
 #'    ,split # Data with id and dates
 #'    ,c("pnr","start","end") #names of id/in/out - in that order
 #'    ,c("pnr","como1.onset","como2.onset","como3.onset","como4.onset")) 
@@ -131,14 +131,14 @@
 #' split[,value:=as.Date(value,origin="1970-01-01")]
 #' split[]
 #' split <- split[!is.na(value)] # remove missing values
-#' splitTwo(dat # in-data with id/in/out
+#' split_two(dat # in-data with id/in/out
 #'    ,split # Data with id/name/date
 #'    ,c("pnr","start","end") #names of id/in/out - in that order
 #'    ,c("pnr","name","value")
 #'    ,format="long") 
 #' @export
 
-splitTwo <- function(indat, # in-data with id/in/out - and possibly other variables
+split_two <- function(indat, # in-data with id/in/out - and possibly other variables
                      splitdat, # Data with id and dates
                      invars, #names of id/in/out - in that order
                      splitvars, #Names var date-vars to split by

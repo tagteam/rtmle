@@ -3,18 +3,18 @@
 #include <vector>
 using namespace Rcpp;
 // [[Rcpp::export]]
-List splitFT(IntegerVector pnrnum, // PNR as sequence number - base data
-              NumericVector inn, // Starttimes - base data
-              NumericVector out, // Endtimes - base data
-              IntegerVector event, // Event at end of interval 0/1 - base data
-              IntegerVector mergevar, // Merge variable, multiple records can have same pnr - base data
-              IntegerVector Spnrnum, // Sequence number of pnr in split guide
-              std::vector<std::string> val, // Value of name to provide to output for interval - split guide
-              NumericVector start, // Interval start - split guide
-              NumericVector end, // Interval end - split guide
-              IntegerVector num, //Covariate number
-              int numcov, // Number of covariate to split by
-              String default_ // Default value when no value is assigned
+List splitft(IntegerVector pnrnum, // PNR as sequence number - base data
+             NumericVector inn, // Starttimes - base data
+             NumericVector out, // Endtimes - base data
+             IntegerVector event, // Event at end of interval 0/1 - base data
+             IntegerVector mergevar, // Merge variable, multiple records can have same pnr - base data
+             IntegerVector Spnrnum, // Sequence number of pnr in split guide
+             std::vector<std::string> val, // Value of name to provide to output for interval - split guide
+             NumericVector start, // Interval start - split guide
+             NumericVector end, // Interval end - split guide
+             IntegerVector num, //Covariate number
+             int numcov, // Number of covariate to split by
+             String default_ // Default value when no value is assigned
 ) { 
   // This function is intended for creating split data for lexis survival analyses. It handles
   // splitting by a set of splitting guide vectors which contains (Spnrnum,start,end,val) 
@@ -77,55 +77,55 @@ List splitFT(IntegerVector pnrnum, // PNR as sequence number - base data
         } //end  Spnrnum==pnrnum - identical pnr in base data and splitting guide
       } // end found one - or some
     } // end new pnr - START, SLUT have been identified - INN/OUT yet to be determined
-      // Start always by pushing the original record and then add new records - and adjust original record
-      // This "push" takes place once per record in base data prior to split or no-split
-      //std::cout<< "Before first out"<<" pnrnum(i)="<<pnrnum(i)<<" inn(i)="<<inn(i)<<" out(i)="<<out(i) <<" nosplit="<<noSplit<<"\n";    
-      INN=OUT+1;  // Start of next pnr-sequence except for first record
-      OUT=INN; // So far just one record
-      Opnrnum.push_back(pnrnum(i));
-      Omergevar.push_back(mergevar(i));
-      Oinn.push_back(inn(i));
-      Oout.push_back(out(i));
-      Oevent.push_back(event(i));
-      for(int k=0; k<numcov; k++) Oval[k].push_back(default_);
-      if (noSplit==1){ //Nothing to split - at least potentially
-      }
-      else{ // Something to split
-        for (int ii=START; ii<=SLUT; ii++){ // Outer loop - Start to end of splitting guide records identified - ii refers to splitting guide
-          for (int iii=INN; iii<=OUT; iii++){ // inner loop - base data - just one record prior to split - iii refers to base records
-            if (start(ii)>Oout[iii] || Oinn[iii]>end(ii)) {
-              //std::cout<< "Action: no action" << "\n";
-              continue; // no overlap, no action
-            }
-            else
-              if (start(ii)<=Oinn[iii] && end(ii)>=Oout[iii]) {
-                //std::cout<<"Action Surrounded"<<"\n";
-                // surrounded
-                for(int k=0; k<numcov;k++)
-                  if(k==num(ii)-1)Oval[k][iii]=val[ii];
-                  else Oval[k][iii]=Oval[k][iii];  // previous value
+    // Start always by pushing the original record and then add new records - and adjust original record
+    // This "push" takes place once per record in base data prior to split or no-split
+    //std::cout<< "Before first out"<<" pnrnum(i)="<<pnrnum(i)<<" inn(i)="<<inn(i)<<" out(i)="<<out(i) <<" nosplit="<<noSplit<<"\n";    
+    INN=OUT+1;  // Start of next pnr-sequence except for first record
+    OUT=INN; // So far just one record
+    Opnrnum.push_back(pnrnum(i));
+    Omergevar.push_back(mergevar(i));
+    Oinn.push_back(inn(i));
+    Oout.push_back(out(i));
+    Oevent.push_back(event(i));
+    for(int k=0; k<numcov; k++) Oval[k].push_back(default_);
+    if (noSplit==1){ //Nothing to split - at least potentially
+    }
+    else{ // Something to split
+      for (int ii=START; ii<=SLUT; ii++){ // Outer loop - Start to end of splitting guide records identified - ii refers to splitting guide
+        for (int iii=INN; iii<=OUT; iii++){ // inner loop - base data - just one record prior to split - iii refers to base records
+          if (start(ii)>Oout[iii] || Oinn[iii]>end(ii)) {
+            //std::cout<< "Action: no action" << "\n";
+            continue; // no overlap, no action
+          }
+          else
+            if (start(ii)<=Oinn[iii] && end(ii)>=Oout[iii]) {
+              //std::cout<<"Action Surrounded"<<"\n";
+              // surrounded
+              for(int k=0; k<numcov;k++)
+                if(k==num(ii)-1)Oval[k][iii]=val[ii];
+                else Oval[k][iii]=Oval[k][iii];  // previous value
                 //std::cout<<"iii="<<iii<<"ii="<<ii<<" num(ii)="<<num(ii)<< " Oval[1,2,3][iii]="<<Oval[1][iii]<<Oval[2][iii]<<Oval[2][iii]<< "\n";
-              }
+            }
             else
               if (end(ii)>=Oinn[iii] && end(ii) <= Oout[iii] && start(ii)<=Oinn[iii]){
                 if(Oinn[iii]==end(ii)){
                   // Only overlap at Oinn=start - no action
                 }
-              else{
-                //std::cout<<"Action left overlap"<<"\n";
-                // Split in 2 records - left overlap
-                // New record start at end and ends with original end
-                OUText +=1; // Extension of length of base records
-                Oinn.push_back(end(ii));
-                Oout.push_back(Oout[iii]);
-                Oevent.push_back(Oevent[iii]);
-                Opnrnum.push_back(Opnrnum[iii]);
-                Omergevar.push_back(Omergevar[iii]);
-                for(int k=0; k<numcov;k++)Oval[k].push_back(Oval[k][iii]);  // previous value
-                Oout[iii]=end(ii); // Original record ends with interval end
-                Oval[num(ii)-1][iii]=val[ii]; // and gets the value from the interval
-                Oevent[iii]=0;
-                //std::cout<< "iii=" <<iii<<" ii="<< ii << " Oval[iii]="<< Oval[iii] << "\n";
+                else{
+                  //std::cout<<"Action left overlap"<<"\n";
+                  // Split in 2 records - left overlap
+                  // New record start at end and ends with original end
+                  OUText +=1; // Extension of length of base records
+                  Oinn.push_back(end(ii));
+                  Oout.push_back(Oout[iii]);
+                  Oevent.push_back(Oevent[iii]);
+                  Opnrnum.push_back(Opnrnum[iii]);
+                  Omergevar.push_back(Omergevar[iii]);
+                  for(int k=0; k<numcov;k++)Oval[k].push_back(Oval[k][iii]);  // previous value
+                  Oout[iii]=end(ii); // Original record ends with interval end
+                  Oval[num(ii)-1][iii]=val[ii]; // and gets the value from the interval
+                  Oevent[iii]=0;
+                  //std::cout<< "iii=" <<iii<<" ii="<< ii << " Oval[iii]="<< Oval[iii] << "\n";
                 }
               }
               else
@@ -147,40 +147,40 @@ List splitFT(IntegerVector pnrnum, // PNR as sequence number - base data
                     for(int k=0; k<numcov;k++)
                       if(k==num(ii)-1)Oval[k].push_back(val[ii]);
                       else Oval[k].push_back(Oval[k][iii]);  // previous value
-                    Oout[iii]=start(ii); // Original record ends with interval end
-                    Oevent[iii]=0;
-                    //std::cout<< "iii=" <<iii<<" ii="<< ii << " Oval[iii]="<< Oval[iii] << "\n";
-                    }
-                  }
-                  else
-                    if(end(ii)>=Oinn[iii] && end(ii)<=Oout[iii] && start(ii)>=Oinn[iii]
-                         && start(ii)<=Oout[iii]){
-                      //std::cout<<"Action Complete overlap"<<"\n";
-                      //Complete overlap - 3 records
-                      OUText +=2;
-                      Oinn.push_back(Oinn[iii]);  // New record start at end and ends with original end
-                      Oout.push_back(start(ii));
-                      Oevent.push_back(0);
-                      Opnrnum.push_back(Opnrnum[iii]);
-                      Omergevar.push_back(Omergevar[iii]);
-                      for(int k=0; k<numcov;k++)Oval[k].push_back(Oval[k][iii]);
-                      Oinn.push_back(end(ii));  // New record start at inn and ends with Tstart(ii) end
-                      Oout.push_back(Oout[iii]);
-                      Oevent.push_back(Oevent[iii]);
-                      Opnrnum.push_back(Opnrnum[iii]);
-                      Omergevar.push_back(Omergevar[iii]);
-                      for(int k=0; k<numcov;k++)Oval[k].push_back(Oval[k][iii]);
-                      Oout[iii]=end(ii); // Original record is middle interval
-                      Oinn[iii]=start(ii);
-                      Oval[num(ii)-1][iii]=val[ii]; // and gets the value from the interval
+                      Oout[iii]=start(ii); // Original record ends with interval end
                       Oevent[iii]=0;
                       //std::cout<< "iii=" <<iii<<" ii="<< ii << " Oval[iii]="<< Oval[iii] << "\n";
-                    }
-          }// end iii-loop - base data
-          OUT=OUT+OUText; // After inner loop number of recrods have extended
-          OUText=0; // reset 
-        } // End ii-loop - splitting guide
-      } // end else-something to split
+                  }
+                }
+                else
+                  if(end(ii)>=Oinn[iii] && end(ii)<=Oout[iii] && start(ii)>=Oinn[iii]
+                       && start(ii)<=Oout[iii]){
+                    //std::cout<<"Action Complete overlap"<<"\n";
+                    //Complete overlap - 3 records
+                    OUText +=2;
+                    Oinn.push_back(Oinn[iii]);  // New record start at end and ends with original end
+                    Oout.push_back(start(ii));
+                    Oevent.push_back(0);
+                    Opnrnum.push_back(Opnrnum[iii]);
+                    Omergevar.push_back(Omergevar[iii]);
+                    for(int k=0; k<numcov;k++)Oval[k].push_back(Oval[k][iii]);
+                    Oinn.push_back(end(ii));  // New record start at inn and ends with Tstart(ii) end
+                    Oout.push_back(Oout[iii]);
+                    Oevent.push_back(Oevent[iii]);
+                    Opnrnum.push_back(Opnrnum[iii]);
+                    Omergevar.push_back(Omergevar[iii]);
+                    for(int k=0; k<numcov;k++)Oval[k].push_back(Oval[k][iii]);
+                    Oout[iii]=end(ii); // Original record is middle interval
+                    Oinn[iii]=start(ii);
+                    Oval[num(ii)-1][iii]=val[ii]; // and gets the value from the interval
+                    Oevent[iii]=0;
+                    //std::cout<< "iii=" <<iii<<" ii="<< ii << " Oval[iii]="<< Oval[iii] << "\n";
+                  }
+        }// end iii-loop - base data
+        OUT=OUT+OUText; // After inner loop number of recrods have extended
+        OUText=0; // reset 
+      } // End ii-loop - splitting guide
+    } // end else-something to split
   } // End i-for loop
   // //Rcout << "Create return" << "\n";  
   return (Rcpp::List::create(Rcpp::Named("pnrnum") = Opnrnum,
@@ -209,7 +209,7 @@ List splitFT(IntegerVector pnrnum, // PNR as sequence number - base data
 // start <- as.Date(c(110,  120,130,130, 90, 190,90,110,120, 199),origin = '1970-01-01')
 // slut <-  as.Date(c(112,  140,150 ,180,100,210,210,190,180,200),origin = '1970-01-01') 
 // num <-   c( 1,    2,   3,  1,  2,  3,  1,   2, 3,   1)
-// OUT <- splitFT(pnrnum, 
+// OUT <- splitft(pnrnum, 
 //              inn, 
 //              out, # Endtimes - base data
 //              event, # Event at end of interval 0/1 - base data
@@ -225,4 +225,4 @@ List splitFT(IntegerVector pnrnum, // PNR as sequence number - base data
 // setkeyv(OUT,c("pnrnum","mergevar","inn"))
 // OUT[]
 // */
-  
+
