@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 23 2024 (16:42) 
 ## Version: 
-## Last-Updated: Apr 17 2025 (11:57) 
+## Last-Updated: May  9 2025 (07:01) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 45
+##     Update #: 46
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -25,7 +25,7 @@
 ##' @param selector Character value deciding about how to select the penalty parameter lambda:
 ##' If \code{"undersmooth"} use the lambda value which results in the least amount of
 ##' penalty such that the model still fits. The other options are \code{"lambda.min"} and \code{"lambda.1se"} which are 
-##' described in the documentation of \code{\link{glmnet}}.
+##' described in the documentation of \code{\link[glmnet]{cv.glmnet}}.
 ##' @param ... Additional arguments for the learning phase passed to \code{\link{glmnet}}. 
 ##'        E.g., setting alpha affects the elastic net.
 ##' @return A vector of predicted probabilities which has the fit as an attribute.  

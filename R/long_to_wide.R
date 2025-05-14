@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 22 2024 (14:07) 
 ## Version: 
-## Last-Updated: Apr 10 2025 (11:06) 
+## Last-Updated: May  1 2025 (08:33) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 37
+##     Update #: 41
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -66,6 +66,7 @@ long_to_wide <- function(x,
     grid <- pop[,data.table::data.table(date=start_followup_date+intervals, end = end_followup),by=eval(as.character(x$names$id))]
     grid[,interval:=0:(length(intervals)-1),by=eval(as.character(x$names$id))]
     grid <- pop[,.SD,.SDcols = c(x$names$id)][grid,on = eval(as.character(x$names$id))]
+    # FIXME: this does not look great 
     length_interval=unique(round(diff(intervals),0))
     # now awkwardly reset the names
     if (length(x$names$competing)>0 & length(x$long_data$competing_data)>0){

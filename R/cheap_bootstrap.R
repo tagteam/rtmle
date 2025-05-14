@@ -11,17 +11,7 @@
 #'     the bootstrap confidence intervals. If it is a vector the analysis will be performed for
 #'     each element of the vector.
 #' @param B Number of bootstrap samples.
-#' @param M Size of the bootstrap samples. If argument \code{replace}
-#'     is \code{FALSE} this defaults to \code{0.632 *
-#'     NROW(x$prepared_data)} and if argument \code{replace} is
-#'     \code{TRUE} this defaults to \code{NROW(x$prepared_data)}.
-#' @param replace Logical. Default is \code{FALSE}. If \code{FALSE}
-#'     bootstrap samples are obtained by sampling without
-#'     replacement. In this case the value of argument \code{M} must
-#'     be smaller than \code{NROW(x$prepared_data)}.  # If \code{TRUE}
-#'     bootstrap samples are obtained by sampling with replacement. In
-#'     this case argument, by default \code{M} will be set equal to
-#'     \code{NROW(x$prepared_data)} # Defaults to "subsampling".
+#' @param M Size of the bootstrap samples. The defaults is \code{0.632 * NROW(x$prepared_data)}.
 #' @param seeds A vector of random seeds for controlling the
 #'     randomness while drawing the bootstrap samples.
 #' @param alpha Significance level. Defaults to 0.05.
@@ -63,7 +53,6 @@ cheap_bootstrap <- function(x,
                             time_horizon,
                             B = 20,
                             M,
-                            replace = FALSE,
                             seeds,
                             alpha = 0.05,
                             add = TRUE,
@@ -83,12 +72,8 @@ cheap_bootstrap <- function(x,
     N <- NROW(x$prepared_data)
     for (b in (1:B)+B_offset){
         set.seed(seeds[[b]])
-        if (replace[[1]] == TRUE) {
-            inbag <- sample(1:N,size = N,replace = TRUE)
-        }else{
-            if(M >= N) stop(paste0("When replace = FALSE, the subsample size M (specified is M=",M,") must be lower than the sample size N (which is N=",N,")"))
-            inbag <- sample(1:N,size = M,replace = FALSE)
-        }
+        if(M >= N) stop(paste0("The subsample size M (specified is M=",M,") must be lower than the sample size N (which is N=",N,")"))
+        inbag <- sample(1:N,size = M,replace = FALSE)
         if (missing(time_horizon)){
             time_horizon <- sort(unique(x$estimate$Main_analysis$Time_horizon))
         }
@@ -108,11 +93,7 @@ cheap_bootstrap <- function(x,
     }
     data.table::setnames(x$estimate$Cheap_bootstrap,"Estimate","Bootstrap_estimate")
     cb <- x$estimate[["Main_analysis"]][,data.table::data.table(Target,Protocol,Time_horizon,Main_estimate = Estimate)][x$estimate$Cheap_bootstrap,on = c("Target","Protocol","Time_horizon")]
-    if (replace == FALSE) {
-        cheap_scale <- sqrt(M / (N - M))
-    } else {
-        cheap_scale <- 1
-    }
+    cheap_scale <- sqrt(M / (N - M))
     # t-distribution 
     cb[,tq := stats::qt(1 - alpha / 2, df = B)]
     cb[,cheap_variance := cumsum((Main_estimate-Bootstrap_estimate)^2)/seq_len(.N),by = c("Target","Protocol","Time_horizon")]

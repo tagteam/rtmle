@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 25 2024 (09:50) 
 ## Version: 
-## Last-Updated: Mar 21 2025 (12:06) 
+## Last-Updated: May 14 2025 (06:18) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 79
+##     Update #: 80
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -73,7 +73,9 @@ x <- rtmle_init(intervals = tau,name_id = "id",name_outcome = "Y",name_competing
 x$long_data <- ld[c("outcome_data","censored_data","competing_data","timevar_data")]
 add_baseline_data(x) <- ld$baseline_data[,start_followup_date:=0]
 x <- long_to_wide(x,intervals = seq(0,2000,30.45*12))
-protocol(x) <- list(name = "Always_A_Never_B",intervention = data.frame("A" = factor(1,levels = c(0,1)),"B" = factor(0,levels = c(0,1))))
+protocol(x) <- list(name = "Always_A_Never_B",
+                    intervention = data.frame("A" = factor(1,levels = c(0,1)),
+                                              "B" = factor(0,levels = c(0,1))))
 protocol(x) <- list(name = "Always_B_Never_A",intervention = data.frame("A" = factor(0,levels = c(0,1)),"B" = factor(1,levels = c(0,1))))
 prepare_data(x) <- list()
 # modifying the prepared data 
