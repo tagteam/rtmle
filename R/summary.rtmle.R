@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 29 2024 (10:44) 
 ## Version: 
-## Last-Updated: Apr 11 2025 (16:43) 
+## Last-Updated: May 22 2025 (12:45) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 174
+##     Update #: 175
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -171,9 +171,17 @@ summary.rtmle <- function(object,analysis = "Main_analysis",targets,reference = 
                         e1
                     }))
                     # risk difference
-                    e[Target_parameter == Target_parameter_label[[1]],"Estimate (CI_95)":= Publish::formatCI(x = outcome_scale(Estimate),lower = outcome_scale(Lower),upper = outcome_scale(Upper),show.x = TRUE,digits = digits)]
+                    e[Target_parameter == Target_parameter_label[[1]],"Estimate (CI_95)":= Publish::formatCI(x = Estimate,
+                                                                                                             lower = Lower,
+                                                                                                             upper = Upper,
+                                                                                                             show.x = TRUE,
+                                                                                                             digits = digits)]
                     # risk ratio
-                    e[Target_parameter == Target_parameter_label[[2]],"Estimate (CI_95)":= Publish::formatCI(x = Estimate,lower = Lower,upper = Upper,show.x = TRUE,digits = digits)]
+                    e[Target_parameter == Target_parameter_label[[2]],"Estimate (CI_95)":= Publish::formatCI(x = Estimate,
+                                                                                                             lower = Lower,
+                                                                                                             upper = Upper,
+                                                                                                             show.x = TRUE,
+                                                                                                             digits = digits)]
                     e[]
                 }))}))
            out <- data.table::rbindlist(list(risk,contrast),
