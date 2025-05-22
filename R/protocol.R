@@ -77,83 +77,116 @@
 #' x$protocols
 ##' @export
 "protocol<-" <- function(x,...,value) {
-    variable <- NULL
-    stopifnot(is.list(value))
-    stopifnot(all(c("name","intervention") %in% names(value)))
-    if (length(value$verbose) == 0) value$verbose <- TRUE
-    intervention_times <- x$time[-length(x$time)]
-    intervention_table <- value$intervention
-    if (inherits(intervention_table,"data.frame")){
-        data.table::setDT(intervention_table)
-        treatment_variables <- names(intervention_table)
-        if (any(grepl(pattern = "_[0-9]+$",
-                      x = treatment_variables))){
-            stop("Treatment variables should be given without time suffix.")
-        }
-        missing_nodes <- (length(intervention_times)-NROW(intervention_table))
-        if (missing_nodes>0){
-            if (value$verbose[[1]] == TRUE){
-                message("The object specifies more intervention nodes than there are rows in the provided intervention table.\nApply last value carried forward for now, 'x$protocol$intervention_table'.")
-            }
-            intervention_table <- intervention_table[c(1:NROW(intervention_table),rep(NROW(intervention_table),missing_nodes))]
-        }else{
-            if (missing_nodes<0){
-                if (value$verbose[[1]] == TRUE){
-                    message("The object specifies fewer intervention nodes than there are rows in the provided intervention table.\nCutting these for now, but please check 'x$protocol$intervention_table'.")
-                }
-                intervention_table <- intervention_table[c(1:length(intervention_times))]
-            }
-        }
-        x$names$treatment_options <- lapply(treatment_variables,
-                                            function(v){
-                                                if (is.factor(value$intervention[[v]])){
-                                                    levels(value$intervention[[v]])
-                                                } else{
-                                                    # FIXME: this seems out of control and will not work
-                                                    stop("The treatment variables must be factors") 
-                                                    unique(value$intervention[[v]])
-                                                }
-                                            })
-        names(x$names$treatment_options) <- treatment_variables
-    }else{
-        if ("treatment_variables" %in% names(value) &&
-            length(value$treatment_variables) == length(intervention_table) &&
-            all(intervention_table %in% c(0,1))){
-            treatment_variables <- value$treatment_variables
-            intervention_table <- data.table::as.data.table(lapply(1:length(treatment_variables),function(v){
-                factor(intervention_table[[v]],levels = c(0,1))
-            }))
-            data.table::setnames(intervention_table,treatment_variables)
-            x$names$treatment_options <- lapply(treatment_variables,function(x)c(0,1))
-            names(x$names$treatment_options) <- treatment_variables
-        }else{
-            stop("Intervention must be a vector of 0s and 1s or a data.frame (or data.table or tibble) containing factors.")
-        }
+  variable <- NULL
+  stopifnot(is.list(value))
+  stopifnot(all(c("name","intervention") %in% names(value)))
+  if (length(value$verbose) == 0) value$verbose <- TRUE
+  intervention_times <- x$time[-length(x$time)] # this is defined by the rtmle_initi when you define the intervals
+  # in case of a stochastic/dynamic intervention we do not define the intervention
+  # as a vector or a data.frame but rather as a function
+  # so we will have the definition of the treatment_variables as a factor with 2 levels
+  intervention_table <- value$intervention
+  if (inherits(intervention_table,"data.frame")){ ## define the intervention as a data.frame with one row for each time for A or A and B
+    data.table::setDT(intervention_table)
+    treatment_variables <- names(intervention_table)
+    if (any(grepl("_[0-9]+$","",treatment_variables))){
+      stop("Treatment variables should be given without time suffix.")
     }
-    if (!("time" %in% names(intervention_table))){
-        intervention_table <- cbind(time = intervention_times,
-                                    intervention_table)
+    missing_nodes <- (length(intervention_times)-NROW(intervention_table))
+    if (missing_nodes>0){
+      if (value$verbose[[1]] == TRUE){
+        message("The object specifies more intervention nodes than there are rows in the provided intervention table.\nApply last value carried forward for now, 'x$protocol$intervention_table'.")
+      }
+      intervention_table <- intervention_table[c(1:NROW(intervention_table),rep(NROW(intervention_table),missing_nodes))]
     }else{
-        if (!(all(intervention_table[["time"]] == intervention_times))){
-            stop(paste("Intervention times do not match. Object contains:\n",
-                       paste(intervention_times,collapse = ", ")))
+      if (missing_nodes<0){
+        if (value$verbose[[1]] == TRUE){
+          message("The object specifies fewer intervention nodes than there are rows in the provided intervention table.\nCutting these for now, but please check 'x$protocol$intervention_table'.")
         }
+        intervention_table <- intervention_table[c(1:length(intervention_times))]
+      }
     }
-    intervention_table <- do.call("rbind",lapply(treatment_variables,function(v){
-        itv <- intervention_table[,c("time",v),with = FALSE]
-        itv[,variable := paste0(v,"_",itv$time)]
-        data.table::setnames(itv,old = v,new = "value")
-        data.table::setcolorder(itv,c("time","variable","value"))
-        itv
-    }))
-    if (length(value$intervene_function)>0){
-        x$protocols[[value$name]]$intervene_function <- value$intervene_function
+    x$names$treatment_options <- lapply(treatment_variables,
+                                        function(v){
+                                          if (is.factor(value$intervention[[v]])){
+                                            levels(value$intervention[[v]])
+                                          } else{
+                                            # FIXME: this seems out of control and will not work
+                                            stop("The treatment variables must be factors")
+                                            unique(value$intervention[[v]])
+                                          }
+                                        })
+    names(x$names$treatment_options) <- treatment_variables
+  }
+  else{
+    ## this is when you do not define the data.frame but only the treatment_variables name
+    ## and the intervention is a vector with one value for each time
+    ## this work only with binary treatment
+    if ("treatment_variables" %in% names(value) && !is.function(intervention_table) &&
+        length(value$treatment_variables) == length(intervention_table) &&
+        all(intervention_table %in% c(0,1))){
+      treatment_variables <- value$treatment_variables
+      # create the intervention table from the vector as a data.table with one raw for each time
+      intervention_table <- data.table::as.data.table(lapply(1:length(treatment_variables),function(v){
+        factor(intervention_table[[v]],levels = c(0,1))
+      }))
+      data.table::setnames(intervention_table,treatment_variables)
+      x$names$treatment_options <- lapply(treatment_variables,function(x)c(0,1))
+      names(x$names$treatment_options) <- treatment_variables
     }else{
-        x$protocols[[value$name]]$intervene_function <- "intervene"
+      if("treatment_variables" %in% names(value) && is.function(intervention_table))
+      { ## we have a stochastic or a dynamic intervention, so it is not fixed, it will depend from the history
+        ## and we have to take track of the needed variables for the definition of the intervention
+        ## we put something here, but in principle the value is not needed in this case.
+        treatment_variables<-value$treatment_variables
+        intervention_table<-data.table::as.data.table(lapply(1:length(treatment_variables),function(v){
+          #factor(NA, levels=c(0,1))
+          value$intervention
+        }))
+        data.table::setnames(intervention_table,treatment_variables)
+      }else{stop("Intervention must be a vector of 0s and 1s or a data.frame (or data.table or tibble) containing factors or a function for dynamic or stochastic rules.")}
+
     }
-    x$protocols[[value$name]]$treatment_variables <- treatment_variables
-    x$protocols[[value$name]]$intervention_table <- intervention_table
-    x
+
+  }
+  if (!("time" %in% names(intervention_table))){
+    intervention_table <- cbind(time = intervention_times,
+                                intervention_table)
+  }else{
+    if (!(all(intervention_table[["time"]] == intervention_times))){
+      stop(paste("Intervention times do not match. Object contains:\n",
+                 paste(intervention_times,collapse = ", ")))
+    }
+  }
+
+  intervention_table <- do.call("rbind",lapply(treatment_variables,function(v){
+    itv <- intervention_table[,c("time",v),with = FALSE]
+    itv[,variable := paste0(v,"_",itv$time)]
+    data.table::setnames(itv,old = v,new = "value")
+    data.table::setcolorder(itv,c("time","variable","value"))
+    itv
+  }))
+
+  if (is.function(value$intervention)){
+    ## the function inside intervene can be used for a dynamic intervention (intervention value depends on the past values)
+    ## or for a stochastic intervention (define a function for the probability of getting the intervention)
+    ## these are different because in the dynamic intervention then we get a value for the intervention_table
+    ## while for the stochastic intervention you get a probability
+    x$protocols[[value$name]]$intervene_function <- value$intervention
+    ## and in this case, we should ask for the intervention_type: dynamic or stochastic so to distinguish what to do with it:
+    if((value$intervention_type) %in% c("stochastic","dynamic")){
+      x$protocols[[value$name]]$intervention_type<-value$intervention_type
+    }
+    else{
+      stop("you defined a function as for the intervention, you need to specify the intervention_type as \"stochastic \" or \" dynamic \" ")
+    }
+    ## in case of a function we should define the variables the rule depends on
+    ## DISCUSS WITH THOMAS AND UNDERSTAND HOW TO DO THIS, AS HE DID FOR THE gform and Qform (target)
+  }else{
+    x$protocols[[value$name]]$intervene_function <- "intervene"
+    #x$protocols[[value$name]]$intervention_type<-"static"
+  }
+  x$protocols[[value$name]]$treatment_variables <- treatment_variables
+  x$protocols[[value$name]]$intervention_table <- intervention_table
+  x
 }
-######################################################################
-### protocol.R ends here
