@@ -53,11 +53,11 @@ at each time point during followup including at time zero (baseline).
 # ------------------------------------------------------------------------------------------
 x <- rtmle_init(intervals = 3,name_id = "id",name_outcome = "Y",name_competing = "Dead",
                 name_censoring = "Censored",censored_label = "censored")
-protocol(x) <- list(name = "Always_A",
+x <- protocol(x,name = "Always_A",
                     intervention = data.frame("A" = factor("1",levels = c("0","1"))))
-protocol(x) <- list(name = "Never_A",
+x <- protocol(x,name = "Never_A",
                     intervention = data.frame("A" = factor("0",levels = c("0","1"))))
-protocol(x) <- list(name = "Initiate_A_then_stop",
+x <- protocol(x,name = "Initiate_A_then_stop",
                     intervention = data.frame("A" = factor(c("1","0","0"),levels = c("0","1"))))
 x$protocols
 # ------------------------------------------------------------------------------------------
@@ -65,10 +65,10 @@ x$protocols
 # ------------------------------------------------------------------------------------------
 x <- rtmle_init(intervals = 3,name_id = "id",name_outcome = "Y",name_competing = "Dead",
                 name_censoring = "Censored",censored_label = "censored")
-protocol(x) <- list(name = "Always_A_never_B",
+x <- protocol(x,name = "Always_A_never_B",
                     intervention = data.frame("A" = factor("1",levels = c("0","1")),
                                               "B" = factor("0",levels = c("0","1"))))
-protocol(x) <- list(name = "Always_A_and_B_never_C",
+x <- protocol(x,name = "Always_A_and_B_never_C",
                     intervention = data.frame("A" = factor("1",levels = c("0","1")),
                                               "B" = factor("1",levels = c("0","1")),
                                               "C" = factor("0",levels = c("0","1"))))

@@ -27,9 +27,10 @@ Set this to 1 for settings where no updating of information should happen after 
 in a longitudinal setting with \code{intervals=3} that the variables in the data set are named \code{"cvddeath_1", "cvddeath_2", "cvddeath_3"}.
 In the setting where \code{intervals=1} this should be the full name of the outcome variable.}
 
-\item{name_competing}{Name of the competing risk variable(s).}
+\item{name_competing}{Name of the competing risk variable(s). Can be \code{NULL} if the data do not contain competing risks for the outcome.}
 
-\item{name_censoring}{Name of the censoring variable(s).}
+\item{name_censoring}{Name of the censoring variable(s). Can be \code{NULL} if the subjects are all uncensored, i.e., the minimum
+potential followup time is longer than the time of the last interval.}
 
 \item{censored_levels}{Character vector with the censoring levels.}
 

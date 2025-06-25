@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul  3 2024 (11:13)
 ## Version:
-## Last-Updated: Mar 25 2025 (18:00) 
+## Last-Updated: Jun 16 2025 (10:19) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 93
+##     Update #: 94
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -25,8 +25,6 @@ additive_formalizer <- function(x,
         treatment_variables <- x$protocols[[protocol]]$treatment_variables
     stopifnot(length(treatment_variables)>0)
     name_time_covariates <- setdiff(x$names$name_time_covariates,exclude_variables)
-    if (length(x$continuous_outcome)>0 && (x$continuous_outcome != FALSE))
-        name_time_covariates <- c(x$names$name_time_covariates, x$names$outcome)
     name_baseline_covariates <- setdiff(x$names$name_baseline_covariates,exclude_variables)
     name_constant_variables <- x$names$name_constant_variables
     if (length(name_time_covariates)>0){

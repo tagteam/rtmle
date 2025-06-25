@@ -7,23 +7,50 @@
 long_to_wide(
   x,
   intervals,
+  start_followup_date,
   fun = function(x) {
      1 * (sum(x) > 0)
- }
+ },
+  verbose = TRUE
 )
 }
 \arguments{
 \item{x}{object of class \code{rtmle}}
 
-\item{intervals}{a vector of time points that discretize the followup time into intervals}
+\item{intervals}{a vector of time points that discretize the
+followup time into intervals}
+
+\item{start_followup_date}{Start of followup date which is substracted from the dates of
+the outcomes, competing risks, censoring (end-of-followup), and time-varying covariates.
+If missing it is assumed to be zero for all in which case the dates of the outcomes,
+competing risks, censoring (end-of-followup), and time-varying covariates must be
+given on the time on study scale.}
 
 \item{fun}{function used to map information onto the intervals. see Details.}
+
+\item{verbose}{Logical. If \code{FALSE} suppress all messages.}
 }
 \description{
-This function is used to prepare the discretized time analysis of register data.
-The start_followup_date is the calendar date where the follow up starts
-or can be zero if the followup data are readily on the time on study scale
+This function is used to prepare a discretized time analysis of longituginal data.
 }
 \details{
-TODO
+The start_followup_date is the calendar date where the follow up
+starts or can be zero if the followup data are readily on the time
+on study scale
+
+The function discretizes data on a given time grid. Dates of events in long format.
+}
+\examples{
+set.seed(17)
+tau <- 3
+ld <- simulate_long_data(n = 91,number_visits = 20,
+                         beta = list(A_on_Y = -.2,A0_on_Y = -0.3,A0_on_A = 6),
+                         register_format = TRUE)
+x <- rtmle_init(intervals = tau,name_id = "id",name_outcome = "Y",name_competing = "Dead",
+                name_censoring = "Censored",censored_label = "censored")
+x <- add_long_data(x,outcome_data=ld$outcome_data,censored_data=ld$censored_data,
+                    competing_data=ld$competing_data,timevar_data=ld$timevar_data)
+x <- add_baseline_data(x,data=ld$baseline_data)
+x <- long_to_wide(x,intervals = seq(0,2000,30.45*12))
+x
 }

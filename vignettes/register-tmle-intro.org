@@ -139,36 +139,43 @@ x
 
 #+RESULTS[(2025-04-10 11:48:17) 8b507b232db5bb073a8147380c6d781f9e76f9f1]:
 :results:
-Targeted minimum loss analysis of register data.
-  Initialized to 3 time intervals (starting at time zero).
-  The name of the subject id variable is 'id'.
-  The outcome, competing risk and censoring variables are named 'Y', 'Dead', and 'Censored', respectively.
-TODO: The object contains no data yet.
-Add the baseline data (if any) with the function 'add_baseline_data<-'
-Add the outcome data and the longitudinal data (covariates and treatment) with one of the functions
-: 'add_long_data<-' or 'add_wide_data<-'.
-TODO: The object contains no protocols. Add them with the function 'protocol<-'.
-TODO: The object contains no targets yet. Add them with the function 'target<-'.
-:end:
 
+Targeted minimum loss based analysis of longitudinal data on a discretized time scale
+initialized to 3 time intervals (starting at time zero).
+
+See name of the subject id variable is 'id'.
+See x$names for the names of the other variables.
+TODO: The object contains no data yet.
+      - Add baseline data with the function 'add_baseline_data'
+      - Use the functions 'add_long_data' and 'long_to_wide' to add and discretize the dates of outcome, censored and competing events and to the longitudinal data (covariates and treatment).
+      - Alternatively, use the function 'add_wide_data' to add the readily discretized data.TODO: The object contains no protocols. Add them with the function 'protocol'.
+TODO: The object contains no targets yet. Add them with the function 'target'.
+:end:
 
 ** Adding the data
 
 #+ATTR_LATEX: :options otherkeywords={}, deletekeywords={}
 #+BEGIN_SRC R  :results output verbatim drawer  :exports both  :session *R* :cache yes  
-x$long_data <- ld[c("outcome_data","censored_data","competing_data","timevar_data")]
-add_baseline_data(x) <- ld$baseline_data[,start_followup_date:=0]
+x <- add_long_data(x,
+                    outcome_data=ld$outcome_data,
+                    censored_data=ld$censored_data,
+                    competing_data=ld$competing_data,
+                    timevar_data=ld$timevar_data)
+x <- add_baseline_data(x,data=ld$baseline_data)
 x
 #+END_SRC
 
 #+RESULTS[(2025-04-10 11:48:17) 49bdcfec7b8159dc23005a1d326989b56a4547c1]:
 :results:
-Targeted minimum loss analysis of register data.
-  Initialized to 3 time intervals (starting at time zero).
-  The name of the subject id variable is 'id'.
-  The outcome, competing risk and censoring variables are named 'Y', 'Dead', and 'Censored', respectively.
-TODO: The object contains no protocols. Add them with the function 'protocol<-'.
-TODO: The object contains no targets yet. Add them with the function 'target<-'.
+
+Targeted minimum loss based analysis of longitudinal data on a discretized time scale
+initialized to 3 time intervals (starting at time zero).
+
+See name of the subject id variable is 'id'.
+See x$names for the names of the other variables.
+
+TODO: The object contains no protocols. Add them with the function 'protocol'.
+TODO: The object contains no targets yet. Add them with the function 'target'.
 :end:
 
 
@@ -177,13 +184,13 @@ TODO: The object contains no targets yet. Add them with the function 'target<-'.
 #+ATTR_LATEX: :options otherkeywords={}, deletekeywords={}
 #+BEGIN_SRC R  :results output verbatim drawer  :exports both  :session *R* :cache yes  
 x <- long_to_wide(x,intervals = seq(0,2000,30.45*6))
-prepare_data(x) <- list()
+x <- prepare_data(x)
 x$prepared_data
 #+END_SRC
 
 #+RESULTS[(2025-04-10 11:48:18) 824e49ea434194f42fc103b764371428d538b5fb]:
 :results:
-id   sex      age start_followup_date   L_0   A_0 Censored_1   Y_1 Dead_1   L_1   A_1 Censored_2   Y_2 Dead_2   L_2   A_2 Censored_3
+          id   sex      age start_followup_date   L_0   A_0 Censored_1   Y_1 Dead_1   L_1   A_1 Censored_2   Y_2 Dead_2   L_2   A_2 Censored_3
        <int> <int>    <num>               <num> <num> <num>     <fctr> <num>  <num> <num> <num>     <fctr> <num>  <num> <num> <num>     <fctr>
     1:     1     0 59.44409                   0     1     1 uncensored     0      0     0     0 uncensored     0      0     0     0 uncensored
     2:     2     1 73.01360                   0     0     0 uncensored     0      0     0     0   censored    NA     NA    NA    NA       <NA>
@@ -216,8 +223,8 @@ id   sex      age start_followup_date   L_0   A_0 Censored_1   Y_1 Dead_1   L_1 
 
 #+ATTR_LATEX: :options otherkeywords={}, deletekeywords={}
 #+BEGIN_SRC R  :results output verbatim drawer  :exports both  :session *R* :cache yes  
-protocol(x) <- list(name = "always A",treatment_variables = "A",intervention = 1)
-protocol(x) <- list(name = "never A",treatment_variables = "A",intervention = 0)
+x <- protocol(x,name = "always A",treatment_variables = "A",intervention = 1)
+x <- protocol(x,name = "never A",treatment_variables = "A",intervention = 0)
 x
 #+END_SRC
 
@@ -235,7 +242,8 @@ TODO: The object contains no targets yet. Add them with the function 'target<-'.
 
 #+ATTR_LATEX: :options otherkeywords={}, deletekeywords={}
 #+BEGIN_SRC R  :results output verbatim drawer  :exports both  :session *R* :cache yes  
-target(x) <- list(name = "Outcome_risk",strategy = "additive",estimator = "tmle",time_horizon = 3,protocols = c("always A","never A"))
+x <- target(x,name = "Outcome_risk",estimator = "tmle",time_horizon = 3,protocols = c("always A","never A"))
+x <- model_formula(x)
 x
 #+END_SRC
 

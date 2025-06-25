@@ -2,7 +2,7 @@
 % Please edit documentation in R/target.R
 \name{target<-}
 \alias{target<-}
-\title{Define a target (parameter) of a hypothetical/emulated trial}
+\title{Define a target parameter}
 \usage{
 target(x, ...) <- value
 }

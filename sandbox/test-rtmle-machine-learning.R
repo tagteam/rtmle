@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Oct 28 2024 (10:19) 
 ## Version: 
-## Last-Updated: Nov  9 2024 (11:38) 
+## Last-Updated: Jun 17 2025 (07:28) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 7
+##     Update #: 14
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -21,12 +21,17 @@ library(prodlim)
 set.seed(17)
 ld <- simulate_long_data(n = 1113,number_visits = 20,beta = list(A_on_Y = -.2,A0_on_Y = -0.3,A0_on_A = 6),register_format = TRUE)
 x <- rtmle_init(intervals = 3,name_id = "id",name_outcome = "Y",name_competing = "Dead",name_censoring = "Censored",censored_label = "censored")
-x$long_data <- ld[c("outcome_data","censored_data","competing_data","timevar_data")]
-add_baseline_data(x) <- ld$baseline_data[,start_followup_date:=0]
+x <- add_long_data(x,
+                    outcome_data=ld$outcome_data,
+                    censored_data=ld$censored_data,
+                    competing_data=ld$competing_data,
+                    timevar_data=ld$timevar_data)
+x <- add_baseline_data(x,data=ld$baseline_data)
 x <- long_to_wide(x,intervals = seq(0,2000,30.45*12))
-protocol(x) <- list(name = "Always_A",treatment_variables = "A",intervention = 1)
-prepare_data(x) <- list()
-target(x) <- list(name = "Outcome_risk",strategy = "additive",estimator = "tmle",protocols = "Always_A")
+x <- protocol(x,name = "Always_A",treatment_variables = "A",intervention = 1)
+x <- prepare_data(x)
+x <- target(x,name = "Outcome_risk",estimator = "tmle",protocols = "Always_A")
+x <- model_formula(x)
 system.time(x <- run_rtmle(x,
                            refit = TRUE,
                            time_horizon = 2,

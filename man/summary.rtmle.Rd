@@ -43,14 +43,19 @@ ld <- simulate_long_data(n = 181,number_visits = 20,
 x <- rtmle_init(intervals = 2,name_id = "id",name_outcome = "Y",
                 name_competing = "Dead",name_censoring = "Censored",
                 censored_label = "censored")
-x$long_data <- ld[c("outcome_data","censored_data","competing_data","timevar_data")]
-add_baseline_data(x) <- ld$baseline_data[,start_followup_date:=0]
+x <- add_long_data(x,
+                   outcome_data=ld$outcome_data,
+                   censored_data=ld$censored_data,
+                   competing_data=ld$competing_data,
+                   timevar_data=ld$timevar_data)
+x <- add_baseline_data(x,data=ld$baseline_data)
 x <- long_to_wide(x,intervals = seq(0,2000,30.45*6))
-protocol(x) <- list(name = "Always_A",treatment_variables = "A",intervention = 1)
-protocol(x) <- list(name = "Never_A",treatment_variables = "A",intervention = 0)
+x <- protocol(x,name = "Always_A",treatment_variables = "A",intervention = 1)
+x <- protocol(x,name = "Never_A",treatment_variables = "A",intervention = 0)
 prepare_data(x) <- list(reset = TRUE)
-target(x) <- list(name = "Outcome_risk",strategy = "additive",
+x <- target(x,name = "Outcome_risk",
                   estimator = "tmle",protocols = c("Always_A","Never_A"))
+x <- model_formula(x)
 x <- run_rtmle(x,time_horizon=1:2)
 summary(x)
 

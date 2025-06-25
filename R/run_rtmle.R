@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul  1 2024 (09:11)
 ## Version:
-## Last-Updated: Apr 11 2025 (16:16) 
+## Last-Updated: Jun 17 2025 (07:34) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 509
+##     Update #: 521
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -57,18 +57,22 @@
 #'                          register_format = TRUE)
 #' x <- rtmle_init(intervals = tau,name_id = "id",name_outcome = "Y",name_competing = "Dead",
 #'                 name_censoring = "Censored",censored_label = "censored")
-#' x$long_data <- ld[c("outcome_data","censored_data","competing_data","timevar_data")]
-#' add_baseline_data(x) <- ld$baseline_data[,start_followup_date:=0]
+#' x <- add_long_data(x,
+#'                    outcome_data=ld$outcome_data,
+#'                    censored_data=ld$censored_data,
+#'                    competing_data=ld$competing_data,
+#'                    timevar_data=ld$timevar_data)
+#' x <- add_baseline_data(x,data=ld$baseline_data)
 #' x <- long_to_wide(x,intervals = seq(0,2000,30.45*12))
-#' protocol(x) <- list(name = "Always_A",
+#' x <- protocol(x,name = "Always_A",
 #'                     intervention = data.frame("A" = factor("1",levels = c("0","1"))))
-#' protocol(x) <- list(name = "Never_A",
+#' x <- protocol(x,name = "Never_A",
 #'                     intervention = data.frame("A" = factor("0",levels = c("0","1"))))
-#' prepare_data(x) <- list()
-#' target(x) <- list(name = "Outcome_risk",
-#'                   strategy = "additive",
+#' x <- prepare_data(x)
+#' x <- target(x,name = "Outcome_risk",
 #'                   estimator = "tmle",
 #'                   protocols = c("Always_A","Never_A"))
+#' x <- model_formula(x)
 #' x <- run_rtmle(x,learner = "learn_glmnet",time_horizon = 1:tau)
 #' summary(x)
 #' \dontrun{
@@ -99,7 +103,7 @@ run_rtmle <- function(x,
         for (sub in subsets){
             stopifnot(is.character(sub$label[[1]]))
             ## FIXME: is this check useful? stopifnot(all(sub$id %in% x$prepared_data[[x$names$id]]))
-            xs <- data.table::copy(x[c("targets","names","times","protocols","continuous_outcome","models")])
+            xs <- data.table::copy(x[c("targets","names","times","protocols","models")])
             xs$prepared_data <- x$prepared_data[x$prepared_data[[x$names$id]] %in% sub$id]
             if (NROW(xs$prepared_data) == 0) stop(paste0("No data in subset: ",label))
             # FIXME: should check if someone is at risk at the maximal time_horizons
@@ -149,16 +153,7 @@ run_rtmle <- function(x,
         return(x)
     }else{
         # check data
-        if (length(x$continuous_outcome) == 0 || x$continuous_outcome == FALSE){
-            x$continuous_outcome <- FALSE
-        }else{
-            x$continuous_outcome <- TRUE
-        }
-        if (!x$continuous_outcome){
-            Target_parameter <- "Risk"
-        } else {
-            Target_parameter <- "Weighted mean among survivors"
-        }
+        Target_parameter <- "Risk"
         available_targets <- names(x$targets)
         if (!missing(targets) && length(targets)>0) {
             if (!(all(targets %in% available_targets)))
@@ -272,5 +267,6 @@ run_rtmle <- function(x,
         return(x)
     }
 }
+
 ######################################################################
 ### run_rtmle.R ends here

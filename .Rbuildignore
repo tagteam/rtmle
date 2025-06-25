@@ -1,5 +1,6 @@
-^sandbox/
-^attic/
+^sandbox
+^attic
+^presentations
 ^.*\.o$
 ^.*\.so$
 ^README.org$

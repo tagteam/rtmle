@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Mar 24 2025 (15:06)
 ## Version:
-## Last-Updated: Mar 24 2025 (15:17)
+## Last-Updated: Jun 16 2025 (10:19) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 2
+##     Update #: 3
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -34,17 +34,12 @@ count_followup <- function(x,
                            outcome_variables,
                            censoring_variables,
                            competing_variables,
-                           max_time_horizon,
-                           continuous_outcome){
+                           max_time_horizon){
     x$followup <- prepared_data[,c(x$names$id),with = FALSE]
     set(x$followup,j = "last_interval",value = numeric(NROW(x$followup)))
     if (max_time_horizon>1){
         for (j in 0:(max_time_horizon-2)){
-            if (!continuous_outcome){
               vital <- 1*(prepared_data[[outcome_variables[[j+1]]]] %in% "0")
-            } else {
-              vital <- rep(1,NROW(prepared_data))
-            }
             if (length(censoring_variables)>0){
                 vital <- vital * 1*(prepared_data[[censoring_variables[[j+1]]]] %in% x$names$uncensored_label)
             }

@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 19 2024 (07:23) 
 ## Version: 
-## Last-Updated: Mar  7 2025 (18:15) 
+## Last-Updated: Jun 16 2025 (14:17) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 32
+##     Update #: 38
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -26,8 +26,9 @@
 ##' @param name_outcome Name of the outcome variable(s). For example, the value \code{"cvddeath"} would mean
 ##' in a longitudinal setting with \code{intervals=3} that the variables in the data set are named \code{"cvddeath_1", "cvddeath_2", "cvddeath_3"}.
 ##' In the setting where \code{intervals=1} this should be the full name of the outcome variable.
-##' @param name_competing Name of the competing risk variable(s).
-##' @param name_censoring Name of the censoring variable(s).
+##' @param name_competing Name of the competing risk variable(s). Can be \code{NULL} if the data do not contain competing risks for the outcome.
+##' @param name_censoring Name of the censoring variable(s). Can be \code{NULL} if the subjects are all uncensored, i.e., the minimum
+##' potential followup time is longer than the time of the last interval. 
 ##' @param censored_levels Character vector with the censoring levels.
 ##' @param censored_label A single character value. Label of the values of the censoring variable(s) that indicated that
 ##' the data of the subject at this time interval are censored. Must be an element of \code{censored_levels} too.
@@ -61,15 +62,21 @@ rtmle_init <- function(intervals,
                        censored_levels = c("uncensored","censored"),
                        censored_label = "censored"){
     time_labels = paste0("time_",0:intervals)
-    if (!length(censored_levels) %in%c(0,1,2))
-        stop("Wrong number of censored levels: has to be 0, 1, or 2.")
-    stopifnot(censored_label%in%censored_levels)
-    if (length(censored_levels) == 2)
+    if (length(name_censoring)>0){
+        if (length(censored_label) != 1 ||
+            length(censored_levels) != 2 ||
+            !(censored_label %in% censored_levels)){
+            stop(paste0("Expect two values for censored_levels ",
+                        "and one value for censored_label.\n",
+                        "The censored_label must be an element of censored_levels.")) 
+        }
         uncensored_label = setdiff(censored_levels,censored_label)
-    else
-        uncensored_label = NULL
+    }else{
+        uncensored_label <- NULL
+    }
     x = list(targets = NULL,
              estimate = NULL,
+             data = NULL,
              names = list("id" = name_id,
                           "time" = name_time,
                           "outcome" = name_outcome,

@@ -72,18 +72,22 @@ ld <- simulate_long_data(n = 91,number_visits = 20,
                          register_format = TRUE)
 x <- rtmle_init(intervals = tau,name_id = "id",name_outcome = "Y",name_competing = "Dead",
                 name_censoring = "Censored",censored_label = "censored")
-x$long_data <- ld[c("outcome_data","censored_data","competing_data","timevar_data")]
-add_baseline_data(x) <- ld$baseline_data[,start_followup_date:=0]
+x <- add_long_data(x,
+                   outcome_data=ld$outcome_data,
+                   censored_data=ld$censored_data,
+                   competing_data=ld$competing_data,
+                   timevar_data=ld$timevar_data)
+x <- add_baseline_data(x,data=ld$baseline_data)
 x <- long_to_wide(x,intervals = seq(0,2000,30.45*12))
-protocol(x) <- list(name = "Always_A",
+x <- protocol(x,name = "Always_A",
                     intervention = data.frame("A" = factor("1",levels = c("0","1"))))
-protocol(x) <- list(name = "Never_A",
+x <- protocol(x,name = "Never_A",
                     intervention = data.frame("A" = factor("0",levels = c("0","1"))))
-prepare_data(x) <- list()
-target(x) <- list(name = "Outcome_risk",
-                  strategy = "additive",
+x <- prepare_data(x)
+x <- target(x,name = "Outcome_risk",
                   estimator = "tmle",
                   protocols = c("Always_A","Never_A"))
+x <- model_formula(x)
 x <- run_rtmle(x,learner = "learn_glmnet",time_horizon = 1:tau)
 summary(x)
 \dontrun{

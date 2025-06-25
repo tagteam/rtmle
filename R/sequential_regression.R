@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 30 2024 (14:30)
 ## Version:
-## Last-Updated: Apr 11 2025 (16:41) 
+## Last-Updated: Jun 16 2025 (10:18) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 293
+##     Update #: 295
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -53,13 +53,16 @@ sequential_regression <- function(x,
         # during the current interval. So, while their observed outcome is NA their predicted_outcome is available
         # we keep the NA values and use outcome_free_and_uncensored rather than outcome_free_and_still_uncensored
         # because the TMLE update step needs to subset the predicted values to the non-NA outcomes
-        if (j == time_horizon) {
-            outcome_name <- outcome_variables[[time_horizon]]
-            # FIXME: protocols could share the outcome formula?
+        outcome_name <- outcome_variables[[time_horizon]]
+        # FIXME: delete the if query when obsolete way of specifying formulas is gone
+        if (protocol_name %in% names(x$models)){
             interval_outcome_formula = x$models[[protocol_name]][[outcome_variables[[j]]]]$formula
-        } else {
+        }else{
+            interval_outcome_formula = x$models[[outcome_variables[[j]]]]$formula
+        }
+        if (j < time_horizon) {
             outcome_name <- "rtmle_predicted_outcome"
-            interval_outcome_formula <- stats::update(stats::formula(x$models[[protocol_name]][[outcome_variables[[j]]]]$formula),"rtmle_predicted_outcome~.")
+            interval_outcome_formula <- stats::update(stats::formula(interval_outcome_formula),"rtmle_predicted_outcome~.")
         }
         ## HERE
         ## Y <- x$prepared_data[outcome_free_and_uncensored][[outcome_name]]
@@ -69,7 +72,7 @@ sequential_regression <- function(x,
         #        time j? those in current outcome_formula
         # FIXME: remove id variable below here
         history_of_variables <- names(x$prepared_data)[1:(-1+match(outcome_variables[[j]],names(x$prepared_data)))]
-        intervenable_history <- setdiff(history_of_variables,c(if (!x$continuous_outcome){outcome_variables} else {NULL},censoring_variables,competing_variables))
+        intervenable_history <- setdiff(history_of_variables,c(outcome_variables,censoring_variables,competing_variables))
         intervened_data <- do.call(x$protocol[[protocol_name]]$intervene_function,
                                    list(data = x$prepared_data[,intervenable_history,with = FALSE],
                                         intervention_table = intervention_table,
@@ -136,7 +139,7 @@ sequential_regression <- function(x,
             }
         }
         # save fitted object
-        x$models[[protocol_name]][[outcome_variables[[j]]]]$fit <- attr(fit_last,"fit")
+        x$models[[outcome_variables[[j]]]]$fit <- attr(fit_last,"fit")
         data.table::setattr(fit_last,"fit",NULL)
         fit_last <- as.numeric(fit_last)
         # set predicted value as outcome for next regression
@@ -190,13 +193,6 @@ sequential_regression <- function(x,
         }else{
             W <- fit_last
         }
-        if (x$continuous_outcome){
-            Y_scale <- Y*(x$outcome_range[2]-x$outcome_range[1])+x$outcome_range[1]
-            W_scale <- W*(x$outcome_range[2]-x$outcome_range[1])+x$outcome_range[1]
-        } else {
-            Y_scale <- Y
-            W_scale <- W
-        }
         # FIXME: we do not need to save the following
         if (FALSE){
             x$sequential_outcome_regression[[target_name]]$predicted_values <- cbind(x$sequential_outcome_regression[[target_name]]$predicted_values,W)
@@ -214,7 +210,7 @@ sequential_regression <- function(x,
         }
         
         if (any(h.g.ratio[index] != 0)) {
-            x$IC[[target_name]][[protocol_name]][[label_time_horizon]][index] <- x$IC[[target_name]][[protocol_name]][[label_time_horizon]][index] + (Y_scale[index] - W_scale[index]) * h.g.ratio[index]
+            x$IC[[target_name]][[protocol_name]][[label_time_horizon]][index] <- x$IC[[target_name]][[protocol_name]][[label_time_horizon]][index] + (Y[index] - W[index]) * h.g.ratio[index]
         }
         ## curIC <- CalcIC(Qstar.kplus1, Qstar, update.list$h.g.ratio,
         ## uncensored, intervention.match, regimes.with.positive.weight)
@@ -230,13 +226,7 @@ sequential_regression <- function(x,
             # fixme j or j-1?
             value = x$prepared_data[[paste0(x$names$outcome,"_",j)]][which(!(outcome_free_and_uncensored))])
     }
-    # rescale rtmle_predicted_outcome if continuous outcome
-    if (x$continuous_outcome){
-        x$prepared_data$rtmle_predicted_outcome <- (x$prepared_data$rtmle_predicted_outcome*(x$outcome_range[2]-x$outcome_range[1]))+x$outcome_range[1]
-        target_parameter <- "Weighted mean among survivors"
-    } else {
-        target_parameter <- "Risk"
-    }
+    target_parameter <- "Risk"
     # g-formula and tmle estimator
     ic <- x$IC[[target_name]][[protocol_name]][[label_time_horizon]] + x$prepared_data$rtmle_predicted_outcome - mean(x$prepared_data$rtmle_predicted_outcome)
     SE = sqrt(stats::var(ic)/N)

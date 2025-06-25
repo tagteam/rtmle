@@ -62,14 +62,14 @@ Here we specify:
 #### Static Intervention: One single binary variable exposure (Always treated protocol)
 
 ```{r}
-protocol(x) <- list(name = "always A",treatment_variables = "A",
+x <- protocol(x,name = "always A",treatment_variables = "A",
 intervention = 1)
 ```
 
 OR 
 
 ```{r}
-protocol(x) <- list(name = "always A",treatment_variables = c("A_1","A_2","A_3"),
+x <- protocol(x,name = "always A",treatment_variables = c("A_1","A_2","A_3"),
 intervention = 1)
 ```
 
@@ -77,28 +77,28 @@ intervention = 1)
 OR 
 
 ```{r}
-protocol(x) <- list(name = "always A",treatment_variables = c("A_1","A_2","A_3"),
+x <- protocol(x,name = "always A",treatment_variables = c("A_1","A_2","A_3"),
 intervention = c(1,1,1))
 ```
 
 #### Static Intervention: Two binary variables exposures (A,B)
 
 ```{r}
-protocol(x) <- list(name = "always combined",treatment_variables = list("A"=c("A_1","A_2","A_3"),"B"=c("B_1","B_2","B_3")),
+x <- protocol(x,name = "always combined",treatment_variables = list("A"=c("A_1","A_2","A_3"),"B"=c("B_1","B_2","B_3")),
 intervention = list("A"=c(1,1,1),"B"=c(1,1,1)))
 ```
 
 OR
 
 ```{r}
-protocol(x) <- list(name = "always combined",treatment_variables = matrix(c("A_1","A_2","A_3", "B_1","B_2","B_3"),3),
+x <- protocol(x,name = "always combined",treatment_variables = matrix(c("A_1","A_2","A_3", "B_1","B_2","B_3"),3),
 intervention = matrix(rep(1,6),3))
 ```
 
 OR
 
 ```{r}
-protocol(x) <- list(name = "always combined", treatment_variables = c("A","B"),
+x <- protocol(x,name = "always combined", treatment_variables = c("A","B"),
 intervention = c(1,1))
 ```
 

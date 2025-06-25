@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 19 2024 (10:07)
 ## Version:
-## Last-Updated: Mar 25 2025 (19:16) 
+## Last-Updated: Jun 17 2025 (07:28) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 212
+##     Update #: 237
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -23,9 +23,8 @@
 ##' the outcome variables (outcome_variables), the competing risk variables (competing_variables) and the
 ##' censoring variables (censoring_variables) and adds them to the object.
 ##' @title Preparing a targeted minimum loss based analysis
-##' @param x Object which contains long format or wide format data
-##' @param ... not used
-##' @param value A list with the following forced elements:
+##' @param x Object initialized with \code{rtmle_init} which contains wide format data.
+##' @param ... not used (not yet)
 ##' \itemize{
 ##' \item \code{"intervals"} The time intervals
 ##' }
@@ -40,30 +39,24 @@
 #' x <- rtmle_init(intervals = 3, name_id = "id",
 #'                 name_outcome = "Y", name_competing = "Dead",
 #'                 name_censoring = "Censored",censored_label = "censored")
-#' x$long_data <- ld[c("outcome_data","censored_data","competing_data","timevar_data")]
-#' add_baseline_data(x) <- ld$baseline_data[,start_followup_date:=0]
+#' x <- add_long_data(x,
+#'                    outcome_data=ld$outcome_data,
+#'                    censored_data=ld$censored_data,
+#'                    competing_data=ld$competing_data,
+#'                    timevar_data=ld$timevar_data)
+#' x <- add_baseline_data(x,data=ld$baseline_data)
 #' x <- long_to_wide(x,intervals=seq(0,2000,30.45*6))
-#' prepare_data(x) <- list()
+#' x <- prepare_data(x)
 #' x$prepared_data
 #'
 ##' @export
 ##' @author Thomas A. Gerds <tag@@biostat.ku.dk>
-"prepare_data<-" <- function(x,...,value){
-
-    # check value
-    stopifnot(is.list(value))
-
+prepare_data <- function(x,...){
+    
     # check object x
     K = length(x$times)
     max_time_horizon = max(x$times)
     stopifnot(max_time_horizon>0)
-
-    if (is.null(value$continuous_outcome)){
-        continuous_outcome <- FALSE
-    } else {
-        continuous_outcome <- value$continuous_outcome
-    }
-    x$continuous_outcome <- continuous_outcome
 
     # names of outcome, competing and censoring variables
     outcome_variables = paste0(x$names$outcome, "_", 1:max_time_horizon)
@@ -80,13 +73,14 @@
     if (NROW(x$prepared_data)>0){
         warning("Overwriting existing prepared data object")
     }
+    # FIXME: are these checks obsolete, now that the add_data function perform these checks?
     check_id <- function(data,id,allow_null = TRUE, name = ""){
         if (NROW(data)>0){
             if (!inherits(data,"data.table"))
                 if (inherits(data,"data.frame")){
                     data.table::setDT(data)
                 } else{
-                    warning("The object x$outcome_data must be a data.table, data.frame, or tibble")
+                    warning("The object x$data$outcome_data must be a data.table, data.frame, or tibble")
                 }
             if (match(id,names(data),nomatch = 0) == 0){
                 stop(paste0("The object ",name," does not have the variable '",
@@ -102,10 +96,11 @@
     }
     check_id(data = x$data$outcome_data, id = x$names$id,allow_null = FALSE,name = "x$data$outcome_data")
     check_id(data = x$data$baseline_data, id = x$names$id,name = "x$data$baseline_data")
-    nix = lapply(names(x$data$timevar_data),function(nn){
-        check_id(data = x$data$timevar_data[[nn]], id = x$names$id,name = paste0("x$data$timevar_data$",nn))
-    })
-    rm(nix)
+    # FIXME: do something else when data were added via add_wide_data
+    ## nix = lapply(names(x$data$timevar_data),function(nn){
+    ## check_id(data = x$data$timevar_data[[nn]], id = x$names$id,name = paste0("x$data$timevar_data$",nn))
+    ## })
+    ## rm(nix)
     # initialize dataset with outcome data
     prepared_data <- x$data$outcome_data
     # sort by id
@@ -149,8 +144,7 @@
             # a time varying covariate is recognized when
             # there is a _1 version of it. That is a variable called hba_1 (root: hba) and also
             # a variable hba1c_level_1_1 (root: hba1c_level_1)
-            # FIXME: there could be root variables which have a time _3 version but not a time _1 version
-            name_time_covariates <- unlist(lapply(grep("_1$",names(x$data$timevar_data),value=TRUE),
+            name_time_covariates <- unlist(lapply(grep("_[1-9]+$",names(x$data$timevar_data),value=TRUE),
                                                   function(x){substring(x,0,nchar(x)-2)}))
             prepared_data <- prepared_data[x$data$timevar_data,on = x$names$id]
         }else{
@@ -161,8 +155,11 @@
                 }
             }
         }
+        non_variables <- setdiff(unlist(lapply(name_time_covariates,function(x)paste0(x,"_",0:K))),
+                                 names(prepared_data))
     } else {
         name_time_covariates <- NULL
+        non_variables <- NULL
     }
     # sorting of variables should not be necessary because the formulas define the dependencies
     # but sorting is still be convenient for data inspections
@@ -173,9 +170,7 @@
         } else{
             if(timepoint != x$times[K]){
                 paste0(c(x$names$censoring, x$names$outcome, x$names$competing, name_time_covariates),"_",timepoint)
-            } else if (continuous_outcome){
-              paste0(c(x$names$censoring, x$names$outcome, x$names$competing),"_",timepoint)
-            } else {
+            } else{
                 paste0(c(x$names$censoring, x$names$outcome),"_",timepoint)
             }
         }
@@ -291,24 +286,6 @@
             }
         }
     }
-    if (continuous_outcome){
-        ## Determine the range of the outcome variable across all time points
-        ## and set the range to be the same for all time points
-        outcome_range <- range(na.omit(unlist(prepared_data[,paste0(x$names$outcome,"_",1:max_time_horizon),with=FALSE])))
-        x$outcome_range <- outcome_range
-
-        ## Scale outcome to be between 0 and 1 according to Mark van der Laan (A Targeted Maximum Likelihood Estimator of a Causal Effect on a Bounded Continuous Outcome)
-        prepared_data[,paste0(x$names$outcome,"_",1:max_time_horizon) := lapply(.SD,function(x){(x-outcome_range[1])/(outcome_range[2]-outcome_range[1])}),
-                      .SDcols = paste0(x$names$outcome,"_",1:max_time_horizon)]
-
-        ## Those who bave a competing event should have outcome set to 0
-        competing_variables <- c(competing_variables,paste0(x$names$competing,"_",max_time_horizon))
-        if(length(x$names$competing)>0){
-            for (j in 1:(max_time_horizon)){
-                prepared_data[prepared_data[[competing_variables[[j]]]] %in% "1",paste0(x$names$outcome,"_",j) := 0]
-            }
-        }
-    }
     # Find last interval for individual where the individual is still 'at-risk' of experiencing
     # the outcome event and still 'uncensored'
     x <- count_followup(x = x,
@@ -316,13 +293,13 @@
                         outcome_variables,
                         censoring_variables,
                         competing_variables,
-                        max_time_horizon = max_time_horizon,
-                        continuous_outcome = continuous_outcome)
+                        max_time_horizon = max_time_horizon)
     x$prepared_data <- prepared_data[]
     x$names$name_time_covariates <- name_time_covariates
     x$names$name_baseline_covariates <- name_baseline_covariates
-    x$names$name_constant_variables <- constant_variables
+    x$names$name_constant_variables <- c(constant_variables,non_variables)
     x
 }
+
 ######################################################################
 ### prepare_data.R ends here

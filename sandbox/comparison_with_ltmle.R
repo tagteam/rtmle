@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 25 2024 (09:50) 
 ## Version: 
-## Last-Updated: May 14 2025 (06:18) 
+## Last-Updated: Jun 17 2025 (07:29) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 80
+##     Update #: 92
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -22,6 +22,17 @@ library(prodlim)
 breakfast_code <- "~/research/Methods/TMLE_for_breakfast/Ltmle/R/"
 if (file.exists(breakfast_code)){
     tar_source(breakfast_code)
+    summary.runLtmle <- function(object,time_horizon,regimen,outcome){
+        if (missing(time_horizon)) time_horizon = object[[1]]$Ltmle_fit$info$time_horizon
+        if (missing(regimen)) regimen = names(object)
+        if (missing(outcome)) outcome = object[[1]]$Ltmle_fit$info$outcome
+        out <- do.call(rbind,lapply(regimen,function(r){
+            cbind(outcome = outcome,
+                  regimen = r,
+                  summary(object[[r]]$Ltmle_fit))
+        }))
+        out[]
+    }
 } else{
     stop(paste0("Please change the variable 'breakfast_code' to point into the",
                 " right folder on your computer.\nYou can always download the folder here:",
@@ -35,12 +46,17 @@ set.seed(17)
 tau <- 3
 ld <- simulate_long_data(n = 91,number_visits = 20,beta = list(A_on_Y = -.2,A0_on_Y = -0.3,A0_on_A = 6),register_format = TRUE)
 x <- rtmle_init(intervals = tau,name_id = "id",name_outcome = "Y",name_competing = "Dead",name_censoring = "Censored",censored_label = "censored")
-x$long_data <- ld[c("outcome_data","censored_data","competing_data","timevar_data")]
-add_baseline_data(x) <- ld$baseline_data[,start_followup_date:=0]
+x <- add_long_data(x,
+                    outcome_data=ld$outcome_data,
+                    censored_data=ld$censored_data,
+                    competing_data=ld$competing_data,
+                    timevar_data=ld$timevar_data)
+x <- add_baseline_data(x,data=ld$baseline_data)
 x <- long_to_wide(x,intervals = seq(0,2000,30.45*12))
-protocol(x) <- list(name = "Always_A",intervention = data.frame("A" = factor(1,levels = c(0,1))))
-prepare_data(x) <- list()
-target(x) <- list(name = "Outcome_risk",strategy = "additive",estimator = "tmle",protocols = "Always_A")
+x <- protocol(x,name = "Always_A",intervention = data.frame("A" = factor(1,levels = c(0,1))))
+x <- prepare_data(x) 
+x <- target(x,name = "Outcome_risk",estimator = "tmle",protocols = "Always_A")
+x <- model_formula(x) 
 x <- run_rtmle(x,learner = "learn_glm",time_horizon = 1:tau)
 
 # Ltmle
@@ -60,28 +76,32 @@ tfit$A$Ltmle_fit$fit$Qstar
 b <- tfit$A$Ltmle_fit$formulas$Qform
 x$models
 formulas <- sapply(x$models[["Always_A"]],function(x)x$formula)
-# ------------------------------------------------------------------------------------------
-# Intervening on more than 1 treatment variable
-# ------------------------------------------------------------------------------------------
 
+# ------------------------------------------------------------------------------------------
+# Intervening on multiple treatment variables
+# ------------------------------------------------------------------------------------------
 set.seed(17)
 tau <- 2
 ld <- simulate_long_data(n = 91,number_visits = 20,beta = list(A_on_Y = -.2,A0_on_Y = -0.3,A0_on_A = 6),register_format = TRUE)
 # generate a second treatment B at random
 ld$timevar_data$B <- ld$timevar_data$A[,.(id = sort(sample(1:91,size = 75,replace = FALSE)),date = date)]
 x <- rtmle_init(intervals = tau,name_id = "id",name_outcome = "Y",name_competing = "Dead",name_censoring = "Censored",censored_label = "censored")
-x$long_data <- ld[c("outcome_data","censored_data","competing_data","timevar_data")]
-add_baseline_data(x) <- ld$baseline_data[,start_followup_date:=0]
+x <- add_long_data(x,outcome_data = ld[["outcome_data"]],censored_data = ld[["censored_data"]],competing_data = ld[["competing_data"]],timevar_data = ld[["timevar_data"]])
+x <- add_baseline_data(x,data = ld$baseline_data)
 x <- long_to_wide(x,intervals = seq(0,2000,30.45*12))
-protocol(x) <- list(name = "Always_A_Never_B",
-                    intervention = data.frame("A" = factor(1,levels = c(0,1)),
-                                              "B" = factor(0,levels = c(0,1))))
-protocol(x) <- list(name = "Always_B_Never_A",intervention = data.frame("A" = factor(0,levels = c(0,1)),"B" = factor(1,levels = c(0,1))))
-prepare_data(x) <- list()
+x <- protocol(x,name = "Always_A_Never_B",
+              intervention = data.frame("A" = factor(rep(1,2),levels = c(0,1)),
+                                        "B" = factor(rep(0,2),levels = c(0,1))))
+x <- protocol(x,name = "Always_B_Never_A",
+              intervention = data.frame("A" = factor(rep(0,2),levels = c(0,1)),
+                                        "B" = factor(rep(1,2),levels = c(0,1))))
+x <- prepare_data(x)
 # modifying the prepared data 
 x$prepared_data[,B_0 := rep(0,.N)]
 x$names$name_constant_variables <- c("B_0",x$names$name_constant_variables)
-target(x) <- list(name = "Outcome_risk",strategy = "additive",estimator = "tmle",protocols = c("Always_A_Never_B","Always_B_Never_A"))
+x <- model_formula(x)
+x <- target(x,name = "Outcome_risk",estimator = "tmle",protocols = c("Always_A_Never_B","Always_B_Never_A"))
+x <- model_formula(x)
 x <- run_rtmle(x,refit = TRUE,learner = "learn_glm",time_horizon = tau)
 summary(x)
 # Ltmle
@@ -115,8 +135,8 @@ summary(tfit)
 summary(x)
 
 c(LTMLE = as.numeric(tfit$A$Ltmle_fit$estimate),
-  RTMLE = x$estimate$Outcome_risk[["Always_A_Never_B"]]$Estimate)
-all.equal(as.numeric(tfit$A$Ltmle_fit$estimate),x$estimate$Outcome_risk[["Always_A_Never_B"]]$Estimate)
+  RTMLE = x$estimate$Main_analysis[Protocol == "Always_A_Never_B"]$Estimate)
+all.equal(as.numeric(tfit$A$Ltmle_fit$estimate),x$estimate$Main_analysis[Protocol == "Always_A_Never_B"]$Estimate)
 all.equal(c(tfit$A$Ltmle_fit$IC),unlist(x$IC$Outcome_risk$Always_A_Never_B,use.names = FALSE))
 
 # FixedTimeTMLE can output the intervention_match matrix
@@ -134,17 +154,21 @@ if (FALSE){
     tau <- 3
     ld <- simulate_long_data(n = 91,number_visits = 20,beta = list(A_on_Y = -.2,A0_on_Y = -0.3,A0_on_A = 6),register_format = TRUE)
     x <- rtmle_init(intervals = tau,name_id = "id",name_outcome = "Y",name_competing = "Dead",name_censoring = "Censored",censored_label = "censored")
-    x$long_data <- ld[c("outcome_data","censored_data","competing_data","timevar_data")]
-    add_baseline_data(x) <- ld$baseline_data[,start_followup_date:=0]
+    x <- add_long_data(x,
+                    outcome_data=ld$outcome_data,
+                    censored_data=ld$censored_data,
+                    competing_data=ld$competing_data,
+                    timevar_data=ld$timevar_data)
+    x <- add_baseline_data(x,data=ld$baseline_data)
     x <- long_to_wide(x,intervals = seq(0,2000,30.45*12))
-    protocol(x) <- list(name = "Always_A",intervention = data.frame("A" = factor(1,levels = c(0,1))))
-    prepare_data(x) <- list()
-    target(x) <- list(name = "Outcome_risk",strategy = "additive",estimator = "tmle",protocols = "Always_A")
+    x <- protocol(x,name = "Always_A",intervention = data.frame("A" = factor(1,levels = c(0,1))))
+    x <- prepare_data(x)
+    x <- target(x,name = "Outcome_risk",estimator = "tmle",protocols = "Always_A")
+    x <- model_formula(x)
     x <- run_rtmle(x,learner = "learn_glm",time_horizon = 1:tau)
     ldata <- copy(x$prepared_data)
     ldata[,id := NULL]
     ldata[,rtmle_predicted_outcome := NULL]
-    ldata[,start_followup_date := NULL]
     ldata[,c("A_0","A_1","A_2") := lapply(.SD,function(a){1*(a == 1)}),.SDcols = c("A_0","A_1","A_2")]
     detQ <- function(data, current.node, nodes, called.from.estimate.g){
         death.index <- grep(paste0(name_competing_risk, "_"),names(data))

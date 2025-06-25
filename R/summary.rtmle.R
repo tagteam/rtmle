@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 29 2024 (10:44) 
 ## Version: 
-## Last-Updated: May 22 2025 (12:45) 
+## Last-Updated: Jun 17 2025 (07:28) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 175
+##     Update #: 187
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -35,14 +35,19 @@
 #' x <- rtmle_init(intervals = 2,name_id = "id",name_outcome = "Y",
 #'                 name_competing = "Dead",name_censoring = "Censored",
 #'                 censored_label = "censored")
-#' x$long_data <- ld[c("outcome_data","censored_data","competing_data","timevar_data")]
-#' add_baseline_data(x) <- ld$baseline_data[,start_followup_date:=0]
+#' x <- add_long_data(x,
+#'                    outcome_data=ld$outcome_data,
+#'                    censored_data=ld$censored_data,
+#'                    competing_data=ld$competing_data,
+#'                    timevar_data=ld$timevar_data)
+#' x <- add_baseline_data(x,data=ld$baseline_data)
 #' x <- long_to_wide(x,intervals = seq(0,2000,30.45*6))
-#' protocol(x) <- list(name = "Always_A",treatment_variables = "A",intervention = 1)
-#' protocol(x) <- list(name = "Never_A",treatment_variables = "A",intervention = 0)
+#' x <- protocol(x,name = "Always_A",treatment_variables = "A",intervention = 1)
+#' x <- protocol(x,name = "Never_A",treatment_variables = "A",intervention = 0)
 #' prepare_data(x) <- list(reset = TRUE)
-#' target(x) <- list(name = "Outcome_risk",strategy = "additive",
+#' x <- target(x,name = "Outcome_risk",
 #'                   estimator = "tmle",protocols = c("Always_A","Never_A"))
+#' x <- model_formula(x)
 #' x <- run_rtmle(x,time_horizon=1:2)
 #' summary(x)
 #'
@@ -50,11 +55,7 @@
 #' @method summary rtmle
 summary.rtmle <- function(object,analysis = "Main_analysis",targets,reference = NULL,digits = 1,...){
     Reference <- risk_ratio_estimate <- risk_difference_estimate <- Protocol <- Target <- Estimate <- Upper <- Lower <- Target_parameter <- Time_horizon <- x <- NULL
-    if (object$continuous_outcome){
-        Target_parameter_label <- c("Mean outcome difference among survivors", "Mean outcome ratio among survivors")
-    } else {
-        Target_parameter_label <- c("Risk_difference", "Risk_ratio")
-    }
+    Target_parameter_label <- c("Risk_difference", "Risk_ratio")
     if (!(analysis %in% names(object$estimate))){
         stop(paste0("The object does not contain an analysis called '",
                     analysis,
@@ -72,15 +73,18 @@ summary.rtmle <- function(object,analysis = "Main_analysis",targets,reference = 
     else {
         stopifnot(all(targets %in% names(object$targets)))
     }
-    outcome_scale <- function(x){x}
-    if (object$continuous_outcome == FALSE) outcome_scale <- function(x){pmin(pmax(0,100*x),100)}
+    outcome_scale <- function(x){pmin(pmax(0,100*x),100)}
     sum <- do.call(rbind,lapply(targets,function(target_name){
         target <- object$targets[[target_name]]
         protocols <- target$protocols
         risk <- do.call(rbind,lapply(protocols,function(protocol_name){
             # to avoid the internal selfdetect problem we take a copy
             e <- data.table::copy(object$estimate[[analysis]][Target == target_name & Protocol == protocol_name])
-            e[,"Estimate (CI_95)":= Publish::formatCI(x = outcome_scale(e$Estimate),lower = outcome_scale(e$Lower),upper = outcome_scale(e$Upper),show.x = TRUE,digits = digits)]
+            e[,"Estimate (CI_95)":= Publish::formatCI(x = outcome_scale(e$Estimate),
+                                                      lower = outcome_scale(e$Lower),
+                                                      upper = outcome_scale(e$Upper),
+                                                      show.x = TRUE,
+                                                      digits = digits)]
             e[]
         }))
         if (analysis == "Main_analysis"){

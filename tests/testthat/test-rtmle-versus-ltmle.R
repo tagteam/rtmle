@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Nov 16 2024 (17:04) 
 ## Version: 
-## Last-Updated: Apr 10 2025 (11:17) 
+## Last-Updated: Jun 18 2025 (06:57) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 38
+##     Update #: 51
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -30,18 +30,19 @@ test_that("single time point compare rtmle with ltmle",{
     data <- data.frame(W, A, Y)
     suppressMessages(result1 <- ltmle(data, Anodes="A", Ynodes="Y", abar=1,estimate.time = FALSE,gbounds = c(0,1)))
     ## summary(result1)
-    x <- rtmle_init(intervals = 1,name_id = "id",name_outcome = "Y",name_competing = NULL,name_censoring = NULL)
+    x <- rtmle_init(intervals = 1,name_id = "id",name_outcome = "Y",name_competing = NULL,name_censoring = NULL,censored_label = "censored")
     rdata <- cbind(id = 1:NROW(data),data)
     setDT(rdata)
     setnames(rdata,c("id","W","A_0","Y_1"))
     x$prepared_data <- rdata
     x$names$name_baseline_covariates <- "W"
     x$names$name_time_covariates <- "A"
-    suppressMessages(protocol(x) <- list(name = "A",treatment_variables = "A",intervention = 1))
-    target(x) <- list(name = "Outcome_risk",strategy = "additive",estimator = "tmle",protocols = "A")
+    suppressMessages(x <- protocol(x,name = "A",treatment_variables = "A",intervention = 1))
+    x <- target(x,name = "Outcome_risk",estimator = "tmle",protocols = "A")
+    x <- model_formula(x)
     x <- run_rtmle(x,refit = TRUE,verbose = FALSE)
-    expect_equal(result1$fit$g[["A"]], as.matrix(x$models[[1]][["A_0"]]$fit))
-    ## all.equal(result1$fit$Q[["Y"]], as.matrix(x$models[[1]][["Y_1"]]$fit))
+    expect_equal(result1$fit$g[["A"]], as.matrix(x$models[["A_0"]]$fit))
+    ## all.equal(result1$fit$Q[["Y"]], as.matrix(x$models[["Y_1"]]$fit))
     expect_equal(result1$estimates[["tmle"]],x$estimate$Main_analysis$Estimate,tolerance = 0.0001)
     expect_equal(result1$IC$tmle,x$IC$Outcome_risk$A$time_horizon_1,tolerance = 0.0001)
 })
@@ -55,18 +56,22 @@ test_that("longitudinal data compare rtmle with ltmle",{
                     name_competing = "Dead",
                     name_censoring = "Censored",
                     censored_label = "censored")
-    x$long_data <- ld[c("outcome_data","censored_data","competing_data","timevar_data")]
-    add_baseline_data(x) <- ld$baseline_data[,start_followup_date:=0]
+    x <- add_long_data(x,
+                    outcome_data=ld$outcome_data,
+                    censored_data=ld$censored_data,
+                    competing_data=ld$competing_data,
+                    timevar_data=ld$timevar_data)
+    x <- add_baseline_data(x,data=ld$baseline_data)
     x <- long_to_wide(x,intervals = seq(0,2000,30.45*12))
-    suppressMessages(protocol(x) <- list(name = "Always_A",treatment_variables = "A",intervention = 1))
-    prepare_data(x) <- list()
-    target(x) <- list(name = "Outcome_risk",strategy = "additive",estimator = "tmle",protocols = "Always_A")
+    suppressMessages(x <- protocol(x,name = "Always_A",treatment_variables = "A",intervention = 1))
+    x <- prepare_data(x)
+    x <- target(x,name = "Outcome_risk",estimator = "tmle",protocols = "Always_A")
+    x <- model_formula(x)
     x <- run_rtmle(x,learner = "learn_glm",time_horizon = 1:3,verbose = FALSE)
     ## summary(x)
     ldata <- copy(x$prepared_data)
     ldata[,id := NULL]
     ldata[,rtmle_predicted_outcome := NULL]
-    ldata[,start_followup_date := NULL]
     ldata[,A_3 := NULL]
     ldata[,c("A_0","A_1","A_2") := lapply(.SD,function(a){1*(a == 1)}),.SDcols = c("A_0","A_1","A_2")]
     detQ <- function(data, current.node, nodes, called.from.estimate.g){
@@ -94,7 +99,7 @@ test_that("longitudinal data compare rtmle with ltmle",{
     # fitted g-models
     for (g in c("A_0","Censored_1","A_1","Censored_2")){
         a <- y2$fit$g[[g]]
-        b <- as.matrix(x$models[["Always_A"]][[g]]$fit)
+        b <- as.matrix(x$models[[g]]$fit)
         rownames(b) <- sub("01","0",rownames(b))
         rownames(b) <- sub("11","1",rownames(b))
         b <- b[match(rownames(a),rownames(b)),]
@@ -134,9 +139,10 @@ if (FALSE){
         x$prepared_data <- rdata
         x$names$name_baseline_covariates <- c("age","gender")
         x$names$name_time_covariates <- c("A","B","L")
-        protocol(x) <- list(name = "AnotB",treatment_variables = c("A","B"),intervention = c(1,0))
-        protocol(x) <- list(name = "BnotA",treatment_variables = c("A","B"),intervention = c(0,1))
-        target(x) <- list(name = "Outcome_risk",strategy = "additive",estimator = "tmle",protocols = c("AnotB","BnotA"))
+        x <- protocol(x,name = "AnotB",treatment_variables = c("A","B"),intervention = c(1,0))
+        x <- protocol(x,name = "BnotA",treatment_variables = c("A","B"),intervention = c(0,1))
+        x <- target(x,name = "Outcome_risk",estimator = "tmle",protocols = c("AnotB","BnotA"))
+        x <- model_formula(x)
         x <- run_rtmle(x,refit = TRUE)
     })
 }

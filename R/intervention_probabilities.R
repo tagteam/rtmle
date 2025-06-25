@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Oct 17 2024 (09:26) 
 ## Version: 
-## Last-Updated: Apr 24 2025 (15:49) 
+## Last-Updated: Jun 16 2025 (15:30) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 220
+##     Update #: 238
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -38,6 +38,8 @@ intervention_probabilities <- function(x,
     ## if max_time_horizon = 5 then we need propensities up to time 4
     eval_times <- eval_times[eval_times < max_time_horizon]
     ##
+    # FIXME: subset to the variables that are in the data. This should be communicated
+    #        differently, e.g., by an NA in the intervention table
     treatment_variables <- lapply(eval_times,function(this_time){
         x$protocols[[protocol_name]]$intervention_table[time == this_time]$variable
     })
@@ -80,7 +82,11 @@ intervention_probabilities <- function(x,
                 }
                 current_G_variables <- c(treatment_variables[[j+1]],censoring_variables[[j+1]])
                 current_formulas <- lapply(current_G_variables,function(G){
-                    formula(x$models[[protocol_name]][[G]]$formula)
+                    # FIXME: delete the if query when obsolete way of specifying formulas is gone
+                    if (protocol_name %in% names(x$models))
+                        formula(x$models[[protocol_name]][[G]]$formula)
+                    else
+                        formula(x$models[[G]]$formula)
                 })
                 names(current_formulas) <- current_G_variables
                 # all variables that are either outcome or predictor in this time interval
@@ -105,19 +111,28 @@ intervention_probabilities <- function(x,
                                            list(data = current_data,
                                                 intervention_table = intervention_table,
                                                 time = j))
-                for (G in current_G_variables){
+                # FIXME: does this filter of constant variables allow us to remove the current_constant checks?
+                for (G in setdiff(current_G_variables,x$names$name_constant_variables)){
                     # fit the propensity and censoring regression models
                     # and store probabilities as intervention_probs
-                    if (refit || length(x$models[[protocol_name]][[G]]$fit) == 0){
+                    # FIXME: delete the if query when obsolete way of specifying formulas is gone
+                    if (protocol_name %in% names(x$models)){
+                        model_G <- x$models[[protocol_name]][[G]]
+                    } else{
+                        model_G <- x$models[[G]]
+                    }
+                    if (refit || length(model_G$fit) == 0){
                         if (G %in% current_constants){
                             if (G %in% censoring_variables){
                                 predicted_values <- 1*(current_data[[G]] == x$names$uncensored_label)
                             }else{
                                 predicted_values <- current_data[[G]]
                             }
-                            x$models[[protocol_name]][[G]]$fit <- "No variation in this variable"
+                            Gfit <- "No variation in this variable"
                         }else{
-                            if (length(ff <- x$models[[protocol_name]][[G]]$formula)>0){
+                            # Assume binary variables
+                            ## Gcount <- sum(current_data[[G]])
+                            if (length(ff <- model_G$formula)>0){
                                 # remove constant predictor variables
                                 ff_vars <- all.vars(stats::formula(ff))
                                 if (length(current_constants)>0){
@@ -146,9 +161,9 @@ intervention_probabilities <- function(x,
                                     }
                                 }
                             }else{
-                                stop(paste0("Cannot see a formula for estimating regression of ",G," at x$models[['",protocol_name,"']][['",G,"']]$formula"))
+                                stop(paste0("Cannot see a formula for estimating regression of ",G," at x$models[['",G,"']]$formula"))
                             }
-                            x$models[[protocol_name]][[G]]$fit <- attr(predicted_values,"fit")
+                            Gfit <- attr(predicted_values,"fit")
                             data.table::setattr(predicted_values,"fit",NULL)
                             intervention_probs[outcome_free_and_uncensored][[G]] <- predicted_values
                             # FIXME: this hack works but only when there are exactly 2 treatment levels!
@@ -162,6 +177,11 @@ intervention_probabilities <- function(x,
                                 }
                             }
                         }
+                        # FIXME: delete the if query when obsolete way of specifying formulas is gone
+                        if (protocol_name %in% names(x$models))
+                            x$models[[protocol_name]][[G]]$fit <- Gfit
+                        else
+                            x$models[[G]]$fit <- Gfit
                     }
                 }
             }

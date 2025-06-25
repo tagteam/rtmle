@@ -1,8 +1,14 @@
-** rtmle
+* rtmle
 
-https://github.com/tagteam/rtmle/actions/workflows/R-CMD-check.yaml/badge.svg [[https://github.com/tagteam/rtmle/actions/workflows/R-CMD-check.yaml][R-CMD-check]]
+This is the development version of the R-package =rtmle=. The package
+implements algorithms for causal inference with event time
+outcomes. Compared with it's predecessor =ltmle= (thank you Joshua
+Schwab!) it has a different user interface for the longitudinal
+targeted minimum loss-based estimator. The user initializes an object
+and then step-by-step prepares the analysis by adding protocols of the
+emulated target trial, data, and modelling instructions to the
+object. This process is fully pipeable since version 2025.06.25.
 
-https://codecov.io/gh/tagteam/rtmle/graph/badge.svg?token=FLEY02HKN3 [[https://codecov.io/gh/tagteam/rtmle][Code coverage]]
 
 ** Installation
 
@@ -13,6 +19,12 @@ You can install the development version of rtmle from [GitHub](https://github.co
 # install.packages("devtools")
 devtools::install_github("tagteam/rtmle")
 #+END_SRC
+
+** Misc 
+
+https://github.com/tagteam/rtmle/actions/workflows/R-CMD-check.yaml/badge.svg [[https://github.com/tagteam/rtmle/actions/workflows/R-CMD-check.yaml][R-CMD-check]]
+
+https://codecov.io/gh/tagteam/rtmle/graph/badge.svg?token=FLEY02HKN3 [[https://codecov.io/gh/tagteam/rtmle][Code coverage]]
 
 
 #+TITLE: Development of R-package rtmle
