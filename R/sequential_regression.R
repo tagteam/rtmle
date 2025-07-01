@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 30 2024 (14:30)
 ## Version:
-## Last-Updated: Jun 16 2025 (10:18) 
+## Last-Updated: Jun 27 2025 (13:25) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 295
+##     Update #: 300
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -41,7 +41,6 @@ sequential_regression <- function(x,
     label_time_horizon <- paste0("time_horizon_",time_horizon)
     reverse_time_scale <- rev(seq(1,time_horizon,1))
     for (j in reverse_time_scale){
-
         # subjects that are outcome-free and uncensored at the BEGINNING of the interval are 'atrisk'
         if (j == 1){
             outcome_free_and_uncensored <- rep(TRUE,N)
@@ -112,29 +111,29 @@ sequential_regression <- function(x,
         args <- list(character_formula = interval_outcome_formula,
                      data = current_data[,!(names(current_data)%in%current_constants),with = FALSE],
                      intervened_data = intervened_data[outcome_free_and_uncensored],...)
-        
-        
+        # super learner needs name of outcome variable
         if (length(learner)>1){
-            if (j == time_horizon)
+            if (j == time_horizon){
                 args <- c(args,list(learners = learner,
                                     outcome_variable = outcome_variables[[j]],
                                     outcome_target_level = NULL,
                                     id_variable = x$names$id))
-            else
+            }else{
                 args <- c(args,list(learners = learner,
                                     outcome_variable = "rtmle_predicted_outcome",
                                     outcome_target_level = NULL,
                                     id_variable = x$names$id))
+            }
             if (inherits(try(
                 fit_last <- do.call("superlearn",c(args,list(seed = seed))),silent = FALSE),
                 "try-error")) {
                 stop(paste0("Sequential regression fit failed with formula:\n",interval_outcome_formula))
             }
         }else{
+            # single learners do not need the name of outcome variable
             if (inherits(try(
                 fit_last <- do.call(learner,args),silent = FALSE),
                 "try-error")) {
-                ## browser(skipCalls=1L)
                 stop(paste0("Sequential regression fit failed with formula:\n",interval_outcome_formula))
             }
         }

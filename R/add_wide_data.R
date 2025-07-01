@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Apr  1 2025 (08:18) 
 ## Version: 
-## Last-Updated: Jun 17 2025 (07:28) 
+## Last-Updated: Jul  1 2025 (11:38) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 24
+##     Update #: 26
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -82,6 +82,8 @@ add_wide_data <- function(x,outcome_data,timevar_data,...){
             } else{
                 x$data$timevar_data <- d
             }
+        }else{
+            x$data$timevar_data <- timevar_data            
         }
     }
     x
