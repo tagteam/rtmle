@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 29 2024 (10:44) 
 ## Version: 
-## Last-Updated: Jun 17 2025 (07:28) 
+## Last-Updated: Jul  8 2025 (12:10) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 187
+##     Update #: 189
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -175,9 +175,9 @@ summary.rtmle <- function(object,analysis = "Main_analysis",targets,reference = 
                         e1
                     }))
                     # risk difference
-                    e[Target_parameter == Target_parameter_label[[1]],"Estimate (CI_95)":= Publish::formatCI(x = Estimate,
-                                                                                                             lower = Lower,
-                                                                                                             upper = Upper,
+                    e[Target_parameter == Target_parameter_label[[1]],"Estimate (CI_95)":= Publish::formatCI(x = 100*Estimate,
+                                                                                                             lower = 100*Lower,
+                                                                                                             upper = 100*Upper,
                                                                                                              show.x = TRUE,
                                                                                                              digits = digits)]
                     # risk ratio
