@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul  1 2024 (09:11)
 ## Version:
-## Last-Updated: Jun 17 2025 (07:34) 
+## Last-Updated: Jul  8 2025 (16:08) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 521
+##     Update #: 526
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -52,7 +52,7 @@
 #'
 #' set.seed(17)
 #' tau <- 3
-#' ld <- simulate_long_data(n = 91,number_visits = 20,
+#' ld <- simulate_long_data(n = 391,number_visits = 20,
 #'                          beta = list(A_on_Y = -.2,A0_on_Y = -0.3,A0_on_A = 6),
 #'                          register_format = TRUE)
 #' x <- rtmle_init(intervals = tau,name_id = "id",name_outcome = "Y",name_competing = "Dead",
@@ -73,8 +73,16 @@
 #'                   estimator = "tmle",
 #'                   protocols = c("Always_A","Never_A"))
 #' x <- model_formula(x)
+#' # default is undersmoothing which means: take the smallest penalty
+#' # where the model still converges
 #' x <- run_rtmle(x,learner = "learn_glmnet",time_horizon = 1:tau)
+#' # can also use lambda.min or lambda.1se
+#' \dontrun{
+#' x <- run_rtmle(x,learner = list("glmnet_cv"=list(learner_fun="learn_glmnet",
+#'                                 selector="min")),
+#'               time_horizon = tau)
 #' summary(x)
+#' }
 #' \dontrun{
 #' # stratified analyses
 #' x <- run_rtmle(x,learner = "learn_glmnet",time_horizon = tau,

@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Oct 17 2024 (09:26) 
 ## Version: 
-## Last-Updated: Jun 16 2025 (15:30) 
+## Last-Updated: Jul  8 2025 (15:54) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 238
+##     Update #: 244
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -154,8 +154,16 @@ intervention_probabilities <- function(x,
                                         stop(paste0("Failed to superlearn/crossfit with formula ",ff))
                                     }
                                 }else{
+                                    # take care of case where additional arguments are passed to a single learner
+                                    if (is.list(learner)){
+                                        learner_args <- learner[[1]][names(learner[[1]]) != "learner_fun"]
+                                        args <- c(args,learner_args)
+                                        learner_fun <- learner[[1]][["learner_fun"]]
+                                    }else{
+                                        learner_fun <- learner
+                                    }
                                     if (inherits(try(
-                                        predicted_values <- do.call(learner,args),silent = FALSE),
+                                        predicted_values <- do.call(learner_fun,args),silent = FALSE),
                                         "try-error")) {
                                         stop(paste0("Failed to learn/predict with formula ",ff))
                                     }

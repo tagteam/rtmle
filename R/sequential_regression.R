@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 30 2024 (14:30)
 ## Version:
-## Last-Updated: Jun 27 2025 (13:25) 
+## Last-Updated: Jul  8 2025 (15:54) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 300
+##     Update #: 303
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -130,9 +130,17 @@ sequential_regression <- function(x,
                 stop(paste0("Sequential regression fit failed with formula:\n",interval_outcome_formula))
             }
         }else{
+            # take care of case where additional arguments are passed to a single learner
+            if (is.list(learner)){
+                learner_args <- learner[[1]][names(learner[[1]]) != "learner_fun"]
+                args <- c(args,learner_args)
+                learner_fun <- learner[[1]][["learner_fun"]]
+            }else{
+                learner_fun <- learner
+            }
             # single learners do not need the name of outcome variable
             if (inherits(try(
-                fit_last <- do.call(learner,args),silent = FALSE),
+                fit_last <- do.call(learner_fun,args),silent = FALSE),
                 "try-error")) {
                 stop(paste0("Sequential regression fit failed with formula:\n",interval_outcome_formula))
             }

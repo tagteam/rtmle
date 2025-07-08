@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jun 16 2025 (08:58) 
 ## Version: 
-## Last-Updated: Jun 17 2025 (07:28) 
+## Last-Updated: Jul  8 2025 (16:07) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 30
+##     Update #: 33
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -65,10 +65,9 @@ model_formula <- function(x,
                 stop(paste0("The following variables in argument Markov do not match time_covariates:\n",
                             paste(Markov[not_found],collapse=", ")))
     }
-    K = length(x$times)
     # loop across time points
     model_formulas <- c(unlist(lapply(x$times,function(tk){
-        if (tk == K){ # no treatment formula for last time point
+        if (tk >= (length(x$times)-1)){ # no treatment formula for last time point, minus 1 because 0 is included in x$times
             all_vars <- NULL
         }else{
             all_vars <- unlist(lapply(all_treatment_variables,function(tv)paste0(tv,"_",tk)))

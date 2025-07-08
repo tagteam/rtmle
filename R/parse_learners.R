@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Nov  9 2024 (09:55) 
 ## Version: 
-## Last-Updated: Nov 16 2024 (16:52) 
+## Last-Updated: Jul  8 2025 (15:39) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 24
+##     Update #: 35
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -59,7 +59,7 @@ parse_learners <- function(learners){
                 learners[[this_learner]]$learner_fun <- names(learners)[[this_learner]]
             }
         }
-        # FIXME: could/should check if argumnents of the function
+        # FIXME: could/should check if arguments of the function
         #        match the arguments character_formula, intervened_data etc.
         #        could also check if the other provided arguments
         #        can be passed (requires that they are named!)
