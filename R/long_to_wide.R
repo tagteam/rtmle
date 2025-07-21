@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 22 2024 (14:07) 
 ## Version: 
-## Last-Updated: Jun 18 2025 (06:54) 
+## Last-Updated: Jul 21 2025 (15:01) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 54
+##     Update #: 70
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -63,10 +63,14 @@ long_to_wide <- function(x,
     if (length(x$data$baseline_data) == 0){
         stop("To discretize the long format data we need the baseline data stored as 'x$data$baseline_data' with the subject id variable.\nUse the function 'add_baseline_data' to add this.")
     }
-    pop <- x$data$baseline_data[,c(x$names$id),with = FALSE]
     if (missing(start_followup_date)){
         if (verbose) message("Missing start_followup_date variable, for now assume 0, which implies that all event times must be given on the time on study scale.")
-        pop[,start_followup_date := rep(0,.N)]
+        pop = x$data$baseline_data[,c(x$names$id),with = FALSE][start_followup_date := rep(0,.N)]
+    }else{
+        if (!is.character(start_followup_date) || match(start_followup_date,names(x$data$baseline_data),nomatch = 0) == 0){
+            stop("Argument start_followup_date must be the name (as character) of a variable in x$data$baseline_data")
+        }
+        pop <- x$data$baseline_data[,c(x$names$id,start_followup_date),with = FALSE]
     }
     #
     # outcome, censored and competing risk define end-of-followup
@@ -114,14 +118,26 @@ long_to_wide <- function(x,
                                          competing_data = x$long_data$competing_data,
                                          censored_data = x$long_data$censored_data,
                                          grid = grid,
-                                         fun.aggregate = NULL,
+                                         fun_aggregate = NULL,
                                          id = x$names$id)
     # time dependent variables including treatment
     for (Vname in Vnames){
+        if (is.list(fun)){
+            if (Vname %in% names(fun)){
+                # use variable specific function
+                vfun <- fun[[Vname]]
+            } else{
+                # use default
+                vfun <- function(x){1*(sum(x)>0)}
+            }
+        } else {
+            vfun <- fun
+        }
+        stopifnot(is.function(vfun))
         x$data$timevar_data[[Vname]] <- map_grid(grid=grid,
                                                  data=x$long_data$timevar_data[[Vname]],
                                                  name=Vname,
-                                                 fun.aggregate = fun,
+                                                 fun_aggregate = vfun,
                                                  rollforward=(length_interval - 1),
                                                  id = x$names$id)
     }

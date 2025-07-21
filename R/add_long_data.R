@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 25 2024 (11:24)
 ## Version:
-## Last-Updated: Jun 18 2025 (06:39) 
+## Last-Updated: Jul 21 2025 (15:10) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 44
+##     Update #: 48
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -75,12 +75,31 @@ add_long_data <- function(x,outcome_data,censored_data,competing_data,timevar_da
             stop("Argument timevar_data must be a named list of data.frames.")
         }
         for (name in names(timevar_data)){
-            if (!(x$names$id %in% names(timevar_data[[name]]))){
-                warning(paste0("Element ",name," of argument 'timevar_data' does not have a variable called ",x$names$id," and is not added."))
+            current_data <- copy(as.data.table(timevar_data[[name]]))
+            if (!(all(c(x$names$id,"date") %in% names(current_data)))){
+                warning(paste0("Element ",
+                               name,
+                               " of argument 'timevar_data' does not have variables called '",
+                               x$names$id,
+                               "' and 'date' and hence it is not added."))
             }else{
-                tv <- list(copy(timevar_data[[name]]))
-                names(tv) <- name
-                x$long_data$timevar_data <- c(x$long_data$timevar_data,tv)
+                if (length(names(current_data))>2) {
+                    if (!(length(names(current_data)) == 3 & "value" %in%names(current_data)))
+                        warning(paste0("Element ",
+                                       name,
+                                       " of argument 'timevar_data' has more than three variables or the 3rd variable is not called 'value' and hence it is not added."))
+                }else{
+                    if (match(name,names(x$long_data$timevar_data),nomatch = 0)>0){
+                        # replace existing element
+                        x$long_data$timevar_data[[name]] <- current_data
+                    }
+                    else{
+                        # append
+                        tv <- list(current_data)
+                        names(tv) <- name
+                        x$long_data$timevar_data <- c(x$long_data$timevar_data,tv)
+                    }
+                }
             }
         }
     }
@@ -88,7 +107,7 @@ add_long_data <- function(x,outcome_data,censored_data,competing_data,timevar_da
         if (!(x$names$id %in% names(nv[[name]])))
             warning(paste0("Element ",name," does not have a variable called ",x$names$id," and is not added."))
         else{
-            x$long_data[[name]] <- copy(nv[[name]])
+            x$long_data[[name]] <- copy(as.data.table(nv[[name]]))
         }
     }
     x

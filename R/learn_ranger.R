@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Oct 28 2024 (09:26) 
 ## Version: 
-## Last-Updated: Apr 24 2025 (15:32) 
+## Last-Updated: Jul 21 2025 (14:41) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 55
+##     Update #: 62
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -38,7 +38,9 @@ learn_ranger <- function(character_formula,data,intervened_data,...){
     if (length(unique(Y)) == 2) probability <- TRUE else probability <- FALSE
     if (probability) {
         if (!is.factor(Y))
-            model_frame[[1]] <- factor(Y,levels = c(0,1))
+            # NOTE: rtmle_predicted_outcome may only hav two levels,
+            #       and the values can be different from 0 and 1
+            model_frame[[1]] <- factor(Y,levels = sort(unique(Y)))
     }
     if (!inherits(try(
              fit <- ranger::ranger(formula = stats::formula(character_formula),
@@ -48,8 +50,9 @@ learn_ranger <- function(character_formula,data,intervened_data,...){
             ,silent = TRUE),
              "try-error")){
     }else{
+        browser(skipCalls=1L)
         stop(paste0("\nCould not fit model with ranger:\n",
-                    "Formula:",character_formula))
+                    "Formula: ",character_formula))
     }
     predicted_values <- vector(mode = "numeric",length = NROW(intervened_data))
     ivars <- all.vars(formula(character_formula))[-1]

@@ -21,7 +21,7 @@ learn_glmnet(
 
 \item{selector}{Character value deciding about how to select the penalty parameter lambda:
 If \code{"undersmooth"} use the lambda value which results in the least amount of
-penalty such that the model still fits. The other options are \code{"lambda.min"} and \code{"lambda.1se"} which are 
+penalty such that the model still fits. The other options are \code{"min"} and \code{"1se"} which are 
 described in the documentation of \code{\link[glmnet]{cv.glmnet}}.}
 
 \item{...}{Additional arguments for the learning phase passed to \code{\link{glmnet}}. 

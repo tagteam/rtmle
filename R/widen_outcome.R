@@ -4,7 +4,7 @@ widen_outcome <- function(x,
                           competing_data,
                           censored_data,
                           grid,
-                          fun.aggregate = NULL,
+                          fun_aggregate = NULL,
                           id){
     stopifnot(id %in% names(outcome_data))
     # -----------------------------------------------------------------------
@@ -26,9 +26,9 @@ widen_outcome <- function(x,
                    name="Censored",
                    rollforward=Inf,
                    values=c("censored","uncensored"),
-                   fun.aggregate = fun.aggregate,
+                   fun_aggregate = fun_aggregate,
                    fill="censored",
-                   X.factor=TRUE,
+                   value_is_factor=TRUE,
                    id = id)
         if (length(wide)>0) wide <- wide[w] else wide <- w
     }
@@ -41,7 +41,11 @@ widen_outcome <- function(x,
     ## outcome_data=outcome_data[date>start]
     ## only interested in first new outcome
     ## outcome_data=outcome_data[outcome_data[,.I[1],by=id]$V1]
-    w <- map_grid(grid=grid,data=outcome_data,name=outcome_name,rollforward=Inf,id = id)
+    w <- map_grid(grid=grid,
+                  data=outcome_data,
+                  name=outcome_name,
+                  rollforward=Inf,
+                  id = id)
     # when outcome occurs at baseline re-set to value 2
     ## set(w,i=which(wide$id%in%admitted_index),j=paste0(outcome,"_0"),value=2)
     if (length(wide)>0) wide <- wide[w] else wide <- w
