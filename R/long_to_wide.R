@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 22 2024 (14:07) 
 ## Version: 
-## Last-Updated: Jul 21 2025 (15:01) 
+## Last-Updated: Jul 21 2025 (15:22) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 70
+##     Update #: 75
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -42,12 +42,15 @@
 #' ld <- simulate_long_data(n = 91,number_visits = 20,
 #'                          beta = list(A_on_Y = -.2,A0_on_Y = -0.3,A0_on_A = 6),
 #'                          register_format = TRUE)
+#' 
 #' x <- rtmle_init(intervals = tau,name_id = "id",name_outcome = "Y",name_competing = "Dead",
 #'                 name_censoring = "Censored",censored_label = "censored")
 #' x <- add_long_data(x,outcome_data=ld$outcome_data,censored_data=ld$censored_data,
-#'                     competing_data=ld$competing_data,timevar_data=ld$timevar_data)
+#'                     competing_data=ld$competing_data,
+#'                     timevar_data=c(ld$timevar_data,list(data.frame(id:=1:91,U=rnorm(91)))))
 #' x <- add_baseline_data(x,data=ld$baseline_data)
-#' x <- long_to_wide(x,intervals = seq(0,2000,30.45*12))
+#' x <- long_to_wide(x,intervals = seq(0,2000,30.45*12),
+#'                   fun=list("U"=function(x)x))
 #' x
 #' @export
 long_to_wide <- function(x,
@@ -65,7 +68,7 @@ long_to_wide <- function(x,
     }
     if (missing(start_followup_date)){
         if (verbose) message("Missing start_followup_date variable, for now assume 0, which implies that all event times must be given on the time on study scale.")
-        pop = x$data$baseline_data[,c(x$names$id),with = FALSE][start_followup_date := rep(0,.N)]
+        pop = x$data$baseline_data[,c(x$names$id),with = FALSE][,start_followup_date := rep(0,.N)]
     }else{
         if (!is.character(start_followup_date) || match(start_followup_date,names(x$data$baseline_data),nomatch = 0) == 0){
             stop("Argument start_followup_date must be the name (as character) of a variable in x$data$baseline_data")
