@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul  1 2024 (09:11)
 ## Version:
-## Last-Updated: Jul  8 2025 (16:08) 
+## Last-Updated: Jul 21 2025 (15:48) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 526
+##     Update #: 533
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -184,7 +184,8 @@ run_rtmle <- function(x,
         ## make sure that the treatment variables are factors with levels equal to those specified by the protocols
         ## FIXME: this could perhaps be done in prepare_data()
         for (v in names(x$names$treatment_options)){
-            for (v_j in paste0(v,"_",x$times)){
+            v_treatment_variables <- intersect(paste0(v,"_",x$times),names(x$prepared_data))
+            for (v_j in v_treatment_variables){
                 if (inherits(x$prepared_data[[v_j]],"factor")){
                     if (!(all.equal(levels(x$prepared_data[[v_j]]),as.character(x$names$treatment_options[[v]])))){
                         stop(paste0("The protocols specify the following treatment options (factor levels) for variable ",v,
@@ -195,7 +196,8 @@ run_rtmle <- function(x,
                     ## stop(paste0("The treatment variable ",v_j," is not a factor"))
                     data.table::set(x$prepared_data,
                                     j = v_j,
-                                    value = factor(x$prepared_data[[v_j]],levels = x$names$treatment_options[[v]]))
+                                    value = factor(x$prepared_data[[v_j]],
+                                                   levels = x$names$treatment_options[[v]]))
                 }
             }
         }

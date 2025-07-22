@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul  4 2024 (07:40) 
 ## Version: 
-## Last-Updated: Mar  7 2025 (17:45) 
+## Last-Updated: Jul 22 2025 (09:20) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 24
+##     Update #: 26
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -20,7 +20,8 @@ formalize <- function(timepoint,
                       name_baseline_covariates,
                       name_time_covariates,
                       Markov = NULL,
-                      constant_variables = NULL){
+                      constant_variables = NULL,
+                      exclusion_rules = NULL){
     form = NULL
     # remove constant variables
     included_baseline_covariates <- setdiff(name_baseline_covariates,constant_variables)
@@ -45,6 +46,9 @@ formalize <- function(timepoint,
     # remove vars that are not in data
     has_not=match(included_vars,names(work_data),nomatch=0)==0
     included_vars=included_vars[!has_not]
+    # apply exclusion_rules
+    if (length(exclusion_rules)>0 && name_outcome_variable %in% names(exclusion_rules))
+    included_vars <- setdiff(included_vars,exclusion_rules[[name_outcome_variable]])
     # add covariates if any
     if(length(included_vars)>0){
         form = paste(included_vars, collapse = " + ")

@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 22 2024 (14:07) 
 ## Version: 
-## Last-Updated: Jul 21 2025 (15:22) 
+## Last-Updated: Jul 21 2025 (15:26) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 75
+##     Update #: 76
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -47,10 +47,10 @@
 #'                 name_censoring = "Censored",censored_label = "censored")
 #' x <- add_long_data(x,outcome_data=ld$outcome_data,censored_data=ld$censored_data,
 #'                     competing_data=ld$competing_data,
-#'                     timevar_data=c(ld$timevar_data,list(data.frame(id:=1:91,U=rnorm(91)))))
+#'                     timevar_data=ld$timevar_data)
 #' x <- add_baseline_data(x,data=ld$baseline_data)
-#' x <- long_to_wide(x,intervals = seq(0,2000,30.45*12),
-#'                   fun=list("U"=function(x)x))
+#' x <- long_to_wide(x,intervals = seq(0,2000,30.45*12))
+#'                   
 #' x
 #' @export
 long_to_wide <- function(x,

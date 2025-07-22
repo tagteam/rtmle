@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Apr  1 2025 (08:18) 
 ## Version: 
-## Last-Updated: Jul  1 2025 (11:38) 
+## Last-Updated: Jul 21 2025 (16:11) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 26
+##     Update #: 30
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -72,11 +72,17 @@ add_wide_data <- function(x,outcome_data,timevar_data,...){
                 }
             }
         }
-        x$data$outcome_data <- copy(outcome_data)
+        x$data$outcome_data <- data.table::copy(data.table::as.data.table(outcome_data))
+        check_binary <- sapply(names(x$data$outcome_data),function(y){
+            if ((y != x$names$id) &
+                length(stats::na.omit(unique(x$data$outcome_data[[y]])))>2){
+                stop(paste0("All outcome data must be binary. Variable '",y,"' has more than 2 values."))
+            }
+        })
     }
     if (!missing(timevar_data)){
         if (is.data.frame(timevar_data)){
-            d <- data.table::copy(timevar_data)
+            d <- data.table::copy(data.table::as.data.table(timevar_data))
             if (!(x$names$id %in% names(d))){
                 warning(paste0("Element 'timevar_data' does not have a variable called ",x$names$id," and is not added."))
             } else{

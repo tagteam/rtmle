@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 30 2024 (14:30)
 ## Version:
-## Last-Updated: Jul 21 2025 (14:17) 
+## Last-Updated: Jul 21 2025 (17:04) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 310
+##     Update #: 318
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -86,8 +86,9 @@ sequential_regression <- function(x,
         else
             learn_variables <- c(history_of_variables,"rtmle_predicted_outcome")
         current_data <- x$prepared_data[outcome_free_and_uncensored,learn_variables,with = FALSE]
-        if (NROW(current_data) == 0)
+        if (NROW(current_data) == 0) {
             stop("No data available for g-estimation")
+        }
         
         current_constants <- sapply(current_data, function(x){length(unique(x))==1})
         if (any(current_constants)) {
@@ -213,7 +214,7 @@ sequential_regression <- function(x,
             current_cnode <- as.character(x$prepared_data[[paste0(x$names$censoring,"_",j)]])
             index <- (current_cnode%in%x$names$uncensored_label) & (intervention_match[,intervention_node_name] %in% 1)
         }else{
-            index <- (intervention_match[,intervention_table[time == j-1]$variable] %in% 1)
+            index <- (intervention_match[,intervention_node_name] %in% 1)
         }
         
         if (any(h.g.ratio[index] != 0)) {

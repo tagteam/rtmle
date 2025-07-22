@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jun 16 2025 (08:58) 
 ## Version: 
-## Last-Updated: Jul  8 2025 (16:07) 
+## Last-Updated: Jul 22 2025 (09:22) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 33
+##     Update #: 39
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -26,6 +26,8 @@
 ##' @param exclude_variables Variables to exclude from the formulas for the nuisance parameters.
 ##' @param Markov Names of time-dependent variables which should only occur with the most recent
 ##'               value on the right hand side of the formulas.
+##' @param exclusion_rules Experimental. Additional exclusion rules given as a named list where names are variables that occur on the left hand side of a formula and
+##' elements are variables that should be excluded from the right hand side of the formula. 
 ##' @param verbose Logical. If \code{FALSE} suppress all messages. \code{TRUE} is the default.
 ##' @param ... Not used (not yet)
 ##' @return The modified \code{rtmle}object
@@ -54,6 +56,7 @@ model_formula <- function(x,
                           exclude_variables = NULL,
                           Markov = NULL,
                           verbose = TRUE,
+                          exclusion_rules = NULL,
                           ...){
     name_constant_variables <- x$names$name_constant_variables
     all_treatment_variables <- setdiff(unlist(lapply(x$protocols,function(u)u$treatment_variables),use.names = FALSE),name_constant_variables)
@@ -82,6 +85,7 @@ model_formula <- function(x,
         }
         # remove constant variables
         all_vars <- setdiff(all_vars,name_constant_variables)
+        # return vector of character formulas
         c(unlist(lapply(all_vars, function(var){
             ff <- formalize(timepoint = tk,
                             work_data = x$prepared_data,
@@ -89,7 +93,8 @@ model_formula <- function(x,
                             name_baseline_covariates = name_baseline_covariates,
                             name_time_covariates  = name_time_covariates,
                             Markov = Markov,
-                            constant_variables = name_constant_variables)
+                            constant_variables = name_constant_variables,
+                            exclusion_rules = exclusion_rules)
             names(ff) = var
             ff
         })))

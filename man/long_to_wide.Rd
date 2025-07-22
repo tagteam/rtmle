@@ -51,9 +51,9 @@ x <- rtmle_init(intervals = tau,name_id = "id",name_outcome = "Y",name_competing
                 name_censoring = "Censored",censored_label = "censored")
 x <- add_long_data(x,outcome_data=ld$outcome_data,censored_data=ld$censored_data,
                     competing_data=ld$competing_data,
-                    timevar_data=c(ld$timevar_data,list(data.frame(id:=1:91,U=rnorm(91)))))
+                    timevar_data=ld$timevar_data)
 x <- add_baseline_data(x,data=ld$baseline_data)
-x <- long_to_wide(x,intervals = seq(0,2000,30.45*12),
-                  fun=list("U"=function(x)x))
+x <- long_to_wide(x,intervals = seq(0,2000,30.45*12))
+                  
 x
 }

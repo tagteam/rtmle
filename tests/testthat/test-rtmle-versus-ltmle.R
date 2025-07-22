@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Nov 16 2024 (17:04) 
 ## Version: 
-## Last-Updated: Jun 18 2025 (06:57) 
+## Last-Updated: Jul 22 2025 (09:22) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 51
+##     Update #: 59
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -49,7 +49,7 @@ test_that("single time point compare rtmle with ltmle",{
 
 test_that("longitudinal data compare rtmle with ltmle",{
     set.seed(17)
-    ld <- simulate_long_data(n = 1291,number_visits = 20,beta = list(A_on_Y = -.2,A0_on_Y = -0.3,A0_on_A = 6),register_format = TRUE)
+    ld <- simulate_long_data(n = 1291,number_visits = 20,beta = list(A_on_Y = -.2,A_0_on_Y = -0.3,A_0_on_A = 6),register_format = TRUE)
     x <- rtmle_init(intervals = 3,
                     name_id = "id",
                     name_outcome = "Y",
@@ -57,10 +57,10 @@ test_that("longitudinal data compare rtmle with ltmle",{
                     name_censoring = "Censored",
                     censored_label = "censored")
     x <- add_long_data(x,
-                    outcome_data=ld$outcome_data,
-                    censored_data=ld$censored_data,
-                    competing_data=ld$competing_data,
-                    timevar_data=ld$timevar_data)
+                       outcome_data=ld$outcome_data,
+                       censored_data=ld$censored_data,
+                       competing_data=ld$competing_data,
+                       timevar_data=ld$timevar_data)
     x <- add_baseline_data(x,data=ld$baseline_data)
     x <- long_to_wide(x,intervals = seq(0,2000,30.45*12))
     suppressMessages(x <- protocol(x,name = "Always_A",treatment_variables = "A",intervention = 1))
@@ -72,7 +72,6 @@ test_that("longitudinal data compare rtmle with ltmle",{
     ldata <- copy(x$prepared_data)
     ldata[,id := NULL]
     ldata[,rtmle_predicted_outcome := NULL]
-    ldata[,A_3 := NULL]
     ldata[,c("A_0","A_1","A_2") := lapply(.SD,function(a){1*(a == 1)}),.SDcols = c("A_0","A_1","A_2")]
     detQ <- function(data, current.node, nodes, called.from.estimate.g){
         death.index <- grep("Dead_",names(data))
@@ -118,32 +117,58 @@ if (FALSE){
         n <- 1000
         age <- rbinom(n, 1, 0.5)
         gender <- rbinom(n, 1, 0.5)
-        A1 <- rexpit(age + gender)
-        L1 <- 2*age - 3*gender + 2*A1 + rnorm(n)
-        B1 <- rexpit(age + 1.5*gender - A1)
-        Y1 <- plogis(-1 + age - gender + L1 - 0.5*B1 - A1 + rnorm(n))
-        A2 <- rexpit(age + gender + A1 - L1 - B1)
-        L2 <- 2*age - 3*gender + 2*A1 + A2 + rnorm(n)
-        B2 <- rexpit(age + 1.5*gender - A1 - A2)
-        Y2 <- plogis(-1 + age - gender + L1 - 0.5*B1 - A1 - 1.8*A2 + rnorm(n))
-        data <- data.frame(age, gender, A1, B1, L1, Y1, A2, B2, L2, Y2)
-        ## result <- ltmle(data, Anodes=c("A1","B1","A2","B2"), Lnodes=c("L1", "L2"), 
-        ## Ynodes=grep("^Y", names(data)), abar=c(1,0,1,0))
-        result <- ltmle(data, Anodes=c("A1","B1","A2","B2"), Lnodes=c("L1", "L2"), 
-                        Ynodes=grep("^Y", names(data)), abar=list(c(1,0,1,0),c(0,1,0,1)))
+        A_0 <- rexpit(age + gender)
+        A_1 <- rexpit(age + gender)
+        L1 <- 2*age - 3*gender + 2*A_1 + rnorm(n)
+        B_0 <- rexpit(age + 1.5*gender)
+        B_1 <- rexpit(age + 1.5*gender - A_1)
+        Y1 <- rexpit(-1+plogis(-1 + age - gender + L1 - 0.5*B_1 - A_1 + rnorm(n)))
+        A_2 <- rexpit(age + gender + A_1 - L1 - B_1)
+        L2 <- 2*age - 3*gender + 2*A_1 + A_2 + rnorm(n)
+        B_2 <- rexpit(age + 1.5*gender - A_1 - A_2)
+        Y2 <- rexpit(plogis(-1 + age - gender + L1 - 0.5*B_1 - A_1 - 1.8*A_2 + rnorm(n)))
+        # once outcome has occurred it stays
+        Y2[Y1 == 1] <- 1
+        data <- data.frame(age, gender,A_0, B_0, L1, A_1, B_1, Y1, L2, A_2, B_2, Y2)
+        result <- ltmle(data,
+                        Anodes=c("A_0","B_0","A_1","B_1","A_2","B_2"),
+                        Lnodes=c("L1", "L2"), 
+                        Ynodes=grep("^Y", names(data)),
+                        survivalOutcome = TRUE,
+                        estimate.time = FALSE,
+                        abar=list(c(1,0,1,0,1,0),c(0,1,0,1,0,1)))
         summary(result)
         x <- rtmle_init(intervals = 2,name_id = "id",name_outcome = "Y",name_competing = NULL,name_censoring = NULL)
         rdata <- cbind(id = 1:NROW(data),data)
         setDT(rdata)
-        setnames(rdata,c("id","age","gender","A_1","B_1","L_1","Y_1","A_2","B_2","L_2","Y_2"))
-        x$prepared_data <- rdata
-        x$names$name_baseline_covariates <- c("age","gender")
-        x$names$name_time_covariates <- c("A","B","L")
-        x <- protocol(x,name = "AnotB",treatment_variables = c("A","B"),intervention = c(1,0))
-        x <- protocol(x,name = "BnotA",treatment_variables = c("A","B"),intervention = c(0,1))
+        setnames(rdata,c("id","age","gender","A_0","B_0","L_1","A_1","B_1","Y_1","L_2","A_2","B_2","Y_2"))
+        x <- add_baseline_data(x,rdata[,.(id,age,gender)])
+        x <- add_wide_data(x,outcome_data = rdata[,.(id,Y_1,Y_2)],
+                           timevar_data = list(A = rdata[,.(id,A_0,A_1,A_2)],
+                                               B = rdata[,.(id,B_0,B_1,B_2)],
+                                               L = rdata[,.(id,L_1,L_2)]))
+        x <- prepare_data(x)
+        x <- protocol(x,
+                      name = "AnotB",
+                      treatment_variables = c("A","B"),
+                      intervention = c(1,0))
+        x <- protocol(x,
+                      name = "BnotA",
+                      treatment_variables = c("A","B"),
+                      intervention = c(0,1))
         x <- target(x,name = "Outcome_risk",estimator = "tmle",protocols = c("AnotB","BnotA"))
-        x <- model_formula(x)
+        x <- model_formula(x,exclusion_rules = make_exclusion_rule(3,"A","B",recursive = FALSE))
         x <- run_rtmle(x,refit = TRUE)
+        # fitted g-models
+        for (g in c("A_0","B_0","A_1","B_1")){
+            a <- result$fit$g[[1]][[g]]
+            b <- as.matrix(x$models[[g]]$fit)
+            rownames(b) <- sub("01","0",rownames(b))
+            rownames(b) <- sub("11","1",rownames(b))
+            b <- b[match(rownames(a),rownames(b)),]
+            expect_equal(a,b)
+        }
+        x$models
     })
 }
 
