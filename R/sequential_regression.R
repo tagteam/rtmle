@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 30 2024 (14:30)
 ## Version:
-## Last-Updated: Jul 21 2025 (17:04) 
+## Last-Updated: Jul 22 2025 (10:52) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 318
+##     Update #: 319
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -244,6 +244,9 @@ sequential_regression <- function(x,
                                   `:=`(Standard_error = SE,
                                        Lower = Estimate-stats::qnorm(.975)*SE,
                                        Upper = Estimate+stats::qnorm(.975)*SE)]
+    # FIXME: is there a better way to circumvent data.tables
+    #        print after := problem?
+    x$estimate[["Main_analysis"]][]
     x$IC[[target_name]][[protocol_name]][[label_time_horizon]] <- ic
     # NOTE if we would return x[] instead of x then x looses its class!
     return(x)

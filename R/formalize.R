@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul  4 2024 (07:40) 
 ## Version: 
-## Last-Updated: Jul 22 2025 (09:20) 
+## Last-Updated: Jul 22 2025 (10:50) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 26
+##     Update #: 37
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -15,13 +15,14 @@
 ## 
 ### Code:
 formalize <- function(timepoint,
-                      work_data,
+                      available_names,
                       name_outcome_variable,
                       name_baseline_covariates,
                       name_time_covariates,
                       Markov = NULL,
                       constant_variables = NULL,
-                      exclusion_rules = NULL){
+                      exclusion_rules = NULL,
+                      inclusion_rules = NULL){
     form = NULL
     # remove constant variables
     included_baseline_covariates <- setdiff(name_baseline_covariates,constant_variables)
@@ -34,21 +35,30 @@ formalize <- function(timepoint,
         markov_time_covariates=NULL
     }
     if (any(has_markov==0)){
-        non_markov_time_covariates=sapply(name_time_covariates[has_markov==0],function(v){paste0(v,"_",0:max(0,timepoint-1))})
+        non_markov_time_covariates <- sapply(name_time_covariates[has_markov==0],function(v){paste0(v,"_",0:max(0,timepoint-1))})
     }    else{
-        non_markov_time_covariates=NULL
+        non_markov_time_covariates <- NULL
     }
-    included_vars=c(included_baseline_covariates,
-                    setdiff(non_markov_time_covariates,constant_variables),
-                    setdiff(markov_time_covariates,constant_variables))
+    included_vars <- c(included_baseline_covariates,
+                       setdiff(non_markov_time_covariates,constant_variables),
+                       setdiff(markov_time_covariates,constant_variables))
     # remove outcome variable (could be removed in earlier functions)
-    included_vars = setdiff(included_vars,name_outcome_variable)
+    included_vars <- setdiff(included_vars,name_outcome_variable)
     # remove vars that are not in data
-    has_not=match(included_vars,names(work_data),nomatch=0)==0
-    included_vars=included_vars[!has_not]
+    included_vars <- intersect(included_vars,available_names)
     # apply exclusion_rules
-    if (length(exclusion_rules)>0 && name_outcome_variable %in% names(exclusion_rules))
-    included_vars <- setdiff(included_vars,exclusion_rules[[name_outcome_variable]])
+    if (length(exclusion_rules)>0 && name_outcome_variable %in% names(exclusion_rules)){
+        included_vars <- setdiff(included_vars,exclusion_rules[[name_outcome_variable]])
+    }
+    # apply inclusion_rules
+    if (length(inclusion_rules)>0 && name_outcome_variable %in% names(inclusion_rules)){
+        if (any(has_not <- (match(inclusion_rules[[name_outcome_variable]],available_names,nomatch = 0) == 0))){
+            warning(paste0("The following variables from the inclusion_rules do not occur in the data:\n",
+                           paste0(inclusion_rules[[name_outcome_variable]][has_not],collapse = ", ")))
+        }
+        ivars <- intersect(inclusion_rules[[name_outcome_variable]],available_names)
+        if (length(ivars)>0) included_vars <- unique(c(included_vars,ivars))
+    }
     # add covariates if any
     if(length(included_vars)>0){
         form = paste(included_vars, collapse = " + ")

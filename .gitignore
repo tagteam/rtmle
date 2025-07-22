@@ -26,4 +26,7 @@ revdep
 *.fot
 *.cb
 *.cb2
-.*.lb
+*.lb
+*.vrb
+*.nav
+*.snm
