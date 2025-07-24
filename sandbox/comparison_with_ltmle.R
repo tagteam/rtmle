@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 25 2024 (09:50) 
 ## Version: 
-## Last-Updated: Jun 17 2025 (07:29) 
+## Last-Updated: Jul 22 2025 (12:35) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 92
+##     Update #: 93
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -46,11 +46,7 @@ set.seed(17)
 tau <- 3
 ld <- simulate_long_data(n = 91,number_visits = 20,beta = list(A_on_Y = -.2,A0_on_Y = -0.3,A0_on_A = 6),register_format = TRUE)
 x <- rtmle_init(intervals = tau,name_id = "id",name_outcome = "Y",name_competing = "Dead",name_censoring = "Censored",censored_label = "censored")
-x <- add_long_data(x,
-                    outcome_data=ld$outcome_data,
-                    censored_data=ld$censored_data,
-                    competing_data=ld$competing_data,
-                    timevar_data=ld$timevar_data)
+x <- add_long_data(x,outcome_data=ld$outcome_data,censored_data=ld$censored_data,competing_data=ld$competing_data,timevar_data=ld$timevar_data)
 x <- add_baseline_data(x,data=ld$baseline_data)
 x <- long_to_wide(x,intervals = seq(0,2000,30.45*12))
 x <- protocol(x,name = "Always_A",intervention = data.frame("A" = factor(1,levels = c(0,1))))
@@ -62,7 +58,7 @@ x <- run_rtmle(x,learner = "learn_glm",time_horizon = 1:tau)
 # Ltmle
 vn <- names(x$prepared_data)
 w_treatment <- x$prepared_data[,c("id",grep("A_",vn,value = TRUE)),with = FALSE]
-w_treatment[,c("A_0","A_1","A_2","A_3") := lapply(.SD,function(a){1*(a == 1)}),.SDcols = c("A_0","A_1","A_2","A_3")]
+w_treatment[,c("A_0","A_1","A_2") := lapply(.SD,function(a){1*(a == 1)}),.SDcols = c("A_0","A_1","A_2")]
 w_outcome <- x$prepared_data[,c("id",grep("Y_|Censored_|Dead_",vn,value = TRUE)),with = FALSE]
 w_timevar <- x$prepared_data[,c("id",grep("L_",vn,value = TRUE)),with = FALSE]
 tfit <- run_ltmle(name_outcome="Y",time_horizon=1:tau,reduce = FALSE,regimen_data=list("A" = w_treatment),outcome_data=list("Y" = w_outcome),baseline_data=x$prepared_data[,.(id,sex,age)],timevar_data=w_timevar,SL.library="glm",censor_others = FALSE,gbounds=c(0,1),abar = rep(1,tau),name_id = "id",verbose=FALSE,gcomp = FALSE)
@@ -89,12 +85,8 @@ x <- rtmle_init(intervals = tau,name_id = "id",name_outcome = "Y",name_competing
 x <- add_long_data(x,outcome_data = ld[["outcome_data"]],censored_data = ld[["censored_data"]],competing_data = ld[["competing_data"]],timevar_data = ld[["timevar_data"]])
 x <- add_baseline_data(x,data = ld$baseline_data)
 x <- long_to_wide(x,intervals = seq(0,2000,30.45*12))
-x <- protocol(x,name = "Always_A_Never_B",
-              intervention = data.frame("A" = factor(rep(1,2),levels = c(0,1)),
-                                        "B" = factor(rep(0,2),levels = c(0,1))))
-x <- protocol(x,name = "Always_B_Never_A",
-              intervention = data.frame("A" = factor(rep(0,2),levels = c(0,1)),
-                                        "B" = factor(rep(1,2),levels = c(0,1))))
+x <- protocol(x,name = "Always_A_Never_B",intervention = data.frame("A" = factor(rep(1,2),levels = c(0,1)),"B" = factor(rep(0,2),levels = c(0,1))))
+x <- protocol(x,name = "Always_B_Never_A",intervention = data.frame("A" = factor(rep(0,2),levels = c(0,1)),"B" = factor(rep(1,2),levels = c(0,1))))
 x <- prepare_data(x)
 # modifying the prepared data 
 x$prepared_data[,B_0 := rep(0,.N)]
@@ -107,9 +99,9 @@ summary(x)
 # Ltmle
 vn <- names(x$prepared_data)
 w_treatment <- x$prepared_data[,c("id",grep("A_",vn,value = TRUE)),with = FALSE]
-w_treatment[,c("A_0","A_1","A_2") := lapply(.SD,function(a){1*(a == 1)}),.SDcols = c("A_0","A_1","A_2")]
+w_treatment[,c("A_0","A_1") := lapply(.SD,function(a){1*(a == 1)}),.SDcols = c("A_0","A_1")]
 w_other <- x$prepared_data[,c("id",grep("B_",vn,value = TRUE)),with = FALSE]
-w_other[,c("B_0","B_1","B_2") := lapply(.SD,function(a){1*(a == 1)}),.SDcols = c("B_0","B_1","B_2")]
+w_other[,c("B_0","B_1") := lapply(.SD,function(a){1*(a == 1)}),.SDcols = c("B_0","B_1")]
 w_outcome <- x$prepared_data[,c("id",grep("Y_|Censored_|Dead_",vn,value = TRUE)),with = FALSE]
 w_timevar <- x$prepared_data[,c("id",grep("L_",vn,value = TRUE)),with = FALSE]
 ab_treatment <- w_treatment[w_other,on = "id"]
@@ -171,7 +163,7 @@ if (FALSE){
     ldata[,rtmle_predicted_outcome := NULL]
     ldata[,c("A_0","A_1","A_2") := lapply(.SD,function(a){1*(a == 1)}),.SDcols = c("A_0","A_1","A_2")]
     detQ <- function(data, current.node, nodes, called.from.estimate.g){
-        death.index <- grep(paste0(name_competing_risk, "_"),names(data))
+        death.index <- grep(paste0("Dead", "_"),names(data))
         if(length(death.index)==0){
             message("No death/terminal event node found")
             return(NULL)

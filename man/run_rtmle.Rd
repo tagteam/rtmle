@@ -9,7 +9,7 @@ run_rtmle(
   targets,
   learner = "learn_glm",
   time_horizon,
-  refit = FALSE,
+  refit = TRUE,
   seed = NULL,
   subsets = NULL,
   keep_influence = TRUE,
@@ -32,7 +32,7 @@ each element of the vector.}
 
 \item{refit}{Logical. If \code{TRUE} ignore any propensity score
 and censoring models learned in previous calls to this
-function. Default is \code{FALSE}.}
+function. This may be useful to save computation time. Default is \code{TRUE}.}
 
 \item{seed}{Seed used for cross-fitting}
 

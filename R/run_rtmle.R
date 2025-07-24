@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul  1 2024 (09:11)
 ## Version:
-## Last-Updated: Jul 21 2025 (15:48) 
+## Last-Updated: Jul 24 2025 (12:06) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 533
+##     Update #: 545
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -27,7 +27,7 @@
 #'     each element of the vector.
 #' @param refit Logical. If \code{TRUE} ignore any propensity score
 #'     and censoring models learned in previous calls to this
-#'     function. Default is \code{FALSE}.
+#'     function. This may be useful to save computation time. Default is \code{TRUE}.
 #' @param seed Seed used for cross-fitting
 #' @param subsets A list structure for subset analyses. Each element is a list 
 #'                which requires a label, to name the subset, and a subset of the 
@@ -100,7 +100,7 @@ run_rtmle <- function(x,
                       targets,
                       learner = "learn_glm",
                       time_horizon,
-                      refit = FALSE,
+                      refit = TRUE,
                       seed = NULL,
                       subsets = NULL,
                       keep_influence = TRUE,
@@ -114,10 +114,17 @@ run_rtmle <- function(x,
             xs <- data.table::copy(x[c("targets","names","times","protocols","models")])
             xs$prepared_data <- x$prepared_data[x$prepared_data[[x$names$id]] %in% sub$id]
             if (NROW(xs$prepared_data) == 0) stop(paste0("No data in subset: ",label))
-            # FIXME: should check if someone is at risk at the maximal time_horizons
+            # FIXME: should check if the number at risk at the maximal time_horizon is not zero
             #        and that there is still variation in the outcome at that time
             xs$followup <- x$followup[x$followup[[x$names$id]] %in% sub$id]
-            xs <- run_rtmle(xs,targets = targets,time_horizon = time_horizon,seed = seed,learner = learner,refit = TRUE,subsets = NULL,verbose = verbose)
+            xs <- run_rtmle(xs,
+                            targets = targets,
+                            time_horizon = time_horizon,
+                            seed = seed,
+                            learner = learner,
+                            refit = TRUE,
+                            subsets = NULL,
+                            verbose = verbose)
             subset_result <- xs$estimate[["Main_analysis"]]
             # add the subset identifying information, such as age="40-60"
             if (length(sub$variable)>0){
@@ -127,6 +134,10 @@ run_rtmle <- function(x,
                 subset_result <- cbind(addthis,subset_result)
                 data.table::setattr(subset_result,"variable",sub$variable)
                 ## data.table::setattr(subset_result,"level",sub$level)
+            }
+            # add the fitted nuisance parameter models
+            for (m in names(x$models)){
+                x$models[[m]][[sub$label]] <- xs$models[[m]][["fit"]]
             }
             # add the estimate of the influence function
             if (keep_influence) {
@@ -154,8 +165,8 @@ run_rtmle <- function(x,
                 data.table::setattr(x$estimate[[sub$label[[1]]]],
                                     "variable",sub_variable)# assumed equal to attr(subset,"variable")
                 ## data.table::setattr(x$estimate[[sub$label[[1]]]],
-                                    ## "level",
-                                    ## c(sub_level, attr(subset_result,"level")))
+                ## "level",
+                ## c(sub_level, attr(subset_result,"level")))
             }
         }
         return(x)

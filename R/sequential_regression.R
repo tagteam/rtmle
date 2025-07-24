@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 30 2024 (14:30)
 ## Version:
-## Last-Updated: Jul 22 2025 (10:52) 
+## Last-Updated: Jul 24 2025 (11:41) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 319
+##     Update #: 338
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -158,7 +158,6 @@ sequential_regression <- function(x,
         # note that we can still predict those who are censored at C_j but uncensored at C_{j-1}
         ## y <- riskRegression::predictRisk(fit_last,newdata = intervened_data)
         # avoid missing values due to logit
-        
         if (x$targets[[target_name]]$estimator == "tmle"){
             if (any(fit_last[!is.na(fit_last)] <= 0)) fit_last <- pmax(fit_last,0.0001)
             if (any(fit_last[!is.na(fit_last)] >= 1)) fit_last <- pmin(fit_last,0.9999)

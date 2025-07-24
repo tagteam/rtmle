@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul  3 2024 (11:13)
 ## Version:
-## Last-Updated: Jun 16 2025 (10:19) 
+## Last-Updated: Jul 24 2025 (09:44) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 94
+##     Update #: 96
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -38,7 +38,7 @@ additive_formalizer <- function(x,
     propensity_formulas <- c(unlist(lapply(x$times,function(tk){
         c(unlist(lapply(paste0(treatment_variables,"_",tk), function(reg){
             formalize(timepoint = tk,
-                      work_data = x$prepared_data,
+                      available_names = names(x$prepared_data),
                       name_outcome_variable = reg,
                       name_baseline_covariates = name_baseline_covariates,
                       name_time_covariates  = name_time_covariates,
@@ -49,7 +49,7 @@ additive_formalizer <- function(x,
     if(length(x$names$censoring)>0){
         censoring_formulas <- c(unlist(lapply(x$times[-1],function(tk){
             formalize(timepoint = tk,
-                      work_data = x$prepared_data,
+                      available_names = names(x$prepared_data),
                       name_outcome_variable = paste0(x$names$censoring,"_",tk),
                       name_baseline_covariates = name_baseline_covariates,
                       name_time_covariates = name_time_covariates,
@@ -63,7 +63,7 @@ additive_formalizer <- function(x,
     ## The reason for this is we do not want to mistakenly assume that L_1 -> A_1 when in reality A_1 happens before L_1
     outcome_formulas <- unlist(lapply(x$times[-1],function(tk){
         formalize(timepoint = tk,
-                  work_data = x$prepared_data,
+                  available_names = names(x$prepared_data),
                   name_outcome_variable = paste0(x$names$outcome,"_",tk),
                   name_baseline_covariates = name_baseline_covariates,
                   name_time_covariates  = name_time_covariates,

@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Oct 17 2024 (09:26) 
 ## Version: 
-## Last-Updated: Jul  8 2025 (15:54) 
+## Last-Updated: Jul 24 2025 (11:49) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 244
+##     Update #: 252
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -186,10 +186,11 @@ intervention_probabilities <- function(x,
                             }
                         }
                         # FIXME: delete the if query when obsolete way of specifying formulas is gone
-                        if (protocol_name %in% names(x$models))
+                        if (protocol_name %in% names(x$models)){
                             x$models[[protocol_name]][[G]]$fit <- Gfit
-                        else
+                        } else{
                             x$models[[G]]$fit <- Gfit
+                        }
                     }
                 }
             }

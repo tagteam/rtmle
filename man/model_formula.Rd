@@ -4,7 +4,15 @@
 \alias{model_formula}
 \title{Model formulas for nuisance parameters}
 \usage{
-model_formula(x, exclude_variables = NULL, Markov = NULL, verbose = TRUE, ...)
+model_formula(
+  x,
+  exclude_variables = NULL,
+  Markov = NULL,
+  verbose = TRUE,
+  exclusion_rules = NULL,
+  inclusion_rules = NULL,
+  ...
+)
 }
 \arguments{
 \item{x}{object of class \code{rtmle}}
@@ -15,6 +23,11 @@ model_formula(x, exclude_variables = NULL, Markov = NULL, verbose = TRUE, ...)
 value on the right hand side of the formulas.}
 
 \item{verbose}{Logical. If \code{FALSE} suppress all messages. \code{TRUE} is the default.}
+
+\item{exclusion_rules}{Experimental. Additional exclusion rules given as a named list where names are variables that occur on the left hand side of a formula and}
+
+\item{inclusion_rules}{Experimental. Additional inclusion rules given as a named list where names are variables that occur on the left hand side of a formula and
+elements are variables that should be included in the right hand side of the formula.}
 
 \item{...}{Not used (not yet)}
 }

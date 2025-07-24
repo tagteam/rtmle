@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Apr  1 2025 (08:18) 
 ## Version: 
-## Last-Updated: Jul 21 2025 (16:11) 
+## Last-Updated: Jul 24 2025 (09:45) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 30
+##     Update #: 36
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -62,11 +62,16 @@ add_wide_data <- function(x,outcome_data,timevar_data,...){
             stop(paste0("Object 'outcome_data' does not have a variable called ",x$names$id,"."))
         }
         ## check the registered names
-        ## FIXME: could check if all Y_times are in the data
-        ## FIXME: could check if Y_0 is in the data which is not allowed
         for (Y in c("outcome","censoring","competing")){
             if (length(x$names[[Y]])>0){
-                Y_variables <- grep(paste0("^",x$names[[Y]],"_[0-9]+$"),names(outcome_data),value = TRUE)
+                Y_variables <- grep(paste0("^",x$names[[Y]],"_[1-9]+$"),names(outcome_data),value = TRUE)
+                zero_variable <- grep(paste0("^",x$names[[Y]],"_0$"),names(outcome_data),value = TRUE)
+                if (length(zero_variable) > 0) {
+                    if (length(unique(outcome_data[[zero_variable]]))>1){
+                        stop(paste0("Found variation in the time zero variable ",zero_variable,".",
+                                    "\nThe outcome, censoring, competing risk variables must all be zero at time zero."))
+                    }
+                }
                 if (length(Y_variables) == 0) {
                     stop(paste0("Cannot find the ",Y," variables: ",paste0(x$names[[Y]],"_",c("1","2","..."),collapse = ", ")))
                 }
@@ -81,6 +86,9 @@ add_wide_data <- function(x,outcome_data,timevar_data,...){
         })
     }
     if (!missing(timevar_data)){
+        if (!is.list(timevar_data) || is.data.frame(timevar_data) || is.null(names(timevar_data))) {
+            stop("Argument timevar_data must be a data.frame or a named list of data.frames.")
+        }
         if (is.data.frame(timevar_data)){
             d <- data.table::copy(data.table::as.data.table(timevar_data))
             if (!(x$names$id %in% names(d))){
@@ -89,7 +97,18 @@ add_wide_data <- function(x,outcome_data,timevar_data,...){
                 x$data$timevar_data <- d
             }
         }else{
-            x$data$timevar_data <- timevar_data            
+            if (is.null(x$data$timevar_data)){
+                x$data$timevar_data <- vector(length(timevar_data),mode = "list")
+                names(x$data$timevar_data) <- names(timevar_data)
+            }
+            for (name in names(timevar_data)){
+                current_data <- copy(as.data.table(timevar_data[[name]]))
+                if (!(x$names$id %in% names(current_data))){
+                    warning(paste0("Element 'timevar_data' does not have a variable called ",x$names$id," and is not added."))
+                } else{
+                    x$data$timevar_data[[name]] <- current_data
+                }
+            }
         }
     }
     x
