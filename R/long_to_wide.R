@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 22 2024 (14:07) 
 ## Version: 
-## Last-Updated: Jul 21 2025 (15:26) 
+## Last-Updated: Jul 25 2025 (10:27) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 76
+##     Update #: 93
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -62,6 +62,19 @@ long_to_wide <- function(x,
     if (length(x$long_data) == 0) {return(NULL)}
     Vnames <- names(x$long_data$timevar_data)
     if (any(duplicated(Vnames))) stop("Duplicated names found in names(x$long_data$timevar_data). Variables must have distinct names.")
+    # check if all dates have the same format
+    tv_date_formats <- sapply(Vnames,function(v){class(x$long_data$timevar_data[[v]][["date"]])})
+    ocd_date_formats <- sapply(intersect(c("outcome_data","censored_data","competing_data"),names(x$long_data)),function(v){class(x$long_data[[v]][["date"]])})
+    if (length(unique(c(tv_date_formats,ocd_date_formats))) > 1){
+        ctab <- data.table(
+            "variable" = names(c(tv_date_formats,ocd_date_formats)),
+            "storage" = rep(c("long_data$timevar_data","long_data"),c(length(tv_date_formats),length(ocd_date_formats))),
+            "class_of_date_variable" = c(tv_date_formats,ocd_date_formats))
+        cat("\n\nAnalysis of date variables:\n\n")
+        print(ctab)
+        cat("\n")
+        stop(paste0("All date variables in long format data need to have the same class (either numeric or Date)."))
+    }
     if (missing(intervals)) {stop("Need time intervals to map the long data.")}
     if (length(x$data$baseline_data) == 0){
         stop("To discretize the long format data we need the baseline data stored as 'x$data$baseline_data' with the subject id variable.\nUse the function 'add_baseline_data' to add this.")
