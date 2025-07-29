@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Oct 28 2024 (09:26) 
 ## Version: 
-## Last-Updated: Jul 21 2025 (14:41) 
+## Last-Updated: Jul 29 2025 (07:18) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 62
+##     Update #: 65
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -50,7 +50,6 @@ learn_ranger <- function(character_formula,data,intervened_data,...){
             ,silent = TRUE),
              "try-error")){
     }else{
-        browser(skipCalls=1L)
         stop(paste0("\nCould not fit model with ranger:\n",
                     "Formula: ",character_formula))
     }

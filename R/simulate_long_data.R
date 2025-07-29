@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 11 2024 (13:24) 
 ## Version: 
-## Last-Updated: Mar 25 2025 (12:35) 
+## Last-Updated: Jul 28 2025 (09:45) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 274
+##     Update #: 292
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -64,7 +64,8 @@ simulate_long_data <- function(n,
         # remove the now obsolete init values
         Beta <- Beta[unique(names(Beta))]
     }
-    # mimick a 10-year time frame
+    # mimick a 10-year time frame and allow
+    # the baseline rates to change every day
     time = seq(1,10*365,1)
     max_fup <- 10*365
     nt <- length(time)
@@ -98,20 +99,20 @@ simulate_long_data <- function(n,
     )
     # baseline treatment depends on baseline variables
     ## pop[, A_0:=stats::rbinom(.N,1,lava::expit(0.35+0.1*L_0-0.3*sex-0.01*age))]
-    if (interventional_distribution)
-      pop[, A_0:=1]
-    else {
-      pop[, A_0:=stats::rbinom(.N,1,0.5)]
+    if (interventional_distribution){
+        pop[, A_0:=1]
+    } else {
+        pop[, A_0:=stats::rbinom(.N,1,0.5)]
     }
-  
-    
+    # initialize amount of treatment: sum_A
+    pop[, sum_A:=A_0]
     pop[, L_0:=stats::rbinom(n,1,.17)]
     people_atrisk <- pop[,data.table::data.table(id,entrytime = time,age,sex,L_0,A_0,sum_L,A,sum_A)]
-
     if (interventional_distribution){
-      people_atrisk[,propensity_A := 1]
+        people_atrisk[,propensity_A := 1]
     } else {
-      people_atrisk[,propensity_A := lava::expit(-3 + Beta$age_on_A*age+Beta$sex_on_A*sex+Beta$L0_on_A*L_0+Beta$A0_on_A*A_0)] ## does not depend on previous treatment; only baseline treatment
+        ## does not depend on previous treatment; only baseline treatment
+        people_atrisk[,propensity_A := lava::expit(-3 + Beta$age_on_A*age+Beta$sex_on_A*sex+Beta$L0_on_A*L_0+Beta$A0_on_A*A_0)] 
     }
     people_atrisk[,hazard_ratio_L := exp(Beta$age_on_L*age+Beta$sex_on_L*sex)]
     people_atrisk[,hazard_ratio_Y := exp(Beta$age_on_Y*age+Beta$sex_on_Y*sex+Beta$L0_on_Y*L_0+Beta$A0_on_Y*A_0)]
@@ -123,7 +124,8 @@ simulate_long_data <- function(n,
     # time loop
     j <- 1
     # doctor visit schedule (could be person specific but fixed for now)
-    schedule <- seq(365,10*365,365)
+    # scheduled visits every 6 months 
+    schedule <- seq(365/2,10*365,365/2)
     while (j < number_visits && nrow(people_atrisk)>0){
         # calculate the time and type of the minimum of latent times to V,L,C,Y,D
         # matrix with latent times
@@ -156,12 +158,7 @@ simulate_long_data <- function(n,
         people_atrisk = people_atrisk[!is_terminal]
         # draw treatment at the doctor visit times
         people_atrisk[event == "V",A := stats::rbinom(.N,1,propensity_A)]
-
         # update propensity score
-        # if (interventional_distribution)
-        #   people_atrisk[event == "V",propensity_A := 1]
-        # else
-        #   people_atrisk[event == "V",propensity_A := lava::expit(-3 + Beta$age_on_A*age+Beta$sex_on_A*sex+Beta$L0_on_A*L_0+Beta$A0_on_A*A)]
         people_atrisk[event == "V",sum_A := sum_A+A]
         # add to comorbidity index 
         people_atrisk[event == "L",sum_L := sum_L+1]

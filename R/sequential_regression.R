@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 30 2024 (14:30)
 ## Version:
-## Last-Updated: Jul 24 2025 (11:41) 
+## Last-Updated: Jul 29 2025 (09:33) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 338
+##     Update #: 353
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -59,17 +59,8 @@ sequential_regression <- function(x,
         }else{
             interval_outcome_formula = x$models[[outcome_variables[[j]]]]$formula
         }
-        if (j < time_horizon) {
-            outcome_name <- "rtmle_predicted_outcome"
-            interval_outcome_formula <- stats::update(stats::formula(interval_outcome_formula),"rtmle_predicted_outcome~.")
-        }
-        ## HERE
-        ## Y <- x$prepared_data[outcome_free_and_uncensored][[outcome_name]]
         Y <- x$prepared_data[[outcome_name]]
         # intervene according to protocol for targets
-        # FIXME: intervene on all variables or only those after
-        #        time j? those in current outcome_formula
-        # FIXME: remove id variable below here
         history_of_variables <- names(x$prepared_data)[1:(-1+match(outcome_variables[[j]],names(x$prepared_data)))]
         intervenable_history <- setdiff(history_of_variables,c(outcome_variables,censoring_variables,competing_variables))
         intervened_data <- do.call(x$protocol[[protocol_name]]$intervene_function,
@@ -89,10 +80,10 @@ sequential_regression <- function(x,
         if (NROW(current_data) == 0) {
             stop("No data available for g-estimation")
         }
-        
         current_constants <- sapply(current_data, function(x){length(unique(x))==1})
         if (any(current_constants)) {
             current_constants <- names(current_constants[current_constants])
+            current_data <- current_data[,!(names(current_data)%in%current_constants),with = FALSE]
         }else{
             current_constants <- NULL
         }
@@ -103,47 +94,58 @@ sequential_regression <- function(x,
                         ".\nCheck the prepared data:\nx$prepared_data[x$followup$last_interval>=",
                         j-1,",.(",x$names$id,",",outcome_variables[[j]],")]"))
         # remove constant predictor variables
-        interval_outcome_formula_vars <- all.vars(stats::formula(interval_outcome_formula))
         if (length(current_constants)>0){
-            # FIXME: table warnings and show number of times per warning
-            ## x$warnings <- paste0("Removing constant variables at time ",j,":\n",paste0(current_constants,collapse = ", "))
-            interval_outcome_formula <- delete_variables_from_formula(character_formula = interval_outcome_formula,delete_vars = current_constants)
-        }
-        args <- list(character_formula = interval_outcome_formula,
-                     data = current_data[,!(names(current_data)%in%current_constants),with = FALSE],
-                     intervened_data = intervened_data[outcome_free_and_uncensored],...)
-        # super learner needs name of outcome variable
-        if (length(learner)>1){
-            if (j == time_horizon){
-                args <- c(args,list(learners = learner,
-                                    outcome_variable = outcome_variables[[j]],
-                                    outcome_target_level = NULL,
-                                    id_variable = x$names$id))
-            }else{
-                args <- c(args,list(learners = learner,
-                                    outcome_variable = "rtmle_predicted_outcome",
-                                    outcome_target_level = NULL,
-                                    id_variable = x$names$id))
-            }
-            if (inherits(try(
-                fit_last <- do.call("superlearn",c(args,list(seed = seed))),silent = FALSE),
-                "try-error")) {
-                stop(paste0("Sequential regression fit failed with formula:\n",interval_outcome_formula))
-            }
+            interval_outcome_formula <- delete_variables_from_formula(character_formula = interval_outcome_formula,
+                                                                      delete_vars = current_constants)
+            number_rhs_variables <- attr(interval_outcome_formula,"number_rhs_variables")
         }else{
-            # take care of case where additional arguments are passed to a single learner
-            if (is.list(learner)){
-                learner_args <- learner[[1]][names(learner[[1]]) != "learner_fun"]
-                args <- c(args,learner_args)
-                learner_fun <- learner[[1]][["learner_fun"]]
+            number_rhs_variables <- length(attr(stats::terms(stats::formula(interval_outcome_formula)),"term.labels"))
+        }
+        if (j < time_horizon) {
+            outcome_name <- "rtmle_predicted_outcome"
+            interval_outcome_formula <- stats::update(stats::formula(interval_outcome_formula),"rtmle_predicted_outcome~.")
+        }
+        if (number_rhs_variables == 0){
+            # here we assume that the outcome is binary or a predicted value 
+            predicted_values <- rep(mean(current_data[[outcome_variables[[j]]]]),NROW(current_data))
+            attr(predicted_values,"fit") <- "No covariates. Predicted average outcome to all subjects."
+        }else{
+            args <- list(character_formula = interval_outcome_formula,
+                         data = current_data,
+                         intervened_data = intervened_data[outcome_free_and_uncensored],...)
+            # super learner needs name of outcome variable
+            if (length(learner)>1){
+                if (j == time_horizon){
+                    args <- c(args,list(learners = learner,
+                                        outcome_variable = outcome_variables[[j]],
+                                        outcome_target_level = NULL,
+                                        id_variable = x$names$id))
+                }else{
+                    args <- c(args,list(learners = learner,
+                                        outcome_variable = "rtmle_predicted_outcome",
+                                        outcome_target_level = NULL,
+                                        id_variable = x$names$id))
+                }
+                if (inherits(try(
+                    fit_last <- do.call("superlearn",c(args,list(seed = seed))),silent = FALSE),
+                    "try-error")) {
+                    stop(paste0("Sequential regression fit failed with formula:\n",interval_outcome_formula))
+                }
             }else{
-                learner_fun <- learner
-            }
-            # single learners do not need the name of outcome variable
-            if (inherits(try(
-                fit_last <- do.call(learner_fun,args),silent = FALSE),
-                "try-error")) {
-                stop(paste0("Sequential regression fit failed with formula:\n",interval_outcome_formula))
+                # take care of case where additional arguments are passed to a single learner
+                if (is.list(learner)){
+                    learner_args <- learner[[1]][names(learner[[1]]) != "learner_fun"]
+                    args <- c(args,learner_args)
+                    learner_fun <- learner[[1]][["learner_fun"]]
+                }else{
+                    learner_fun <- learner
+                }
+                # single learners do not need the name of outcome variable
+                if (inherits(try(
+                    fit_last <- do.call(learner_fun,args),silent = FALSE),
+                    "try-error")) {
+                    stop(paste0("Sequential regression fit failed with formula:\n",interval_outcome_formula))
+                }
             }
         }
         # save fitted object
@@ -193,7 +195,7 @@ sequential_regression <- function(x,
                                  outcome_free_and_uncensored = outcome_free_and_uncensored,
                                  intervention_match = imatch)
             ),"try-error"))
-                stop(paste0("Fluctuation model used in the TMLE update step failed",
+                stop(paste0("Fluctuation model used in the TMLE update step faile",
                             " in the attempt to run function tmle_update at time point: ",j))
             ## FIXME: why do we not need the following?
             ## W[!outcome_free_and_uncensored] <- Y[!outcome_free_and_uncensored]

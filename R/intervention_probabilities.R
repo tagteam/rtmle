@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Oct 17 2024 (09:26) 
 ## Version: 
-## Last-Updated: Jul 24 2025 (11:49) 
+## Last-Updated: Jul 29 2025 (09:13) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 252
+##     Update #: 257
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -103,6 +103,7 @@ intervention_probabilities <- function(x,
                 current_constants <- sapply(current_data, function(x){length(unique(x))==1})
                 if (any(current_constants)) {
                     current_constants <- names(current_constants[current_constants])
+                    current_data <- current_data[,!(names(current_data)%in%current_constants),with = FALSE]
                 }else{
                     current_constants <- NULL
                 }
@@ -131,41 +132,46 @@ intervention_probabilities <- function(x,
                             Gfit <- "No variation in this variable"
                         }else{
                             # Assume binary variables
-                            ## Gcount <- sum(current_data[[G]])
                             if (length(ff <- model_G$formula)>0){
                                 # remove constant predictor variables
-                                ff_vars <- all.vars(stats::formula(ff))
                                 if (length(current_constants)>0){
-                                    ## warning("Removing constant variables at time ",j,":\n",paste0(current_constants,collapse = ", ") )
                                     ff <- delete_variables_from_formula(character_formula = ff,delete_vars = current_constants)
-                                }
-                                args <- list(character_formula = ff,
-                                             data = current_data[,!(names(current_data)%in%current_constants),with = FALSE],
-                                             intervened_data = intervened_data,...)
-                                if (length(learner)>1){
-                                    args <- c(args,
-                                              list(learners = learner,
-                                                   outcome_variable = G,
-                                                   outcome_target_level = levels(current_data[[G]])[[2]],
-                                                   id_variable = x$names$id))
-                                    if (inherits(try(
-                                        predicted_values <- do.call("superlearn",c(args,list(seed = seed))),silent = FALSE),
-                                        "try-error")) {
-                                        stop(paste0("Failed to superlearn/crossfit with formula ",ff))
-                                    }
+                                    number_rhs_variables <- attr(ff,"number_rhs_variables")
                                 }else{
-                                    # take care of case where additional arguments are passed to a single learner
-                                    if (is.list(learner)){
-                                        learner_args <- learner[[1]][names(learner[[1]]) != "learner_fun"]
-                                        args <- c(args,learner_args)
-                                        learner_fun <- learner[[1]][["learner_fun"]]
+                                    number_rhs_variables <- length(attr(stats::terms(stats::formula(ff)),"term.labels"))
+                                }
+                                if (number_rhs_variables == 0){
+                                    predicted_values <- rep(mean(current_data[[G]] == levels(current_data[[G]])[[2]]),NROW(current_data))
+                                    attr(predicted_values,"fit") <- "No covariates. Predicted average outcome to all subjects."
+                                }else{
+                                    args <- list(character_formula = ff,
+                                                 data = current_data[,!(names(current_data)%in%current_constants),with = FALSE],
+                                                 intervened_data = intervened_data,...)
+                                    if (length(learner)>1){
+                                        args <- c(args,
+                                                  list(learners = learner,
+                                                       outcome_variable = G,
+                                                       outcome_target_level = levels(current_data[[G]])[[2]],
+                                                       id_variable = x$names$id))
+                                        if (inherits(try(
+                                            predicted_values <- do.call("superlearn",c(args,list(seed = seed))),silent = FALSE),
+                                            "try-error")) {
+                                            stop(paste0("Failed to superlearn/crossfit with formula ",ff))
+                                        }
                                     }else{
-                                        learner_fun <- learner
-                                    }
-                                    if (inherits(try(
-                                        predicted_values <- do.call(learner_fun,args),silent = FALSE),
-                                        "try-error")) {
-                                        stop(paste0("Failed to learn/predict with formula ",ff))
+                                        # take care of case where additional arguments are passed to a single learner
+                                        if (is.list(learner)){
+                                            learner_args <- learner[[1]][names(learner[[1]]) != "learner_fun"]
+                                            args <- c(args,learner_args)
+                                            learner_fun <- learner[[1]][["learner_fun"]]
+                                        }else{
+                                            learner_fun <- learner
+                                        }
+                                        if (inherits(try(
+                                            predicted_values <- do.call(learner_fun,args),silent = FALSE),
+                                            "try-error")) {
+                                            stop(paste0("Failed to learn/predict with formula ",ff))
+                                        }
                                     }
                                 }
                             }else{
