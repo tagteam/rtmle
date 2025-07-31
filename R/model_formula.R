@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jun 16 2025 (08:58) 
 ## Version: 
-## Last-Updated: Jul 25 2025 (09:02) 
+## Last-Updated: Jul 31 2025 (07:42) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 49
+##     Update #: 50
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -85,8 +85,9 @@ model_formula <- function(x,
                 all_vars <- c(all_vars,paste0(x$names$censoring,"_",tk))
             }
         }
-        # remove constant variables
-        all_vars <- setdiff(all_vars,name_constant_variables)
+        # remove constant variables 
+        # FIXME: this also removes constant outcome variables
+        ## all_vars <- setdiff(all_vars,name_constant_variables)
         # return vector of character formulas
         c(unlist(lapply(all_vars, function(vv){
             ff <- formalize(timepoint = tk,
