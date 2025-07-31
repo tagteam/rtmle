@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 30 2024 (14:30)
 ## Version:
-## Last-Updated: Jul 31 2025 (08:38) 
+## Last-Updated: Jul 31 2025 (08:42) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 382
+##     Update #: 383
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -180,7 +180,7 @@ sequential_regression <- function(x,
         # the column names A_1,B_1,E_1 of the intervention_match table are made with paste
         # in function intervention_probabilities
         intervention_node_name <- paste(intervention_table[time == j-1]$variable,collapse = ",")
-        if (outcome_name %in% names(current_constants) || length(x$targets[[target_name]]$estimator) == 0 || x$targets[[target_name]]$estimator == "tmle"){
+        if (!(outcome_name %in% names(current_constants)) || length(x$targets[[target_name]]$estimator) == 0 || x$targets[[target_name]]$estimator == "tmle"){
             # use only data from subjects who are uncensored in current interval
             # construction of clever covariates
             W_previous <- rep(NA,length(Y))
