@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 30 2024 (14:30)
 ## Version:
-## Last-Updated: Jul 31 2025 (07:54) 
+## Last-Updated: Jul 31 2025 (08:10) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 378
+##     Update #: 379
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -85,67 +85,69 @@ sequential_regression <- function(x,
             stop("No data available for g-estimation")
         }
         current_constants <- sapply(current_data, function(x){length(na.omit(unique(x)))==1})
-        if (any(current_constants)) {
-            current_constants <- names(current_constants[current_constants])
-            current_data <- current_data[,!(names(current_data)%in%current_constants),with = FALSE]
-        }else{
-            current_constants <- NULL
-        }
-        # remove constant predictor variables
-        if (length(current_constants)>0){
-            interval_outcome_formula <- delete_variables_from_formula(character_formula = interval_outcome_formula,
-                                                                      delete_vars = current_constants)
-            number_rhs_variables <- attr(interval_outcome_formula,"number_rhs_variables")
-        }else{
-            number_rhs_variables <- length(attr(stats::terms(stats::formula(interval_outcome_formula)),"term.labels"))
-        }
-        # if there are no covariates or if there is no variability in the outcome variable
-        # then we simply predict the mean 
-        if (number_rhs_variables == 0 || outcome_variables[[j]]%in%current_constants){
+        if (outcome_name %in% current_constants){
             # here we assume that the outcome is binary or a predicted value 
-            fit_last <- rep(mean(current_data[[outcome_variables[[j]]]],na.rm = TRUE),NROW(current_data))
+            fit_last <- rep(na.omit(unique(current_data[[outcome_name]])),NROW(current_data))
+            attr(fit_last,"fit") <- "No variation of the outcome variable. Predicted single outcome value to all subjects."
+        }else{
+            if (any(current_constants)) {
+                current_constants <- names(current_constants[current_constants])
+                current_data <- current_data[,!(names(current_data)%in%current_constants),with = FALSE]
+            }else{
+                current_constants <- NULL
+            }
+            # remove constant predictor variables
+            if (length(current_constants)>0){
+                interval_outcome_formula <- delete_variables_from_formula(character_formula = interval_outcome_formula,
+                                                                          delete_vars = current_constants)
+                number_rhs_variables <- attr(interval_outcome_formula,"number_rhs_variables")
+            }else{
+                number_rhs_variables <- length(attr(stats::terms(stats::formula(interval_outcome_formula)),"term.labels"))
+            }
+            # if there are no covariates or if there is no variability in the outcome variable
+            # then we simply predict the mean 
             if (number_rhs_variables == 0){
+                # here we assume that the outcome is binary or a predicted value 
+                fit_last <- rep(mean(current_data[[outcome_variables[[j]]]],na.rm = TRUE),NROW(current_data))
                 attr(fit_last,"fit") <- "No covariates. Predicted average outcome to all subjects."
             }else{
-                attr(fit_last,"fit") <- "No variation of the outcome variable. Predicted single outcome value to all subjects."
-            }
-        }else{
-            args <- list(character_formula = interval_outcome_formula,
-                         data = current_data,
-                         intervened_data = intervened_data[outcome_free_and_uncensored],...)
-            # super learner needs name of outcome variable
-            if (length(learner)>1){
-                if (j == time_horizon){
-                    args <- c(args,list(learners = learner,
-                                        outcome_variable = outcome_variables[[j]],
-                                        outcome_target_level = NULL,
-                                        id_variable = x$names$id))
+                args <- list(character_formula = interval_outcome_formula,
+                             data = current_data,
+                             intervened_data = intervened_data[outcome_free_and_uncensored],...)
+                # super learner needs name of outcome variable
+                if (length(learner)>1){
+                    if (j == time_horizon){
+                        args <- c(args,list(learners = learner,
+                                            outcome_variable = outcome_variables[[j]],
+                                            outcome_target_level = NULL,
+                                            id_variable = x$names$id))
+                    }else{
+                        args <- c(args,list(learners = learner,
+                                            outcome_variable = "rtmle_predicted_outcome",
+                                            outcome_target_level = NULL,
+                                            id_variable = x$names$id))
+                    }
+                    if (inherits(try(
+                        fit_last <- do.call("superlearn",c(args,list(seed = seed))),silent = FALSE),
+                        "try-error")) {
+                        stop(paste0("Sequential regression fit failed with formula:\n",interval_outcome_formula))
+                    }
                 }else{
-                    args <- c(args,list(learners = learner,
-                                        outcome_variable = "rtmle_predicted_outcome",
-                                        outcome_target_level = NULL,
-                                        id_variable = x$names$id))
-                }
-                if (inherits(try(
-                    fit_last <- do.call("superlearn",c(args,list(seed = seed))),silent = FALSE),
-                    "try-error")) {
-                    stop(paste0("Sequential regression fit failed with formula:\n",interval_outcome_formula))
-                }
-            }else{
-                # take care of case where additional arguments are passed to a single learner
-                if (is.list(learner)){
-                    learner_args <- learner[[1]][names(learner[[1]]) != "learner_fun"]
-                    args <- c(args,learner_args)
-                    learner_fun <- learner[[1]][["learner_fun"]]
-                }else{
-                    learner_fun <- learner
-                }
-                # single learners do not need the name of outcome variable
-                if (inherits(try(
-                    fit_last <- do.call(learner_fun,args),silent = FALSE),
-                    "try-error")) {
-                    stop(paste0("Sequential regression fit failed with formula:\n",
-                                interval_outcome_formula))
+                    # take care of case where additional arguments are passed to a single learner
+                    if (is.list(learner)){
+                        learner_args <- learner[[1]][names(learner[[1]]) != "learner_fun"]
+                        args <- c(args,learner_args)
+                        learner_fun <- learner[[1]][["learner_fun"]]
+                    }else{
+                        learner_fun <- learner
+                    }
+                    # single learners do not need the name of outcome variable
+                    if (inherits(try(
+                        fit_last <- do.call(learner_fun,args),silent = FALSE),
+                        "try-error")) {
+                        stop(paste0("Sequential regression fit failed with formula:\n",
+                                    interval_outcome_formula))
+                    }
                 }
             }
         }
