@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Apr  1 2025 (08:18) 
 ## Version: 
-## Last-Updated: Jul 31 2025 (06:54) 
+## Last-Updated: Jul 31 2025 (07:21) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 37
+##     Update #: 38
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -86,7 +86,7 @@ add_wide_data <- function(x,outcome_data,timevar_data,...){
         })
     }
     if (!missing(timevar_data)){
-        if (!is.list(timevar_data) || !inherits(timevar_data,"data.frame") || is.null(names(timevar_data))) {
+        if ((!is.list(timevar_data) &&  !inherits(timevar_data,"data.frame")) || is.null(names(timevar_data))) {
             stop("Argument timevar_data must be a data.frame or a named list of data.frames.")
         }
         if (inherits(timevar_data,"data.frame")){
