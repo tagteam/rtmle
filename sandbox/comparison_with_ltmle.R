@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 25 2024 (09:50) 
 ## Version: 
-## Last-Updated: Jul 29 2025 (10:21) 
+## Last-Updated: Jul 31 2025 (18:15) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 95
+##     Update #: 96
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -44,23 +44,24 @@ if (file.exists(breakfast_code)){
 # ------------------------------------------------------------------------------------------
 set.seed(17)
 tau <- 3
-ld <- simulate_long_data(n = 91,number_visits = 20,beta = list(A_on_Y = -.2,A0_on_Y = -0.3,A0_on_A = 6),register_format = TRUE)
+ld <- simulate_long_data(n = 1891,number_visits = 20,beta = list(A_on_Y = -.2,A0_on_Y = -0.3,A0_on_A = 6),register_format = TRUE)
 x <- rtmle_init(intervals = tau,name_id = "id",name_outcome = "Y",name_competing = "Dead",name_censoring = "Censored",censored_label = "censored")
 x <- add_long_data(x,outcome_data=ld$outcome_data,censored_data=ld$censored_data,competing_data=ld$competing_data,timevar_data=ld$timevar_data)
 x <- add_baseline_data(x,data=ld$baseline_data)
-x <- long_to_wide(x,intervals = seq(0,2000,30.45*12))
+x <- long_to_wide(x,intervals = seq(0,2000,30.45*6))
 x <- protocol(x,name = "Always_A",intervention = data.frame("A" = factor(1,levels = c(0,1))))
 x <- prepare_data(x) 
 x <- target(x,name = "Outcome_risk",estimator = "tmle",protocols = "Always_A")
 x <- model_formula(x) 
 x <- run_rtmle(x,learner = "learn_glm",time_horizon = 1:tau)
+x$estimate
 # Ltmle
 vn <- names(x$prepared_data)
 w_treatment <- x$prepared_data[,c("id",grep("A_",vn,value = TRUE)),with = FALSE]
 w_treatment[,c("A_0","A_1","A_2") := lapply(.SD,function(a){1*(a == 1)}),.SDcols = c("A_0","A_1","A_2")]
 w_outcome <- x$prepared_data[,c("id",grep("Y_|Censored_|Dead_",vn,value = TRUE)),with = FALSE]
 w_timevar <- x$prepared_data[,c("id",grep("L_",vn,value = TRUE)),with = FALSE]
-tfit <- run_ltmle(name_outcome="Y",time_horizon=1:tau,reduce = FALSE,regimen_data=list("A" = w_treatment),outcome_data=list("Y" = w_outcome),baseline_data=x$prepared_data[,.(id,sex,age)],timevar_data=w_timevar,SL.library="glm",censor_others = FALSE,gbounds=c(0,1),abar = rep(1,tau),name_id = "id",verbose=FALSE,gcomp = FALSE)
+tfit <- run_ltmle(name_outcome="Y",time_horizon=1:tau,reduce = FALSE,regimen_data=list("A" = w_treatment),outcome_data=list("Y" = w_outcome),baseline_data=x$prepared_data[,.(id,sex,age)],timevar_data=w_timevar,SL.library="glm",censor_others = FALSE,gbounds=c(0,1),abar = rep(1,tau),name_id = "id",verbose=TRUE,gcomp = FALSE)
 tfit1 <- run_ltmle(stratify = TRUE,name_outcome="Y",time_horizon=1:tau,reduce = FALSE,regimen_data=list("A" = w_treatment),outcome_data=list("Y" = w_outcome),baseline_data=x$prepared_data[,.(id,sex,age)],timevar_data=w_timevar,SL.library="glm",censor_others = FALSE,gbounds=c(0,1),abar = rep(1,tau),name_id = "id",verbose=FALSE,gcomp = FALSE)
 summary(tfit)
 summary(x)

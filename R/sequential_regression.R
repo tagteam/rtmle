@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 30 2024 (14:30)
 ## Version:
-## Last-Updated: Jul 31 2025 (17:45) 
+## Last-Updated: Jul 31 2025 (18:08) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 392
+##     Update #: 396
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -203,12 +203,6 @@ sequential_regression <- function(x,
         }else{
             W <- fit_last
         }
-        # FIXME: we do not need to save the following
-        if (FALSE){
-            x$sequential_outcome_regression[[target_name]]$predicted_values <- cbind(x$sequential_outcome_regression[[target_name]]$predicted_values,W)
-            x$sequential_outcome_regression[[target_name]]$fit <- c(x$sequential_outcome_regression[[target_name]]$fit,list(fit_last))
-            x$sequential_outcome_regression[[target_name]]$intervened_data <- c(x$sequential_outcome_regression[[target_name]]$intervened_data,list(intervened_data))
-        }
         # calculate contribution to influence function
         h.g.ratio <- 1/x$cumulative_intervention_probs[[protocol_name]][,ipos]
         if (any(h.g.ratio>10000)) h.g.ratio <- pmin(h.g.ratio,10000)
@@ -242,6 +236,8 @@ sequential_regression <- function(x,
     SE = sqrt(stats::var(ic)/N)
     x$estimate[["Main_analysis"]][Target == target_name & Protocol ==  protocol_name & Time_horizon == time_horizon & Target_parameter == target_parameter,
                                   Estimate := mean(x$prepared_data$rtmle_predicted_outcome)]
+    # clean up for the next run
+    x$prepared_data[,rtmle_predicted_outcome := NULL]
     x$estimate[["Main_analysis"]][Target == target_name & Protocol ==  protocol_name & Time_horizon == time_horizon & Target_parameter == target_parameter,
                                   `:=`(Standard_error = SE,
                                        Lower = Estimate-stats::qnorm(.975)*SE,
