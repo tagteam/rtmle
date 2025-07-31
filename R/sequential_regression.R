@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 30 2024 (14:30)
 ## Version:
-## Last-Updated: Jul 31 2025 (08:14) 
+## Last-Updated: Jul 31 2025 (08:34) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 380
+##     Update #: 381
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -155,55 +155,59 @@ sequential_regression <- function(x,
         x$models[[outcome_variables[[j]]]]$fit <- attr(fit_last,"fit")
         data.table::setattr(fit_last,"fit",NULL)
         fit_last <- as.numeric(fit_last)
-        # set predicted value as outcome for next regression
-        ## FIXME: if (target$estimator == "tmle")
-        old_action <- options()$na.action
-        on.exit(options(na.action = old_action))
-        options(na.action = "na.pass")
-        # note that we can still predict those who are censored at C_j but uncensored at C_{j-1}
-        ## y <- riskRegression::predictRisk(fit_last,newdata = intervened_data)
-        # avoid missing values due to logit
-        if (x$targets[[target_name]]$estimator == "tmle"){
-            if (any(fit_last[!is.na(fit_last)] <= 0)) fit_last <- pmax(fit_last,0.0001)
-            if (any(fit_last[!is.na(fit_last)] >= 1)) fit_last <- pmin(fit_last,0.9999)
-        }
-        ## y <- pmax(pmin(y,0.99999),0.00001)
-        ## y <- pmax(pmin(y,0.9999),0.0001)
-        # TMLE update step
-        if (length(x$names$censoring)>0){
-            ipos <- censoring_variables[[j]]
-        }else{
-            # FIXME: this is not easy to read, but when there are multiple treatment variables
-            #        at time j, such as A_j and B_j then we match on the last
-            ipos <- rev(treatment_variables[[j]])[[1]]
-        }
-        # the column names A_1,B_1,E_1 of the intervention_match table are made with paste
-        # in function intervention_probabilities
-        intervention_node_name <- paste(intervention_table[time == j-1]$variable,collapse = ",")
-        if (length(x$targets[[target_name]]$estimator) == 0 || x$targets[[target_name]]$estimator == "tmle"){
-            # use only data from subjects who are uncensored in current interval
-            # construction of clever covariates
-            W_previous <- rep(NA,length(Y))
-            W_previous[outcome_free_and_uncensored] <- lava::logit(fit_last)
-            # FIXME: this test of infinite inverse_probability_weights needs more work
-            inverse_probability_weights <- x$cumulative_intervention_probs[[protocol_name]][,ipos]
-            imatch <- (x$intervention_match[[protocol_name]][,intervention_node_name]%in% 1)
-            if (any(inverse_probability_weights[!is.na(Y) & outcome_free_and_uncensored & as.vector(imatch)] == 0)){
-                stop("Exactly zero intervention probabilities encountered at the attempt to run the TMLE-update fluctuation model.\nYou may have to consider changing the target parameter or bounding the intervention probabilities somehow.\nGood luck!")
-            }
-            if (inherits(try(
-                W <- tmle_update(Y = Y,
-                                 offset = W_previous,
-                                 intervention_probs = inverse_probability_weights,
-                                 outcome_free_and_uncensored = outcome_free_and_uncensored,
-                                 intervention_match = imatch)
-            ),"try-error"))
-                stop(paste0("Fluctuation model used in the TMLE update step faile",
-                            " in the attempt to run function tmle_update at time point: ",j))
-            ## FIXME: why do we not need the following?
-            ## W[!outcome_free_and_uncensored] <- Y[!outcome_free_and_uncensored]
-        }else{
+        if (outcome_name %in% names(current_constants)){
             W <- fit_last
+        }else{
+            # set predicted value as outcome for next regression
+            ## FIXME: if (target$estimator == "tmle")
+            old_action <- options()$na.action
+            on.exit(options(na.action = old_action))
+            options(na.action = "na.pass")
+            # note that we can still predict those who are censored at C_j but uncensored at C_{j-1}
+            ## y <- riskRegression::predictRisk(fit_last,newdata = intervened_data)
+            # avoid missing values due to logit
+            if (x$targets[[target_name]]$estimator == "tmle"){
+                if (any(fit_last[!is.na(fit_last)] <= 0)) fit_last <- pmax(fit_last,0.0001)
+                if (any(fit_last[!is.na(fit_last)] >= 1)) fit_last <- pmin(fit_last,0.9999)
+            }
+            ## y <- pmax(pmin(y,0.99999),0.00001)
+            ## y <- pmax(pmin(y,0.9999),0.0001)
+            # TMLE update step
+            if (length(x$names$censoring)>0){
+                ipos <- censoring_variables[[j]]
+            }else{
+                # FIXME: this is not easy to read, but when there are multiple treatment variables
+                #        at time j, such as A_j and B_j then we match on the last
+                ipos <- rev(treatment_variables[[j]])[[1]]
+            }
+            # the column names A_1,B_1,E_1 of the intervention_match table are made with paste
+            # in function intervention_probabilities
+            intervention_node_name <- paste(intervention_table[time == j-1]$variable,collapse = ",")
+            if (length(x$targets[[target_name]]$estimator) == 0 || x$targets[[target_name]]$estimator == "tmle"){
+                # use only data from subjects who are uncensored in current interval
+                # construction of clever covariates
+                W_previous <- rep(NA,length(Y))
+                W_previous[outcome_free_and_uncensored] <- lava::logit(fit_last)
+                # FIXME: this test of infinite inverse_probability_weights needs more work
+                inverse_probability_weights <- x$cumulative_intervention_probs[[protocol_name]][,ipos]
+                imatch <- (x$intervention_match[[protocol_name]][,intervention_node_name]%in% 1)
+                if (any(inverse_probability_weights[!is.na(Y) & outcome_free_and_uncensored & as.vector(imatch)] == 0)){
+                    stop("Exactly zero intervention probabilities encountered at the attempt to run the TMLE-update fluctuation model.\nYou may have to consider changing the target parameter or bounding the intervention probabilities somehow.\nGood luck!")
+                }
+                if (inherits(try(
+                    W <- tmle_update(Y = Y,
+                                     offset = W_previous,
+                                     intervention_probs = inverse_probability_weights,
+                                     outcome_free_and_uncensored = outcome_free_and_uncensored,
+                                     intervention_match = imatch)
+                ),"try-error"))
+                    stop(paste0("Fluctuation model used in the TMLE update step faile",
+                                " in the attempt to run function tmle_update at time point: ",j))
+                ## FIXME: why do we not need the following?
+                ## W[!outcome_free_and_uncensored] <- Y[!outcome_free_and_uncensored]
+            }else{
+                W <- fit_last
+            }
         }
         # FIXME: we do not need to save the following
         if (FALSE){
