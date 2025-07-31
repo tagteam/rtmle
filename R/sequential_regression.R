@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 30 2024 (14:30)
 ## Version:
-## Last-Updated: Jul 31 2025 (07:51) 
+## Last-Updated: Jul 31 2025 (07:54) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 377
+##     Update #: 378
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -103,11 +103,11 @@ sequential_regression <- function(x,
         # then we simply predict the mean 
         if (number_rhs_variables == 0 || outcome_variables[[j]]%in%current_constants){
             # here we assume that the outcome is binary or a predicted value 
-            predicted_values <- rep(mean(current_data[[outcome_variables[[j]]]],na.rm = TRUE),NROW(current_data))
+            fit_last <- rep(mean(current_data[[outcome_variables[[j]]]],na.rm = TRUE),NROW(current_data))
             if (number_rhs_variables == 0){
-                attr(predicted_values,"fit") <- "No covariates. Predicted average outcome to all subjects."
+                attr(fit_last,"fit") <- "No covariates. Predicted average outcome to all subjects."
             }else{
-                attr(predicted_values,"fit") <- "No variation of the outcome variable. Predicted single outcome value to all subjects."
+                attr(fit_last,"fit") <- "No variation of the outcome variable. Predicted single outcome value to all subjects."
             }
         }else{
             args <- list(character_formula = interval_outcome_formula,
