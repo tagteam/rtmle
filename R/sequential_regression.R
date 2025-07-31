@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 30 2024 (14:30)
 ## Version:
-## Last-Updated: Jul 31 2025 (08:42) 
+## Last-Updated: Jul 31 2025 (17:45) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 383
+##     Update #: 392
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -85,17 +85,17 @@ sequential_regression <- function(x,
             stop("No data available for g-estimation")
         }
         current_constants <- sapply(current_data, function(x){length(na.omit(unique(x)))==1})
-        if (outcome_name %in% names(current_constants)){
+        if (any(current_constants)) {
+            current_constants <- names(current_constants[current_constants])
+        }else{
+            current_constants <- NULL
+        }
+        if (outcome_name %in% current_constants){
             # here we assume that the outcome is binary or a predicted value 
             fit_last <- rep(na.omit(unique(current_data[[outcome_name]])),NROW(current_data))
             attr(fit_last,"fit") <- "No variation of the outcome variable. Predicted single outcome value to all subjects."
         }else{
-            if (any(current_constants)) {
-                current_constants <- names(current_constants[current_constants])
-                current_data <- current_data[,!(names(current_data)%in%current_constants),with = FALSE]
-            }else{
-                current_constants <- NULL
-            }
+            current_data <- current_data[,!(names(current_data)%in%current_constants),with = FALSE]
             # remove constant predictor variables
             if (length(current_constants)>0){
                 interval_outcome_formula <- delete_variables_from_formula(character_formula = interval_outcome_formula,
@@ -167,8 +167,6 @@ sequential_regression <- function(x,
             if (any(fit_last[!is.na(fit_last)] <= 0)) fit_last <- pmax(fit_last,0.0001)
             if (any(fit_last[!is.na(fit_last)] >= 1)) fit_last <- pmin(fit_last,0.9999)
         }
-        ## y <- pmax(pmin(y,0.99999),0.00001)
-        ## y <- pmax(pmin(y,0.9999),0.0001)
         # TMLE update step
         if (length(x$names$censoring)>0){
             ipos <- censoring_variables[[j]]
