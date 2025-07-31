@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Oct 17 2024 (09:26) 
 ## Version: 
-## Last-Updated: Jul 29 2025 (09:13) 
+## Last-Updated: Jul 31 2025 (07:47) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 257
+##     Update #: 258
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -100,7 +100,7 @@ intervention_probabilities <- function(x,
                     stop(paste0("Missing values detected in data for fitting nuisance parameter models at time ",j,":\n",
                                 paste0(names(has_missing),": n=",has_missing,collapse = "\n")))
                 }
-                current_constants <- sapply(current_data, function(x){length(unique(x))==1})
+                current_constants <- sapply(current_data, function(x){length(na.omit(unique(x)))==1})
                 if (any(current_constants)) {
                     current_constants <- names(current_constants[current_constants])
                     current_data <- current_data[,!(names(current_data)%in%current_constants),with = FALSE]

@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 30 2024 (14:30)
 ## Version:
-## Last-Updated: Jul 31 2025 (07:37) 
+## Last-Updated: Jul 31 2025 (07:51) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 374
+##     Update #: 377
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -84,19 +84,13 @@ sequential_regression <- function(x,
         if (NROW(current_data) == 0) {
             stop("No data available for g-estimation")
         }
-        current_constants <- sapply(current_data, function(x){length(unique(x))==1})
+        current_constants <- sapply(current_data, function(x){length(na.omit(unique(x)))==1})
         if (any(current_constants)) {
             current_constants <- names(current_constants[current_constants])
             current_data <- current_data[,!(names(current_data)%in%current_constants),with = FALSE]
         }else{
             current_constants <- NULL
         }
-        # check if there is variability in the outcome variable
-        if (outcome_variables[[j]]%in%current_constants)
-            stop(paste0("No variation in the outcome variable: ",
-                        outcome_variables[[j]],
-                        ".\nCheck the prepared data:\nx$prepared_data[x$followup$last_interval>=",
-                        j-1,",.(",x$names$id,",",outcome_variables[[j]],")]"))
         # remove constant predictor variables
         if (length(current_constants)>0){
             interval_outcome_formula <- delete_variables_from_formula(character_formula = interval_outcome_formula,
@@ -105,10 +99,16 @@ sequential_regression <- function(x,
         }else{
             number_rhs_variables <- length(attr(stats::terms(stats::formula(interval_outcome_formula)),"term.labels"))
         }
-        if (number_rhs_variables == 0){
+        # if there are no covariates or if there is no variability in the outcome variable
+        # then we simply predict the mean 
+        if (number_rhs_variables == 0 || outcome_variables[[j]]%in%current_constants){
             # here we assume that the outcome is binary or a predicted value 
-            predicted_values <- rep(mean(current_data[[outcome_variables[[j]]]]),NROW(current_data))
-            attr(predicted_values,"fit") <- "No covariates. Predicted average outcome to all subjects."
+            predicted_values <- rep(mean(current_data[[outcome_variables[[j]]]],na.rm = TRUE),NROW(current_data))
+            if (number_rhs_variables == 0){
+                attr(predicted_values,"fit") <- "No covariates. Predicted average outcome to all subjects."
+            }else{
+                attr(predicted_values,"fit") <- "No variation of the outcome variable. Predicted single outcome value to all subjects."
+            }
         }else{
             args <- list(character_formula = interval_outcome_formula,
                          data = current_data,
