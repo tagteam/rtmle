@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 30 2024 (14:30)
 ## Version:
-## Last-Updated: Jul 31 2025 (07:29) 
+## Last-Updated: Jul 31 2025 (07:34) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 371
+##     Update #: 373
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -61,9 +61,7 @@ sequential_regression <- function(x,
         }
         if (j < time_horizon) {
             outcome_name <- "rtmle_predicted_outcome"
-            print(interval_outcome_formula)
             interval_outcome_formula <- stats::update(stats::formula(interval_outcome_formula),"rtmle_predicted_outcome~.")
-            print(interval_outcome_formula)
         }
         Y <- x$prepared_data[[outcome_name]]
         # intervene according to protocol for targets
@@ -101,6 +99,7 @@ sequential_regression <- function(x,
                         j-1,",.(",x$names$id,",",outcome_variables[[j]],")]"))
         # remove constant predictor variables
         if (length(current_constants)>0){
+            if (is.null(interval_outcome_formula)) browser(skipCalls=1L)
             interval_outcome_formula <- delete_variables_from_formula(character_formula = interval_outcome_formula,
                                                                       delete_vars = current_constants)
             number_rhs_variables <- attr(interval_outcome_formula,"number_rhs_variables")
