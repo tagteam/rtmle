@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 25 2024 (09:50) 
 ## Version: 
-## Last-Updated: Jul 22 2025 (12:35) 
+## Last-Updated: Jul 29 2025 (10:21) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 93
+##     Update #: 95
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -54,7 +54,6 @@ x <- prepare_data(x)
 x <- target(x,name = "Outcome_risk",estimator = "tmle",protocols = "Always_A")
 x <- model_formula(x) 
 x <- run_rtmle(x,learner = "learn_glm",time_horizon = 1:tau)
-
 # Ltmle
 vn <- names(x$prepared_data)
 w_treatment <- x$prepared_data[,c("id",grep("A_",vn,value = TRUE)),with = FALSE]
@@ -65,7 +64,7 @@ tfit <- run_ltmle(name_outcome="Y",time_horizon=1:tau,reduce = FALSE,regimen_dat
 tfit1 <- run_ltmle(stratify = TRUE,name_outcome="Y",time_horizon=1:tau,reduce = FALSE,regimen_data=list("A" = w_treatment),outcome_data=list("Y" = w_outcome),baseline_data=x$prepared_data[,.(id,sex,age)],timevar_data=w_timevar,SL.library="glm",censor_others = FALSE,gbounds=c(0,1),abar = rep(1,tau),name_id = "id",verbose=FALSE,gcomp = FALSE)
 summary(tfit)
 summary(x)
-all.equal(as.numeric(tfit$A$Ltmle_fit$estimate),x$estimate$Outcome_risk[["Always_A"]]$Estimate)
+all.equal(as.numeric(tfit$A$Ltmle_fit$estimate),x$estimate$Main_analysis$Estimate)
 all.equal(c(tfit$A$Ltmle_fit$IC),unlist(x$IC$Outcome_risk$Always_A,use.names = FALSE))
 tfit$A$Ltmle_fit$fit$Q
 tfit$A$Ltmle_fit$fit$Qstar

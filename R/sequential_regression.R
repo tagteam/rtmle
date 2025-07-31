@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 30 2024 (14:30)
 ## Version:
-## Last-Updated: Jul 29 2025 (09:33) 
+## Last-Updated: Jul 31 2025 (07:03) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 353
+##     Update #: 370
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -48,16 +48,20 @@ sequential_regression <- function(x,
             outcome_free_and_uncensored <- (x$followup$last_interval >= (j-1))
         }
         # Note that at the time_horizon subjects who are censored in last interval have an NA outcome
-        # but at any subsequent (lower time) we can predict the outcome also for subjects who are censored
-        # during the current interval. So, while their observed outcome is NA their predicted_outcome is available
-        # we keep the NA values and use outcome_free_and_uncensored rather than outcome_free_and_still_uncensored
-        # because the TMLE update step needs to subset the predicted values to the non-NA outcomes
+        # but at any subsequent step of the algorithm, that is in an earlier time interval,
+        # the predicted outcome is available also for subjects who are censored
+        # during the current interval. So, while their observed outcome is NA
+        # their predicted_outcome is available.
         outcome_name <- outcome_variables[[time_horizon]]
         # FIXME: delete the if query when obsolete way of specifying formulas is gone
         if (protocol_name %in% names(x$models)){
             interval_outcome_formula = x$models[[protocol_name]][[outcome_variables[[j]]]]$formula
         }else{
             interval_outcome_formula = x$models[[outcome_variables[[j]]]]$formula
+        }
+        if (j < time_horizon) {
+            outcome_name <- "rtmle_predicted_outcome"
+            interval_outcome_formula <- stats::update(stats::formula(interval_outcome_formula),"rtmle_predicted_outcome~.")
         }
         Y <- x$prepared_data[[outcome_name]]
         # intervene according to protocol for targets
@@ -101,10 +105,6 @@ sequential_regression <- function(x,
         }else{
             number_rhs_variables <- length(attr(stats::terms(stats::formula(interval_outcome_formula)),"term.labels"))
         }
-        if (j < time_horizon) {
-            outcome_name <- "rtmle_predicted_outcome"
-            interval_outcome_formula <- stats::update(stats::formula(interval_outcome_formula),"rtmle_predicted_outcome~.")
-        }
         if (number_rhs_variables == 0){
             # here we assume that the outcome is binary or a predicted value 
             predicted_values <- rep(mean(current_data[[outcome_variables[[j]]]]),NROW(current_data))
@@ -144,7 +144,8 @@ sequential_regression <- function(x,
                 if (inherits(try(
                     fit_last <- do.call(learner_fun,args),silent = FALSE),
                     "try-error")) {
-                    stop(paste0("Sequential regression fit failed with formula:\n",interval_outcome_formula))
+                    stop(paste0("Sequential regression fit failed with formula:\n",
+                                interval_outcome_formula))
                 }
             }
         }

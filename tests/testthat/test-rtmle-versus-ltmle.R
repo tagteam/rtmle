@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Nov 16 2024 (17:04) 
 ## Version: 
-## Last-Updated: Jul 23 2025 (17:57) 
+## Last-Updated: Jul 30 2025 (06:31) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 69
+##     Update #: 70
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -53,7 +53,7 @@ test_that("longitudinal data compare rtmle with ltmle",{
     x <- rtmle_init(intervals = 3,name_id = "id",name_outcome = "Y",name_competing = "Dead",name_censoring = "Censored",censored_label = "censored")
     x <- add_long_data(x,outcome_data=ld$outcome_data,censored_data=ld$censored_data,competing_data=ld$competing_data,timevar_data=ld$timevar_data)
     x <- add_baseline_data(x,data=ld$baseline_data)
-    x <- long_to_wide(x,intervals = seq(0,2000,30.45*12))
+    suppressMessages(x <- long_to_wide(x,intervals = seq(0,2000,30.45*12)))
     suppressMessages(x <- protocol(x,name = "Always_A",treatment_variables = "A",intervention = 1))
     x <- prepare_data(x)
     x <- target(x,name = "Outcome_risk",estimator = "tmle",protocols = "Always_A")
