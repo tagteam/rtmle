@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Nov  3 2024 (14:39) 
 ## Version: 
-## Last-Updated: Jul 31 2025 (07:26) 
+## Last-Updated: Jul 31 2025 (07:31) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 23
+##     Update #: 24
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -23,6 +23,7 @@ delete_variables_from_formula  <- function(character_formula,
         fml <- character_formula
     }else{
         if (length(character_formula) != 1){
+            browser(skipCalls = 0L)
             stop("Argument character_formula has to be a single character string")
         }
         fml <- stats::formula(character_formula)
