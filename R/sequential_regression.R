@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 30 2024 (14:30)
 ## Version:
-## Last-Updated: Jul 31 2025 (08:10) 
+## Last-Updated: Jul 31 2025 (08:14) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 379
+##     Update #: 380
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -85,7 +85,7 @@ sequential_regression <- function(x,
             stop("No data available for g-estimation")
         }
         current_constants <- sapply(current_data, function(x){length(na.omit(unique(x)))==1})
-        if (outcome_name %in% current_constants){
+        if (outcome_name %in% names(current_constants)){
             # here we assume that the outcome is binary or a predicted value 
             fit_last <- rep(na.omit(unique(current_data[[outcome_name]])),NROW(current_data))
             attr(fit_last,"fit") <- "No variation of the outcome variable. Predicted single outcome value to all subjects."
