@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 30 2024 (14:30)
 ## Version:
-## Last-Updated: Jul 31 2025 (18:08) 
+## Last-Updated: Jul 31 2025 (18:51) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 396
+##     Update #: 397
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -21,7 +21,7 @@ sequential_regression <- function(x,
                                   learner,
                                   seed = seed,
                                   ...){
-    time = Target = Protocol = Time_horizon = Estimate = Target_parameter = Standard_error = Lower = Upper = NULL
+    time = Target = Protocol = Time_horizon = Estimate = Target_parameter = Standard_error = Lower = Upper = rtmle_predicted_outcome = NULL
     N <- NROW(x$prepared_data)
     # FIXME: inconsistent listing:
     intervention_table <- x$protocols[[protocol_name]]$intervention_table

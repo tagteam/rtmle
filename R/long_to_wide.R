@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 22 2024 (14:07) 
 ## Version: 
-## Last-Updated: Jul 25 2025 (10:27) 
+## Last-Updated: Aug 12 2025 (19:34) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 93
+##     Update #: 97
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -150,12 +150,25 @@ long_to_wide <- function(x,
             vfun <- fun
         }
         stopifnot(is.function(vfun))
-        x$data$timevar_data[[Vname]] <- map_grid(grid=grid,
-                                                 data=x$long_data$timevar_data[[Vname]],
-                                                 name=Vname,
-                                                 fun_aggregate = vfun,
-                                                 rollforward=(length_interval - 1),
-                                                 id = x$names$id)
+        # FIXME: need a better, more flexible way to deal
+        #        with different types of variables here
+        if ("value" %in% names(x$long_data$timevar_data[[Vname]])){
+            x$data$timevar_data[[Vname]] <- map_grid(grid=grid,
+                                                     data=x$long_data$timevar_data[[Vname]],
+                                                     name=Vname,
+                                                     fun_aggregate = vfun,
+                                                     values = NULL,
+                                                     value_is_factor = FALSE,
+                                                     rollforward=Inf,
+                                                     id = x$names$id)
+        } else{
+            x$data$timevar_data[[Vname]] <- map_grid(grid=grid,
+                                                     data=x$long_data$timevar_data[[Vname]],
+                                                     name=Vname,
+                                                     fun_aggregate = vfun,
+                                                     rollforward=(length_interval - 1),
+                                                     id = x$names$id)
+        }
     }
     return(x)
 }

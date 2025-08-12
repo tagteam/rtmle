@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 25 2024 (11:24)
 ## Version:
-## Last-Updated: Jul 21 2025 (15:10) 
+## Last-Updated: Aug 12 2025 (19:25) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 48
+##     Update #: 51
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -66,7 +66,12 @@
 #' x <- run_rtmle(x,learner = "learn_glmnet",time_horizon = 1:tau)
 #' summary(x)
 #' @export
-add_long_data <- function(x,outcome_data,censored_data,competing_data,timevar_data,...){
+add_long_data <- function(x,
+                          outcome_data,
+                          censored_data,
+                          competing_data,
+                          timevar_data,
+                          ...){
     nv = c(list(outcome_data,censored_data,competing_data))
     names(nv) = c("outcome_data","censored_data","competing_data")
     nv = nv[sapply(nv,NROW)>0]
@@ -88,17 +93,16 @@ add_long_data <- function(x,outcome_data,censored_data,competing_data,timevar_da
                         warning(paste0("Element ",
                                        name,
                                        " of argument 'timevar_data' has more than three variables or the 3rd variable is not called 'value' and hence it is not added."))
-                }else{
-                    if (match(name,names(x$long_data$timevar_data),nomatch = 0)>0){
-                        # replace existing element
-                        x$long_data$timevar_data[[name]] <- current_data
-                    }
-                    else{
-                        # append
-                        tv <- list(current_data)
-                        names(tv) <- name
-                        x$long_data$timevar_data <- c(x$long_data$timevar_data,tv)
-                    }
+                }
+                if (match(name,names(x$long_data$timevar_data),nomatch = 0)>0){
+                    # replace existing element
+                    x$long_data$timevar_data[[name]] <- current_data
+                }
+                else{
+                    # append
+                    tv <- list(current_data)
+                    names(tv) <- name
+                    x$long_data$timevar_data <- c(x$long_data$timevar_data,tv)
                 }
             }
         }
