@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 19 2024 (10:07)
 ## Version:
-## Last-Updated: Jun 17 2025 (07:28) 
+## Last-Updated: sep 10 2025 (08:31) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 237
+##     Update #: 240
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -128,11 +128,14 @@ prepare_data <- function(x,...){
     }
     # merging with the baseline covariates
     if (length(x$data$baseline_data)>0){
-        name_baseline_covariates = setdiff(names(x$data$baseline_data),x$names$id)
+        name_baseline_covariates = setdiff(names(x$data$baseline_data),c(x$names$id,x$names$start_followup_date))
         if (!is.null(x$data$baseline_data)){
             stopifnot(inherits(x$data$baseline_data,"data.table"))
             stopifnot(match(x$names$id,names(x$data$baseline_data),nomatch = 0)>0)
             prepared_data=x$data$baseline_data[prepared_data,on = x$names$id]
+            # remove start of follow_up date because this is not a covariate
+            if (length(x$names$start_followup_date)>0)
+                prepared_data[[x$names$start_followup_date]] <- NULL
         }
     }else{
         name_baseline_covariates <- NULL

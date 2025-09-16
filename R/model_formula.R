@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jun 16 2025 (08:58) 
 ## Version: 
-## Last-Updated: Jul 31 2025 (07:42) 
+## Last-Updated: sep 16 2025 (14:21) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 50
+##     Update #: 54
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -23,10 +23,11 @@
 ##' The reason for this is we do not want to mistakenly assume that L_k -> A_k when in reality A_k may happen before L_k
 ##' @title Model formulas for nuisance parameters
 ##' @param x  object of class \code{rtmle}
-##' @param exclude_variables Variables to exclude from the formulas for the nuisance parameters.
 ##' @param Markov Names of time-dependent variables which should only occur with the most recent
 ##'               value on the right hand side of the formulas.
+##' @param exclude_variables Variables to exclude from the formulas for the nuisance parameters.
 ##' @param exclusion_rules Experimental. Additional exclusion rules given as a named list where names are variables that occur on the left hand side of a formula and
+##'                        elements are variables that should be included in the right hand side of the formula. 
 ##' @param inclusion_rules Experimental. Additional inclusion rules given as a named list where names are variables that occur on the left hand side of a formula and
 ##' elements are variables that should be included in the right hand side of the formula. 
 ##' @param verbose Logical. If \code{FALSE} suppress all messages. \code{TRUE} is the default.
@@ -54,12 +55,13 @@
 ##' @export 
 ##' @author Thomas A. Gerds <tag@@biostat.ku.dk>
 model_formula <- function(x,
-                          exclude_variables = NULL,
                           Markov = NULL,
                           verbose = TRUE,
+                          exclude_variables = NULL,
                           exclusion_rules = NULL,
                           inclusion_rules = NULL,
                           ...){
+    exclude_variables = c("start_followup_date",exclude_variables)
     name_constant_variables <- x$names$name_constant_variables
     all_treatment_variables <- setdiff(unlist(lapply(x$protocols,function(u)u$treatment_variables),use.names = FALSE),name_constant_variables)
     name_time_covariates <- setdiff(x$names$name_time_covariates,exclude_variables)
@@ -98,7 +100,8 @@ model_formula <- function(x,
                             Markov = Markov,
                             constant_variables = name_constant_variables,
                             exclusion_rules = exclusion_rules,
-                            inclusion_rules = inclusion_rules)
+                            inclusion_rules = inclusion_rules,
+                            unwanted_variables = exclude_variables)
             names(ff) = vv
             ff
         })))

@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 25 2024 (11:24)
 ## Version:
-## Last-Updated: Aug 12 2025 (19:25) 
+## Last-Updated: sep 15 2025 (14:15) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 51
+##     Update #: 52
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -72,9 +72,6 @@ add_long_data <- function(x,
                           competing_data,
                           timevar_data,
                           ...){
-    nv = c(list(outcome_data,censored_data,competing_data))
-    names(nv) = c("outcome_data","censored_data","competing_data")
-    nv = nv[sapply(nv,NROW)>0]
     if (length(timevar_data)>0){
         if (!is.list(timevar_data) || is.data.frame(timevar_data) || is.null(names(timevar_data))) {
             stop("Argument timevar_data must be a named list of data.frames.")
@@ -107,10 +104,16 @@ add_long_data <- function(x,
             }
         }
     }
+    nv = c(list(outcome_data,censored_data,competing_data))
+    names(nv) = c("outcome_data","censored_data","competing_data")
+    nv = nv[sapply(nv,NROW)>0]
     for (name in names(nv)){
         if (!(x$names$id %in% names(nv[[name]])))
             warning(paste0("Element ",name," does not have a variable called ",x$names$id," and is not added."))
         else{
+            if (any(duplicated(nv[[name]][[x$names$id]])))
+                stop("Duplicated values of variable '",x$names$id,"' in dataset '",name," are not allowed")
+
             x$long_data[[name]] <- copy(as.data.table(nv[[name]]))
         }
     }

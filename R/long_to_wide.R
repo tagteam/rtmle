@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 22 2024 (14:07) 
 ## Version: 
-## Last-Updated: Aug 12 2025 (19:34) 
+## Last-Updated: sep 15 2025 (14:13) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 97
+##     Update #: 120
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -64,7 +64,9 @@ long_to_wide <- function(x,
     if (any(duplicated(Vnames))) stop("Duplicated names found in names(x$long_data$timevar_data). Variables must have distinct names.")
     # check if all dates have the same format
     tv_date_formats <- sapply(Vnames,function(v){class(x$long_data$timevar_data[[v]][["date"]])})
-    ocd_date_formats <- sapply(intersect(c("outcome_data","censored_data","competing_data"),names(x$long_data)),function(v){class(x$long_data[[v]][["date"]])})
+    ocd_date_formats <- sapply(intersect(c("outcome_data","censored_data","competing_data"),names(x$long_data)),function(v){
+        class(x$long_data[[v]][["date"]])
+    })
     if (length(unique(c(tv_date_formats,ocd_date_formats))) > 1){
         ctab <- data.table(
             "variable" = names(c(tv_date_formats,ocd_date_formats)),
@@ -86,7 +88,9 @@ long_to_wide <- function(x,
         if (!is.character(start_followup_date) || match(start_followup_date,names(x$data$baseline_data),nomatch = 0) == 0){
             stop("Argument start_followup_date must be the name (as character) of a variable in x$data$baseline_data")
         }
+        x$names$start_followup_date <- start_followup_date
         pop <- x$data$baseline_data[,c(x$names$id,start_followup_date),with = FALSE]
+        setnames(pop,start_followup_date,"start_followup_date")
     }
     #
     # outcome, censored and competing risk define end-of-followup

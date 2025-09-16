@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds & Alessandra
 ## Created: Jul 3 2024 (13:46)
 ## Version:
-## Last-Updated: Jun 16 2025 (13:40) 
+## Last-Updated: sep 11 2025 (16:52) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 85
+##     Update #: 86
 #----------------------------------------------------------------------
 ##
 ### Commentary: 
@@ -102,7 +102,7 @@ protocol <- function(x,
         missing_nodes <- (length(intervention_times)-NROW(intervention_table))
         if (missing_nodes>0){
             if (verbose[[1]] == TRUE){
-                message("The object specifies more intervention nodes than there are rows in the provided intervention table.\nApply last value carried forward for now, 'x$protocol$intervention_table'.")
+                message("The object specifies more intervention nodes than there are rows in the provided intervention table.\nApply last value carried forward for now, but please check 'x$protocol$intervention_table'.")
             }
             intervention_table <- intervention_table[c(1:NROW(intervention_table),rep(NROW(intervention_table),missing_nodes))]
         }else{

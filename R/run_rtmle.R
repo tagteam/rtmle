@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul  1 2024 (09:11)
 ## Version:
-## Last-Updated: Jul 24 2025 (12:06) 
+## Last-Updated: sep 15 2025 (16:21) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 545
+##     Update #: 546
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -107,6 +107,7 @@ run_rtmle <- function(x,
                       verbose = FALSE,
                       ...){
     time <- label <- level <- NULL
+    ## FIXME: need to stop or adapt if learner="glmnet" instead of "learn_glmnet"
     if (length(subsets)>0){
         for (sub in subsets){
             stopifnot(is.character(sub$label[[1]]))
