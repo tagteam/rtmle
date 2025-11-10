@@ -1,4 +1,5 @@
 ^sandbox
+^simulation
 ^attic
 ^presentations
 ^.*\.o$

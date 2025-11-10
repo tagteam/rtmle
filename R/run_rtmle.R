@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul  1 2024 (09:11)
 ## Version:
-## Last-Updated: sep 15 2025 (16:21) 
+## Last-Updated: okt 29 2025 (08:23) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 546
+##     Update #: 549
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -107,6 +107,7 @@ run_rtmle <- function(x,
                       verbose = FALSE,
                       ...){
     time <- label <- level <- NULL
+    if (length(x$targets) == 0) stop("Object contains no targets. You can add one with the function rtmle::target")
     ## FIXME: need to stop or adapt if learner="glmnet" instead of "learn_glmnet"
     if (length(subsets)>0){
         for (sub in subsets){

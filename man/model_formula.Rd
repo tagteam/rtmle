@@ -6,9 +6,9 @@
 \usage{
 model_formula(
   x,
-  exclude_variables = NULL,
   Markov = NULL,
   verbose = TRUE,
+  exclude_variables = NULL,
   exclusion_rules = NULL,
   inclusion_rules = NULL,
   ...
@@ -17,14 +17,15 @@ model_formula(
 \arguments{
 \item{x}{object of class \code{rtmle}}
 
-\item{exclude_variables}{Variables to exclude from the formulas for the nuisance parameters.}
-
 \item{Markov}{Names of time-dependent variables which should only occur with the most recent
 value on the right hand side of the formulas.}
 
 \item{verbose}{Logical. If \code{FALSE} suppress all messages. \code{TRUE} is the default.}
 
-\item{exclusion_rules}{Experimental. Additional exclusion rules given as a named list where names are variables that occur on the left hand side of a formula and}
+\item{exclude_variables}{Variables to exclude from the formulas for the nuisance parameters.}
+
+\item{exclusion_rules}{Experimental. Additional exclusion rules given as a named list where names are variables that occur on the left hand side of a formula and
+elements are variables that should be included in the right hand side of the formula.}
 
 \item{inclusion_rules}{Experimental. Additional inclusion rules given as a named list where names are variables that occur on the left hand side of a formula and
 elements are variables that should be included in the right hand side of the formula.}

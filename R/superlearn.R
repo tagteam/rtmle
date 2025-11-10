@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Oct 31 2024 (07:29) 
 ## Version: 
-## Last-Updated: Apr 14 2025 (08:43) 
+## Last-Updated: nov  6 2025 (16:05) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 115
+##     Update #: 116
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -86,23 +86,23 @@ superlearn <- function(folds,
     for (this_learner_name in names(learners))
         set(level_one_data,j = this_learner_name,value = numeric(N))
     for (k in 1:folds){
-        learn_data <- data[split == k]
-        i_data <- intervened_data[split != k]
-        learning_args <- list(character_formula = character_formula,
-                              data = learn_data,
-                              intervened_data = i_data)
+        learn_data <- data[split != k]
+        i_data <- intervened_data[split == k]
+        ## learning_args <- list(character_formula = character_formula,
+                              ## data = learn_data,
+                              ## intervened_data = i_data)
         # when there is no variation in the outcome variable then the predicted risk of all learners
         # is set to this unique value of the outcome variable
         if (length(unival <- unique(na.omit(learn_data[[outcome_variable]]))) == 1){
             if (!is.null(outcome_target_level)){
-                predicted_k <- rep(1*(outcome_target_level == unival),sum(split != k))
+                predicted_k <- rep(1*(outcome_target_level == unival),sum(split == k))
             }else {
-                predicted_k <- rep(unival,sum(split != k))
+                predicted_k <- rep(unival,sum(split == k))
             }
             for (this_learner_name in names(learners)) {
                 set(level_one_data,
                     j = this_learner_name,
-                    i = which(split != k),
+                    i = which(split == k),
                     value = predicted_k)
             }
         } else{
@@ -128,7 +128,7 @@ superlearn <- function(folds,
                 }
                 set(level_one_data,
                     j = this_learner_name,
-                    i = which(split != k),
+                    i = which(split == k),
                     value = as.vector(predicted_k))
             }
         }
