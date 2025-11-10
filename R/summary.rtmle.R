@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 29 2024 (10:44) 
 ## Version: 
-## Last-Updated: nov 10 2025 (13:00) 
+## Last-Updated: nov 10 2025 (13:04) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 192
+##     Update #: 195
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -123,7 +123,7 @@ summary.rtmle <- function(object,analysis = "Main_analysis",targets,reference = 
                     }
                     this_estimate <- object$estimate[[analysis]][Target == target_name & Protocol == protocol_name & Time_horizon == tp]$Estimate
                     if (analysis == "Main_analysis"){
-                        list(this_IC <- object$IC[[target_name]][[protocol_name]][[paste0("time_horizon_",tp)]])
+                        this_IC <- list("Main_analysis" = object$IC[[target_name]][[protocol_name]][[paste0("time_horizon_",tp)]])
                     }else{
                         this_IC <- lapply(analysis_levels,function(level){
                             subset_IC[[level]][[target_name]][[protocol_name]][[paste0("time_horizon_",tp)]]                        
@@ -134,10 +134,10 @@ summary.rtmle <- function(object,analysis = "Main_analysis",targets,reference = 
                     e <- do.call(rbind,lapply(1:length(analysis_levels),function(level){
                         risk_difference_estimate <- this_estimate[[level]] - reference_estimate[[level]]
                         risk_ratio_estimate <- exp(log(this_estimate[[level]]) - log(reference_estimate[[level]]))
-                        risk_difference_se <- sd(this_IC - reference_IC[[level]])/sqrt(N)
+                        risk_difference_se <- sd(this_IC[[level]] - reference_IC[[level]])/sqrt(N)
                         risk_difference_lower <- risk_difference_estimate - qnorm(.975)*risk_difference_se
                         risk_difference_upper <- risk_difference_estimate + qnorm(.975)*risk_difference_se
-                        risk_ratio_log_se <- sd(this_IC/this_estimate[[level]] - reference_IC[[level]]/reference_estimate[[level]])/sqrt(N)
+                        risk_ratio_log_se <- sd(this_IC[[level]]/this_estimate[[level]] - reference_IC[[level]]/reference_estimate[[level]])/sqrt(N)
                         risk_ratio_lower <- risk_ratio_estimate*exp(-qnorm(.975)*risk_ratio_log_se)
                         risk_ratio_upper <- risk_ratio_estimate*exp(qnorm(.975)*risk_ratio_log_se)
                         e1 <- data.table(Target = rep(target_name,2),
