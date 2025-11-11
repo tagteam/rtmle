@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jun 16 2025 (08:58) 
 ## Version: 
-## Last-Updated: okt 28 2025 (17:22) 
+## Last-Updated: nov 11 2025 (08:33) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 56
+##     Update #: 57
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -51,6 +51,17 @@
 ##' x <- prepare_data(x) 
 ##' x <- target(x,name = "Outcome_risk",estimator = "tmle",protocols = "Always_A")
 ##' x <- model_formula(x)
+##' x$models
+##' # remove age from all Y_1 formula
+##' x <- model_formula(x,exclusion_rules=list("Y_1"="age"))
+##' x$models
+##' # remove age from all Y formula
+##' x <- model_formula(x,exclusion_rules=list("Y_*"="age"))
+##' # remove age and L_0 from Censored_1 and from Censored_2 formula
+##' x <- model_formula(x,exclusion_rules=list("Censored_[1:2]"="age|L_0"))
+##' x$models
+##' # remove all L_t variables from Censored_1 and from Censored_2 formula
+##' x <- model_formula(x,exclusion_rules=list("Censored_[1:2]"="L_*"))
 ##' x$models
 ##' @export 
 ##' @author Thomas A. Gerds <tag@@biostat.ku.dk>
