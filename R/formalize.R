@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul  4 2024 (07:40) 
 ## Version: 
-## Last-Updated: nov 11 2025 (08:31) 
+## Last-Updated: nov 11 2025 (08:56) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 50
+##     Update #: 51
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -52,15 +52,12 @@ formalize <- function(timepoint,
     # apply exclusion_rules
     if (length(exclusion_rules)>0){
         matches <- vapply(names(exclusion_rules), function(e) {grepl(e, name_outcome_variable)}, logical(1))
-        if (name_outcome_variable == "Censored_3") browser(skipCalls=1L)
         if (sum(matches) > 0){
             exclusion_pattern <- c(unlist(exclusion_rules[matches]))
             # Regex metacharacters . \ | ( ) [ { ^ $ * + ? 
             ## regexp_pattern <- "[\\.\\\\\\|\\(\\)\\[\\{\\^\\$\\*\\+\\?]"
             ## has_regex <- grepl(regexp_pattern, exclusion_pattern)
             excluded_vars <- grep(paste0(exclusion_pattern,collapse = "|"),included_vars,value = TRUE)
-            print(names(matches))
-            print(excluded_vars)
             included_vars <- setdiff(included_vars,excluded_vars)
         }
     }
