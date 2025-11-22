@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 25 2024 (09:49) 
 ## Version: 
-## Last-Updated: Jul 28 2025 (10:04) 
+## Last-Updated: nov 20 2025 (16:14) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 7
+##     Update #: 9
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -36,10 +36,15 @@ x <- long_to_wide(x,intervals = seq(0,2000,30.45*6))
 x <- protocol(x,name = "Always_A",treatment_variables = "A",intervention = 1)
 x <- prepare_data(x)
 x$prepared_data[Y_2 == 1,Y_2 := 0]
+# test if constant variable is removed
+x$prepared_data[,L_1 := 1]
 x <- target(x,name = "Outcome_risk",estimator = "tmle",protocols = "Always_A")
 x <- model_formula(x)
-x <- run_rtmle(x,verbose = FALSE)
+x <- run_rtmle(x,verbose = FALSE,learner = "learn_glmnet")
+x$models
 summary(x)
+plot_model_parameters_all(x, Model_outcomes=c("Y"))
+
 
 dt <- rbindlist(list(ld$timevar_data$A[,event := "A"],
                      ld$timevar_data$L[,event := "L"],

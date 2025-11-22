@@ -1,11 +1,11 @@
-### plot.rtmle.R --- 
+### plot.rtmle.R ---
 #----------------------------------------------------------------------
 ## Author: Thomas Alexander Gerds
-## Created: sep 12 2025 (08:30) 
+## Created: Sep 23 2024 (16:42) 
 ## Version: 
-## Last-Updated: sep 13 2025 (09:22) 
+## Last-Updated: nov 22 2025 (09:23) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 22
+##     Update #: 26
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -14,8 +14,24 @@
 #----------------------------------------------------------------------
 ## 
 ### Code:
-#' @importFrom ggplot2 ggplot aes geom_line geom_ribbon labs theme_minimal facet_wrap
-#' @export autoplot.rtmle
+##' @title ggplot rtmle objects
+#' @description Plot risk predictions and average treatment effects from rtmle objects
+#' @name plot.rtmle
+#' @aliases autoplot.rtmle
+#' @param object Object of class \code{"rtmle"} prepared and fitted
+#' @param x Object of class \code{"rtmle"} prepared and fitted
+#' @param analysis Name of the analysis. Default is NULL which refers to object[["Main_analysis"]].
+#' @param xlim Limits for x-axis
+#' @param ylim Limits for y-axis
+#' @param y_breaks Breaks for y-axis
+#' @param x_breaks Breaks for x-axis
+#' @param position_atrisk Vector of positions on the x-axis where numbers at-risk are shown below the graph.
+#' @param conf_int Logical. If \code{TRUE} add confidence shadows to the graph.
+#' @param ... Not used 
+#' @importFrom ggplot2 ggplot aes geom_line geom_ribbon labs
+#'     theme_minimal facet_wrap
+#' @rdname plot.rtmle
+#' @method autoplot rtmle
 #' @export
 autoplot.rtmle <- function(object,
                            analysis = NULL,
@@ -26,6 +42,7 @@ autoplot.rtmle <- function(object,
                            position_atrisk,
                            conf_int,
                            ...) {
+    Estimate=Lower=N=Protocol=Time_horizon=Upper=last_interval <- NULL
     cbbPalette <- c("#000000", "#E69F00", "#56B4E9", "#009E73", "#D55E00", "#0072B2", "#CC79A7", "#F0E442")
     if (!requireNamespace("ggplot2", quietly = TRUE)) {
         stop("Package 'ggplot2' must be installed to use autoplot.rtmle().")
@@ -102,7 +119,8 @@ autoplot.rtmle <- function(object,
                              label = "Number at risk")
     return(p)
 }
-
+#' @method plot rtmle
+#' @rdname plot.rtmle
 #' @export
 plot.rtmle <- function(x, ...) {
   print(autoplot.rtmle(x, ...))

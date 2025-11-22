@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jun 16 2025 (08:58) 
 ## Version: 
-## Last-Updated: nov 11 2025 (08:33) 
+## Last-Updated: nov 20 2025 (09:17) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 57
+##     Update #: 58
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -52,6 +52,8 @@
 ##' x <- target(x,name = "Outcome_risk",estimator = "tmle",protocols = "Always_A")
 ##' x <- model_formula(x)
 ##' x$models
+##' # remove age from all formulas
+##' x <- model_formula(x,exclusion_rules=list("*"="age"))
 ##' # remove age from all Y_1 formula
 ##' x <- model_formula(x,exclusion_rules=list("Y_1"="age"))
 ##' x$models

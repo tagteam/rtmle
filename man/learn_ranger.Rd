@@ -2,7 +2,7 @@
 % Please edit documentation in R/learn_ranger.R
 \name{learn_ranger}
 \alias{learn_ranger}
-\title{Nuisance parameter learner based on \code{\link{ranger}}}
+\title{Nuisance parameter learner based on \code{\link[ranger]{ranger}}}
 \usage{
 learn_ranger(character_formula, data, intervened_data, ...)
 }
@@ -13,14 +13,14 @@ learn_ranger(character_formula, data, intervened_data, ...)
 
 \item{intervened_data}{Data for prediction}
 
-\item{...}{Additional arguments for the learning phase passed to \code{\link{ranger}}. These can include hyperparameters.}
+\item{...}{Additional arguments for the learning phase passed to \code{\link[ranger]{ranger}}. These can include hyperparameters.}
 }
 \value{
 A vector of predicted probabilities which has the fit as an attribute.
 }
 \description{
 Learning nuisance parameter models for TMLE and predicting
-probabilities in intervened data based on \code{\link{ranger}}
+probabilities in intervened data based on \code{\link[ranger]{ranger}}
 }
 \details{
 Hyperparameters are set via ...

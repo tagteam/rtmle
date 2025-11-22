@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 23 2024 (16:42) 
 ## Version: 
-## Last-Updated: sep 15 2025 (11:59) 
+## Last-Updated: nov 22 2025 (09:08) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 59
+##     Update #: 60
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -18,7 +18,7 @@
 ##' probabilities in intervened data based on \code{\link{glmnet}}
 ##'
 ##' This can be useful to avoid too many parameters in the model.
-##' @title Nuisance parameter learner based on \code{\link{glmnet}}
+##' @title Nuisance parameter learner based on \code{\link[glmnet]{glmnet}}
 ##' @param character_formula Formula for nuisance parameter as a character
 ##' @param data Data for learning 
 ##' @param intervened_data Data for prediction
@@ -26,7 +26,7 @@
 ##' If \code{"undersmooth"} use the lambda value which results in the least amount of
 ##' penalty such that the model still fits. The other options are \code{"min"} and \code{"1se"} which are 
 ##' described in the documentation of \code{\link[glmnet]{cv.glmnet}}.
-##' @param ... Additional arguments for the learning phase passed to \code{\link{glmnet}}. 
+##' @param ... Additional arguments for the learning phase passed to \code{\link[glmnet]{glmnet}}. 
 ##'        E.g., setting alpha affects the elastic net.
 ##' @return A vector of predicted probabilities which has the fit as an attribute.  
 ##' @seealso \code{link{superlearn}}, \code{link{learn_ranger}}, \code{link{learn_glm}}

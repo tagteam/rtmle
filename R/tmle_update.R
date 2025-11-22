@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul  3 2024 (13:54) 
 ## Version: 
-## Last-Updated: Nov 25 2024 (08:05) 
+## Last-Updated: nov 20 2025 (11:07) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 47
+##     Update #: 54
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -20,7 +20,7 @@ tmle_update <- function(Y,
                      outcome_free_and_uncensored,
                      intervention_match) {
     N <- length(Y)
-    if (length(intervention_probs) == 0) intervention_probs <- 1
+    if (length(intervention_probs) == 0) intervention_probs <- rep(1,N)
     ## FIXME: are there better ways to remove those censored in current interval?
     subjects_with_weights <- !is.na(Y) & outcome_free_and_uncensored & as.vector(intervention_match)
     weights <- numeric(N)

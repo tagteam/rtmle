@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Oct 28 2024 (09:26) 
 ## Version: 
-## Last-Updated: Jul 29 2025 (07:18) 
+## Last-Updated: nov 22 2025 (09:07) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 65
+##     Update #: 68
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -15,14 +15,14 @@
 ## 
 ### Code:
 ##' Learning nuisance parameter models for TMLE and predicting
-##' probabilities in intervened data based on \code{\link{ranger}}
+##' probabilities in intervened data based on \code{\link[ranger]{ranger}}
 ##'
 ##' Hyperparameters are set via ...
-##' @title Nuisance parameter learner based on \code{\link{ranger}}
+##' @title Nuisance parameter learner based on \code{\link[ranger]{ranger}}
 ##' @param character_formula Formula for nuisance parameter as a character
 ##' @param data Data for learning 
 ##' @param intervened_data Data for prediction 
-##' @param ... Additional arguments for the learning phase passed to \code{\link{ranger}}. These can include hyperparameters.
+##' @param ... Additional arguments for the learning phase passed to \code{\link[ranger]{ranger}}. These can include hyperparameters.
 ##' @return A vector of predicted probabilities which has the fit as an attribute.  
 ##' @seealso \code{link{superlearn}}, \code{link{learn_glm}}, \code{link{learn_glmnet}}
 ##' @export 
@@ -38,7 +38,7 @@ learn_ranger <- function(character_formula,data,intervened_data,...){
     if (length(unique(Y)) == 2) probability <- TRUE else probability <- FALSE
     if (probability) {
         if (!is.factor(Y))
-            # NOTE: rtmle_predicted_outcome may only hav two levels,
+            # FIXME: rtmle_predicted_outcome may only have two levels,
             #       and the values can be different from 0 and 1
             model_frame[[1]] <- factor(Y,levels = sort(unique(Y)))
     }

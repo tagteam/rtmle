@@ -2,7 +2,7 @@
 % Please edit documentation in R/learn_glmnet.R
 \name{learn_glmnet}
 \alias{learn_glmnet}
-\title{Nuisance parameter learner based on \code{\link{glmnet}}}
+\title{Nuisance parameter learner based on \code{\link[glmnet]{glmnet}}}
 \usage{
 learn_glmnet(
   character_formula,
@@ -24,7 +24,7 @@ If \code{"undersmooth"} use the lambda value which results in the least amount o
 penalty such that the model still fits. The other options are \code{"min"} and \code{"1se"} which are 
 described in the documentation of \code{\link[glmnet]{cv.glmnet}}.}
 
-\item{...}{Additional arguments for the learning phase passed to \code{\link{glmnet}}. 
+\item{...}{Additional arguments for the learning phase passed to \code{\link[glmnet]{glmnet}}. 
 E.g., setting alpha affects the elastic net.}
 }
 \value{
