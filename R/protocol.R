@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds & Alessandra
 ## Created: Jul 3 2024 (13:46)
 ## Version:
-## Last-Updated: sep 11 2025 (16:52) 
+## Last-Updated: nov 24 2025 (14:44) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 86
+##     Update #: 92
 #----------------------------------------------------------------------
 ##
 ### Commentary: 
@@ -113,17 +113,16 @@ protocol <- function(x,
                 intervention_table <- intervention_table[c(1:length(intervention_times))]
             }
         }
-        x$names$treatment_options <- lapply(treatment_variables,
-                                            function(v){
-                                                if (is.factor(intervention[[v]])){
-                                                    levels(intervention[[v]])
-                                                } else{
-                                                    # FIXME: this seems out of control and will not work
-                                                    stop("The treatment variables must be factors") 
-                                                    unique(intervention[[v]])
-                                                }
-                                            })
-        names(x$names$treatment_options) <- treatment_variables
+        treatment_options <- sapply(treatment_variables,
+                                    function(v){
+                                        if (is.factor(intervention[[v]])){
+                                            levels(intervention[[v]])
+                                        } else{
+                                            # FIXME: this seems out of control and will not work
+                                            stop("The treatment variables must be factors") 
+                                            unique(intervention[[v]])
+                                        }
+                                    },simplify = FALSE)
     }else{
         if (!missing(treatment_variables) && 
             length(treatment_variables) == length(intervention_table) &&
@@ -132,8 +131,7 @@ protocol <- function(x,
                 factor(intervention_table[[v]],levels = c(0,1))
             }))
             data.table::setnames(intervention_table,treatment_variables)
-            x$names$treatment_options <- lapply(treatment_variables,function(x)c(0,1))
-            names(x$names$treatment_options) <- treatment_variables
+            treatment_options <- sapply(treatment_variables,function(x)c(0,1),simplify = FALSE)
         }else{
             stop("Intervention must be a vector of 0s and 1s or a data.frame (or data.table or tibble) containing factors.")
         }
@@ -161,8 +159,20 @@ protocol <- function(x,
     }
     x$protocols[[name]]$treatment_variables <- treatment_variables
     x$protocols[[name]]$intervention_table <- intervention_table
+    # adding the treatment options if necessary
+    if (length(x$names$treatment_options) == 0){
+        x$names$treatment_options <- treatment_options
+    }else{
+        new_options <- setdiff(names(treatment_options),
+                               names(x$names$treatment_options))
+        if (length(new_options)>0){
+            x$names$treatment_options <- c(x$names$treatment_options,treatment_options[new_options])
+        }
+    }
     x
 }
+
+
 ##' Define a named protocol for a hypothetical/emulated trial
 ##'
 ##' This function adds a protocol to an existing object.
@@ -255,17 +265,16 @@ protocol <- function(x,
                 intervention_table <- intervention_table[c(1:length(intervention_times))]
             }
         }
-        x$names$treatment_options <- lapply(treatment_variables,
-                                            function(v){
-                                                if (is.factor(value$intervention[[v]])){
-                                                    levels(value$intervention[[v]])
-                                                } else{
-                                                    # FIXME: this seems out of control and will not work
-                                                    stop("The treatment variables must be factors") 
-                                                    unique(value$intervention[[v]])
-                                                }
-                                            })
-        names(x$names$treatment_options) <- treatment_variables
+        treatment_options <- sapply(treatment_variables,
+                                    function(v){
+                                        if (is.factor(value$intervention[[v]])){
+                                            levels(value$intervention[[v]])
+                                        } else{
+                                            # FIXME: this seems out of control and will not work
+                                            stop("The treatment variables must be factors") 
+                                            unique(value$intervention[[v]])
+                                        }
+                                    },simplify = FALSE)
     }else{
         if ("treatment_variables" %in% names(value) &&
             length(value$treatment_variables) == length(intervention_table) &&
@@ -275,8 +284,7 @@ protocol <- function(x,
                 factor(intervention_table[[v]],levels = c(0,1))
             }))
             data.table::setnames(intervention_table,treatment_variables)
-            x$names$treatment_options <- lapply(treatment_variables,function(x)c(0,1))
-            names(x$names$treatment_options) <- treatment_variables
+            treatment_options <- sapply(treatment_variables,function(x)c(0,1),simplify = FALSE)
         }else{
             stop("Intervention must be a vector of 0s and 1s or a data.frame (or data.table or tibble) containing factors.")
         }
@@ -304,6 +312,16 @@ protocol <- function(x,
     }
     x$protocols[[value$name]]$treatment_variables <- treatment_variables
     x$protocols[[value$name]]$intervention_table <- intervention_table
+    # adding the treatment options if necessary
+    if (length(x$names$treatment_options) == 0){
+        x$names$treatment_options <- treatment_options
+    }else{
+        new_options <- setdiff(names(treatment_options),
+                               names(x$names$treatment_options))
+        if (length(new_options)>0){
+            x$names$treatment_options <- c(x$names$treatment_options,treatment_options[new_options])
+        }
+    }
     x
 }
 ######################################################################

@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul  4 2024 (07:40) 
 ## Version: 
-## Last-Updated: nov 20 2025 (09:15) 
+## Last-Updated: nov 24 2025 (12:14) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 54
+##     Update #: 63
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -62,14 +62,21 @@ formalize <- function(timepoint,
         }
     }
     # apply inclusion_rules
-    if (length(inclusion_rules)>0 && name_outcome_variable %in% names(inclusion_rules)){
-        if (any(has_not <- (match(inclusion_rules[[name_outcome_variable]],available_names,nomatch = 0) == 0))){
-            warning(paste0("The following variables from the inclusion_rules do not occur in the data:\n",
-                           paste0(inclusion_rules[[name_outcome_variable]][has_not],collapse = ", ")))
+    if (length(inclusion_rules)>0){
+        matches <- vapply(names(inclusion_rules), function(e) {grepl(e, name_outcome_variable)}, logical(1))
+        if (sum(matches) > 0){
+            inclusion_pattern <- c(unlist(inclusion_rules[matches]))
+            included_additions <- grep(paste0(inclusion_pattern,collapse = "|"),available_names,value = TRUE)
+            if (length(included_additions)>0){
+                included_vars <- unique(c(included_vars,inclusion_pattern))
+            }else{
+                warning(paste0("The following inclusion_rule did not match any variable in the data:\n",paste0(names(matches),collapse = ",")))
+            }
         }
-        ivars <- intersect(inclusion_rules[[name_outcome_variable]],available_names)
-        if (length(ivars)>0) included_vars <- unique(c(included_vars,ivars))
     }
+    # In any case the outcome variable cannot be a predictor
+    included_vars <- setdiff(included_vars,name_outcome_variable)
+    
     # add covariates if any
     if(length(included_vars)>0){
         form = paste(included_vars, collapse = " + ")

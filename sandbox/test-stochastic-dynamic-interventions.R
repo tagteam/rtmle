@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Nov  1 2024 (10:37) 
 ## Version: 
-## Last-Updated: Jun 17 2025 (07:28) 
+## Last-Updated: nov 25 2025 (12:13) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 12
+##     Update #: 13
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -29,7 +29,7 @@ x <- add_long_data(x,
 x <- add_baseline_data(x,data=ld$baseline_data)
 x <- long_to_wide(x,intervals = seq(0,2000,30.45*12))
 my_break <- function(data,time){
-    browser(skipCalls=1L)
+    ## browser(skipCalls=1L)
     if (time == 0)
         return(1)
     else

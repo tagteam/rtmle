@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Oct 17 2024 (09:26) 
 ## Version: 
-## Last-Updated: sep 15 2025 (11:57) 
+## Last-Updated: nov 24 2025 (14:26) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 260
+##     Update #: 264
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -144,9 +144,16 @@ intervention_probabilities <- function(x,
                                     predicted_values <- rep(mean(current_data[[G]] == levels(current_data[[G]])[[2]]),NROW(current_data))
                                     attr(predicted_values,"fit") <- "No covariates. Predicted average outcome to all subjects."
                                 }else{
+                                    # intervened data may contain the outcome of the treatment as a predictor of
+                                    # the censoring variable
+                                    if (length(kickmeoutfornow <- setdiff(all.vars(stats::as.formula(ff)),names(intervened_data)))>0){
+                                        idata <- intervened_data[,-kickmeoutfornow,with = FALSE]
+                                        }else{
+                                            idata <- intervened_data[]
+                                        }
                                     args <- list(character_formula = ff,
                                                  data = current_data[,!(names(current_data)%in%current_constants),with = FALSE],
-                                                 intervened_data = intervened_data,...)
+                                                 intervened_data = idata,...)
                                     if (length(learner)>1){
                                         args <- c(args,
                                                   list(learners = learner,

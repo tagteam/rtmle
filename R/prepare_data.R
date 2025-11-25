@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 19 2024 (10:07)
 ## Version:
-## Last-Updated: okt 29 2025 (08:20) 
+## Last-Updated: nov 24 2025 (11:54) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 242
+##     Update #: 243
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -147,8 +147,8 @@ prepare_data <- function(x,...){
             # a time varying covariate is recognized when
             # there is a _1 version of it. That is a variable called hba_1 (root: hba) and also
             # a variable hba1c_level_1_1 (root: hba1c_level_1)
-            name_time_covariates <- unlist(lapply(grep("_[1-9]+$",names(x$data$timevar_data),value=TRUE),
-                                                  function(x){substring(x,0,nchar(x)-2)}))
+            name_time_covariates <- unique(unlist(lapply(grep("_[1-9]+$",names(x$data$timevar_data),value=TRUE),
+                                                         function(x){substring(x,0,nchar(x)-2)})))
             prepared_data <- prepared_data[x$data$timevar_data,on = x$names$id]
         }else{
             name_time_covariates <- names(x$data$timevar_data)
