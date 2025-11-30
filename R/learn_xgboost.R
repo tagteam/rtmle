@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Oct 28 2024 (09:26) 
 ## Version: 
-## Last-Updated: nov 24 2025 (14:28) 
+## Last-Updated: nov 30 2025 (13:14) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 105
+##     Update #: 116
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -97,12 +97,18 @@ learn_xgboost <- function(character_formula,
     # remove all other variables to avoid false positive missing values
     intervened_data <- intervened_data[,ivars,with = FALSE]
     no_missing <- !(apply(intervened_data,1,function(x)any(is.na(x))))
+    intervened_data = intervened_data[no_missing]
     predicted_values[!no_missing] <- as.numeric(NA)
     rhs <- stats::reformulate(attr(stats::terms(stats::formula(character_formula)), "term.labels"))
-    new_model_matrix <- Publish::specialFrame(rhs,
-                                              data = intervened_data[no_missing],
-                                              specials = NULL,
-                                              na.action = na.omit)$design
+    if (inherits(try(
+        new_model_matrix <- Publish::specialFrame(rhs,
+                                                  data = intervened_data,
+                                                  specials = NULL,
+                                                  na.action = na.omit)$design
+    ),"try-error")){
+        stop(paste0("Problem with the design matrix for the xgboost predictions.\n",
+                    "A possible reason could be a variable that has no variation in the intervened_data."))
+    }
     nd <- xgboost::xgb.DMatrix(new_model_matrix)
     if (inherits(try(
         predicted_values[no_missing] <- predict(fit,newdata = nd)

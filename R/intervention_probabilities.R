@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Oct 17 2024 (09:26) 
 ## Version: 
-## Last-Updated: nov 24 2025 (14:26) 
+## Last-Updated: nov 30 2025 (08:57) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 264
+##     Update #: 269
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -113,10 +113,12 @@ intervention_probabilities <- function(x,
                                                 intervention_table = intervention_table,
                                                 time = j))
                 # FIXME: does this filter of constant variables allow us to remove the current_constant checks?
+                #        or should the filter also use the current_constant check results
+                #        e.g., for preventing problems when subsetting/boostrapping the data
                 for (G in setdiff(current_G_variables,x$names$name_constant_variables)){
                     # fit the propensity and censoring regression models
                     # and store probabilities as intervention_probs
-                    # FIXME: delete the if query when obsolete way of specifying formulas is gone
+                    # FIXME: delete the next if-query when obsolete way of specifying formulas is banned
                     if (protocol_name %in% names(x$models)){
                         model_G <- x$models[[protocol_name]][[G]]
                     } else{
@@ -134,6 +136,7 @@ intervention_probabilities <- function(x,
                             # Assume binary variables
                             if (length(ff <- model_G$formula)>0){
                                 # remove constant predictor variables
+                                # from formula and later from data
                                 if (length(current_constants)>0){
                                     ff <- delete_variables_from_formula(character_formula = ff,delete_vars = current_constants)
                                     number_rhs_variables <- attr(ff,"number_rhs_variables")
@@ -144,16 +147,12 @@ intervention_probabilities <- function(x,
                                     predicted_values <- rep(mean(current_data[[G]] == levels(current_data[[G]])[[2]]),NROW(current_data))
                                     attr(predicted_values,"fit") <- "No covariates. Predicted average outcome to all subjects."
                                 }else{
-                                    # intervened data may contain the outcome of the treatment as a predictor of
-                                    # the censoring variable
-                                    if (length(kickmeoutfornow <- setdiff(all.vars(stats::as.formula(ff)),names(intervened_data)))>0){
-                                        idata <- intervened_data[,-kickmeoutfornow,with = FALSE]
-                                        }else{
-                                            idata <- intervened_data[]
-                                        }
+                                    # limit data and intervened_data to variables in formula
+                                    all_vars <- all.vars(stats::as.formula(ff))
                                     args <- list(character_formula = ff,
-                                                 data = current_data[,!(names(current_data)%in%current_constants),with = FALSE],
-                                                 intervened_data = idata,...)
+                                                 data = current_data[,all_vars,with = FALSE],
+                                                 intervened_data = intervened_data[,all_vars[-1],with = FALSE]
+                                                ,...)
                                     if (length(learner)>1){
                                         args <- c(args,
                                                   list(learners = learner,

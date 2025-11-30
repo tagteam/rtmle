@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Nov  3 2024 (14:39) 
 ## Version: 
-## Last-Updated: Jul 31 2025 (07:34) 
+## Last-Updated: nov 30 2025 (07:03) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 25
+##     Update #: 27
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -16,8 +16,12 @@
 ### Code:
 #
 # delete_variables_from_formula("Y~x+Z","Z")
+# will not delete the outcome:
+# delete_variables_from_formula("Y~x+Z","Y")
+# but will delete a vector of variables
+# delete_variables_from_formula("Y~x+Z",c("x","Z"))
 # 
-delete_variables_from_formula  <- function(character_formula,
+delete_variables_from_formula <- function(character_formula,
                                            delete_vars) {
     if (inherits(character_formula,"formula")){
         fml <- character_formula

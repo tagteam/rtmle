@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 30 2024 (14:30)
 ## Version:
-## Last-Updated: sep 12 2025 (10:24) 
+## Last-Updated: nov 30 2025 (08:57) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 400
+##     Update #: 403
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -111,9 +111,11 @@ sequential_regression <- function(x,
                 fit_last <- rep(mean(current_data[[outcome_variables[[j]]]],na.rm = TRUE),NROW(current_data))
                 attr(fit_last,"fit") <- "No covariates. Predicted average outcome to all subjects."
             }else{
+                # restrict data and to the variables in the formula
+                all_vars <- all.vars(stats::as.formula(interval_outcome_formula))
                 args <- list(character_formula = interval_outcome_formula,
-                             data = current_data,
-                             intervened_data = intervened_data[outcome_free_and_uncensored],...)
+                             data = training_data[,all_vars,with = FALSE],
+                             intervened_data = idata[outcome_free_and_uncensored,all_vars[-1],with = FALSE],...)
                 # super learner needs name of outcome variable
                 if (length(learner)>1){
                     if (j == time_horizon){
