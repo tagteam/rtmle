@@ -8,13 +8,13 @@ run_rtmle(
   x,
   targets,
   learner = "learn_glm",
+  estimator = "tmle",
   time_horizon,
   refit = TRUE,
   seed = NULL,
   subsets = NULL,
   keep_influence = TRUE,
-  verbose = FALSE,
-  ...
+  verbose = FALSE
 )
 }
 \arguments{
@@ -25,6 +25,8 @@ targets in x$targets are analysed.}
 
 \item{learner}{A function which is called to fit (learn) the
 nuisance parameter models.}
+
+\item{estimator}{Character specifying the estimator: either \code{'tmle'} or \code{'g-formula'}.}
 
 \item{time_horizon}{The time horizon at which to calculate
 risks. If it is a vector the analysis will be performed for
@@ -50,8 +52,6 @@ and bootstrap. See examples.}
 Currently this argument is only used when argument \code{subsets} is also specified.}
 
 \item{verbose}{Logical. If \code{FALSE} suppress all messages. \code{FALSE} is the default.}
-
-\item{...}{Additional arguments passed to the learner function.}
 }
 \value{
 The modified object contains the fitted nuisance parameter

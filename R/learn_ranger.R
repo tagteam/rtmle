@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Oct 28 2024 (09:26) 
 ## Version: 
-## Last-Updated: nov 22 2025 (09:07) 
+## Last-Updated: dec  1 2025 (10:06) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 68
+##     Update #: 78
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -42,12 +42,14 @@ learn_ranger <- function(character_formula,data,intervened_data,...){
             #       and the values can be different from 0 and 1
             model_frame[[1]] <- factor(Y,levels = sort(unique(Y)))
     }
-    if (!inherits(try(
-             fit <- ranger::ranger(formula = stats::formula(character_formula),
-                                   data = model_frame,
-                                   probability = probability,
-                                   ...)
-            ,silent = TRUE),
+    if (!inherits(
+             try(
+                 fit <- ranger::ranger(formula = stats::formula(character_formula),
+                                       data = model_frame,
+                                       probability = probability,
+                                       write.forest = TRUE, importance = 'none', 
+                                       ...)
+                ,silent = TRUE),
              "try-error")){
     }else{
         stop(paste0("\nCould not fit model with ranger:\n",

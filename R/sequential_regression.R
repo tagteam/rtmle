@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 30 2024 (14:30)
 ## Version:
-## Last-Updated: nov 30 2025 (08:57) 
+## Last-Updated: dec  2 2025 (09:55) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 403
+##     Update #: 421
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -19,8 +19,8 @@ sequential_regression <- function(x,
                                   protocol_name,
                                   time_horizon,
                                   learner,
-                                  seed = seed,
-                                  ...){
+                                  estimator,
+                                  seed = seed){
     time = Target = Protocol = Time_horizon = Estimate = Target_parameter = Standard_error = Lower = Upper = rtmle_predicted_outcome = NULL
     N <- NROW(x$prepared_data)
     # FIXME: inconsistent listing:
@@ -114,20 +114,19 @@ sequential_regression <- function(x,
                 # restrict data and to the variables in the formula
                 all_vars <- all.vars(stats::as.formula(interval_outcome_formula))
                 args <- list(character_formula = interval_outcome_formula,
-                             data = training_data[,all_vars,with = FALSE],
-                             intervened_data = idata[outcome_free_and_uncensored,all_vars[-1],with = FALSE],...)
+                             data = current_data[,all_vars,with = FALSE],
+                             intervened_data = intervened_data[outcome_free_and_uncensored,all_vars[-1],with = FALSE])
                 # super learner needs name of outcome variable
-                if (length(learner)>1){
+                if (learner$name == "superlearn"){
+                    args <- c(args,
+                              learner$args, # folds and other arguments for superlearning
+                              list(learners = learner$learners,
+                                   parse_learners = FALSE,
+                                   outcome_variable = "rtmle_predicted_outcome",
+                                   outcome_target_level = NULL,
+                                   id_variable = x$names$id))
                     if (j == time_horizon){
-                        args <- c(args,list(learners = learner,
-                                            outcome_variable = outcome_variables[[j]],
-                                            outcome_target_level = NULL,
-                                            id_variable = x$names$id))
-                    }else{
-                        args <- c(args,list(learners = learner,
-                                            outcome_variable = "rtmle_predicted_outcome",
-                                            outcome_target_level = NULL,
-                                            id_variable = x$names$id))
+                        args$outcome_variable = outcome_variables[[j]]
                     }
                     if (inherits(try(
                         fit_last <- do.call("superlearn",c(args,list(seed = seed))),silent = FALSE),
@@ -135,17 +134,12 @@ sequential_regression <- function(x,
                         stop(paste0("Sequential regression fit failed with formula:\n",interval_outcome_formula))
                     }
                 }else{
-                    # take care of case where additional arguments are passed to a single learner
-                    if (is.list(learner)){
-                        learner_args <- learner[[1]][names(learner[[1]]) != "learner_fun"]
-                        args <- c(args,learner_args)
-                        learner_fun <- learner[[1]][["learner_fun"]]
-                    }else{
-                        learner_fun <- learner
-                    }
+                    #
+                    # this is a single learner 
+                    # 
                     # single learners do not need the name of outcome variable
                     if (inherits(try(
-                        fit_last <- do.call(learner_fun,args),silent = FALSE),
+                        fit_last <- do.call(learner$fun,c(args,learner$args)),silent = FALSE),
                         "try-error")) {
                         stop(paste0("Sequential regression fit failed with formula:\n",
                                     interval_outcome_formula))
@@ -158,14 +152,14 @@ sequential_regression <- function(x,
         data.table::setattr(fit_last,"fit",NULL)
         fit_last <- as.numeric(fit_last)
         # set predicted value as outcome for next regression
-        ## FIXME: if (target$estimator == "tmle")
+        ## FIXME: if (estimator == "tmle")
         old_action <- options()$na.action
         on.exit(options(na.action = old_action))
         options(na.action = "na.pass")
         # note that we can still predict those who are censored at C_j but uncensored at C_{j-1}
         ## y <- riskRegression::predictRisk(fit_last,newdata = intervened_data)
         # avoid missing values due to logit
-        if (x$targets[[target_name]]$estimator == "tmle"){
+        if (estimator == "tmle"){
             if (any(fit_last[!is.na(fit_last)] <= 0)) fit_last <- pmax(fit_last,0.0001)
             if (any(fit_last[!is.na(fit_last)] >= 1)) fit_last <- pmin(fit_last,0.9999)
         }
@@ -180,7 +174,7 @@ sequential_regression <- function(x,
         # the column names A_1,B_1,E_1 of the intervention_match table are made with paste
         # in function intervention_probabilities
         intervention_node_name <- paste(intervention_table[time == j-1]$variable,collapse = ",")
-        if (!(outcome_name %in% names(current_constants)) || length(x$targets[[target_name]]$estimator) == 0 || x$targets[[target_name]]$estimator == "tmle"){
+        if (!(outcome_name %in% names(current_constants)) || estimator == "tmle"){
             # use only data from subjects who are uncensored in current interval
             # construction of clever covariates
             W_previous <- rep(NA,length(Y))
@@ -207,14 +201,15 @@ sequential_regression <- function(x,
         }
         # calculate contribution to influence function
         h.g.ratio <- 1/x$cumulative_intervention_probs[[protocol_name]][,ipos]
-        if (any(h.g.ratio>10000)) h.g.ratio <- pmin(h.g.ratio,10000)
+        # FIXME: what is this constant 10000? 
+        ## if (any(h.g.ratio>10000)) h.g.ratio <- pmin(h.g.ratio,10000)
+        if (any(h.g.ratio>nrow(x$prepared_data))) h.g.ratio <- pmin(h.g.ratio,nrow(x$prepared_data))
         if (length(x$names$censoring)>0){
             current_cnode <- as.character(x$prepared_data[[paste0(x$names$censoring,"_",j)]])
             index <- (current_cnode%in%x$names$uncensored_label) & (intervention_match[,intervention_node_name] %in% 1)
         }else{
             index <- (intervention_match[,intervention_node_name] %in% 1)
         }
-        
         if (any(h.g.ratio[index] != 0)) {
             x$IC[[target_name]][[protocol_name]][[label_time_horizon]][index] <- x$IC[[target_name]][[protocol_name]][[label_time_horizon]][index] + (Y[index] - W[index]) * h.g.ratio[index]
         }

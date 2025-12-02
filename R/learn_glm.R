@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 23 2024 (12:49) 
 ## Version: 
-## Last-Updated: Apr  9 2025 (15:34) 
+## Last-Updated: dec  2 2025 (09:37) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 114
+##     Update #: 126
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -26,6 +26,7 @@
 ##' @param intervened_data Data for prediction 
 ##' @param learn_variables Vector of variable names. Only include these in the learning.
 ##' Can be \code{"NONE"} which means to not use any variables and simply predict the mean outcome.
+##' @param maxit Number of iterations passed to \code{link[stats]{glm.fit}} and \code{link[speedglm]{speedglm.wfit}} 
 ##' @param ... Additional arguments for the learning phase. Not used at the moment.
 ##' @return A vector of predicted probabilities which has the fit as an attribute.  
 ##' @seealso \code{link{superlearn}}, \code{link{learn_ranger}}, \code{link{learn_glmnet}}
@@ -35,8 +36,8 @@ learn_glm <- function(character_formula,
                       data,
                       intervened_data,
                       learn_variables = NULL,
+                      maxit = 100,
                       ...){
-    # FIXME: maxit should be controllable
     # FIXME: speedglm should be handled by own learner 
     ## args <- as.list(match.call())
     ## if (!("speed"%in%names(args))) speed <- FALSE
@@ -75,7 +76,7 @@ learn_glm <- function(character_formula,
                                                      intercept = attributes(tf)$intercept,
                                                      offset = stats::model.offset(model_frame),
                                                      family = quasibinomial(),
-                                                     maxit = 100),
+                                                     maxit = maxit),
                       silent = TRUE),
                       "try-error")){
         class(fit) <- c("speedglm", "speedlm")
@@ -86,7 +87,7 @@ learn_glm <- function(character_formula,
                                        offset = stats::model.offset(model_frame),
                                        intercept = attributes(tf)$intercept,
                                        family = quasibinomial(),
-                                       control = glm.control(maxit = 100))
+                                       control = glm.control(maxit = maxit))
                 ,silent = TRUE),
                  "try-error")){
             class(fit) <- c(class(fit),c("glm","lm"))

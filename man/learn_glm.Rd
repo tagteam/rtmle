@@ -9,6 +9,7 @@ learn_glm(
   data,
   intervened_data,
   learn_variables = NULL,
+  maxit = 100,
   ...
 )
 }
@@ -21,6 +22,8 @@ learn_glm(
 
 \item{learn_variables}{Vector of variable names. Only include these in the learning.
 Can be \code{"NONE"} which means to not use any variables and simply predict the mean outcome.}
+
+\item{maxit}{Number of iterations passed to \code{link[stats]{glm.fit}} and \code{link[speedglm]{speedglm.wfit}}}
 
 \item{...}{Additional arguments for the learning phase. Not used at the moment.}
 }

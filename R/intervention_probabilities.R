@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Oct 17 2024 (09:26) 
 ## Version: 
-## Last-Updated: nov 30 2025 (08:57) 
+## Last-Updated: dec  2 2025 (09:55) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 269
+##     Update #: 283
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -19,8 +19,7 @@ intervention_probabilities <- function(x,
                                        refit = FALSE,
                                        learner,
                                        time_horizon,
-                                       seed,
-                                       ...){
+                                       seed){
     variable <- NULL
     # FIXME: consider using x$sample_size?
     N <- NROW(x$prepared_data)
@@ -151,11 +150,12 @@ intervention_probabilities <- function(x,
                                     all_vars <- all.vars(stats::as.formula(ff))
                                     args <- list(character_formula = ff,
                                                  data = current_data[,all_vars,with = FALSE],
-                                                 intervened_data = intervened_data[,all_vars[-1],with = FALSE]
-                                                ,...)
-                                    if (length(learner)>1){
+                                                 intervened_data = intervened_data[,all_vars[-1],with = FALSE])
+                                    if (learner$name == "superlearn"){
                                         args <- c(args,
-                                                  list(learners = learner,
+                                                  learner$args,  # folds and other arguments for superlearning
+                                                  list(learners = learner$learners,
+                                                       parse_learners = FALSE,
                                                        outcome_variable = G,
                                                        outcome_target_level = levels(current_data[[G]])[[2]],
                                                        id_variable = x$names$id))
@@ -165,16 +165,12 @@ intervention_probabilities <- function(x,
                                             stop(paste0("Failed to superlearn/crossfit with formula ",ff))
                                         }
                                     }else{
-                                        # take care of case where additional arguments are passed to a single learner
-                                        if (is.list(learner)){
-                                            learner_args <- learner[[1]][names(learner[[1]]) != "learner_fun"]
-                                            args <- c(args,learner_args)
-                                            learner_fun <- learner[[1]][["learner_fun"]]
-                                        }else{
-                                            learner_fun <- learner
-                                        }
+                                        #
+                                        # this is a single learner 
+                                        #
+                                        # single learners do not need the name of outcome variable
                                         if (inherits(try(
-                                            predicted_values <- do.call(learner_fun,args),silent = FALSE),
+                                            predicted_values <- do.call(learner$fun,c(args,learner$args)),silent = FALSE),
                                             "try-error")) {
                                             stop(paste0("Failed to learn/predict with formula ",ff))
                                         }

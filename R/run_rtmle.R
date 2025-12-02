@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul  1 2024 (09:11)
 ## Version:
-## Last-Updated: nov 24 2025 (14:31) 
+## Last-Updated: dec  2 2025 (09:52) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 551
+##     Update #: 562
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -22,6 +22,7 @@
 #'     targets in x$targets are analysed.
 #' @param learner A function which is called to fit (learn) the
 #'     nuisance parameter models.
+#' @param estimator  Character specifying the estimator: either \code{'tmle'} or \code{'g-formula'}.
 #' @param time_horizon The time horizon at which to calculate
 #'     risks. If it is a vector the analysis will be performed for
 #'     each element of the vector.
@@ -41,7 +42,6 @@
 #' @param keep_influence Logical: if \code{TRUE} store the estimated influence function of the estimator in the object.
 #'                       Currently this argument is only used when argument \code{subsets} is also specified.
 #' @param verbose Logical. If \code{FALSE} suppress all messages. \code{FALSE} is the default.
-#' @param ... Additional arguments passed to the learner function.
 #' @return The modified object contains the fitted nuisance parameter
 #'     models and the estimate of the target parameter.
 #' @author Thomas A Gerds \email{tag@@biostat.ku.dk}
@@ -99,13 +99,13 @@
 run_rtmle <- function(x,
                       targets,
                       learner = "learn_glm",
+                      estimator = "tmle",
                       time_horizon,
                       refit = TRUE,
                       seed = NULL,
                       subsets = NULL,
                       keep_influence = TRUE,
-                      verbose = FALSE,
-                      ...){
+                      verbose = FALSE){
     time <- label <- level <- NULL
     if (length(x$targets) == 0) stop("Object contains no targets. You can add one with the function rtmle::target")
     ## FIXME: need to stop or adapt if learner="glmnet" instead of "learn_glmnet"
@@ -188,9 +188,7 @@ run_rtmle <- function(x,
         } else {
             stopifnot(all(time_horizon <= max(x$times) & time_horizon>0))
         }
-        if (length(learner)>1){
-            learners <- parse_learners(learner)
-        }
+        learners <- parse_learners(learner)
         ## sapply(x$prepared_data,function(x)sum(is.na(x)))
         if (!(x$names$id%in%names(x$prepared_data)))
             stop(paste0("Cannot see id variable ",x$names$id," in x$prepared_data."))
@@ -232,7 +230,7 @@ run_rtmle <- function(x,
                             Protocol = protocol_name,
                             Target_parameter = Target_parameter,
                             Time_horizon = time_horizon,
-                            Estimator = x$targets[[target_name]]$estimator,
+                            Estimator = estimator,
                             Estimate = numeric(1),
                             P_value = 1,
                             Standard_error = numeric(1),
@@ -266,10 +264,9 @@ run_rtmle <- function(x,
                 x <- intervention_probabilities(x,
                                                 protocol_name = protocol_name,
                                                 refit = refit,
-                                                learner = learner,
+                                                learner = learners,
                                                 time_horizon = time_horizon,
-                                                seed = seed,
-                                                ...)
+                                                seed = seed)
                 #
                 # Q-part: loop backwards in time through iterative condtional expectations
                 #
@@ -279,9 +276,9 @@ run_rtmle <- function(x,
                                                target_name = target_name,
                                                protocol_name = protocol_name,
                                                time_horizon = th,
-                                               learner = learner,
-                                               seed = seed,
-                                               ...)
+                                               learner = learners,
+                                               estimator = estimator,
+                                               seed = seed)
                     # FIXME: why does x loose its class in this loop?
                     class(x) <- "rtmle"
                 }

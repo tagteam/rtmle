@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Oct 31 2024 (07:29) 
 ## Version: 
-## Last-Updated: nov 30 2025 (13:16) 
+## Last-Updated: dec  2 2025 (09:55) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 159
+##     Update #: 198
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -29,6 +29,7 @@
 ##'  \code{\link{learn_glmnet}},  \code{\link{learn_ranger}}. If the learner is a list then either the name of the learner
 ##' is a learner function or the list has an element \code{learner_fun} which is the name of a learner function. The other elements of the list are
 ##' passed on as additional arguments to the learner function.
+##' @param parse_learners Logical. If TRUE parse learners. \code{\link{run_rtmle}} needs sets this to FALSE.
 ##' @param character_formula A formula (passed as a character string!) to parse the outcome and the predictor variables. 
 ##' @param outcome_variable The name of the outcome variable (same as \code{all.vars(formula(character_formula))[[1]]} provided to avoid overhead in the parsing of the formula.
 ##' @param outcome_target_level The level of the binary outcome variable for which the superlearner predicts the risk.  
@@ -54,7 +55,8 @@
 ##'                   learners = list("learn_glm",
 ##'                                   "my_ranger" = list(learner_fun = "learn_ranger",
 ##'                                                      num.trees = 5),
-##'                                   "learn_glmnet" = list(alpha = 1)),
+##'                                   "learn_glmnet" = list(alpha = 1,
+##'                                                      learner_fun="learn_glmnet")),
 ##'                   character_formula = "A_0~L_0+sex+age",
 ##'                   outcome_variable = "A_0",
 ##'                   outcome_target_level="1",
@@ -67,6 +69,7 @@
 superlearn <- function(folds,
                        seed,
                        learners,
+                       parse_learners = TRUE,
                        character_formula,
                        outcome_variable,
                        outcome_target_level, # for treatment and censoring variables
@@ -75,9 +78,12 @@ superlearn <- function(folds,
                        intervened_data,
                        ensemble,
                        ...){
+    expected_levels = NULL
     N <- NROW(data)
-    stopifnot(length(learners)>1)
-    learners <- parse_learners(learners)
+    if (parse_learners){
+        stopifnot(length(learners)>1)
+        learners <- parse_learners(list(folds = folds,learners = learners))$learners
+    }
     # set the seed
     if (!missing(seed) && is.numeric(seed)) set.seed(seed)
     # split the data
@@ -91,15 +97,16 @@ superlearn <- function(folds,
         # need only pay attention to variables with more than 2 levels
         # because 2 level variables are caught by constant variable checks
         # when 1 level is missing
-        multi_factor_levels <- data[, .(factor = factor_cols,
-                                        expected_levels = sapply(.SD,uniqueN)),
+        multi_factor_levels <- data[, data.table::data.table(factor = factor_cols,
+                                                             expected_levels = sapply(.SD,uniqueN)),
                                     .SDcols = factor_cols][expected_levels>2]
     }
     # create emtpy level-1 data
     level_one_data <- data.table::data.table(id = 1:N,data[[outcome_variable]])
     setnames(level_one_data,c(id_variable,outcome_variable))
     # initialize a column in the level-1 data
-    for (this_learner_name in names(learners)){
+    learner_names <- sapply(learners,function(x){x$name})
+    for (this_learner_name in learner_names){
         set(level_one_data,j = this_learner_name,value = numeric(N))
     }
     # loop across folds
@@ -108,7 +115,7 @@ superlearn <- function(folds,
         # current learning data
         learn_data_k <- data[random_split != k]
         # current test data where treatment variables have values set under the intervention
-        i_data_k <- intervened_data[random_split == k]
+        test_data_k <- data[random_split == k]
         # check for constant outcome and predictor variables
         current_constants <- sapply(learn_data_k, function(x){length(na.omit(unique(x)))==1})
         current_constants <- names(current_constants[current_constants])
@@ -119,11 +126,11 @@ superlearn <- function(folds,
         if (outcome_variable %in% current_constants){
             if (!is.null(outcome_target_level)){
                 outcome_value_k <- na.omit(unique(learn_data_k[[outcome_variable]]))
-                predicted_k <- rep(1*(outcome_target_level == outcome_value_k),NROW(i_data_k))
+                predicted_k <- rep(1*(outcome_target_level == outcome_value_k),NROW(test_data_k))
             }else {
-                predicted_k <- rep(outcome_value_k,NROW(i_data_k))
+                predicted_k <- rep(outcome_value_k,NROW(test_data_k))
             }
-            for (this_learner_name in names(learners)) {
+            for (this_learner_name in learner_names) {
                 set(level_one_data,j = this_learner_name,i = which(random_split == k),value = predicted_k)
             }
         } else {
@@ -135,8 +142,8 @@ superlearn <- function(folds,
             if (NROW(multi_factor_levels)>0){
                 vars_missing_levels_k <- unique(rbind(
                     multi_factor_levels,
-                    data[, .(factor = multi_factor_levels$factor,
-                             expected_levels = sapply(.SD,uniqueN)),
+                    data[, data.table::data.table(factor = multi_factor_levels$factor,
+                                                  expected_levels = sapply(.SD,uniqueN)),
                          .SDcols = multi_factor_levels$factor]))[duplicated(factor)]$factor
                 if (length(vars_missing_levels_k)>0){
                     warning(paste0("Outcome: ",outcome_variable,": the following variables have not all levels in all folds: ",
@@ -161,39 +168,30 @@ superlearn <- function(folds,
             if (number_rhs_variables_k == 0){
                 # here we assume that the outcome is binary or a predicted continuous value 
                 if (!is.null(outcome_target_level)){
-                    predicted_k <- rep(mean(outcome_target_level == learn_data_k[[outcome_variable]],na.rm = TRUE),NROW(i_data_k))
+                    predicted_k <- rep(mean(outcome_target_level == learn_data_k[[outcome_variable]],na.rm = TRUE),NROW(test_data_k))
                 }else {
-                    predicted_k <- rep(mean(learn_data_k[[outcome_variable]],na.rm = TRUE),NROW(i_data_k))
+                    predicted_k <- rep(mean(learn_data_k[[outcome_variable]],na.rm = TRUE),NROW(test_data_k))
                 }
-                for (this_learner_name in names(learners)) {
+                for (this_learner_name in learner_names) {
                     set(level_one_data,
                         j = this_learner_name,
                         i = which(random_split == k),
                         value = as.vector(predicted_k))
                 }
             }else{
-                for (this_learner_name in names(learners)) {
-                    this_learner <- learners[[this_learner_name]]
-                    learner_args <- list(character_formula = character_formula_k,
-                                         data = learn_data_k,
-                                         intervened_data = i_data_k)
-                    ## adding learner specific tuning parameters
-                    learner_fun_pos <- match("learner_fun",
-                                             names(learners[[this_learner_name]]))
-                    if (length(this_learner) == 1){
-                        this_learner_args <- NULL
-                    } else{
-                        ## if (is.na(learner_fun_pos)) stop(paste0("Cannot find learner function for learner ",this_learner_name))
-                        this_learner_args <- this_learner[-learner_fun_pos]
-                    }
+                for (this_learner in learners) {
+                    learner_args <- c(list(character_formula = character_formula_k,
+                                           data = learn_data_k,
+                                           intervened_data = test_data_k),
+                                      ## learner specific arguments such as tuning parameters
+                                      this_learner$args)
                     if (inherits(try( 
-                        predicted_k <- do.call(this_learner[[learner_fun_pos]],
-                                               c(learner_args,this_learner_args))
+                        predicted_k <- do.call(this_learner$fun, learner_args)
                     ),"try-error")){
                         stop(paste0("Learning failed in fold ",k," with learner ",this_learner))
                     }
                     set(level_one_data,
-                        j = this_learner_name,
+                        j = this_learner$name,
                         i = which(random_split == k),
                         value = as.vector(predicted_k))
                 }
@@ -203,18 +201,29 @@ superlearn <- function(folds,
     # discrete super learner (for now)
     # choose the minimizer of the Brier score
     if (!is.null(outcome_target_level)){
-        x <- sapply(names(learners), function(this_learner_name){
+        x <- sapply(learner_names, function(this_learner_name){
             mean(((1*(level_one_data[[outcome_variable]] == outcome_target_level))-level_one_data[[this_learner_name]])^2)
         })
     } else{
         # FIXME: NA values of the outcome should not make it until here
-        x <- sapply(names(learners),function(this_learner_name){
+        x <- sapply(learner_names,function(this_learner_name){
             outcome <- level_one_data[[outcome_variable]]
             mean((outcome-level_one_data[[this_learner_name]])^2,na.rm = TRUE)})
     }
-    winner <- names(x)[which.min(x)]
-    ## print(winner)
-    return(level_one_data[[winner]])
+    names(x) <- learner_names
+    winner_name <- names(x)[which.min(x)]
+    ## print(x)
+    ## print(winner_name)
+    names(learners) <- learner_names
+    winner <- learners[[winner_name]]
+    learner_args <- c(list(character_formula = character_formula,
+                           data = data,
+                           intervened_data = intervened_data),
+                      this_learner$args)
+    predicted_values <- do.call(winner$fun,c(winner$args,learner_args))
+    data.table::setattr(predicted_values,"winner",winner)
+    data.table::setattr(predicted_values,"fit",x)
+    return(predicted_values)
 }
 
 

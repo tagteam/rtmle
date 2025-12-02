@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 3 2024 (13:46)
 ## Version:
-## Last-Updated: Jun 16 2025 (09:00) 
+## Last-Updated: dec  1 2025 (18:15) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 37
+##     Update #: 39
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -28,8 +28,8 @@ target <- function(x,
                    protocols,
                    estimator,
                    ...) {
+    if (!missing(estimator)) warning("Argument estimator is obsolete and ignored. Specify new argument estimator of run_rtmle instead.")
     x$targets[[name]][["protocols"]] <- unique(c(x$targets[[name]][["protocols"]],protocols))
-    x$targets[[name]][["estimator"]] <- estimator
     x
 }
 ##' Define a target parameter 
