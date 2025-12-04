@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 3 2024 (13:46)
 ## Version:
-## Last-Updated: dec  3 2025 (08:42) 
+## Last-Updated: dec  4 2025 (12:04) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 41
+##     Update #: 43
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -31,8 +31,10 @@ target <- function(x,
     if (all(!(found <- protocols%in%names(x$protocols)))) {
         stop("The following protocols are not defined:\n",paste0(protocols[!found],collapse = ", "))
     }
-    if (!missing(estimator)) warning("Argument estimator is obsolete and ignored. Specify new argument estimator of run_rtmle instead.")
     x$targets[[name]][["protocols"]] <- unique(c(x$targets[[name]][["protocols"]],protocols))
+    if (!missing(estimator)){
+        x$estimator <- unique(c(x$estimator,estimator))
+    }
     x
 }
 
