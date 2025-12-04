@@ -20,7 +20,7 @@ Imports:
     data.table,
     riskRegression,
     Publish,
-    xgboost,
+    xgboost (>= 3.1.2),
     prodlim,
     ggplot2,
     survival,
