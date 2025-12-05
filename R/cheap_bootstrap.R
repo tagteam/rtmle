@@ -68,6 +68,22 @@ cheap_bootstrap <- function(x,
     # add to existing bootstrap results if any
     if (add[[1]] == TRUE && length(x$estimate$Cheap_bootstrap)>0){
         B_offset <- max(x$estimate$Cheap_bootstrap$B)
+        x$estimate$Cheap_bootstrap[,"P_value" := NA]
+        x$estimate$Cheap_bootstrap[, "Main_Estimate":= NULL]
+        setnames(
+          x$estimate$Cheap_bootstrap,
+          c(
+            "Bootstrap_estimate",
+            "Bootstrap_standard_error",
+            "Bootstrap_lower",
+            "Bootstrap_upper"
+          ),
+          c("Estimate", 
+            "Standard_error",
+            "Lower",
+            "Upper"
+          )
+        )
     }else{
         x$estimate$Cheap_bootstrap <- NULL
         B_offset <- 0
