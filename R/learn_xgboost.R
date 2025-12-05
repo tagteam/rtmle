@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Oct 28 2024 (09:26) 
 ## Version: 
-## Last-Updated: nov 30 2025 (13:14) 
+## Last-Updated: dec  4 2025 (12:09) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 116
+##     Update #: 123
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -64,11 +64,10 @@ learn_xgboost <- function(character_formula,
                                      ignore=NULL,
                                      ignore.case=TRUE,
                                      defaults=list("xgboost"=list(max_depth = 2L,
-                                                                  eta = 1.0,
+                                                                  learning_rate = 1.0,
                                                                   nrounds = 2L,
                                                                   subsample = 1.0,
-                                                                  lambda = 1,
-                                                                  verbose = 0,
+                                                                  reg_lambda = 1,
                                                                   objective = "reg:squarederror")),
                                      forced=NULL,
                                      verbose=TRUE)
@@ -83,9 +82,9 @@ learn_xgboost <- function(character_formula,
         # FIXME: the reference level should be controlled better
         Y <- as.numeric(Y == levels(Y)[[2]])
     }
-    d <- xgboost::xgb.DMatrix(sf$design, label = Y)
+    ## d <- xgboost::xgb.DMatrix(sf$design, label = Y)
     if (!inherits(try(
-             fit <- do.call(xgboost::xgboost,c(list(data = d),control$xgboost))
+             fit <- do.call(xgboost::xgboost,c(list(x = sf$design,y = Y),control$xgboost))
             ,silent = TRUE),
              "try-error")){
     }else{
@@ -109,9 +108,9 @@ learn_xgboost <- function(character_formula,
         stop(paste0("Problem with the design matrix for the xgboost predictions.\n",
                     "A possible reason could be a variable that has no variation in the intervened_data."))
     }
-    nd <- xgboost::xgb.DMatrix(new_model_matrix)
+    ## nd <- xgboost::xgb.DMatrix(data = new_model_matrix)
     if (inherits(try(
-        predicted_values[no_missing] <- predict(fit,newdata = nd)
+        predicted_values[no_missing] <- predict(fit,newdata = new_model_matrix)
     ),"try-error")) {
         stop("Xgboost prediction failed")
     }

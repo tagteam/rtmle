@@ -51,5 +51,26 @@ test_that("run rtmle on without competing risks",{
     expect_output(print(summary(x)))
 })
 
+test_that("rtmle can use g-formula",{
+    set.seed(112)
+    ld <- simulate_long_data(n = 1000,number_visits = 20,beta = list(A_on_Y = -.2,A0_on_Y = -0.3,A0_on_A = 6),register_format = TRUE)
+    x <- rtmle_init(intervals = 2,name_id = "id",name_outcome = "Y",name_competing = NULL,name_censoring = "Censored",censored_label = "censored")
+    x$long_data <- ld[c("outcome_data","censored_data","timevar_data")]
+    x$long_data$outcome_data <- rbind(x$long_data$outcome_data,ld$competing_data)
+    setkey(x$long_data$outcome_data,id,date)
+    x <- add_baseline_data(x,data=ld$baseline_data)
+    x <- long_to_wide(x,intervals = seq(0,2000,30.45*6),verbose = FALSE)
+    x <- protocol(x,name = "Always_A",treatment_variables = "A",intervention = 1)
+    x <- prepare_data(x,verbose = FALSE)     
+    x <- target(x,name = "Outcome_risk",protocols = "Always_A")
+    x <- model_formula(x)
+    x <- run_rtmle(x,estimator = "tmle",verbose = FALSE)
+    for (cp in 1:length(x$cumulative_intervention_probs)){
+        x$cumulative_intervention_probs[[cp]] <- pmax(x$cumulative_intervention_probs[[cp]],0.5)
+    }
+    z <- run_rtmle(x,refit = FALSE,estimator = "tmle",verbose = FALSE)
+    y <- run_rtmle(x,estimator = "g-formula",verbose = FALSE)
+    expect_output(print(summary(x)))    
+})
 
 
