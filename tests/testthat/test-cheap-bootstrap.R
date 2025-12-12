@@ -38,7 +38,7 @@ test_that("Cheap bootstrap confidence intervals",{
     x <- run_rtmle(x,learner = "learn_glmnet",time_horizon = 1:tau,verbose = FALSE)
     x <- cheap_bootstrap(x,B = 2,M = 71)
     a = x$estimate$Main_analysis[,.(Time_horizon,Protocol,Bootstrap_lower,Bootstrap_upper)]
-    b = x$estimate$Cheap_bootstrap[B == 2][,.(Time_horizon,Protocol,Bootstrap_lower,Bootstrap_upper)]
+    b = x$estimate$Cheap_bootstrap$Main_analysis[B == 2][,.(Time_horizon,Protocol,Bootstrap_lower,Bootstrap_upper)]
     setkey(a,Time_horizon,Protocol)
     setkey(b,Time_horizon,Protocol)
     expect_equal(a,b)
