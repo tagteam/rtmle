@@ -1,16 +1,15 @@
 * About
 
 The R-package =rtmle= implements a class of targeted minimum loss
-estimators for the analysis of longitudinal register data.
-In this vignette, we detail how to use cheap subsampling with
-the =rtmle= package to obtain robust inference.
-In particular, the researcher may want to supplement their confidence intervals
-with robust bootstrap confidence intervals if these appear
-to be very narrow or wide. 
-Cheap subsampling has been demonstrated to have
-good coverage with few bootstrap data sets, see https://arxiv.org/abs/2501.10289.
-Furthermore, we highlight two important features of using cheap subsampling with
-=rtmle=:
+estimators for the analysis of longitudinal register data.  In this
+vignette, we detail how to use cheap subsampling with the =rtmle=
+package to obtain robust inference. In particular, one may want to
+supplement the analysis with cheap bootstrap confidence intervals if
+the asymptotic confidence intervals are suspiciously narrow or
+suspiciously wide. Cheap subsampling has been demonstrated to have
+good coverage readily with a few bootstrap data sets, see
+https://arxiv.org/abs/2501.10289. Furthermore, we highlight two
+important features of using cheap subsampling with =rtmle=:
 
 1. Bootstrap confidence intervals based on the doubly robust LTMLE estimator, which, therefore, make the confidence intervals "doubly robust". 
 2. Stability of the confidence intervals when the estimated propensity scores are close to zero. 

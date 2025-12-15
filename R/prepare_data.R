@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 19 2024 (10:07)
 ## Version:
-## Last-Updated: nov 24 2025 (11:54) 
+## Last-Updated: dec 12 2025 (08:22) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 243
+##     Update #: 248
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -148,7 +148,7 @@ prepare_data <- function(x,...){
             # there is a _1 version of it. That is a variable called hba_1 (root: hba) and also
             # a variable hba1c_level_1_1 (root: hba1c_level_1)
             name_time_covariates <- unique(unlist(lapply(grep("_[1-9]+$",names(x$data$timevar_data),value=TRUE),
-                                                         function(x){substring(x,0,nchar(x)-2)})))
+                                                         function(x){gsub("_[0-9]+$", "", x)})))
             prepared_data <- prepared_data[x$data$timevar_data,on = x$names$id]
         }else{
             name_time_covariates <- names(x$data$timevar_data)
