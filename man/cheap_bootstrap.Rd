@@ -12,7 +12,8 @@ cheap_bootstrap(
   seeds,
   alpha = 0.05,
   add = TRUE,
-  verbose = FALSE
+  verbose = FALSE,
+  which_subsets = NULL
 )
 }
 \arguments{
@@ -34,6 +35,8 @@ randomness while drawing the bootstrap samples.}
 \item{add}{Logical. If \code{TRUE} add new bootstrap results to the existing bootstrap results}
 
 \item{verbose}{Logical. Passed to run_rtmle to control verbosity.}
+
+\item{which_subsets}{Character vector specifying which subsets to perform the cheap bootstrap on.}
 }
 \value{
 The modified object
@@ -73,9 +76,8 @@ x <- target(x,name = "Outcome_risk",
                   protocols = c("Always_A","Never_A"))
  x <- model_formula(x)
  x <- run_rtmle(x,learner = "learn_glm",time_horizon = 1:tau)
- x <- cheap_bootstrap(x,B=5,time_horizon=1:tau)
+ x <- cheap_bootstrap(x,B=5,time_horizon=1:tau, M = 0.632*NROW(x$prepared_data))
  summary(x)
-cb
 }
 
 }

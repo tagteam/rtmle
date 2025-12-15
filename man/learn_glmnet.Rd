@@ -32,7 +32,7 @@ A vector of predicted probabilities which has the fit as an attribute.
 }
 \description{
 Learning nuisance parameter models for TMLE and predicting
-probabilities in intervened data based on \code{\link{glmnet}}
+probabilities in intervened data based on \code{\link[glmnet]{glmnet}}
 }
 \details{
 This can be useful to avoid too many parameters in the model.

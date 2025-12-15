@@ -15,7 +15,7 @@
 ## 
 ### Code:
 ##' Learning nuisance parameter models for TMLE and predicting
-##' probabilities in intervened data based on \code{\link{glmnet}}
+##' probabilities in intervened data based on \code{\link[glmnet]{glmnet}}
 ##'
 ##' This can be useful to avoid too many parameters in the model.
 ##' @title Nuisance parameter learner based on \code{\link[glmnet]{glmnet}}
