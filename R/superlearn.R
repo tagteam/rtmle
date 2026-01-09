@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Oct 31 2024 (07:29) 
 ## Version: 
-## Last-Updated: dec  2 2025 (09:55) 
-##           By: Thomas Alexander Gerds
-##     Update #: 198
+## Last-Updated: Jan  9 2026 (11:06) 
+##           By: Johan Sebastian Ohlendorff
+##     Update #: 217
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -220,7 +220,8 @@ superlearn <- function(folds,
                            data = data,
                            intervened_data = intervened_data),
                       this_learner$args)
-    predicted_values <- do.call(winner$fun,c(winner$args,learner_args))
+    predicted_values_args <- c(winner$args, learner_args[!names(learner_args)%in%names(winner$args)]) ## do not include duplicate arguments
+    predicted_values <- do.call(winner$fun,predicted_values_args)
     data.table::setattr(predicted_values,"winner",winner)
     data.table::setattr(predicted_values,"fit",x)
     return(predicted_values)

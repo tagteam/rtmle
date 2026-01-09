@@ -284,6 +284,8 @@ run_rtmle <- function(x,
                 }
             }
         }
+        ## Keep the learner function used for cheap bootstrap
+        x$learner <- learner
         return(x)
     }
 }
