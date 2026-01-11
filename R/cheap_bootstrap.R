@@ -18,6 +18,8 @@
 #' @param add Logical. If \code{TRUE} add new bootstrap results to the existing bootstrap results
 #' @param verbose Logical. Passed to run_rtmle to control verbosity.
 #' @param which_subsets Character vector specifying which subsets to perform the cheap bootstrap on.
+#' @param replace Logical. Whether to sample with replacement. Default is FALSE. Should not be changed.
+#' @param ... Additional arguments passed to \code{run_rtmle}.
 ##' @return The modified object
 ##' @author Johan Sebastian Ohlendorff
 ##'     \email{johan.ohlendorff@@sund.ku.dk} and Thomas A Gerds
@@ -61,13 +63,18 @@ cheap_bootstrap <- function(x,
                             alpha = 0.05,
                             add = TRUE,
                             verbose = FALSE,
-                            which_subsets = NULL){
+                            which_subsets = NULL,
+                            replace = FALSE,
+                            ...){
     if (is.null(x$estimate)){
         stop("The object lacks an analysis. Please apply run_rtmle() before calling cheap_bootstrap.")
     }
     if (!("Cheap_bootstrap") %in% names(x$estimate)){
       x$estimate$Cheap_bootstrap <- list()
     }
+    if (replace){
+      message("Argument 'replace' should not be changed from its default value FALSE for cheap bootstrap. \n Only valid when not using a super learner.")
+    } 
     if (is.null(which_subsets)){
       which_subsets <- names(x$estimate)
     } else {
@@ -109,8 +116,8 @@ cheap_bootstrap <- function(x,
       N <- NROW(x$prepared_data)
       for (b in (1:B)+B_offset){
         set.seed(seeds[[b]])
-        if(M >= N) stop(paste0("The subsample size M (specified is M=",M,") must be lower than the sample size N (which is N=",N,")"))
-        inbag <- sample(1:N,size = M,replace = FALSE)
+        if(M >= N && !replace) stop(paste0("The subsample size M (specified is M=",M,") must be lower than the sample size N (which is N=",N,")"))
+        inbag <- sample(1:N,size = M,replace = replace)
         if (missing(time_horizon)){
           time_horizon <- sort(unique(x$estimate[[v]]$Time_horizon))
         }
@@ -121,7 +128,9 @@ cheap_bootstrap <- function(x,
                                            id = x$prepared_data[[x$names$id]][inbag],
                                            append = TRUE,
                                            variable = "B",
-                                           level = b)))
+                                           level = b)),
+                       learner = x$learner,
+                       ...)
       }
       x$estimate$Cheap_bootstrap[[v]] <- x$estimate$CB
       x$estimate$CB <- NULL
@@ -133,7 +142,11 @@ cheap_bootstrap <- function(x,
       }
       data.table::setnames(x$estimate$Cheap_bootstrap[[v]],"Estimate","Bootstrap_estimate")
       cb <- x$estimate[[v]][,data.table::data.table(Target,Protocol,Time_horizon,Main_estimate = Estimate)][x$estimate$Cheap_bootstrap[[v]],on = c("Target","Protocol","Time_horizon")]
-      cheap_scale <- sqrt(M / (N - M))
+      if (replace){
+        cheap_scale <- sqrt(M / N)
+      } else {
+        cheap_scale <- sqrt(M / (N - M))
+      }
       # t-distribution 
       cb[,tq := stats::qt(1 - alpha / 2, df = B)]
       cb[,cheap_variance := cumsum((Main_estimate-Bootstrap_estimate)^2)/seq_len(.N),by = c("Target","Protocol","Time_horizon")]

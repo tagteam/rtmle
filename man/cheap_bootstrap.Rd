@@ -13,7 +13,9 @@ cheap_bootstrap(
   alpha = 0.05,
   add = TRUE,
   verbose = FALSE,
-  which_subsets = NULL
+  which_subsets = NULL,
+  replace = FALSE,
+  ...
 )
 }
 \arguments{
@@ -37,6 +39,10 @@ randomness while drawing the bootstrap samples.}
 \item{verbose}{Logical. Passed to run_rtmle to control verbosity.}
 
 \item{which_subsets}{Character vector specifying which subsets to perform the cheap bootstrap on.}
+
+\item{replace}{Logical. Whether to sample with replacement. Default is FALSE. Should not be changed.}
+
+\item{...}{Additional arguments passed to \code{run_rtmle}.}
 }
 \value{
 The modified object
