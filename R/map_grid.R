@@ -5,7 +5,6 @@ map_grid <- function(grid,
                      values=c(1,0),
                      fun_aggregate = NULL,
                      fill=NA,
-                     value_is_factor=FALSE,
                      id){
     value = NULL
     if (length(data)==0) return(NULL)
@@ -35,12 +34,6 @@ map_grid <- function(grid,
                          sep="_",
                          fun.aggregate = fun_aggregate,
                          fill=fill))
-    if (value_is_factor) {
-        # this is for ltmle censored/uncensored
-        for (cc in names(wide)[-1]){
-            set(wide,j=cc,value=factor(wide[[cc]],levels=values))
-        }
-    }
     grid[,value:=NULL]
     data[,value:=NULL]
     # dcast assigns numeric column names when value.var

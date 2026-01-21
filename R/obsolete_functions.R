@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jun 16 2025 (14:50) 
 ## Version: 
-## Last-Updated: dec  3 2025 (06:21) 
+## Last-Updated: jan 20 2026 (17:31) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 6
+##     Update #: 7
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -47,7 +47,7 @@
 #'                    competing_data=ld$competing_data,
 #'                    timevar_data=ld$timevar_data)
 #' x <- add_baseline_data(x,data=ld$baseline_data)
-#' x <- long_to_wide(x,intervals=seq(0,2000,30.45*6))
+#' x <- long_to_wide(x,breaks=seq(0,2000,30.45*6))
 #' x <- prepare_data(x)
 #' x$prepared_data
 #'

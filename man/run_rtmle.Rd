@@ -78,7 +78,7 @@ x <- add_long_data(x,
                    competing_data=ld$competing_data,
                    timevar_data=ld$timevar_data)
 x <- add_baseline_data(x,data=ld$baseline_data)
-x <- long_to_wide(x,intervals = seq(0,2000,30.45*12))
+x <- long_to_wide(x,breaks = seq(0,2000,30.45*12))
 x <- protocol(x,name = "Always_A",
                     intervention = data.frame("A" = factor("1",levels = c("0","1"))))
 x <- protocol(x,name = "Never_A",

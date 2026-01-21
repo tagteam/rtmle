@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Oct 17 2024 (09:26) 
 ## Version: 
-## Last-Updated: dec  2 2025 (09:55) 
+## Last-Updated: jan 15 2026 (15:05) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 283
+##     Update #: 292
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -221,16 +221,22 @@ intervention_probabilities <- function(x,
         previous <- rep(1,N)
         for(j in eval_times){
             intervention_variables <- intervention_table[time == j]$variable
-            observed_values <- x$prepared_data[,intervention_variables,with = FALSE]
-            for (v in 1:length(intervention_variables)){
-                # when there are multiple intervention variables
-                # all observed values must match  
-                intervention_values <- intervention_table[time == j & variable == intervention_variables[[v]]]$value
-                intervention_match[,j+1] <- previous <- previous*(observed_values[[intervention_variables[[v]]]] %in% intervention_values)
+            if (length(intervention_variables)>0){
+                observed_values <- x$prepared_data[,intervention_variables,with = FALSE]
+                for (v in 1:length(intervention_variables)){
+                    # when there are multiple intervention variables
+                    # all observed values must match
+                    intervention_values <- intervention_table[time == j & variable == intervention_variables[[v]]]$value
+                    intervention_match[,j+1] <- previous <- previous*(observed_values[[intervention_variables[[v]]]] %in% intervention_values)
+                }
+            }else{
+                # FIXME: does this work when we only intervene on baseline treatment but not on subsequent treatments?
+                # last value carried forward
+                intervention_match[,j+1] <- previous
             }
         }
         ## the intervention_match matrix has one column per time point
-        # when there are mulitple treatment variables we paste-collapse the names
+        # when there are multiple treatment variables we paste-collapse the names
         colnames(intervention_match) <- sapply(treatment_variables,paste,collapse = ",")
         x$intervention_match[[protocol_name]] <- intervention_match
     }

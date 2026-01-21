@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jun 16 2025 (08:58) 
 ## Version: 
-## Last-Updated: nov 20 2025 (09:17) 
+## Last-Updated: jan 20 2026 (17:31) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 58
+##     Update #: 59
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -46,7 +46,7 @@
 ##'                      competing_data = ld[["competing_data"]],
 ##'                      timevar_data = ld[["timevar_data"]])
 ##' x <- add_baseline_data(x,data = ld$baseline_data)
-##' x <- long_to_wide(x,intervals = seq(0,2000,30.45*6))
+##' x <- long_to_wide(x,breaks = seq(0,2000,30.45*6))
 ##' x <- protocol(x,name = "Always_A",treatment_variables = "A",intervention = 1)
 ##' x <- prepare_data(x) 
 ##' x <- target(x,name = "Outcome_risk",estimator = "tmle",protocols = "Always_A")

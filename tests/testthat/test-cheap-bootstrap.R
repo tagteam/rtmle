@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Apr  9 2025 (10:02) 
 ## Version: 
-## Last-Updated: Jun 17 2025 (07:28) 
+## Last-Updated: jan 20 2026 (17:31) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 17
+##     Update #: 18
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -28,7 +28,7 @@ test_that("Cheap bootstrap confidence intervals",{
                     competing_data=ld$competing_data,
                     timevar_data=ld$timevar_data)
     x <- add_baseline_data(x,data=ld$baseline_data)
-    x <- long_to_wide(x,intervals = seq(0,2000,30.45*12))
+    x <- long_to_wide(x,breaks = seq(0,2000,30.45*12))
     x <- protocol(x,name = "Always_A",intervention = data.frame("A" = factor("1",levels = c("0","1"))),verbose = FALSE)
     x <- protocol(x,name = "Never_A",intervention = data.frame("A" = factor("0",levels = c("0","1"))),verbose = FALSE)
     x <- prepare_data(x)

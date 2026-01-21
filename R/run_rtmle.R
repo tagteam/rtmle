@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul  1 2024 (09:11)
 ## Version:
-## Last-Updated: dec  2 2025 (09:52) 
+## Last-Updated: jan 20 2026 (17:31) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 562
+##     Update #: 563
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -63,7 +63,7 @@
 #'                    competing_data=ld$competing_data,
 #'                    timevar_data=ld$timevar_data)
 #' x <- add_baseline_data(x,data=ld$baseline_data)
-#' x <- long_to_wide(x,intervals = seq(0,2000,30.45*12))
+#' x <- long_to_wide(x,breaks = seq(0,2000,30.45*12))
 #' x <- protocol(x,name = "Always_A",
 #'                     intervention = data.frame("A" = factor("1",levels = c("0","1"))))
 #' x <- protocol(x,name = "Never_A",

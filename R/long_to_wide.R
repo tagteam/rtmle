@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 22 2024 (14:07) 
 ## Version: 
-## Last-Updated: sep 15 2025 (14:13) 
+## Last-Updated: jan 21 2026 (10:50) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 120
+##     Update #: 132
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -26,7 +26,9 @@
 #' starts or can be zero if the followup data are readily on the time
 #' on study scale
 #' @param x object of class \code{rtmle}
-#' @param intervals a vector of time points that discretize the
+#' @param breaks a vector of time points that discretize the
+#'     followup time into intervals
+#' @param intervals OBSOLETE a vector of time points that discretize the
 #'     followup time into intervals
 #' @param start_followup_date Start of followup date which is substracted from the dates of
 #' the outcomes, competing risks, censoring (end-of-followup), and time-varying covariates.
@@ -49,16 +51,23 @@
 #'                     competing_data=ld$competing_data,
 #'                     timevar_data=ld$timevar_data)
 #' x <- add_baseline_data(x,data=ld$baseline_data)
-#' x <- long_to_wide(x,intervals = seq(0,2000,30.45*12))
+#' x <- long_to_wide(x,breaks = seq(0,2000,30.45*12))
 #'                   
 #' x
 #' @export
 long_to_wide <- function(x,
+                         breaks,
                          intervals,
                          start_followup_date,
                          fun = function(x){1*(sum(x)>0)},
                          verbose = TRUE){
     interval = end_followup = censored_date =  competing_date = outcome_date = NULL
+    if (!missing(intervals)){
+        warning("Argument intervals is obsolete: use breaks instead.")
+        breaks <- intervals
+    }else{
+        if (missing(breaks)) {stop("Need time points that define the discrete time scale to map the long data.")}
+    }
     if (length(x$long_data) == 0) {return(NULL)}
     Vnames <- names(x$long_data$timevar_data)
     if (any(duplicated(Vnames))) stop("Duplicated names found in names(x$long_data$timevar_data). Variables must have distinct names.")
@@ -77,12 +86,11 @@ long_to_wide <- function(x,
         cat("\n")
         stop(paste0("All date variables in long format data need to have the same class (either numeric or Date)."))
     }
-    if (missing(intervals)) {stop("Need time intervals to map the long data.")}
     if (length(x$data$baseline_data) == 0){
         stop("To discretize the long format data we need the baseline data stored as 'x$data$baseline_data' with the subject id variable.\nUse the function 'add_baseline_data' to add this.")
     }
-    if (missing(start_followup_date)){
-        if (verbose) message("Missing start_followup_date variable, for now assume 0, which implies that all event times must be given on the time on study scale.")
+    if (missing(start_followup_date)||start_followup_date[1] == 0){
+        if (verbose && missing(start_followup_date)) message("Missing start_followup_date variable, for now assume 0, which implies that all event times must be given on the time on study scale.")
         pop = x$data$baseline_data[,c(x$names$id),with = FALSE][,start_followup_date := rep(0,.N)]
     }else{
         if (!is.character(start_followup_date) || match(start_followup_date,names(x$data$baseline_data),nomatch = 0) == 0){
@@ -116,11 +124,11 @@ long_to_wide <- function(x,
     pop <- x$long_data$outcome_data[pop,on = x$names$id]
     pop[,end_followup := pmin(censored_date,competing_date,outcome_date,na.rm = TRUE)]
     if (any(is.na(pop$end_followup)))stop("Missing values in end of followup information")
-    grid <- pop[,data.table::data.table(date=start_followup_date+intervals, end = end_followup),by=eval(as.character(x$names$id))]
-    grid[,interval:=0:(length(intervals)-1),by=eval(as.character(x$names$id))]
+    grid <- pop[,data.table::data.table(date=start_followup_date+breaks, end = end_followup),by=eval(as.character(x$names$id))]
+    grid[,interval:=0:(length(breaks)-1),by=eval(as.character(x$names$id))]
     grid <- pop[,.SD,.SDcols = c(x$names$id)][grid,on = eval(as.character(x$names$id))]
     # FIXME: this does not look great 
-    length_interval=unique(round(diff(intervals),0))
+    length_interval=unique(round(diff(breaks),0))
     # now awkwardly reset the names
     if (length(x$names$competing)>0 & length(x$long_data$competing_data)>0){
         setnames(x$long_data$competing_data,"competing_date","date")
@@ -132,14 +140,7 @@ long_to_wide <- function(x,
     # FIXME: check for data after the end of followup?
     ## grid <- grid[date<=end+length_interval]
     # mapping outcome information to discrete time scale
-    x$data$outcome_data <- widen_outcome(x,
-                                         outcome_name = x$names$outcome,
-                                         outcome_data = x$long_data$outcome_data,
-                                         competing_data = x$long_data$competing_data,
-                                         censored_data = x$long_data$censored_data,
-                                         grid = grid,
-                                         fun_aggregate = NULL,
-                                         id = x$names$id)
+    x$data$outcome_data <- widen_outcome(x,grid = grid,fun_aggregate = NULL)
     # time dependent variables including treatment
     for (Vname in Vnames){
         if (is.list(fun)){
@@ -162,7 +163,6 @@ long_to_wide <- function(x,
                                                      name=Vname,
                                                      fun_aggregate = vfun,
                                                      values = NULL,
-                                                     value_is_factor = FALSE,
                                                      rollforward=Inf,
                                                      id = x$names$id)
         } else{

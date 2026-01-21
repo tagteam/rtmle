@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Nov 16 2024 (17:04) 
 ## Version: 
-## Last-Updated: dec  9 2025 (14:12) 
+## Last-Updated: jan 20 2026 (18:03) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 75
+##     Update #: 77
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -50,15 +50,10 @@ test_that("single time point compare rtmle with ltmle",{
 test_that("longitudinal data compare rtmle with ltmle",{
     set.seed(17)
     ld <- simulate_long_data(n = 1291,number_visits = 20,beta = list(A_on_Y = -.2,A_0_on_Y = -0.3,A_0_on_A = 6),register_format = TRUE)
-    x <- rtmle_init(intervals = 3,
-                    name_id = "id",
-                    name_outcome = "Y",
-                    name_competing = "Dead",
-                    name_censoring = "Censored",
-                    censored_label = "censored")
+    x <- rtmle_init(intervals = 3,name_id = "id",name_outcome = "Y",name_competing = "Dead",name_censoring = "Censored",censored_label = "censored")
     x <- add_long_data(x,outcome_data=ld$outcome_data,censored_data=ld$censored_data,competing_data=ld$competing_data,timevar_data=ld$timevar_data)
     x <- add_baseline_data(x,data=ld$baseline_data)
-    suppressMessages(x <- long_to_wide(x,intervals = seq(0,2000,30.45*12)))
+    suppressMessages(x <- long_to_wide(x,breaks = seq(0,2000,30.45*12)))
     suppressMessages(x <- protocol(x,name = "Always_A",treatment_variables = "A",intervention = 1))
     suppressMessages(x <- protocol(x,name = "Never_A",treatment_variables = "A",intervention = 0))
     x <- prepare_data(x)

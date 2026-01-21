@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 30 2024 (14:30)
 ## Version:
-## Last-Updated: dec  4 2025 (11:42) 
+## Last-Updated: jan 15 2026 (16:45) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 428
+##     Update #: 436
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -181,7 +181,12 @@ sequential_regression <- function(x,
             W_previous[outcome_free_and_uncensored] <- lava::logit(fit_last)
             # FIXME: this test of infinite inverse_probability_weights needs more work
             inverse_probability_weights <- x$cumulative_intervention_probs[[protocol_name]][,ipos]
-            imatch <- (x$intervention_match[[protocol_name]][,intervention_node_name]%in% 1)
+            if (nchar(intervention_node_name)>0){
+                imatch <- (intervention_match[,intervention_node_name]%in% 1)
+            }else{
+                imatch <- rep(1,N)
+                imatch[!outcome_free_and_uncensored] <- NA
+            }
             if (any(inverse_probability_weights[!is.na(Y) & outcome_free_and_uncensored & as.vector(imatch)] == 0)){
                 stop("Exactly zero intervention probabilities encountered at the attempt to run the TMLE-update fluctuation model.\nYou may have to consider changing the target parameter or bounding the intervention probabilities somehow.\nGood luck!")
             }
@@ -206,9 +211,19 @@ sequential_regression <- function(x,
         if (any(h.g.ratio>nrow(x$prepared_data))) h.g.ratio <- pmin(h.g.ratio,nrow(x$prepared_data))
         if (length(x$names$censoring)>0){
             current_cnode <- as.character(x$prepared_data[[paste0(x$names$censoring,"_",j)]])
-            index <- (current_cnode%in%x$names$uncensored_label) & (intervention_match[,intervention_node_name] %in% 1)
+            if (nchar(intervention_node_name)>0){
+                index <- (current_cnode%in%x$names$uncensored_label) & (intervention_match[,intervention_node_name] %in% 1)
+            }else{
+                outcome_free_and_uncensored
+                index <- (current_cnode%in%x$names$uncensored_label)
+            }
         }else{
-            index <- (intervention_match[,intervention_node_name] %in% 1)
+            if (nchar(intervention_node_name)>0){
+                index <- (intervention_match[,intervention_node_name] %in% 1)
+            }else{
+                index <- rep(1,N)
+                index[!outcome_free_and_uncensored] <- NA
+            }
         }
         if (any(h.g.ratio[index] != 0)) {
             x$IC[[target_name]][[protocol_name]][[label_time_horizon]][index] <- x$IC[[target_name]][[protocol_name]][[label_time_horizon]][index] + (Y[index] - W[index]) * h.g.ratio[index]

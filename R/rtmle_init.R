@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 19 2024 (07:23) 
 ## Version: 
-## Last-Updated: Jun 16 2025 (14:17) 
+## Last-Updated: jan 21 2026 (07:50) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 38
+##     Update #: 42
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -65,10 +65,11 @@ rtmle_init <- function(intervals,
     if (length(name_censoring)>0){
         if (length(censored_label) != 1 ||
             length(censored_levels) != 2 ||
-            !(censored_label %in% censored_levels)){
-            stop(paste0("Expect two values for censored_levels ",
+            !(censored_label %in% censored_levels) ||
+            censored_label != censored_levels[[2]]){
+            stop(paste0("Need exactly two values for censored_levels ",
                         "and one value for censored_label.\n",
-                        "The censored_label must be an element of censored_levels.")) 
+                        "The censored_label must be the second value of censored_levels.")) 
         }
         uncensored_label = setdiff(censored_levels,censored_label)
     }else{

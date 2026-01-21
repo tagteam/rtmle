@@ -183,7 +183,7 @@ TODO: The object contains no targets yet. Add them with the function 'target'.
 
 #+ATTR_LATEX: :options otherkeywords={}, deletekeywords={}
 #+BEGIN_SRC R  :results output verbatim drawer  :exports both  :session *R* :cache yes  
-x <- long_to_wide(x,intervals = seq(0,2000,30.45*6))
+x <- long_to_wide(x,breaks = seq(0,2000,30.45*6))
 x <- prepare_data(x)
 x$prepared_data
 #+END_SRC

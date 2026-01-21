@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 19 2024 (10:07)
 ## Version:
-## Last-Updated: dec 12 2025 (08:22) 
+## Last-Updated: jan 20 2026 (17:31) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 248
+##     Update #: 255
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -45,7 +45,7 @@
 #'                    competing_data=ld$competing_data,
 #'                    timevar_data=ld$timevar_data)
 #' x <- add_baseline_data(x,data=ld$baseline_data)
-#' x <- long_to_wide(x,intervals=seq(0,2000,30.45*6))
+#' x <- long_to_wide(x,breaks=seq(0,2000,30.45*6))
 #' x <- prepare_data(x)
 #' x$prepared_data
 #'
@@ -73,34 +73,33 @@ prepare_data <- function(x,...){
     if (NROW(x$prepared_data)>0){
         warning("Overwriting existing prepared data object")
     }
-    # FIXME: are these checks obsolete, now that the add_data function perform these checks?
-    check_id <- function(data,id,allow_null = TRUE, name = ""){
-        if (NROW(data)>0){
-            if (!inherits(data,"data.table"))
-                if (inherits(data,"data.frame")){
-                    data.table::setDT(data)
-                } else{
-                    warning("The object x$data$outcome_data must be a data.table, data.frame, or tibble")
+    if (FALSE){
+        # FIXME: are these checks obsolete, now that the add_data function perform these checks?
+        check_id <- function(data,id,allow_null = TRUE, name = ""){
+            if (NROW(data)>0){
+                if (!inherits(data,"data.table")){
+                    if (inherits(data,"data.frame")){
+                        data.table::setDT(data)
+                    } else{
+                        warning("The object x$data$outcome_data must be a data.table, data.frame, or tibble")
+                    }
                 }
-            if (match(id,names(data),nomatch = 0) == 0){
-                stop(paste0("The object ",name," does not have the variable '",
-                            id,
-                            "' as was initialized under x$names$id.\n",
-                            "Perhaps the subject identifying variable exists under a different name?"))
-            }
-        }else{
-            if (!allow_null[[1]]){
-                stop(paste0("Data ",name," has zero rows"))
+                if (match(id,names(data),nomatch = 0) == 0){
+                    stop(paste0("The object ",name," does not have a variable called '", id,".\n"))
+                }
+            }else{
+                if (!allow_null[[1]]){
+                    stop(paste0("Data ",name," has zero rows."))
+                }
             }
         }
+        check_id(data = x$data$outcome_data, id = x$names$id,allow_null = FALSE,name = "x$data$outcome_data")
+        check_id(data = x$data$baseline_data, id = x$names$id,name = "x$data$baseline_data")
+        # FIXME: do something else when data were added via add_wide_data
+        nix = lapply(names(x$data$timevar_data),function(nn){
+            check_id(data = x$data$timevar_data[[nn]], id = x$names$id,name = paste0("x$data$timevar_data$",nn))
+        })
     }
-    check_id(data = x$data$outcome_data, id = x$names$id,allow_null = FALSE,name = "x$data$outcome_data")
-    check_id(data = x$data$baseline_data, id = x$names$id,name = "x$data$baseline_data")
-    # FIXME: do something else when data were added via add_wide_data
-    ## nix = lapply(names(x$data$timevar_data),function(nn){
-    ## check_id(data = x$data$timevar_data[[nn]], id = x$names$id,name = paste0("x$data$timevar_data$",nn))
-    ## })
-    ## rm(nix)
     # initialize dataset with outcome data
     prepared_data <- x$data$outcome_data
     # sort by id

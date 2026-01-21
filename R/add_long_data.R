@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 25 2024 (11:24)
 ## Version:
-## Last-Updated: sep 15 2025 (14:15) 
+## Last-Updated: jan 20 2026 (17:31) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 52
+##     Update #: 54
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -53,7 +53,7 @@
 #'                    competing_data=ld$competing_data,
 #'                    timevar_data=ld$timevar_data)
 #' x <- add_baseline_data(x,data=ld$baseline_data)
-#' x <- long_to_wide(x,intervals = seq(0,2000,30.45*12))
+#' x <- long_to_wide(x,breaks = seq(0,2000,30.45*12))
 #' x <- protocol(x,name = "Always_A",
 #'                     intervention = data.frame("A" = factor("1",levels = c("0","1"))))
 #' x <- protocol(x,name = "Never_A",
@@ -79,17 +79,16 @@ add_long_data <- function(x,
         for (name in names(timevar_data)){
             current_data <- copy(as.data.table(timevar_data[[name]]))
             if (!(all(c(x$names$id,"date") %in% names(current_data)))){
-                warning(paste0("Element ",
-                               name,
-                               " of argument 'timevar_data' does not have variables called '",
-                               x$names$id,
-                               "' and 'date' and hence it is not added."))
+                stop(paste0("Element ",
+                            name,
+                            " of argument 'timevar_data' does not have variables called '",
+                            x$names$id, "' and 'date'."))
             }else{
                 if (length(names(current_data))>2) {
                     if (!(length(names(current_data)) == 3 & "value" %in%names(current_data)))
-                        warning(paste0("Element ",
-                                       name,
-                                       " of argument 'timevar_data' has more than three variables or the 3rd variable is not called 'value' and hence it is not added."))
+                        stop(paste0("Element ",
+                                    name,
+                                    " of argument 'timevar_data' has more than three variables or the 3rd variable is not called 'value'."))
                 }
                 if (match(name,names(x$long_data$timevar_data),nomatch = 0)>0){
                     # replace existing element
@@ -109,7 +108,7 @@ add_long_data <- function(x,
     nv = nv[sapply(nv,NROW)>0]
     for (name in names(nv)){
         if (!(x$names$id %in% names(nv[[name]])))
-            warning(paste0("Element ",name," does not have a variable called ",x$names$id," and is not added."))
+            stop(paste0("Element ",name," does not have a variable called ",x$names$id,"."))
         else{
             if (any(duplicated(nv[[name]][[x$names$id]])))
                 stop("Duplicated values of variable '",x$names$id,"' in dataset '",name," are not allowed")

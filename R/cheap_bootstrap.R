@@ -17,7 +17,7 @@
 #' @param alpha Significance level. Defaults to 0.05.
 #' @param add Logical. If \code{TRUE} add new bootstrap results to the existing bootstrap results
 #' @param verbose Logical. Passed to run_rtmle to control verbosity.
-#' @param which_subsets Character vector specifying which subsets to perform the cheap bootstrap on.
+#' @param analyses Character vector specifying which analyses to perform the cheap bootstrap on.
 #' @param replace Logical. Whether to sample with replacement. Default is FALSE. Should not be changed.
 #' @param ... Additional arguments passed to \code{run_rtmle}.
 ##' @return The modified object
@@ -39,7 +39,7 @@
 #'                    competing_data=ld$competing_data,
 #'                    timevar_data=ld$timevar_data)
 #' x <- add_baseline_data(x,data=ld$baseline_data)
-#' x <- long_to_wide(x,intervals = seq(0,2000,30.45*12))
+#' x <- long_to_wide(x,breaks = seq(0,2000,30.45*12))
 #' x <- protocol(x,name = "Always_A",
 #'                     intervention = data.frame("A" = factor("1",levels = c("0","1"))))
 #' x <- protocol(x,name = "Never_A",
@@ -63,7 +63,7 @@ cheap_bootstrap <- function(x,
                             alpha = 0.05,
                             add = TRUE,
                             verbose = FALSE,
-                            which_subsets = NULL,
+                            analyses = NULL,
                             replace = FALSE,
                             ...){
     if (is.null(x$estimate)){
@@ -75,19 +75,19 @@ cheap_bootstrap <- function(x,
     if (replace){
       message("Argument 'replace' should not be changed from its default value FALSE for cheap bootstrap. \n Only valid when not using a super learner.")
     } 
-    if (is.null(which_subsets)){
-      which_subsets <- names(x$estimate)
+    if (is.null(analyses)){
+      analyses <- names(x$estimate)
     } else {
       ## Make sure that the specified subsets exist
-      which_subsets <- intersect(which_subsets, names(x$estimate))
-      if (length(which_subsets) == 0){
-        stop("None of the specified subsets in 'which_subsets' exist in the object.")
+      analyses <- intersect(analyses, names(x$estimate))
+      if (length(analyses) == 0){
+        stop("None of the specified subsets in 'analyses' exist in the object.")
       }
     }
-    which_subsets <- setdiff(which_subsets,"Cheap_bootstrap")
+    analyses <- setdiff(analyses,"Cheap_bootstrap")
     
     Target_parameter <- Main_estimate <- Bootstrap_estimate <- Bootstrap_lower <- Bootstrap_upper <- Main <- cheap_lower <- cheap_upper <- cheap_variance <- Estimate <- Estimator <- tq <- Time_horizon <- Protocol <- Target <- NULL
-    for (v in which_subsets){
+    for (v in analyses){
       message(paste0("Cheap bootstrap for '",v,"'"))
       # add to existing bootstrap results if any
       if (add[[1]] == TRUE && length(x$estimate$Cheap_bootstrap[[v]])>0){

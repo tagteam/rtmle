@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds & Alessandra
 ## Created: Jul 3 2024 (13:46)
 ## Version:
-## Last-Updated: dec  3 2025 (06:22) 
+## Last-Updated: jan 20 2026 (08:13) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 94
+##     Update #: 99
 #----------------------------------------------------------------------
 ##
 ### Commentary: 
@@ -116,11 +116,14 @@ protocol <- function(x,
         treatment_options <- sapply(treatment_variables,
                                     function(v){
                                         if (is.factor(intervention[[v]])){
-                                            levels(intervention[[v]])
+                                            if (length(levels(intervention[[v]])) == 2){
+                                                levels(intervention[[v]])
+                                            }else{
+                                                stop(paste0("All treatment variables must have exactly 2 levels. Problem with variable ",
+                                                            v),".")
+                                            }
                                         } else{
-                                            # FIXME: this seems out of control and will not work
-                                            stop("The treatment variables must be factors") 
-                                            unique(intervention[[v]])
+                                            stop(paste0("The treatment variables must be factors. Problem with variable ",v,"."))
                                         }
                                     },simplify = FALSE)
     }else{

@@ -6,6 +6,7 @@
 \usage{
 long_to_wide(
   x,
+  breaks,
   intervals,
   start_followup_date,
   fun = function(x) {
@@ -17,7 +18,10 @@ long_to_wide(
 \arguments{
 \item{x}{object of class \code{rtmle}}
 
-\item{intervals}{a vector of time points that discretize the
+\item{breaks}{a vector of time points that discretize the
+followup time into intervals}
+
+\item{intervals}{OBSOLETE a vector of time points that discretize the
 followup time into intervals}
 
 \item{start_followup_date}{Start of followup date which is substracted from the dates of
@@ -53,7 +57,7 @@ x <- add_long_data(x,outcome_data=ld$outcome_data,censored_data=ld$censored_data
                     competing_data=ld$competing_data,
                     timevar_data=ld$timevar_data)
 x <- add_baseline_data(x,data=ld$baseline_data)
-x <- long_to_wide(x,intervals = seq(0,2000,30.45*12))
+x <- long_to_wide(x,breaks = seq(0,2000,30.45*12))
                   
 x
 }
