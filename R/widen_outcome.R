@@ -27,7 +27,7 @@ widen_outcome <- function(x,
             data.table::setnames(censored_before_outcome_and_death,x$names$id)
             data.table::setkeyv(censored_before_outcome_and_death,x$names$id)
         }
-        if (any(censored_before_outcome_and_death)){
+        if (NROW(censored_before_outcome_and_death)>0){
             censored_variables <- map_grid(grid=grid,
                                            data=x$long_data$censored_data[censored_before_outcome_and_death,on = x$names$id],
                                            name=x$names$censoring,
@@ -54,7 +54,7 @@ widen_outcome <- function(x,
             data.table::setnames(competing_risk_before_outcome,x$names$id)
             data.table::setkeyv(competing_risk_before_outcome,x$names$id)
         }
-        if (length(competing_risk_before_outcome)>0){
+        if (NROW(competing_risk_before_outcome)>0){
             competing_variables <- map_grid(grid=grid,
                                             data=x$long_data$competing_data[competing_risk_before_outcome,on = x$names$id],
                                             name=x$name$competing,
@@ -105,7 +105,7 @@ widen_outcome <- function(x,
             wide <- wide[competing_variables]
         }
     }else{
-        if (length(x$competing_variables)>0){
+        if (length(competing_variables)>0){
             # join on id
             wide <- competing_variables[outcome_variables]
         }else{

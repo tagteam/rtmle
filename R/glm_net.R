@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 27 2024 (18:30) 
 ## Version: 
-## Last-Updated: Oct  2 2024 (16:02) 
+## Last-Updated: jan 25 2026 (12:19) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 10
+##     Update #: 12
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -78,6 +78,7 @@ glm_net <- function(formula,
                lambda = lambda)
     class(out) = "glm_net"
     out
+
 }
 
 

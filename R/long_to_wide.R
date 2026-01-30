@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 22 2024 (14:07) 
 ## Version: 
-## Last-Updated: jan 21 2026 (10:50) 
+## Last-Updated: jan 30 2026 (08:39) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 132
+##     Update #: 136
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -90,8 +90,10 @@ long_to_wide <- function(x,
         stop("To discretize the long format data we need the baseline data stored as 'x$data$baseline_data' with the subject id variable.\nUse the function 'add_baseline_data' to add this.")
     }
     if (missing(start_followup_date)||start_followup_date[1] == 0){
-        if (verbose && missing(start_followup_date)) message("Missing start_followup_date variable, for now assume 0, which implies that all event times must be given on the time on study scale.")
-        pop = x$data$baseline_data[,c(x$names$id),with = FALSE][,start_followup_date := rep(0,.N)]
+        if (missing(start_followup_date)){
+            x$details <- c(x$details,list("Missing start_followup_date variable, for now assume 0, which implies that all event times must be given on the scale: 'time since 0'."))
+        }
+        pop <- x$data$baseline_data[,c(x$names$id),with = FALSE][,start_followup_date := rep(0,.N)]
     }else{
         if (!is.character(start_followup_date) || match(start_followup_date,names(x$data$baseline_data),nomatch = 0) == 0){
             stop("Argument start_followup_date must be the name (as character) of a variable in x$data$baseline_data")

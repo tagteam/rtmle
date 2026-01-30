@@ -17,9 +17,22 @@ test_that("run rtmle on simulated data",{
     expect_equal(x$estimate$Main_analysis$Estimate,0.1893173,tolerance = 0.001)
     expect_equal(x$estimate$Main_analysis$Standard_error,0.01976462,tolerance = 0.001)
 })
-
-
-test_that("run rtmle on without competing risks",{
+test_that("run rtmle without covariates",{
+    set.seed(112)
+    ld <- simulate_long_data(n = 1000,number_visits = 20,beta = list(A_on_Y = -.2,A0_on_Y = -0.3,A0_on_A = 6),register_format = TRUE)
+    x <- rtmle_init(intervals = 4,name_id = "id",name_outcome = "Y",name_competing = "Dead",name_censoring = "Censored",censored_label = "censored")
+    #  add treatment variables but no timevarying covariates
+    x <- add_long_data(x,outcome_data=ld$outcome_data,censored_data=ld$censored_data,competing_data=ld$competing_data,timevar_data = ld$timevar_data["A"])
+    #  need id variable in the baseline data
+    x <- add_baseline_data(x,data=ld$baseline_data[,.(id)])
+    x <- long_to_wide(x,breaks = seq(0,2000,30.45*6),verbose = 0L)
+    x <- protocol(x,name = "Always_A",treatment_variables = "A",intervention = 1)
+    x <- prepare_data(x) 
+    x <- target(x,name = "Outcome_risk",estimator = "tmle",protocols = "Always_A")
+    x <- model_formula(x)
+    suppressWarnings(x <- run_rtmle(x,time_horizon = 2,refit = TRUE,verbose = FALSE))
+})
+test_that("run rtmle without competing risks",{
     set.seed(112)
     ld <- simulate_long_data(n = 1000,number_visits = 20,beta = list(A_on_Y = -.2,A0_on_Y = -0.3,A0_on_A = 6),register_format = TRUE)
     x <- rtmle_init(intervals = 2,name_id = "id",name_outcome = "Y",name_competing = NULL,name_censoring = "Censored",censored_label = "censored")

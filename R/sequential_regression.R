@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 30 2024 (14:30)
 ## Version:
-## Last-Updated: jan 15 2026 (16:45) 
+## Last-Updated: jan 30 2026 (11:53) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 436
+##     Update #: 480
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -23,11 +23,8 @@ sequential_regression <- function(x,
                                   seed = seed){
     time = Target = Protocol = Time_horizon = Estimate = Target_parameter = Standard_error = Lower = Upper = rtmle_predicted_outcome = NULL
     N <- NROW(x$prepared_data)
-    # FIXME: inconsistent listing:
     intervention_table <- x$protocols[[protocol_name]]$intervention_table
-    intervention_match <- x$intervention_match[[protocol_name]]
-    # FIXME: treatment_variables=intervention_table$variable?
-    treatment_variables <- x$protocols[[protocol_name]]$intervention_table[time%in%0:time_horizon]$variable
+    intervention_match <- x$protocols[[protocol_name]]$intervention_match
     if (length(x$names$censoring)>0){
         censoring_variables <- paste0(x$names$censoring,"_",1:time_horizon)
     }else{
@@ -40,147 +37,71 @@ sequential_regression <- function(x,
     stopifnot(time_horizon>0)
     label_time_horizon <- paste0("time_horizon_",time_horizon)
     reverse_time_scale <- rev(seq(1,time_horizon,1))
-    for (j in reverse_time_scale){
+    for (k in reverse_time_scale){
         # subjects that are outcome-free and uncensored at the BEGINNING of the interval are 'atrisk'
-        if (j == 1){
-            outcome_free_and_uncensored <- rep(TRUE,N)
+        outcome_free_and_uncensored <- (x$followup$last_interval >= (k-1))
+        # we always have the censoring variable in time interval _k *before* the outcome variable in same interval
+        # hence to analyse Y_k we need C_k = "uncensored" for the modeling of Y_k
+        # we thus remove subjects who are at risk at the beginning of the interval
+        # but get censored during the interval (in fact, their outcome is NA)
+        if (length(x$names$censoring)>0){
+            current_cnode <- as.character(x$prepared_data[[paste0(x$names$censoring,"_",k)]])
+            outcome_free_and_uncensored_outcome <- outcome_free_and_uncensored & (current_cnode %in% x$names$uncensored_label)
         }else{
-            outcome_free_and_uncensored <- (x$followup$last_interval >= (j-1))
+            outcome_free_and_uncensored_outcome <- outcome_free_and_uncensored
         }
         # Note that at the time_horizon subjects who are censored in last interval have an NA outcome
         # but at any subsequent step of the algorithm, that is in an earlier time interval,
         # the predicted outcome is available also for subjects who are censored
         # during the current interval. So, while their observed outcome is NA
         # their predicted_outcome is available.
-        outcome_name <- outcome_variables[[time_horizon]]
-        # FIXME: delete the if query when obsolete way of specifying formulas is gone
-        if (protocol_name %in% names(x$models)){
-            interval_outcome_formula = x$models[[protocol_name]][[outcome_variables[[j]]]]$formula
+        interval_outcome_formula <- x$models[[paste0("time_",(k-1))]][["outcome"]][[1]]$formula
+        if (k == time_horizon) {        
+            outcome_name <- outcome_variables[[time_horizon]]
         }else{
-            interval_outcome_formula = x$models[[outcome_variables[[j]]]]$formula
-        }
-        if (j < time_horizon) {
             outcome_name <- "rtmle_predicted_outcome"
             interval_outcome_formula <- stats::update(stats::formula(interval_outcome_formula),"rtmle_predicted_outcome~.")
         }
         Y <- x$prepared_data[[outcome_name]]
         # intervene according to protocol for targets
-        history_of_variables <- names(x$prepared_data)[1:(-1+match(outcome_variables[[j]],names(x$prepared_data)))]
-        intervenable_history <- setdiff(history_of_variables,c(outcome_variables,censoring_variables,competing_variables))
         intervened_data <- do.call(x$protocol[[protocol_name]]$intervene_function,
-                                   list(data = x$prepared_data[,intervenable_history,with = FALSE],
+                                   list(data = x$prepared_data[outcome_free_and_uncensored],
                                         intervention_table = intervention_table,
-                                        time = j))
+                                        time = k))
         # fit outcome regression
-        # we always have the censoring variable in time interval _j *before* the outcome variable in same interval
-        # hence to analyse Y_j we need C_j = "uncensored" for the modeling of Y_j
-        # we thus remove subjects who are at risk at the beginning of the interval
-        # but get censored during the interval (in fact, their outcome is NA)
-        if (j == time_horizon)
-            learn_variables <- c(history_of_variables,outcome_variables[[j]])
-        else
-            learn_variables <- c(history_of_variables,"rtmle_predicted_outcome")
-        current_data <- x$prepared_data[outcome_free_and_uncensored,learn_variables,with = FALSE]
-        if (NROW(current_data) == 0) {
-            stop("No data available for g-estimation")
-        }
-        current_constants <- sapply(current_data, function(x){length(na.omit(unique(x)))==1})
-        if (any(current_constants)) {
-            current_constants <- names(current_constants[current_constants])
-        }else{
-            current_constants <- NULL
-        }
-        if (outcome_name %in% current_constants){
-            # here we assume that the outcome is binary or a predicted value 
-            fit_last <- rep(na.omit(unique(current_data[[outcome_name]])),NROW(current_data))
-            attr(fit_last,"fit") <- "No variation of the outcome variable. Predicted single outcome value to all subjects."
-        }else{
-            current_data <- current_data[,!(names(current_data)%in%current_constants),with = FALSE]
-            # remove constant predictor variables
-            if (length(current_constants)>0){
-                interval_outcome_formula <- delete_variables_from_formula(character_formula = interval_outcome_formula,
-                                                                          delete_vars = current_constants)
-                number_rhs_variables <- attr(interval_outcome_formula,"number_rhs_variables")
-            }else{
-                number_rhs_variables <- length(attr(stats::terms(stats::formula(interval_outcome_formula)),"term.labels"))
-            }
-            # if there are no covariates or if there is no variability in the outcome variable
-            # then we simply predict the mean 
-            if (number_rhs_variables == 0){
-                # here we assume that the outcome is binary or a predicted value 
-                fit_last <- rep(mean(current_data[[outcome_variables[[j]]]],na.rm = TRUE),NROW(current_data))
-                attr(fit_last,"fit") <- "No covariates. Predicted average outcome to all subjects."
-            }else{
-                # restrict data and to the variables in the formula
-                all_vars <- all.vars(stats::as.formula(interval_outcome_formula))
-                args <- list(character_formula = interval_outcome_formula,
-                             data = current_data[,all_vars,with = FALSE],
-                             intervened_data = intervened_data[outcome_free_and_uncensored,all_vars[-1],with = FALSE])
-                # super learner needs name of outcome variable
-                if (learner$name == "superlearn"){
-                    args <- c(args,
-                              learner$args, # folds and other arguments for superlearning
-                              list(learners = learner$learners,
-                                   parse_learners = FALSE,
-                                   outcome_variable = "rtmle_predicted_outcome",
-                                   outcome_target_level = NULL,
-                                   id_variable = x$names$id))
-                    if (j == time_horizon){
-                        args$outcome_variable = outcome_variables[[j]]
-                    }
-                    if (inherits(try(
-                        fit_last <- do.call("superlearn",c(args,list(seed = seed))),silent = FALSE),
-                        "try-error")) {
-                        stop(paste0("Sequential regression fit failed with formula:\n",interval_outcome_formula))
-                    }
-                }else{
-                    #
-                    # this is a single learner 
-                    # 
-                    # single learners do not need the name of outcome variable
-                    if (inherits(try(
-                        fit_last <- do.call(learner$fun,c(args,learner$args)),silent = FALSE),
-                        "try-error")) {
-                        stop(paste0("Sequential regression fit failed with formula:\n",
-                                    interval_outcome_formula))
-                    }
-                }
-            }
-        }
+        fit_last_interval <- fitter(learner = learner,
+                                    formula = interval_outcome_formula,
+                                    data = x$prepared_data[outcome_free_and_uncensored_outcome],
+                                    intervened_data = intervened_data,
+                                    id_variable = x$names$id)
         # save fitted object
-        x$models[[outcome_variables[[j]]]]$fit <- attr(fit_last,"fit")
-        data.table::setattr(fit_last,"fit",NULL)
-        fit_last <- as.numeric(fit_last)
+        x$models[[paste0("time_",(k-1))]][["outcome"]][[1]]$fit <- attr(fit_last_interval,"fit")
+        data.table::setattr(fit_last_interval,"fit",NULL)
+        fit_last_interval <- as.numeric(fit_last_interval)
         # set predicted value as outcome for next regression
         ## FIXME: if (estimator == "tmle")
         old_action <- options()$na.action
         on.exit(options(na.action = old_action))
         options(na.action = "na.pass")
         # note that we can still predict those who are censored at C_j but uncensored at C_{j-1}
-        ## y <- riskRegression::predictRisk(fit_last,newdata = intervened_data)
+        ## y <- riskRegression::predictRisk(fit_last_interval,newdata = intervened_data)
         # avoid missing values due to logit
         if (estimator == "tmle"){
-            if (any(fit_last[!is.na(fit_last)] <= 0)) fit_last <- pmax(fit_last,0.0001)
-            if (any(fit_last[!is.na(fit_last)] >= 1)) fit_last <- pmin(fit_last,0.9999)
+            if (any(fit_last_interval[!is.na(fit_last_interval)] <= 0)) fit_last_interval <- pmax(fit_last_interval,0.0001)
+            if (any(fit_last_interval[!is.na(fit_last_interval)] >= 1)) fit_last_interval <- pmin(fit_last_interval,0.9999)
         }
         # TMLE update step
-        if (length(x$names$censoring)>0){
-            ipos <- censoring_variables[[j]]
-        }else{
-            # FIXME: this is not easy to read, but when there are multiple treatment variables
-            #        at time j, such as A_j and B_j then we match on the last
-            ipos <- rev(treatment_variables[[j]])[[1]]
-        }
+        ipos <- x$protocols[[protocol_name]]$intervention_last_nodes[k]
+        inverse_probability_weights <- x$protocols[[protocol_name]]$cumulative_intervention_probs[,ipos]
         # the column names A_1,B_1,E_1 of the intervention_match table are made with paste
         # in function intervention_probabilities
-        intervention_node_name <- paste(intervention_table[time == j-1]$variable,collapse = ",")
-        if (!(outcome_name %in% names(current_constants)) && estimator == "tmle"){
+        intervention_node_name <- paste(intervention_table[time == k-1]$variable,collapse = ",")
+        if (estimator == "tmle"){
             # use only data from subjects who are uncensored in current interval
             # construction of clever covariates
             W_previous <- rep(NA,length(Y))
-            W_previous[outcome_free_and_uncensored] <- lava::logit(fit_last)
+            W_previous[outcome_free_and_uncensored] <- lava::logit(fit_last_interval)
             # FIXME: this test of infinite inverse_probability_weights needs more work
-            inverse_probability_weights <- x$cumulative_intervention_probs[[protocol_name]][,ipos]
             if (nchar(intervention_node_name)>0){
                 imatch <- (intervention_match[,intervention_node_name]%in% 1)
             }else{
@@ -198,23 +119,21 @@ sequential_regression <- function(x,
                                  intervention_match = imatch)
             ),"try-error"))
                 stop(paste0("Fluctuation model used in the TMLE update step faile",
-                            " in the attempt to run function tmle_update at time point: ",j))
+                            " in the attempt to run function tmle_update at time point: ",k))
             ## FIXME: why do we not need the following?
             ## W[!outcome_free_and_uncensored] <- Y[!outcome_free_and_uncensored]
         }else{
-            W <- fit_last
+            W <- fit_last_interval
         }
         # calculate contribution to influence function
-        h.g.ratio <- 1/x$cumulative_intervention_probs[[protocol_name]][,ipos]
+        h.g.ratio <- 1/inverse_probability_weights
         # FIXME: what is this constant 10000? 
         ## if (any(h.g.ratio>10000)) h.g.ratio <- pmin(h.g.ratio,10000)
-        if (any(h.g.ratio>nrow(x$prepared_data))) h.g.ratio <- pmin(h.g.ratio,nrow(x$prepared_data))
+        if (max(h.g.ratio,na.rm = TRUE)>nrow(x$prepared_data)) h.g.ratio <- pmin(h.g.ratio,nrow(x$prepared_data))
         if (length(x$names$censoring)>0){
-            current_cnode <- as.character(x$prepared_data[[paste0(x$names$censoring,"_",j)]])
             if (nchar(intervention_node_name)>0){
                 index <- (current_cnode%in%x$names$uncensored_label) & (intervention_match[,intervention_node_name] %in% 1)
             }else{
-                outcome_free_and_uncensored
                 index <- (current_cnode%in%x$names$uncensored_label)
             }
         }else{
@@ -240,7 +159,7 @@ sequential_regression <- function(x,
             i = which(!(outcome_free_and_uncensored)), # not atrisk
             j = "rtmle_predicted_outcome",
             # fixme j or j-1?
-            value = x$prepared_data[[paste0(x$names$outcome,"_",j)]][which(!(outcome_free_and_uncensored))])
+            value = x$prepared_data[[paste0(x$names$outcome,"_",k)]][which(!(outcome_free_and_uncensored))])
     }
     target_parameter <- "Risk"
     # g-formula and tmle estimator

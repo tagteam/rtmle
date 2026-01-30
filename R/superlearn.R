@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Oct 31 2024 (07:29) 
 ## Version: 
-## Last-Updated: Jan  9 2026 (11:06) 
-##           By: Johan Sebastian Ohlendorff
-##     Update #: 217
+## Last-Updated: jan 23 2026 (10:53) 
+##           By: Thomas Alexander Gerds
+##     Update #: 222
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -32,7 +32,6 @@
 ##' @param parse_learners Logical. If TRUE parse learners. \code{\link{run_rtmle}} needs sets this to FALSE.
 ##' @param character_formula A formula (passed as a character string!) to parse the outcome and the predictor variables. 
 ##' @param outcome_variable The name of the outcome variable (same as \code{all.vars(formula(character_formula))[[1]]} provided to avoid overhead in the parsing of the formula.
-##' @param outcome_target_level The level of the binary outcome variable for which the superlearner predicts the risk.  
 ##' @param id_variable The name of the subject id variable.
 ##' @param data The data for learning.
 ##' @param intervened_data The data were all intervention variables are readily set according to the intervention protocol.
@@ -59,7 +58,6 @@
 ##'                                                      learner_fun="learn_glmnet")),
 ##'                   character_formula = "A_0~L_0+sex+age",
 ##'                   outcome_variable = "A_0",
-##'                   outcome_target_level="1",
 ##'                   id_variable = "id",
 ##'                   data = ld[!duplicated(id)],
 ##'                   intervened_data = ld[!duplicated(id)])
@@ -72,7 +70,6 @@ superlearn <- function(folds,
                        parse_learners = TRUE,
                        character_formula,
                        outcome_variable,
-                       outcome_target_level, # for treatment and censoring variables
                        id_variable,
                        data,
                        intervened_data,
@@ -124,12 +121,8 @@ superlearn <- function(folds,
         # CASE: no variation in the outcome variable
         #       predict the unique outcome value
         if (outcome_variable %in% current_constants){
-            if (!is.null(outcome_target_level)){
-                outcome_value_k <- na.omit(unique(learn_data_k[[outcome_variable]]))
-                predicted_k <- rep(1*(outcome_target_level == outcome_value_k),NROW(test_data_k))
-            }else {
-                predicted_k <- rep(outcome_value_k,NROW(test_data_k))
-            }
+            outcome_value_k <- na.omit(unique(learn_data_k[[outcome_variable]]))
+            predicted_k <- rep(outcome_value_k,NROW(test_data_k))
             for (this_learner_name in learner_names) {
                 set(level_one_data,j = this_learner_name,i = which(random_split == k),value = predicted_k)
             }
@@ -167,11 +160,7 @@ superlearn <- function(folds,
             # if there are no covariates then we simply predict the mean 
             if (number_rhs_variables_k == 0){
                 # here we assume that the outcome is binary or a predicted continuous value 
-                if (!is.null(outcome_target_level)){
-                    predicted_k <- rep(mean(outcome_target_level == learn_data_k[[outcome_variable]],na.rm = TRUE),NROW(test_data_k))
-                }else {
-                    predicted_k <- rep(mean(learn_data_k[[outcome_variable]],na.rm = TRUE),NROW(test_data_k))
-                }
+                predicted_k <- rep(mean(learn_data_k[[outcome_variable]],na.rm = TRUE),NROW(test_data_k))
                 for (this_learner_name in learner_names) {
                     set(level_one_data,
                         j = this_learner_name,
@@ -200,20 +189,13 @@ superlearn <- function(folds,
     }
     # discrete super learner (for now)
     # choose the minimizer of the Brier score
-    if (!is.null(outcome_target_level)){
-        x <- sapply(learner_names, function(this_learner_name){
-            mean(((1*(level_one_data[[outcome_variable]] == outcome_target_level))-level_one_data[[this_learner_name]])^2)
-        })
-    } else{
-        # FIXME: NA values of the outcome should not make it until here
-        x <- sapply(learner_names,function(this_learner_name){
-            outcome <- level_one_data[[outcome_variable]]
-            mean((outcome-level_one_data[[this_learner_name]])^2,na.rm = TRUE)})
-    }
+    # FIXME: NA values of the outcome should not make it until here
+    x <- sapply(learner_names,function(this_learner_name){
+        mean(
+        (level_one_data[[outcome_variable]]-level_one_data[[this_learner_name]]
+        )^2,na.rm = TRUE)})
     names(x) <- learner_names
     winner_name <- names(x)[which.min(x)]
-    ## print(x)
-    ## print(winner_name)
     names(learners) <- learner_names
     winner <- learners[[winner_name]]
     learner_args <- c(list(character_formula = character_formula,

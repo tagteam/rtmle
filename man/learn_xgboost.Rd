@@ -41,9 +41,11 @@ x <- add_long_data(x,
 x <- add_baseline_data(x,data=ld$baseline_data)
 x <- long_to_wide(x,breaks = seq(0,2000,30.45*12))
 x <- protocol(x,name = "Always_A",
-                    intervention = data.frame("A" = factor("1",levels = c("0","1"))))
+                    intervention = data.frame(time=x$intervention_nodes,
+                                              "A" = factor("1",levels = c("0","1"))))
 x <- protocol(x,name = "Never_A",
-                    intervention = data.frame("A" = factor("0",levels = c("0","1"))))
+                    intervention = data.frame(time=x$intervention_nodes,
+                                              "A" = factor("0",levels = c("0","1"))))
 x <- prepare_data(x)
 x <- target(x,name = "Outcome_risk",
                   estimator = "tmle",

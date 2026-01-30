@@ -52,7 +52,7 @@ x <- add_baseline_data(x,data=ld$baseline_data)
 x <- long_to_wide(x,breaks = seq(0,2000,30.45*6))
 x <- protocol(x,name = "Always_A",treatment_variables = "A",intervention = 1)
 x <- protocol(x,name = "Never_A",treatment_variables = "A",intervention = 0)
-prepare_data(x) <- list(reset = TRUE)
+x <- prepare_data(x)
 x <- target(x,name = "Outcome_risk",
                   estimator = "tmle",protocols = c("Always_A","Never_A"))
 x <- model_formula(x)

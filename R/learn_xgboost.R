@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Oct 28 2024 (09:26) 
 ## Version: 
-## Last-Updated: jan 20 2026 (17:31) 
+## Last-Updated: jan 23 2026 (11:33) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 124
+##     Update #: 126
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -41,9 +41,11 @@
 #' x <- add_baseline_data(x,data=ld$baseline_data)
 #' x <- long_to_wide(x,breaks = seq(0,2000,30.45*12))
 #' x <- protocol(x,name = "Always_A",
-#'                     intervention = data.frame("A" = factor("1",levels = c("0","1"))))
+#'                     intervention = data.frame(time=x$intervention_nodes,
+#'                                               "A" = factor("1",levels = c("0","1"))))
 #' x <- protocol(x,name = "Never_A",
-#'                     intervention = data.frame("A" = factor("0",levels = c("0","1"))))
+#'                     intervention = data.frame(time=x$intervention_nodes,
+#'                                               "A" = factor("0",levels = c("0","1"))))
 #' x <- prepare_data(x)
 #' x <- target(x,name = "Outcome_risk",
 #'                   estimator = "tmle",

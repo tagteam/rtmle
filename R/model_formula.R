@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jun 16 2025 (08:58) 
 ## Version: 
-## Last-Updated: jan 20 2026 (17:31) 
+## Last-Updated: jan 30 2026 (11:21) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 59
+##     Update #: 118
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -19,10 +19,15 @@
 ##'
 ##' Note that due to the discretized nature of the data, we do not include
 ##' the time-dependent covariates at time k in the models for treatment at time k,
-##' except at time 0. 
-##' The reason for this is we do not want to mistakenly assume that L_k -> A_k when in reality A_k may happen before L_k
+##' except at time 0. The reason for this is that we do not want to mistakenly assume that
+##' L_k -> A_k when in reality A_k may happen before L_k.
+##'
+##' When interventions depend on more than one variable
 ##' @title Model formulas for nuisance parameters
 ##' @param x  object of class \code{rtmle}
+##' @param propensity_model Only relevant for interventions which depend on multiple treatment variables:
+##' Decide how to model the propensity of the regimen that the protocol dictates:
+##' Possible values are \code{"joint"}, \code{"sequential"} or \code{"independent"}.
 ##' @param Markov Names of time-dependent variables which should only occur with the most recent
 ##'               value on the right hand side of the formulas.
 ##' @param exclude_variables Variables to exclude from the formulas for the nuisance parameters.
@@ -34,22 +39,23 @@
 ##' @param ... Not used (not yet)
 ##' @return The modified \code{rtmle}object
 ##' @examples
-##' set.seed(112)
-##' ld <- simulate_long_data(n = 1000,number_visits = 20,
+##' ld <- simulate_long_data(n = 117,number_visits = 20,
 ##'                          beta = list(A_on_Y = -.2,A0_on_Y = -0.3,A0_on_A = 6),
 ##'                          register_format = TRUE)
 ##' x <- rtmle_init(intervals = 2,name_id = "id",name_outcome = "Y",
 ##'                 name_competing = "Dead",
 ##'                 name_censoring = "Censored",censored_label = "censored")
-##' x <- add_long_data(x,outcome_data = ld[["outcome_data"]],
-##'                      censored_data = ld[["censored_data"]],
-##'                      competing_data = ld[["competing_data"]],
-##'                      timevar_data = ld[["timevar_data"]])
-##' x <- add_baseline_data(x,data = ld$baseline_data)
-##' x <- long_to_wide(x,breaks = seq(0,2000,30.45*6))
+##' x <- add_long_data(x,
+##'                    outcome_data=ld$outcome_data,
+##'                    censored_data=ld$censored_data,
+##'                    competing_data=ld$competing_data,
+##'                    timevar_data=ld$timevar_data)
+##' x <- add_baseline_data(x,data=ld$baseline_data)
+##' x <- long_to_wide(x,breaks = seq(0,2000,30.45*12))
+##' x <- prepare_data(x)
 ##' x <- protocol(x,name = "Always_A",treatment_variables = "A",intervention = 1)
-##' x <- prepare_data(x) 
-##' x <- target(x,name = "Outcome_risk",estimator = "tmle",protocols = "Always_A")
+##' x <- protocol(x,name = "Never_A",treatment_variables = "A",intervention = 0)
+##' x <- protocol(x,name = "Use_A_not_B",treatment_variables = c("A","B"),intervention = c(1,0))
 ##' x <- model_formula(x)
 ##' x$models
 ##' # remove age from all formulas
@@ -68,6 +74,7 @@
 ##' @export 
 ##' @author Thomas A. Gerds <tag@@biostat.ku.dk>
 model_formula <- function(x,
+                          propensity_model = "joint",
                           Markov = NULL,
                           verbose = TRUE,
                           exclude_variables = NULL,
@@ -76,6 +83,7 @@ model_formula <- function(x,
                           ...){
     exclude_variables = c("start_followup_date",exclude_variables)
     name_constant_variables <- x$names$name_constant_variables
+    if (length(x$protocols) == 0) {stop("No protocols registered in object, hence unclear variables are intervened upon.")}
     all_treatment_variables <- setdiff(unlist(lapply(x$protocols,function(u)u$treatment_variables),use.names = FALSE),name_constant_variables)
     name_time_covariates <- setdiff(x$names$name_time_covariates,exclude_variables)
     name_baseline_covariates <- setdiff(x$names$name_baseline_covariates,exclude_variables)
@@ -85,48 +93,43 @@ model_formula <- function(x,
                 stop(paste0("The following variables in argument Markov do not match time_covariates:\n",
                             paste(Markov[not_found],collapse=", ")))
     }
-    # loop across time points
-    model_formulas <- c(unlist(lapply(x$times,function(tk){
-        if (tk >= (length(x$times)-1)){ # no treatment formula for last time point, minus 1 because 0 is included in x$times
-            all_vars <- NULL
-        }else{
-            all_vars <- unlist(lapply(all_treatment_variables,function(tv)paste0(tv,"_",tk)))
+    #
+    # loop across time points looking at treatments, censoring, outcomes from the beginning of the interval
+    # 
+    model_formulas <- lapply(x$intervention_nodes,function(tk){
+        all_vars <- c(lapply(x$protocols,function(pro){
+            vals <- pro$intervention_table[time == tk,value]
+            names(vals) <- pro$intervention_table[time == tk,variable]
+            vals
+        }))
+        # censoring variables before outcome (no model for censoring at time zero)
+        if(length(x$names$censoring)>0){
+            censvalue <- paste0("'",x$names$uncensored_label,"'")
+            names(censvalue) = paste0(x$names$censoring,"_",(tk+1))
+            all_vars <- c(all_vars,list("censoring" = censvalue))
         }
-        if (tk != 0){
-            # outcome variables (no model for outcome at time zero)
-            all_vars <- c(all_vars,paste0(x$names$outcome,"_",tk))
-            # censoring variables (no model for censoring at time zero)
-            if(length(x$names$censoring)>0){    
-                all_vars <- c(all_vars,paste0(x$names$censoring,"_",tk))
-            }
-        }
-        # remove constant variables 
-        # FIXME: this also removes constant outcome variables
-        ## all_vars <- setdiff(all_vars,name_constant_variables)
+        # outcome variables (no model for outcome at time zero)
+        outvalue <- 1
+        names(outvalue) <- paste0(x$names$outcome,"_",(tk+1))
+        all_vars <- c(all_vars,list("outcome" = outvalue))
         # return vector of character formulas
-        c(unlist(lapply(all_vars, function(vv){
-            ff <- formalize(timepoint = tk,
-                            available_names = names(x$prepared_data),
-                            name_outcome_variable = vv,
-                            name_baseline_covariates = name_baseline_covariates,
-                            name_time_covariates  = name_time_covariates,
-                            Markov = Markov,
-                            constant_variables = name_constant_variables,
-                            exclusion_rules = exclusion_rules,
-                            inclusion_rules = inclusion_rules,
-                            unwanted_variables = exclude_variables)
-            names(ff) = vv
+        tk_forms <- lapply(names(all_vars), function(nav){
+            vv <- all_vars[[nav]]
+            ## this may be confusing but at intervention node k
+            ## we evaluate treatment in the previous interval [t_{k-1},t_k] but
+            ## censoring and outcome in the next interval [t_{k},t_{k+1}]
+            if (nav%in% c("censoring","outcome"))
+                eval_time <- tk+1
+            else
+                eval_time <- tk
+            ff <- formalize(timepoint = eval_time,available_names = names(x$prepared_data),name_outcome_variable = names(vv),outcome_value = as.character(vv),name_baseline_covariates = name_baseline_covariates,name_time_covariates  = name_time_covariates,Markov = Markov,constant_variables = name_constant_variables,exclusion_rules = exclusion_rules,inclusion_rules = inclusion_rules,handle_concomitant_variables = propensity_model,unwanted_variables = exclude_variables)
             ff
-        })))
-    })))
-    # Remove formulas of variables that do not occur in data
-    if (verbose && any(do_not_occur <- !(names(model_formulas) %in% names(x$prepared_data)))){
-        message(paste0("The right hand sides of the following formulas do not occur in the data, hence we drop them:\n", 
-                       paste0(model_formulas[do_not_occur],collapse = "\n")))
-    }
-    model_formulas <- model_formulas[names(model_formulas) %in% names(x$prepared_data)]
-    x$models <- lapply(model_formulas,function(f)list(formula = f))
-    if (verbose)
+        })
+        names(tk_forms) <- names(all_vars)
+        tk_forms
+    })
+    names(model_formulas) <- paste0("time_",x$intervention_nodes)
+    x$models <- model_formulas
     x
 }
 
