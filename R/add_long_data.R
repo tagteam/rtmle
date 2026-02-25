@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 25 2024 (11:24)
 ## Version:
-## Last-Updated: jan 23 2026 (10:47) 
+## Last-Updated: feb 25 2026 (15:52) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 55
+##     Update #: 59
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -82,17 +82,17 @@ add_long_data <- function(x,
         }
         for (name in names(timevar_data)){
             current_data <- copy(as.data.table(timevar_data[[name]]))
-            if (!(all(c(x$names$id,"date") %in% names(current_data)))){
+            if (!(x$names$id %in% names(current_data))){
                 stop(paste0("Element ",
                             name,
-                            " of argument 'timevar_data' does not have variables called '",
-                            x$names$id, "' and 'date'."))
+                            " of argument 'timevar_data' does not have a variable called '",
+                            x$names$id))
             }else{
                 if (length(names(current_data))>2) {
-                    if (!(length(names(current_data)) == 3 & "value" %in%names(current_data)))
+                    if (!(length(names(current_data)) == 3 & ("value" %in%names(current_data) || all(c("start_exposure","end_exposure")%in%names(current_data)))))
                         stop(paste0("Element ",
                                     name,
-                                    " of argument 'timevar_data' has more than three variables or the 3rd variable is not called 'value'."))
+                                    " of argument 'timevar_data' is inconsistent with the three accepted formats:\n (id,date,value)\n (id,start_exposure,end_exposure) \n(id,date)."))
                 }
                 if (match(name,names(x$long_data$timevar_data),nomatch = 0)>0){
                     # replace existing element

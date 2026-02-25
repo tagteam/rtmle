@@ -11,6 +11,7 @@ learn_glmnet(
   selector = "undersmooth",
   lambda = NULL,
   alpha = 1,
+  family,
   nfolds = 10,
   type.measure = "deviance",
   ...
@@ -26,9 +27,13 @@ learn_glmnet(
 \item{selector}{Character value deciding about how to select the penalty parameter lambda:
 If \code{"undersmooth"} use the lambda value which results in the least amount of
 penalty such that the model still fits. The other options are \code{"min"} and \code{"1se"} which are 
-described in the documentation of \code{\link[glmnet]{cv.glmnet}}.}
+described in the documentation of \link[glmnet]{cv.glmnet}.}
 
-\item{alpha}{The elasticnet mixing parameter. See the ?glmnet for more details.}
+\item{lambda}{Penalty parameter passed to \link[glmnet]{glmnet} or \link[glmnet]{cv.glmnet}.}
+
+\item{alpha}{The elasticnet mixing parameter. See \link[glmnet]{glmnet} for more details.}
+
+\item{family}{Passed to \link[glmnet]{glmnet} or \link[glmnet]{cv.glmnet}.}
 
 \item{nfolds}{Number of folds for cross-validation. Default is 10.}
 

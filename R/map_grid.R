@@ -7,6 +7,7 @@ map_grid <- function(grid,
                      fill=NA,
                      id){
     value = NULL
+    stopifnot(rollforward[[1]]>0)
     if (length(data)==0) return(NULL)
     setkeyv(grid,c(id,"date"))
     setkeyv(data,c(id,"date"))
@@ -16,6 +17,8 @@ map_grid <- function(grid,
     } else{
         stopifnot("value"%in%names(data))
     }
+    # when rollforward = Inf then the last value is carried forward
+    # with equidistant time grids rollforward can be the length of the interval
     grid <- data[grid,roll=rollforward]
     if (length(values) == 2){
         # missing value means no event in this interval

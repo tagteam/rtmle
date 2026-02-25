@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Oct 28 2024 (09:26) 
 ## Version: 
-## Last-Updated: dec  1 2025 (10:06) 
+## Last-Updated: jan 30 2026 (12:54) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 78
+##     Update #: 79
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -34,7 +34,7 @@ learn_ranger <- function(character_formula,data,intervened_data,...){
                                       data = data,
                                       drop.unused.levels = TRUE,
                                       na.action = na.omit)
-    Y <- model_frame[[1]]
+    Y <- as.numeric(model_frame[[1]])
     if (length(unique(Y)) == 2) probability <- TRUE else probability <- FALSE
     if (probability) {
         if (!is.factor(Y))

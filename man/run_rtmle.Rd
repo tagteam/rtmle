@@ -60,59 +60,6 @@ The modified object contains the fitted nuisance parameter
 \description{
 This function runs the analysis defined in previous steps.
 }
-\examples{
-# ------------------------------------------------------------------------------------------
-# Intervening on a single treatment variable
-# ------------------------------------------------------------------------------------------
-
-set.seed(17)
-tau <- 3
-ld <- simulate_long_data(n = 391,number_visits = 20,
-                         beta = list(A_on_Y = -.2,A0_on_Y = -0.3,A0_on_A = 6),
-                         register_format = TRUE)
-x <- rtmle_init(intervals = tau,name_id = "id",name_outcome = "Y",name_competing = "Dead",
-                name_censoring = "Censored",censored_label = "censored")
-x <- add_long_data(x,
-                   outcome_data=ld$outcome_data,
-                   censored_data=ld$censored_data,
-                   competing_data=ld$competing_data,
-                   timevar_data=ld$timevar_data)
-x <- add_baseline_data(x,data=ld$baseline_data)
-x <- long_to_wide(x,breaks = seq(0,2000,30.45*12))
-x <- protocol(x,name = "Always_A",
-                    intervention = data.frame(time=x$intervention_nodes,
-                                                   "A" = factor("1",levels = c("0","1"))))
-x <- protocol(x,name = "Never_A",
-                    intervention = data.frame(time=x$intervention_nodes,
-                                              "A" = factor("0",levels = c("0","1"))))
-x <- prepare_data(x)
-x <- target(x,name = "Outcome_risk",
-                  estimator = "tmle",
-                  protocols = c("Always_A","Never_A"))
-x <- model_formula(x)
-# default is undersmoothing which means: take the smallest penalty
-# where the model still converges
-x <- run_rtmle(x,learner = "learn_glmnet",time_horizon = 1:tau)
-# can also use lambda.min or lambda.1se
-\dontrun{
-x <- run_rtmle(x,learner = list("glmnet_cv"=list(learner_fun="learn_glmnet",
-                                selector="min")),
-              time_horizon = tau)
-summary(x)
-}
-\dontrun{
-# stratified analyses
-x <- run_rtmle(x,learner = "learn_glmnet",time_horizon = tau,
-               verbose=FALSE,
-               subsets=list(list(label="Sex",variable="Sex",
-                                 level="Female",id=x$prepared_data[sex==0,id]),
-                       list(label="Sex",variable="Sex",
-                                 level="Male",id=x$prepared_data[sex==1,id])))
-}
-
-
-
-}
 \author{
 Thomas A Gerds \email{tag@biostat.ku.dk}
 }

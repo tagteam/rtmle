@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jun 16 2025 (08:58) 
 ## Version: 
-## Last-Updated: jan 30 2026 (11:21) 
+## Last-Updated: feb  5 2026 (17:42) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 118
+##     Update #: 128
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -98,10 +98,15 @@ model_formula <- function(x,
     # 
     model_formulas <- lapply(x$intervention_nodes,function(tk){
         all_vars <- c(lapply(x$protocols,function(pro){
-            vals <- pro$intervention_table[time == tk,value]
-            names(vals) <- pro$intervention_table[time == tk,variable]
-            vals
+            vals <- pro$intervention_table[time == tk][["value"]]
+            if (length(vals) == 0){
+                NULL
+            }else{
+                names(vals) <- pro$intervention_table[time == tk][["variable"]]
+                vals
+            }
         }))
+        all_vars <- all_vars[!sapply(all_vars, is.null)]
         # censoring variables before outcome (no model for censoring at time zero)
         if(length(x$names$censoring)>0){
             censvalue <- paste0("'",x$names$uncensored_label,"'")
@@ -122,7 +127,18 @@ model_formula <- function(x,
                 eval_time <- tk+1
             else
                 eval_time <- tk
-            ff <- formalize(timepoint = eval_time,available_names = names(x$prepared_data),name_outcome_variable = names(vv),outcome_value = as.character(vv),name_baseline_covariates = name_baseline_covariates,name_time_covariates  = name_time_covariates,Markov = Markov,constant_variables = name_constant_variables,exclusion_rules = exclusion_rules,inclusion_rules = inclusion_rules,handle_concomitant_variables = propensity_model,unwanted_variables = exclude_variables)
+            ff <- formalize(timepoint = eval_time,
+                            available_names = names(x$prepared_data),
+                            name_outcome_variable = names(vv),
+                            outcome_value = as.character(vv),
+                            name_baseline_covariates = name_baseline_covariates,
+                            name_time_covariates  = name_time_covariates,
+                            Markov = Markov,
+                            constant_variables = name_constant_variables,
+                            exclusion_rules = exclusion_rules,
+                            inclusion_rules = inclusion_rules,
+                            handle_concomitant_variables = propensity_model,
+                            unwanted_variables = exclude_variables)
             ff
         })
         names(tk_forms) <- names(all_vars)

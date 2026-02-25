@@ -30,7 +30,8 @@ If missing it is assumed to be zero for all in which case the dates of the outco
 competing risks, censoring (end-of-followup), and time-varying covariates must be
 given on the time on study scale.}
 
-\item{fun}{function used to map information onto the intervals. see Details.}
+\item{fun}{function used to map time-dependent covariate information onto the intervals.
+Can be a single function or a named list with}
 
 \item{verbose}{Logical. If \code{FALSE} suppress all messages.}
 }

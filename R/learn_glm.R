@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 23 2024 (12:49) 
 ## Version: 
-## Last-Updated: jan 20 2026 (07:41) 
+## Last-Updated: jan 30 2026 (12:53) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 129
+##     Update #: 130
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -65,7 +65,7 @@ learn_glm <- function(character_formula,
                                       data = data,
                                       drop.unused.levels = TRUE,
                                       na.action = na.pass)
-    Y <- model_frame[[1]]
+    Y <- as.numeric(model_frame[[1]])
     Y_label <- names(model_frame)[[1]]
     tf <- stats::terms(model_frame)
     X <- stats::model.matrix(object = tf, data = model_frame)

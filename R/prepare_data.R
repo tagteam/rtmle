@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 19 2024 (10:07)
 ## Version:
-## Last-Updated: jan 20 2026 (17:31) 
+## Last-Updated: feb 22 2026 (11:55) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 255
+##     Update #: 256
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -188,7 +188,7 @@ prepare_data <- function(x,...){
             stop(paste0("Cannot find censoring variable(s):\n",paste0(censoring_variables[this_out],collapse = ", "),"\n in x$data$outcome_data"))
         }
     }
-    if(length(x$names$competing)>0){
+    if(length(x$names$competing)>0 && max(x$intervention_node)>0){
         competing_variables_position = match(competing_variables, names(prepared_data))
         if (any(this_out <- is.na(competing_variables_position))){
             stop(paste0("Cannot find competing risk variable(s):\n",paste0(competing_variables[this_out],collapse = ", "),"\n in x$data$outcome_data"))

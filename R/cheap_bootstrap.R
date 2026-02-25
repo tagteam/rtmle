@@ -72,70 +72,69 @@ cheap_bootstrap <- function(x,
         stop("The object lacks an analysis. Please apply run_rtmle() before calling cheap_bootstrap.")
     }
     if (!("Cheap_bootstrap") %in% names(x$estimate)){
-      x$estimate$Cheap_bootstrap <- list()
+        x$estimate$Cheap_bootstrap <- list()
     }
     if (replace){
-      message("Argument 'replace' should not be changed from its default value FALSE for cheap bootstrap. \n Only valid when not using a super learner.")
+        message("Argument 'replace' should not be changed from its default value FALSE for cheap bootstrap. \n Only valid when not using a super learner.")
     } 
     if (is.null(analyses)){
-      analyses <- names(x$estimate)
+        analyses <- names(x$estimate)
     } else {
-      ## Make sure that the specified subsets exist
-      analyses <- intersect(analyses, names(x$estimate))
-      if (length(analyses) == 0){
-        stop("None of the specified subsets in 'analyses' exist in the object.")
-      }
+        ## Make sure that the specified subsets exist
+        analyses <- intersect(analyses, names(x$estimate))
+        if (length(analyses) == 0){
+            stop("None of the specified subsets in 'analyses' exist in the object.")
+        }
     }
     analyses <- setdiff(analyses,"Cheap_bootstrap")
-    
     Target_parameter <- Main_estimate <- Bootstrap_estimate <- Bootstrap_lower <- Bootstrap_upper <- Main <- cheap_lower <- cheap_upper <- cheap_variance <- Estimate <- Estimator <- tq <- Time_horizon <- Protocol <- Target <- NULL
     for (v in analyses){
-      message(paste0("Cheap bootstrap for '",v,"'"))
-      # add to existing bootstrap results if any
-      if (add[[1]] == TRUE && length(x$estimate$Cheap_bootstrap[[v]])>0){
-        B_offset <- max(x$estimate$Cheap_bootstrap[[v]]$B)
-        x$estimate$Cheap_bootstrap[[v]][,"P_value" := NA]
-        x$estimate$Cheap_bootstrap[[v]][, "Main_Estimate":= NULL]
-        setnames(
-          x$estimate$Cheap_bootstrap[[v]],
-          c(
-            "Bootstrap_estimate",
-            "Bootstrap_standard_error",
-            "Bootstrap_lower",
-            "Bootstrap_upper"
-          ),
-          c("Estimate", 
-            "Standard_error",
-            "Lower",
-            "Upper"
-          )
-        )
-      }else{
-        x$estimate$Cheap_bootstrap[[v]] <- NULL
-        B_offset <- 0
-      }
-      if (missing(seeds)) seeds <- sample.int(1e+09, B+B_offset)
-      N <- NROW(x$prepared_data)
-      for (b in (1:B)+B_offset){
-        set.seed(seeds[[b]])
-        if(M >= N && !replace) stop(paste0("The subsample size M (specified is M=",M,") must be lower than the sample size N (which is N=",N,")"))
-        inbag <- sample(1:N,size = M,replace = replace)
-        if (missing(time_horizon)){
-          time_horizon <- sort(unique(x$estimate[[v]]$Time_horizon))
+        if (verbose) message(paste0("Cheap bootstrap for '",v,"'"))
+        # add to existing bootstrap results if any
+        if (add[[1]] == TRUE && length(x$estimate$Cheap_bootstrap[[v]])>0){
+            B_offset <- max(x$estimate$Cheap_bootstrap[[v]]$B)
+            x$estimate$Cheap_bootstrap[[v]][,"P_value" := NA]
+            x$estimate$Cheap_bootstrap[[v]][, "Main_Estimate":= NULL]
+            setnames(
+                x$estimate$Cheap_bootstrap[[v]],
+                c(
+                    "Bootstrap_estimate",
+                    "Bootstrap_standard_error",
+                    "Bootstrap_lower",
+                    "Bootstrap_upper"
+                ),
+                c("Estimate", 
+                  "Standard_error",
+                  "Lower",
+                  "Upper"
+                  )
+            )
+        }else{
+            x$estimate$Cheap_bootstrap[[v]] <- NULL
+            B_offset <- 0
         }
-        x <- run_rtmle(x = x,
-                       verbose = verbose,
-                       time_horizon = time_horizon,
-                       subsets = list(list(label = "CB",
-                                           id = x$prepared_data[[x$names$id]][inbag],
-                                           append = TRUE,
-                                           variable = "B",
-                                           level = b)),
-                       learner = x$learner,
-                       ...)
-      }
-      x$estimate$Cheap_bootstrap[[v]] <- x$estimate$CB
-      x$estimate$CB <- NULL
+        if (missing(seeds)) seeds <- sample.int(1e+09, B+B_offset)
+        N <- NROW(x$prepared_data)
+        for (b in (1:B)+B_offset){
+            set.seed(seeds[[b]])
+            if(M >= N && !replace) stop(paste0("The subsample size M (specified is M=",M,") must be lower than the sample size N (which is N=",N,")"))
+            inbag <- sample(1:N,size = M,replace = replace)
+            if (missing(time_horizon)){
+                time_horizon <- sort(unique(x$estimate[[v]]$Time_horizon))
+            }
+            x <- run_rtmle(x = x,
+                           verbose = verbose,
+                           time_horizon = time_horizon,
+                           subsets = list(list(label = "CB",
+                                               id = x$prepared_data[[x$names$id]][inbag],
+                                               append = TRUE,
+                                               variable = "B",
+                                               level = b)),
+                           learner = x$learner,
+                           ...)
+        }
+        x$estimate$Cheap_bootstrap[[v]] <- x$estimate$CB
+        x$estimate$CB <- NULL
 
       # calculate the cheap lower and upper confidence limits
       # when there readily are bootstrap results we append to them

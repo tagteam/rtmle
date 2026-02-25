@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Nov 16 2024 (17:04) 
 ## Version: 
-## Last-Updated: jan 23 2026 (14:41) 
+## Last-Updated: feb 24 2026 (14:55) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 78
+##     Update #: 83
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -40,9 +40,12 @@ test_that("single time point compare rtmle with ltmle",{
     suppressMessages(x <- protocol(x,name = "A",treatment_variables = "A",intervention = 1))
     x <- target(x,name = "Outcome_risk",estimator = "tmle",protocols = "A")
     x <- model_formula(x)
-    x <- run_rtmle(x,refit = TRUE,verbose = FALSE)
-    expect_equal(result1$fit$g[["A"]], as.matrix(x$models[["A_0"]]$fit))
-    ## all.equal(result1$fit$Q[["Y"]], as.matrix(x$models[["Y_1"]]$fit))
+    x <- run_rtmle(x,refit = FALSE,verbose = FALSE,learner = "learn_glm")
+    expect_equal(result1$fit$g[["A"]], as.matrix(x$models[["time_0"]][["A"]][["A_0"]]$fit))
+    yfit_rtmle <- as.matrix(x$models$time_0$outcome[["A"]]$fit)
+    yfit_ltmle <- result1$fit$Q[["Y"]]
+    rownames(yfit_ltmle) = rownames(yfit_rtmle)
+    expect_equal(yfit_rtmle,yfit_ltmle)
     expect_equal(result1$estimates[["tmle"]],x$estimate$Main_analysis$Estimate,tolerance = 0.0001)
     expect_equal(result1$IC$tmle,x$IC$Outcome_risk$A$time_horizon_1,tolerance = 0.0001)
 })
@@ -89,7 +92,14 @@ test_that("longitudinal data compare rtmle with ltmle",{
     # fitted g-models
     for (g in c("A_0","Censored_1","A_1","Censored_2")){
         a <- y2$fit$g[[g]]
-        b <- as.matrix(x$models[[g]]$fit)
+        is_cens <- !("A" == strsplit(g,"_")[[1]][1])
+        time <- strsplit(g,"_")[[1]][2]
+        if (is_cens){
+            time <- as.numeric(time)-1
+            b <- as.matrix(x$models[[paste0("time_",time)]][["censoring"]][[g]]$fit)
+        }else{
+            b <- as.matrix(x$models[[paste0("time_",time)]][["Always_A"]][[g]]$fit)
+        }
         rownames(b) <- sub("01","0",rownames(b))
         rownames(b) <- sub("11","1",rownames(b))
         b <- b[match(rownames(a),rownames(b)),]

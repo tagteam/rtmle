@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Oct 28 2024 (09:26) 
 ## Version: 
-## Last-Updated: jan 23 2026 (11:33) 
+## Last-Updated: jan 30 2026 (12:53) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 126
+##     Update #: 131
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -79,11 +79,7 @@ learn_xgboost <- function(character_formula,
                                 data = data,
                                 specials = NULL,
                                 na.action = na.omit)
-    Y <- sf$response[[1]]
-    if (is.factor(Y)){
-        # FIXME: the reference level should be controlled better
-        Y <- as.numeric(Y == levels(Y)[[2]])
-    }
+    Y <- as.numeric(sf$response[[1]])
     ## d <- xgboost::xgb.DMatrix(sf$design, label = Y)
     if (!inherits(try(
              fit <- do.call(xgboost::xgboost,c(list(x = sf$design,y = Y),control$xgboost))

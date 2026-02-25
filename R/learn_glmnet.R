@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 23 2024 (16:42) 
 ## Version: 
-## Last-Updated: jan 25 2026 (14:37) 
+## Last-Updated: feb 22 2026 (08:11) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 83
+##     Update #: 110
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -25,10 +25,12 @@
 ##' @param selector Character value deciding about how to select the penalty parameter lambda:
 ##' If \code{"undersmooth"} use the lambda value which results in the least amount of
 ##' penalty such that the model still fits. The other options are \code{"min"} and \code{"1se"} which are 
-##' described in the documentation of \code{\link[glmnet]{cv.glmnet}}.
-##'@param alpha The elasticnet mixing parameter. See the ?glmnet for more details.
-#' @param nfolds Number of folds for cross-validation. Default is 10.
-#' @param type.measure loss to use for cross-validation. Default is deviance.
+##' described in the documentation of \link[glmnet]{cv.glmnet}.
+##' @param lambda Penalty parameter passed to \link[glmnet]{glmnet} or \link[glmnet]{cv.glmnet}.
+##' @param alpha The elasticnet mixing parameter. See \link[glmnet]{glmnet} for more details.
+##' @param family Passed to \link[glmnet]{glmnet} or \link[glmnet]{cv.glmnet}.
+##' @param nfolds Number of folds for cross-validation. Default is 10.
+##' @param type.measure loss to use for cross-validation. Default is deviance.
 ##' @param ... Additional arguments for the learning phase passed to \code{\link[glmnet]{glmnet}}. 
 ##'        E.g., setting alpha affects the elastic net.
 ##' @return A vector of predicted probabilities which has the fit as an attribute.  
@@ -40,6 +42,7 @@ learn_glmnet <- function(character_formula,
                          selector = "undersmooth",
                          lambda = NULL,
                          alpha = 1,
+                         family,
                          nfolds = 10,
                          type.measure = "deviance",
                          ...){
@@ -50,24 +53,24 @@ learn_glmnet <- function(character_formula,
                                       data = data,
                                       drop.unused.levels = FALSE,
                                       na.action = na.omit)
-    Y <- model_frame[[1]]
-    ## FAM <- ifelse(length(unique(Y))>2,"gaussian","binomial")
+    Y <- as.numeric(model_frame[[1]])
+    if (missing(family)){
+        family <- ifelse(length(unique(Y))>2,"gaussian","binomial")
+    }
     X <- model.matrix(RHS,data = data)
-    if (selector == "undersmooth"){
-        # Forcing cv = FALSE
-        args <- c(list(cv = FALSE),list(x = X,y = Y,family = "gaussian",...))
-        args <- args[unique(names(args))]
-        ## fit <- do.call(glm_net,args)
-        fit <- glmnet::glmnet(x=X,y=Y,lambda=lambda,alpha=alpha,...)
+    args <- list(x = X,y = Y,lambda = lambda,alpha = alpha,family = family,...)
+    args <- args[unique(names(args))]
+    if (length(lambda) == 1 || selector == "undersmooth"){
+        fit <- do.call(glmnet::glmnet,args)
         selected.lambda <- fit$lambda[length(fit$lambda)]
         selected.beta <- fit$beta[,match(selected.lambda,fit$lambda,nomatch = NCOL(fit$beta)),drop = FALSE]
     }else{
         # forcing cv
         stopifnot(selector%in%c("min","1se"))
-        args <- c(list(cv = TRUE),list(x = X,y = Y,family = "gaussian",...))
+        args <- c(list(type.measure = type.measure,nfolds = nfolds),args)
         args <- args[unique(names(args))]
-        fit <- glmnet::cv.glmnet(x=X,y=Y,lambda=lambda,nfolds=nfolds,type.measure =type.measure,alpha=alpha,...)
-        lambda <- fit$lambda
+        fit <- do.call(glmnet::cv.glmnet,args)
+        ## lambda <- fit$lambda
         selected.lambda <- fit[[paste0("lambda.",selector)]]
         selected.beta <- fit$glmnet.fit$beta[,fit$index[,"Lambda"][[selector]],drop = FALSE]
     }

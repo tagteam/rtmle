@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul  4 2024 (07:40) 
 ## Version: 
-## Last-Updated: jan 25 2026 (12:38) 
+## Last-Updated: feb  5 2026 (09:22) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 81
+##     Update #: 88
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -101,9 +101,17 @@ formalize <- function(timepoint,
                 names(form[[j]]) <- name_outcome_variable[[j]]
             }
         }else{
-            # joint or independent
-            form <- list(list(formula = paste0(outcome_string," ~ ",rhs)))
-            names(form) <- paste0(name_outcome_variable,collapse = ", ")
+            # joint 
+            if (handle_concomitant_variables == "joint"){
+                form <- list(list(formula = paste0(outcome_string," ~ ",rhs)))
+                names(form) <- paste0(name_outcome_variable,collapse = ",")
+            }else{
+                # independent
+                form <- do.call("c",lapply(outcome_string,function(os){
+                    list(list(formula = paste0(os," ~ ",rhs)))
+                }))
+                names(form) <- name_outcome_variable
+            }
         }
     }else{
         outcome_string <- paste0("I(1*(",name_outcome_variable,"==",outcome_value,"))")

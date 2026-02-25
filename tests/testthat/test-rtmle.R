@@ -31,6 +31,8 @@ test_that("run rtmle without covariates",{
     x <- target(x,name = "Outcome_risk",estimator = "tmle",protocols = "Always_A")
     x <- model_formula(x)
     suppressWarnings(x <- run_rtmle(x,time_horizon = 2,refit = TRUE,verbose = FALSE))
+    expect_equal(x$estimate$Main_analysis$Estimate,0.1871618,tolerance = 0.001)
+    expect_equal(x$estimate$Main_analysis$Standard_error,0.01957285,tolerance = 0.001)
 })
 test_that("run rtmle without competing risks",{
     set.seed(112)
@@ -63,9 +65,7 @@ test_that("rtmle can use g-formula",{
     x <- target(x,name = "Outcome_risk",protocols = "Always_A")
     x <- model_formula(x)
     x <- run_rtmle(x,estimator = "tmle",verbose = FALSE)
-    for (cp in 1:length(x$cumulative_intervention_probs)){
-        x$cumulative_intervention_probs[[cp]] <- pmax(x$cumulative_intervention_probs[[cp]],0.5)
-    }
+    x$protocols$Always_A$cumulative_intervention_probs <- pmax(x$protocols$Always_A$cumulative_intervention_probs,0.5)
     z <- run_rtmle(x,refit = FALSE,estimator = "tmle",verbose = FALSE)
     y <- run_rtmle(x,estimator = "g-formula",verbose = FALSE)
     expect_output(print(summary(x)))    

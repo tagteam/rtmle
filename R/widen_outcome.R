@@ -89,7 +89,8 @@ widen_outcome <- function(x,
             comp_varnames <- setdiff(names(competing_variables),x$names$id)
         }
         for (j in 1:length(cens_varnames)){
-            has_censored <- censored_variables[[cens_varnames[[j]]]] == x$names$censored_label
+            # allow missing values in censored_variables
+            has_censored <- censored_variables[[cens_varnames[[j]]]] %in% x$names$censored_label
             if (any(has_censored)){
                 set(outcome_variables,j = out_varnames[[j]], i = which(has_censored),value = NA)
                 if (has_competing){

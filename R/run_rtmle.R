@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul  1 2024 (09:11)
 ## Version:
-## Last-Updated: jan 23 2026 (11:37) 
+## Last-Updated: feb 23 2026 (17:26) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 566
+##     Update #: 578
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -80,7 +80,7 @@
 #' x <- run_rtmle(x,learner = "learn_glmnet",time_horizon = 1:tau)
 #' # can also use lambda.min or lambda.1se
 #' \dontrun{
-#' x <- run_rtmle(x,learner = list("glmnet_cv"=list(learner_fun="learn_glmnet",
+#' x <- run_rtmle(x,learner = list(glmnet_cv"=list(learner_fun="learn_glmnet",
 #'                                 selector="min")),
 #'               time_horizon = tau)
 #' summary(x)
@@ -114,8 +114,12 @@ run_rtmle <- function(x,
     if (length(subsets)>0){
         for (sub in subsets){
             stopifnot(is.character(sub$label[[1]]))
-            ## FIXME: is this check useful? stopifnot(all(sub$id %in% x$prepared_data[[x$names$id]]))
-            xs <- data.table::copy(x[c("targets","names","times","protocols","models","intervention_nodes")])
+            xs <- data.table::copy(x[c("targets","names","times","protocols","models","intervention_nodes","tuning_parameters")])
+            for (pp in names(xs$protocols)){
+                xs$protocols[[pp]]$intervention_match <- xs$protocols[[pp]]$intervention_match[x$prepared_data[[x$names$id]] %in% sub$id]
+                xs$protocols[[pp]]$intervention_probs <- NULL
+                xs$protocols[[pp]]$cumulative_intervention_probs <- NULL
+            }
             xs$prepared_data <- x$prepared_data[x$prepared_data[[x$names$id]] %in% sub$id]
             if (NROW(xs$prepared_data) == 0) stop(paste0("No data in subset: ",label))
             # FIXME: should check if the number at risk at the maximal time_horizon is not zero
@@ -244,7 +248,7 @@ run_rtmle <- function(x,
         }else{
             # initialize new targets, new protocols and new time_horizons
             e <- rbind(x$estimate[["Main_analysis"]],empty_estimate)
-            e <- e[e[,.I[1],by = c("Target","Protocol","Time_horizon")]$V1]
+            e <- e[e[,.I[1],by = c("Target","Protocol","Time_horizon","Estimator")]$V1]
             x$estimate[["Main_analysis"]] <- e
         }
         # for loop across targets
@@ -263,12 +267,13 @@ run_rtmle <- function(x,
                 #
                 # G-part: fit nuisance parameter models for propensity and censoring
                 #
-                x <- intervention_probabilities(x,
-                                                protocol_name = protocol_name,
-                                                refit = refit,
-                                                learner = learners,
-                                                time_horizon = time_horizon,
-                                                seed = seed)
+                if (estimator == "tmle"){
+                    x <- intervention_probabilities(x,
+                                                    protocol_name = protocol_name,
+                                                    refit = refit,
+                                                    learner = learners,
+                                                    seed = seed)
+                }
                 #
                 # Q-part: loop backwards in time through iterative condtional expectations
                 #
@@ -281,8 +286,6 @@ run_rtmle <- function(x,
                                                learner = learners,
                                                estimator = estimator,
                                                seed = seed)
-                    # FIXME: why does x loose its class in this loop?
-                    class(x) <- "rtmle"
                 }
             }
         }

@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 25 2024 (09:50) 
 ## Version: 
-## Last-Updated: jan 20 2026 (17:45) 
+## Last-Updated: feb  5 2026 (09:25) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 99
+##     Update #: 103
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -49,7 +49,7 @@ x <- rtmle_init(intervals = tau,name_id = "id",name_outcome = "Y",name_competing
 x <- add_long_data(x,outcome_data=ld$outcome_data,censored_data=ld$censored_data,competing_data=ld$competing_data,timevar_data=ld$timevar_data)
 x <- add_baseline_data(x,data=ld$baseline_data)
 x <- long_to_wide(x,breaks = seq(0,2000,30.45*6))
-x <- protocol(x,name = "Always_A",intervention = data.frame("A" = factor(1,levels = c(0,1))))
+x <- protocol(x,name = "Always_A",intervention = data.frame(time = 0:tau,"A" = factor(1,levels = c(0,1))))
 x <- prepare_data(x) 
 x <- target(x,name = "Outcome_risk",estimator = "tmle",protocols = "Always_A")
 x <- model_formula(x) 
@@ -80,20 +80,20 @@ set.seed(17)
 tau <- 2
 ld <- simulate_long_data(n = 91,number_visits = 20,beta = list(A_on_Y = -.2,A0_on_Y = -0.3,A0_on_A = 6),register_format = TRUE)
 # generate a second treatment B at random
-ld$timevar_data$B <- ld$timevar_data$A[,.(id = sort(sample(1:91,size = 75,replace = FALSE)),date = date)]
+ld$timevar_data$B <- ld$timevar_data$A[id %in% sort(sample(1:91,size = 75,replace = FALSE))]
 x <- rtmle_init(intervals = tau,name_id = "id",name_outcome = "Y",name_competing = "Dead",name_censoring = "Censored",censored_label = "censored")
 x <- add_long_data(x,outcome_data = ld[["outcome_data"]],censored_data = ld[["censored_data"]],competing_data = ld[["competing_data"]],timevar_data = ld[["timevar_data"]])
 x <- add_baseline_data(x,data = ld$baseline_data)
 x <- long_to_wide(x,breaks = seq(0,2000,30.45*12))
-x <- protocol(x,name = "Always_A_Never_B",intervention = data.frame("A" = factor(rep(1,2),levels = c(0,1)),"B" = factor(rep(0,2),levels = c(0,1))))
-x <- protocol(x,name = "Always_B_Never_A",intervention = data.frame("A" = factor(rep(0,2),levels = c(0,1)),"B" = factor(rep(1,2),levels = c(0,1))))
+x <- protocol(x,name = "Always_A_Never_B",intervention = data.frame(time = 0:(tau-1),"A" = factor(rep(1,2),levels = c(0,1)),"B" = factor(rep(0,2),levels = c(0,1))))
+x <- protocol(x,name = "Always_B_Never_A",intervention = data.frame(time = 0:(tau-1),"A" = factor(rep(0,2),levels = c(0,1)),"B" = factor(rep(1,2),levels = c(0,1))))
 x <- prepare_data(x)
 # modifying the prepared data 
 x$prepared_data[,B_0 := rep(0,.N)]
 x$names$name_constant_variables <- c("B_0",x$names$name_constant_variables)
 x <- model_formula(x)
 x <- target(x,name = "Outcome_risk",estimator = "tmle",protocols = c("Always_A_Never_B","Always_B_Never_A"))
-x <- model_formula(x)
+x <- model_formula(x,propensity_model = "independent")
 x <- run_rtmle(x,refit = TRUE,learner = "learn_glm",time_horizon = tau)
 summary(x)
 # Ltmle
@@ -113,7 +113,7 @@ tfit <- run_ltmle(name_outcome="Y",time_horizon=tau,reduce = FALSE,regimen_data=
 ## sapply(x$models[[1]],function(x)x$formula)
 uu <- head(tfit$A$Ltmle_fit$cum.g.used)
 Lcum <- tfit$A$Ltmle_fit$cum.g[uu]
-Rcum <- x$cumulative_intervention_probs[[1]][,-2][uu]
+Rcum <- x$protocols$Always_B_Never_A$cumulative_intervention_probs[,-2]
 all.equal(Lcum,Rcum)
 
 colnames(x$cumulative_intervention_probs[[1]])
@@ -153,7 +153,7 @@ if (FALSE){
                     timevar_data=ld$timevar_data)
     x <- add_baseline_data(x,data=ld$baseline_data)
     x <- long_to_wide(x,breaks = seq(0,2000,30.45*12))
-    x <- protocol(x,name = "Always_A",intervention = data.frame("A" = factor(1,levels = c(0,1))))
+    x <- protocol(x,name = "Always_A",intervention = data.frame(time = 0:(tau-1),"A" = factor(1,levels = c(0,1))))
     x <- prepare_data(x)
     x <- target(x,name = "Outcome_risk",estimator = "tmle",protocols = "Always_A")
     x <- model_formula(x)
@@ -180,16 +180,7 @@ if (FALSE){
             list(is.deterministic=is.deterministic, Q.value=0)
         }
     }
-    y <- ltmle(data = ldata,
-               Anodes = c("A_0","A_1","A_2"),
-               Cnodes = c("Censored_1","Censored_2","Censored_3"),
-               Ynodes = c("Y_1","Y_2","Y_3"),
-               Lnodes = c("L_0","Dead_1","L_1","Dead_2","L_2"),
-               survivalOutcome = TRUE,
-               deterministic.Q.function = detQ,
-               abar = rep(1,3),
-               estimate.time = FALSE,
-               )
+    y <- ltmle(data = ldata,Anodes = c("A_0","A_1","A_2"),Cnodes = c("Censored_1","Censored_2","Censored_3"),Ynodes = c("Y_1","Y_2","Y_3"),Lnodes = c("L_0","Dead_1","L_1","Dead_2","L_2"),survivalOutcome = TRUE,deterministic.Q.function = detQ,abar = rep(1,3),estimate.time = FALSE,)
     summary(y)
     summary(tfit$A$Ltmle_fit)
     # formulas

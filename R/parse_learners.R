@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Nov  9 2024 (09:55) 
 ## Version: 
-## Last-Updated: dec  2 2025 (09:35) 
+## Last-Updated: feb  5 2026 (08:14) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 104
+##     Update #: 106
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -47,7 +47,9 @@ parse_learners <- function(learners){
         parsed_learners <- list(name = learners,fun = learners,args = NULL)
     }else{
         if (is.character(learners)) {
-            parsed_learners <- lapply(learners,FUN = parse_learners)
+            parsed_learners <- list(name = "superlearn",
+                                    learners = lapply(learners,FUN = parse_learners),
+                                    args = list(folds = 10))
         } else {
             # FIXME: write a helpful error message
             stopifnot(is.list(learners))

@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Oct 31 2024 (07:29) 
 ## Version: 
-## Last-Updated: jan 23 2026 (10:53) 
+## Last-Updated: feb 21 2026 (07:30) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 222
+##     Update #: 231
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -97,6 +97,8 @@ superlearn <- function(folds,
         multi_factor_levels <- data[, data.table::data.table(factor = factor_cols,
                                                              expected_levels = sapply(.SD,uniqueN)),
                                     .SDcols = factor_cols][expected_levels>2]
+    }else{
+        multi_factor_levels <- NULL
     }
     # create emtpy level-1 data
     level_one_data <- data.table::data.table(id = 1:N,data[[outcome_variable]])
@@ -195,14 +197,17 @@ superlearn <- function(folds,
         (level_one_data[[outcome_variable]]-level_one_data[[this_learner_name]]
         )^2,na.rm = TRUE)})
     names(x) <- learner_names
-    winner_name <- names(x)[which.min(x)]
+    x <- 100*sort(x)
+    winner_name <- names(x)[1]
     names(learners) <- learner_names
     winner <- learners[[winner_name]]
     learner_args <- c(list(character_formula = character_formula,
                            data = data,
                            intervened_data = intervened_data),
                       this_learner$args)
-    predicted_values_args <- c(winner$args, learner_args[!names(learner_args)%in%names(winner$args)]) ## do not include duplicate arguments
+    ## do not include duplicate arguments
+    predicted_values_args <- c(winner$args,
+                               learner_args[!names(learner_args)%in%names(winner$args)]) 
     predicted_values <- do.call(winner$fun,predicted_values_args)
     data.table::setattr(predicted_values,"winner",winner)
     data.table::setattr(predicted_values,"fit",x)
