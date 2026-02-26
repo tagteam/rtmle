@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 30 2024 (14:30)
 ## Version:
-## Last-Updated: feb 25 2026 (16:13) 
+## Last-Updated: feb 26 2026 (12:59) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 545
+##     Update #: 547
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -82,10 +82,12 @@ sequential_regression <- function(x,
                                     intervened_data = intervened_data,
                                     id_variable = x$names$id,
                                     minority_threshold = x$tuning_parameters$minority_threshold,
-                                    seed = seed)
+                                    seed = seed,
+                                    diagnostics = x$diagnostics)
         # save fitted object
         x$models[[paste0("time_",(k-1))]][["outcome"]][[protocol_name]]$fit <- attr(fit_last_interval,"fit")
-        data.table::setattr(fit_last_interval,"fit",NULL)
+        x$diagnostics <- attr(fit_last_interval,"diagnostics")
+        # remove attributes
         fit_last_interval <- as.numeric(fit_last_interval)
         # set predicted value as outcome for next regression
         if (estimator == "tmle"){
@@ -127,7 +129,8 @@ sequential_regression <- function(x,
                                                  offset = predicted_outcome_previous,
                                                  intervention_probs = inverse_probability_weights,
                                                  outcome_free_and_uncensored = outcome_free_and_uncensored,
-                                                 intervention_match = imatch)
+                                                 intervention_match = imatch,
+                                                 k = k,protocol = protocol_name)
             ),"try-error")){
                 stop(paste0("Fluctuation model used in the TMLE update step faile",
                             " in the attempt to run function tmle_update at time point: ",k))

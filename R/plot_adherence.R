@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: dec 11 2025 (10:23) 
 ## Version: 
-## Last-Updated: feb 25 2026 (16:12) 
+## Last-Updated: feb 26 2026 (12:38) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 20
+##     Update #: 21
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -14,6 +14,51 @@
 #----------------------------------------------------------------------
 ## 
 ### Code:
+#' Plot cumulative non-adherence by protocol
+#'
+#' Computes time to first deviation from a treatment regime for each protocol in a
+#' \code{speff2trial}-like object \code{x}, allowing for right censoring and competing
+#' risks (e.g., death/outcome). The result is plotted as the cumulative incidence
+#' (in percent) of non-adherence over follow-up time, stratified by protocol.
+#'
+#' @param x An object containing protocol-specific adherence information and follow-up
+#'   data. Must include at least \code{x$protocols} (a named list where each element has
+#'   \code{$intervention_match}), \code{x$followup} (with \code{last_interval}),
+#'   \code{x$prepared_data} (optional; used for censoring indicators), and
+#'   \code{x$names$censoring}.
+#' @param ... Currently unused. Included for future extensions.
+#'
+#' @details
+#' For each protocol, the function restricts to initiators (those with
+#' \code{intervention_match[,1] == 1}). It then identifies:
+#' \itemize{
+#'   \item \code{first_deviation}: the first interval where \code{intervention_match} equals 0.
+#'   \item \code{censored_time}: the first interval marked \code{"censored"} in the prepared data
+#'     (if censoring variables are provided).
+#' }
+#' The non-adherence time is \code{pmin(last_interval, first_deviation, censored_time, na.rm = TRUE)}.
+#' The event indicator \code{event_nonadherence} is coded as 0 (censored), 1 (non-adherence),
+#' and 2 (competing event / outcome).
+#'
+#' A stratified cumulative incidence function is fitted using \code{prodlim::prodlim}
+#' with \code{Hist(time_nonadherence, event_nonadherence)} and plotted with
+#' \code{prodlim::ggprodlim} for cause 1 (non-adherence).
+#'
+#' @return A \code{ggplot2} object (as returned by \code{prodlim::ggprodlim}) showing the
+#'   cumulative incidence of non-adherence (percent) by protocol.
+#'
+#' @examples
+#' \dontrun{
+#' p <- plot_adherence(x)
+#' print(p)
+#' }
+#'
+#' @seealso \code{\link[prodlim:prodlim]{prodlim}}, \code{\link[prodlim:ggprodlim]{ggprodlim}},
+#'   \code{\link[prodlim:Hist]{Hist}}
+#'
+#' @importFrom prodlim prodlim ggprodlim Hist
+#' @importFrom data.table data.table :=
+#' @export
 plot_adherence <- function(x,...){
     time_nonadherence = last_interval = event_nonadherence = value = variable = first_event = event = treatment = NULL
     # find time to first deviation from regime where
@@ -39,6 +84,7 @@ plot_adherence <- function(x,...){
                                          data = dt_nonadherence)
     prodlim::ggprodlim(fit_nonadherence,cause = 1,ylim = c(0,100))+ ylab("Non-adherence")
 }
+
 
 
 ######################################################################

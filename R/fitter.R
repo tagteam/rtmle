@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: jan 25 2026 (09:26) 
 ## Version: 
-## Last-Updated: feb 25 2026 (16:06) 
+## Last-Updated: feb 26 2026 (13:29) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 54
+##     Update #: 60
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -21,7 +21,8 @@ fitter <- function(intervention_node,
                    intervened_data,
                    id_variable,
                    minority_threshold,
-                   seed){
+                   seed,
+                   diagnostics = NULL){
     current_data <- data.table::as.data.table(model.frame(formula = stats::formula(formula),data = data))
     ## I(1*(A==1)) has class 'AsIs' but the values are numeric, that's why as.numeric is applied
     current_outcome_name <- names(current_data)[[1]]
@@ -67,7 +68,11 @@ fitter <- function(intervention_node,
                                outcome_variable = "rtmle_outcome",
                                id_variable = id_variable))
                 if (inherits(try(
-                    predicted_values <- do.call("superlearn",c(args,list(seed = seed))),silent = FALSE),
+                    predicted_values <- do.call("superlearn",
+                                                c(args,
+                                                  list(diagnostics = diagnostics,
+                                                       current_constants,
+                                                       seed = seed))),silent = FALSE),
                     "try-error")) {
                     stop(paste0("Failed to superlearn/crossfit with formula ",ff,"\nwhere the outcome is: ",
                                 ifelse(current_outcome_name == "rtmle_predicted_outcome",

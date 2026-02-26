@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Oct 17 2024 (09:26) 
 ## Version: 
-## Last-Updated: feb 22 2026 (07:57) 
+## Last-Updated: feb 26 2026 (13:17) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 450
+##     Update #: 456
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -64,18 +64,25 @@ intervention_probabilities <- function(x,
                                            intervened_data = intervened_data,
                                            id_variable = x$names$id,
                                            minority_threshold = x$tuning_parameters$minority_threshold,
-                                           seed = seed)
+                                           seed = seed,
+                                           diagnostics = x$diagnostics)
                     # store the fit
                     x$models[[paste0("time_",k)]][[NUI]][[NP]]$fit <- attr(nuisance_fit,"fit")
-                    # check predicted values
+                    # update diagnostics
+                    if (length(attr(nuisance_fit,"diagnostics"))>0)
+                        x$diagnostics <- attr(nuisance_fit,"diagnostics")
+                    # remove attributes predicted values
                     nuisance_fit <- as.numeric(nuisance_fit)
+                    # check predicted values
                     if (any(is.na(nuisance_fit))){
                         stop(paste0("Fitting nuisance parameter model returned missing values:\n",
                                     current_formula))
                     }
                     if (any(nuisance_fit<0) || any(nuisance_fit>1)){
                         nuisance_fit <- pmax(0,pmin(1,nuisance_fit))
-                        x$models[[paste0("time_",k)]][[NUI]][[NP]]$warnings <- c("Truncated intervention probabilities outside [0,1].")
+                        x$diagnostics$probabilities_off_range <- c(x$diagnostics$probabilities_off_range,
+                                                                   c("Intervention probabilities outside [0,1] at intervention node ",k," for model ",NP," estimating ", NUI,"."))
+                        ## x$models[[paste0("time_",k)]][[NUI]][[NP]]$warnings <- c("Truncated intervention probabilities outside [0,1].")
                     }
                     # add columns to the intervention_probs matrix
                     intervention_probs_k <- cbind(intervention_probs_k,

@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 19 2024 (07:23) 
 ## Version: 
-## Last-Updated: feb 25 2026 (16:13) 
+## Last-Updated: feb 26 2026 (12:40) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 50
+##     Update #: 51
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -102,7 +102,8 @@ rtmle_init <- function(intervals,
              intervention_nodes = 0:(intervals-1),
              tuning_parameters = list(minority_threshold = minority_threshold,
                                       weight_truncation = weight_truncation,
-                                      prediction_range = prediction_range))
+                                      prediction_range = prediction_range),
+             diagnostics = NULL)
     class(x) = "rtmle"
     x
 }

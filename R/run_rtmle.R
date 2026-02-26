@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul  1 2024 (09:11)
 ## Version:
-## Last-Updated: feb 23 2026 (17:26) 
+## Last-Updated: feb 26 2026 (13:28) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 578
+##     Update #: 590
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -22,26 +22,35 @@
 #'     targets in x$targets are analysed.
 #' @param learner A function which is called to fit (learn) the
 #'     nuisance parameter models.
-#' @param estimator  Character specifying the estimator: either \code{'tmle'} or \code{'g-formula'}.
+#' @param estimator Character specifying the estimator: either
+#'     \code{'tmle'} or \code{'g-formula'}.
 #' @param time_horizon The time horizon at which to calculate
 #'     risks. If it is a vector the analysis will be performed for
 #'     each element of the vector.
 #' @param refit Logical. If \code{TRUE} ignore any propensity score
 #'     and censoring models learned in previous calls to this
-#'     function. This may be useful to save computation time. Default is \code{TRUE}.
+#'     function. This may be useful to save computation time. Default
+#'     is \code{TRUE}.
 #' @param seed Seed used for cross-fitting
-#' @param subsets A list structure for subset analyses. Each element is a list 
-#'                which requires a label, to name the subset, and a subset of the 
-#'                variable \code{x$names$id} in the data \code{x$prepared_data} to
-#'                identify the subset. The results of the subset analysis are stored
-#'                in \code{x$estimate[[subsets[[label]]}. An optional element of each
-#'                subset-list is called \code{append}
-#'                which should be logical: if \code{TRUE} append the estimates to the existing
-#'                estimates with rbind. This may be used for stratified analyses, to study seed dependence (Monte-Carlo error)
-#'                and bootstrap. See examples.
-#' @param keep_influence Logical: if \code{TRUE} store the estimated influence function of the estimator in the object.
-#'                       Currently this argument is only used when argument \code{subsets} is also specified.
-#' @param verbose Logical. If \code{FALSE} suppress all messages. \code{FALSE} is the default.
+#' @param subsets A list structure for subset analyses. Each element
+#'     is a list which requires a label, to name the subset, and a
+#'     subset of the variable \code{x$names$id} in the data
+#'     \code{x$prepared_data} to identify the subset. The results of
+#'     the subset analysis are stored in
+#'     \code{x$estimate[[subsets[[label]]}. An optional element of
+#'     each subset-list is called \code{append} which should be
+#'     logical: if \code{TRUE} append the estimates to the existing
+#'     estimates with rbind. This may be used for stratified analyses,
+#'     to study seed dependence (Monte-Carlo error) and bootstrap. See
+#'     examples.
+#' @param keep_influence Logical: if \code{TRUE} store the estimated
+#'     influence function of the estimator in the object.  Currently
+#'     this argument is only used when argument \code{subsets} is also
+#'     specified.
+#' @param verbose Logical. If \code{FALSE} suppress all
+#'     messages. \code{FALSE} is the default.
+#' @param ... Further arguments can change the tuning parameters. E.g., To apply weight truncation,
+#' use \code{weight_truncation=c(0.01,0.99)}.
 #' @return The modified object contains the fitted nuisance parameter
 #'     models and the estimate of the target parameter.
 #' @author Thomas A Gerds \email{tag@@biostat.ku.dk}
@@ -55,7 +64,9 @@
 #' ld <- simulate_long_data(n = 391,number_visits = 20,
 #'                          beta = list(A_on_Y = -.2,A0_on_Y = -0.3,A0_on_A = 6),
 #'                          register_format = TRUE)
-#' x <- rtmle_init(intervals = tau,name_id = "id",name_outcome = "Y",name_competing = "Dead",
+#' x <- rtmle_init(intervals = tau,name_id = "id",
+#'                 name_outcome = "Y",
+#'                 name_competing = "Dead",
 #'                 name_censoring = "Censored",censored_label = "censored")
 #' x <- add_long_data(x,
 #'                    outcome_data=ld$outcome_data,
@@ -78,11 +89,15 @@
 #' # default is undersmoothing which means: take the smallest penalty
 #' # where the model still converges
 #' x <- run_rtmle(x,learner = "learn_glmnet",time_horizon = 1:tau)
+#' # with weight truncation
+#' xw <- run_rtmle(x,learner = "learn_glmnet",time_horizon = 1:tau,
+#' weight_truncation=c(0.4,0.6))
 #' # can also use lambda.min or lambda.1se
 #' \dontrun{
-#' x <- run_rtmle(x,learner = list(glmnet_cv"=list(learner_fun="learn_glmnet",
-#'                                 selector="min")),
-#'               time_horizon = tau)
+#'     x <- run_rtmle(x,learner = list(name = "glmnet_min",
+#'                                    learner_fun="learn_glmnet",
+#'                                    selector="min"),
+#'                   time_horizon = tau)
 #' summary(x)
 #' }
 #' \dontrun{
@@ -107,9 +122,17 @@ run_rtmle <- function(x,
                       seed = NULL,
                       subsets = NULL,
                       keep_influence = TRUE,
-                      verbose = FALSE){
+                      verbose = FALSE,
+                      ...){
     time <- label <- level <- NULL
     if (length(x$targets) == 0) stop("Object contains no targets. You can add one with the function rtmle::target")
+    dot_args <- list(...)
+    new_tuning_parms <- intersect(names(dot_args), names(x$tuning_parameters))
+    if (length(new_tuning_parms)>0){
+        for (ntp in new_tuning_parms) {
+            x$tuning_parameters[[ntp]] <- dot_args[[ntp]]
+        }
+    }
     ## FIXME: need to stop or adapt if learner="glmnet" instead of "learn_glmnet"
     if (length(subsets)>0){
         for (sub in subsets){
@@ -290,7 +313,8 @@ run_rtmle <- function(x,
             }
         }
         ## Keep the learner function used for cheap bootstrap
-        x$learner <- learner
+        x$unparsed_learner <- learner
+        x$learner <- learners
         return(x)
     }
 }

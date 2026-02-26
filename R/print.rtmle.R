@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 19 2024 (08:31) 
 ## Version: 
-## Last-Updated: feb 26 2026 (09:31) 
+## Last-Updated: feb 26 2026 (12:51) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 138
+##     Update #: 143
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -109,17 +109,21 @@ print.rtmle <- function(x, ...) {
             collapse = ", "
         )
     }
-    summarize_learners <- function(x){
+    summarize_learners <- function(x,called_from_summarize_learners = FALSE){
         if (is.null(x$learners)){
             # --------------------------------
             # SINGLE LEARNER
             # --------------------------------
             learner_args <- setdiff(names(x),c("name","learner_fun"))
             args_string <- .format_args(x[learner_args])
-            if (is.null(args_string)){
-                return(paste0("                       +", x$name))
-            } else {
-                return(paste0("                       +", x$name, " (", args_string, ")"))
+            if (called_from_summarize_learners){
+                if (is.null(args_string)){
+                    return(paste0("                       +", x$name))
+                } else {
+                    return(paste0("                       +", x$name, " (", args_string, ")"))
+                }
+            }else{
+                paste0("", x$name, " (", args_string, ")")
             }
         } else {
             # --------------------------------
@@ -128,7 +132,7 @@ print.rtmle <- function(x, ...) {
             folds <- x$folds
             header <- paste0("SuperLearner (", folds, "-fold CV)")
             learner_lines <- unlist(
-                lapply(x$learners, function(l){summarize_learners(l)})
+                lapply(x$learners, function(l){summarize_learners(l,called_from_summarize_learners = TRUE)})
             )
             paste0(header,"\n", paste0(learner_lines,collapse = "\n"))
         }
@@ -137,6 +141,10 @@ print.rtmle <- function(x, ...) {
         cat(sep = "","\nLearner:             ",summarize_learners(x = x$learner))
     }else{
         cat(sep = "","\nTODO: Use the function 'run_rtmle' to estimate the nuisance parameter models and the target parameter.")
+    }
+    if (length(x$diagnostics)>0){
+        n_diag = lapply(x$diagnostics,length)
+        cat("\nWarnings in x$diagnostics: ",paste0(names(n_diag),n_diag,collapse = "n="))
     }
     if (length(x$estimate)>0){
         cat("\n\nResults:\n")

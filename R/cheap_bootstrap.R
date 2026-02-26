@@ -130,7 +130,7 @@ cheap_bootstrap <- function(x,
                                                append = TRUE,
                                                variable = "B",
                                                level = b)),
-                           learner = x$learner,
+                           learner = x$unparsed_learner,
                            ...)
         }
         x$estimate$Cheap_bootstrap[[v]] <- x$estimate$CB

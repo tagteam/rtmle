@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Nov  9 2024 (09:55) 
 ## Version: 
-## Last-Updated: feb 26 2026 (08:23) 
+## Last-Updated: feb 26 2026 (13:27) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 111
+##     Update #: 113
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -60,7 +60,11 @@ parse_learners <- function(learners){
                 #
                 # a single learner, not a super learner
                 #
-                learner_name <- learners$name
+                if (length(learners$name)>0){
+                    learner_name <- learners$name
+                }else{
+                    learner_name <- "unnamed"
+                }
                 if (inherits(learners$learner_fun,"function")){
                     learner_fun <- learners$learner_fun
                 } else{

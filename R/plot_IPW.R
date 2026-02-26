@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: feb 26 2026 (09:52) 
 ## Version: 
-## Last-Updated: feb 26 2026 (10:37) 
+## Last-Updated: feb 26 2026 (12:32) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 20
+##     Update #: 34
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -47,7 +47,7 @@ plot_IPW <- function(
                      x,
                      protocols = NULL
                      ) {
-    intervention_nodes <- used_cumprobs <- NULL
+    intervention_node <- intervention_nodes <- used_cumprobs <- NULL
     stopifnot(!is.null(x$protocols),!is.null(x$followup),!is.null(x$intervention_nodes))
     protocol_names <- names(x$protocols)
     if (!is.null(protocols)) {
@@ -60,6 +60,12 @@ plot_IPW <- function(
     plot_dt <- do.call(rbind,lapply(protocol_names,function(this_protocol){
         do.call(rbind,lapply(x$intervention_nodes,function(k){
             outcome_free_and_uncensored <- (x$followup$last_interval >= (k-1))
+            if (length(x$names$censoring)>0){
+                current_cnode <- as.character(x$prepared_data[[paste0(x$names$censoring,"_",(k+1))]])
+                outcome_free_and_uncensored_outcome <- outcome_free_and_uncensored & (current_cnode %in% x$names$uncensored_label)
+            }else{
+                outcome_free_and_uncensored_outcome <- outcome_free_and_uncensored
+            }
             ipos <- x$protocols[[this_protocol]]$intervention_last_nodes[k+1]
             used_cumprobs <- x$protocols[[this_protocol]]$cumulative_intervention_probs[,ipos]
             if (is.numeric(x$tuning_parameters$weight_truncation)){
@@ -74,11 +80,13 @@ plot_IPW <- function(
                 imatch <- rep(1,NROW(x$prepared_data))
                 imatch[!outcome_free_and_uncensored] <- NA
             }
-            subjects_with_weights <- outcome_free_and_uncensored & as.vector(imatch)
+            Y <- x$prepared_data[[paste0(x$names$outcome,"_",k+1)]]
+            subjects_with_weights <- outcome_free_and_uncensored_outcome & as.vector(imatch)
             data.table::data.table(protocol = this_protocol,intervention_node = k,used_cumprobs = used_cumprobs[subjects_with_weights])
         }))
     }))
     plot_dt[, intervention_node := factor(intervention_node, levels = x$intervention_nodes)]
+    missing_values <- plot_dt[,data.table::data.table("mising value" = sum(is.na(used_cumprobs))),by = c("intervention_node","protocol")]
     p <- ggplot2::ggplot(plot_dt, ggplot2::aes(x = intervention_node, y = used_cumprobs)) +
         ggplot2::geom_boxplot(outlier.alpha = 0.4) +
         ggplot2::labs(
@@ -87,7 +95,8 @@ plot_IPW <- function(
                      title = "Cumulative intervention probabilities among intervention-adherent and at-risk subjects"
                  ) +
         ggplot2::theme_bw() +
-        ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45, hjust = 1))
+        ggplot2::ylim(c(0,1)) 
+        ## ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 0, hjust = 0))
     if (length(protocol_names)>1) {
         p <- p + ggplot2::facet_grid(. ~ protocol)
     }

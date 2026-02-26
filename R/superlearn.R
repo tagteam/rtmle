@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Oct 31 2024 (07:29) 
 ## Version: 
-## Last-Updated: feb 21 2026 (07:30) 
+## Last-Updated: feb 26 2026 (13:17) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 231
+##     Update #: 245
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -24,22 +24,35 @@
 ##' @title Super learning for rtmle
 ##' @param folds Number of folds
 ##' @param seed Random seed
-##' @param learners List of learners. Each learner can either be a character string or a list. If the learner is a
-##' character string it must be the name of a learner function, such as \code{\link{learn_glm}},
-##'  \code{\link{learn_glmnet}},  \code{\link{learn_ranger}}. If the learner is a list then either the name of the learner
-##' is a learner function or the list has an element \code{learner_fun} which is the name of a learner function. The other elements of the list are
-##' passed on as additional arguments to the learner function.
-##' @param parse_learners Logical. If TRUE parse learners. \code{\link{run_rtmle}} needs sets this to FALSE.
-##' @param character_formula A formula (passed as a character string!) to parse the outcome and the predictor variables. 
-##' @param outcome_variable The name of the outcome variable (same as \code{all.vars(formula(character_formula))[[1]]} provided to avoid overhead in the parsing of the formula.
+##' @param learners List of learners. Each learner can either be a
+##'     character string or a list. If the learner is a character
+##'     string it must be the name of a learner function, such as
+##'     \code{\link{learn_glm}}, \code{\link{learn_glmnet}},
+##'     \code{\link{learn_ranger}}. If the learner is a list then
+##'     either the name of the learner is a learner function or the
+##'     list has an element \code{learner_fun} which is the name of a
+##'     learner function. The other elements of the list are passed on
+##'     as additional arguments to the learner function.
+##' @param parse_learners Logical. If TRUE parse
+##'     learners. \code{\link{run_rtmle}} needs sets this to FALSE.
+##' @param character_formula A formula (passed as a character string!)
+##'     to parse the outcome and the predictor variables.
+##' @param outcome_variable The name of the outcome variable (same as
+##'     \code{all.vars(formula(character_formula))[[1]]} provided to
+##'     avoid overhead in the parsing of the formula.
 ##' @param id_variable The name of the subject id variable.
 ##' @param data The data for learning.
-##' @param intervened_data The data were all intervention variables are readily set according to the intervention protocol.
-##' @param ensemble Type of superlearning. When \code{"winner"} the discrete super learner is the learner with the lowest
-##' level-one mean squared prediction error (Brier score).
-##' @param ... Not (yet) used. 
-##' @return The level-one data column of the discrete superlearner. 
-##' @seealso \code{\link{run_rtmle}}, \code{learn_glm}, \code{learn_glmnet}, \code{learn_ranger}
+##' @param intervened_data The data were all intervention variables
+##'     are readily set according to the intervention protocol.
+##' @param ensemble Type of superlearning. When \code{"winner"} the
+##'     discrete super learner is the learner with the lowest
+##'     level-one mean squared prediction error (Brier score).
+##' @param diagnostics For internal use when called from run_rtmle via fitter which is
+##' called from intervention_probabilities and sequential_regression.
+##' @param ... Not (yet) used.
+##' @return The level-one data column of the discrete superlearner.
+##' @seealso \code{\link{run_rtmle}}, \code{learn_glm},
+##'     \code{learn_glmnet}, \code{learn_ranger}
 ##' @examples
 ##' # Note that the function is designed to be called from run_rtmle.  
 ##' library(ranger)
@@ -74,6 +87,7 @@ superlearn <- function(folds,
                        data,
                        intervened_data,
                        ensemble,
+                       diagnostics = NULL,
                        ...){
     expected_levels = NULL
     N <- NROW(data)
@@ -141,18 +155,17 @@ superlearn <- function(folds,
                                                   expected_levels = sapply(.SD,uniqueN)),
                          .SDcols = multi_factor_levels$factor]))[duplicated(factor)]$factor
                 if (length(vars_missing_levels_k)>0){
-                    warning(paste0("Outcome: ",outcome_variable,": the following variables have not all levels in all folds: ",
-                                   paste0(vars_missing_levels_k,collapse = ", ")))
+                    diagnostics$missing_levels <- c(diagnostics$missing_levels,
+                                        paste0("Outcome: ",outcome_variable,": the following variables have not all levels in all folds: ",
+                                               paste0(vars_missing_levels_k,collapse = ", ")))
                     character_formula_k <- delete_variables_from_formula(character_formula = character_formula_k,
                                                                          delete_vars = vars_missing_levels_k)
                 }
             }
-
-
             # remove constant predictor variables
             if (length(current_constants)>0){
-                warning(paste0("Outcome: ",outcome_variable,": the following variables are constant in fold ",k,": ",
-                               paste0(current_constants,collapse = ", ")))
+                diagnostics$constant_predictors <- c(diagnostics$constant_predictors,paste0("Outcome: ",outcome_variable,": the following variables are constant in fold ",k,": ",
+                                                                                            paste0(current_constants,collapse = ", ")))
                 character_formula_k <- delete_variables_from_formula(character_formula = character_formula_k,
                                                                      delete_vars = current_constants)
                 number_rhs_variables_k <- attr(character_formula_k,"number_rhs_variables")
@@ -211,6 +224,7 @@ superlearn <- function(folds,
     predicted_values <- do.call(winner$fun,predicted_values_args)
     data.table::setattr(predicted_values,"winner",winner)
     data.table::setattr(predicted_values,"fit",x)
+    data.table::setattr(predicted_values,"diagnostics",diagnostics)
     return(predicted_values)
 }
 
