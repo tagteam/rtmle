@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 22 2024 (14:07) 
 ## Version: 
-## Last-Updated: feb 24 2026 (14:56) 
+## Last-Updated: feb 25 2026 (16:11) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 191
+##     Update #: 192
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -62,7 +62,7 @@ long_to_wide <- function(x,
                          start_followup_date,
                          fun = function(x){1*(sum(x)>0)},
                          verbose = TRUE){
-    interval = end_followup = censored_date =  competing_date = outcome_date = NULL
+    previous_date = interval = end_followup = censored_date =  competing_date = outcome_date = NULL
     if (!missing(intervals)){
         warning("Argument intervals is obsolete: use breaks instead.")
         breaks <- intervals

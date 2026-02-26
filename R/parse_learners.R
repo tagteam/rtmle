@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Nov  9 2024 (09:55) 
 ## Version: 
-## Last-Updated: feb  5 2026 (08:14) 
+## Last-Updated: feb 26 2026 (08:23) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 106
+##     Update #: 111
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -43,23 +43,26 @@ parse_learners <- function(learners){
         if (inherits(try(has_fun <- do.call("inherits",list(x = as.name(learner_fun),"function")),silent = TRUE),
                      "try-error")|| !has_fun){
             stop(paste0("Cannot parse the learner_fun as a function for learner '",learners,"'\nYou may need to load a library first?"))
-        }        
-        parsed_learners <- list(name = learners,fun = learners,args = NULL)
-    }else{
+        }
+        # NORMALIZE: use list() instead of NULL so it matches list-form learners
+        parsed_learners <- list(name = learners, fun = learners, args = list())
+    } else {
         if (is.character(learners)) {
-            parsed_learners <- list(name = "superlearn",
-                                    learners = lapply(learners,FUN = parse_learners),
-                                    args = list(folds = 10))
+            parsed_learners <- list(
+                name = "superlearn",
+                learners = lapply(learners, FUN = parse_learners),
+                # NORMALIZE: include learner="superlearn" (so list-form and char-vector form align)
+                args = list(learner = "superlearn", folds = 10)
+            )
         } else {
-            # FIXME: write a helpful error message
             stopifnot(is.list(learners))
             if (is.null(learners$learners)){
                 #
                 # a single learner, not a super learner
-                # 
+                #
                 learner_name <- learners$name
                 if (inherits(learners$learner_fun,"function")){
-                    learner_fun <- learners$learner_fun # as.character(substitute(learners$learner_fun))
+                    learner_fun <- learners$learner_fun
                 } else{
                     if (!is.character(learners$learner_fun)){
                         stop("The learners must specify a learner function as element learner_fun.\n",
@@ -74,49 +77,56 @@ parse_learners <- function(learners){
                                     "\nYou may need to load a library first?"))
                     }
                 }
-                # the remaining must be arguments of learner_fun
                 learner_args <- learners
-                # FIXME: could/should check if arguments of the function
-                #        match the arguments character_formula, intervened_data etc.
-                #        could also check if the other provided arguments
-                #        can be passed (requires that they are named!)
                 learner_args$name <- NULL
                 learner_args$learner_fun <- NULL
-                parsed_learners <- list(name = learner_name,fun = learner_fun,args = learner_args)
-            }else{
+
+                # NORMALIZE: ensure args is list() (never NULL)
+                if (is.null(learner_args)) learner_args <- list()
+
+                parsed_learners <- list(name = learner_name, fun = learner_fun, args = learner_args)
+            } else {
                 # super learner
-                # make sure that all learners have names
                 learner_args <- learners
-                # learners may be a named list
-                # and these names should be used if the learner
-                # does not have an argument 'name'
+
+                # make sure that all learners have names
                 list_names <- names(learners$learners)
                 for (l in 1:length(learners$learners)){
                     if (!is.character(learners$learners[[l]])){
                         if (length(learners$learners[[l]]$name) == 0){
                             if (length(list_names[[l]])>0){
                                 learners$learners[[l]]$name <- list_names[[l]]
-                            }else{
+                            } else {
                                 learners$learners[[l]]$name <- paste0("noname_learner_",l)
                             }
                         }
                     }
                 }
-                learners <- lapply(X = learners$learners,FUN = parse_learners)
+
+                learners <- lapply(X = learners$learners, FUN = parse_learners)
+
                 learner_args$learners <- NULL
                 learner_args$name <- NULL
-                if (length(learner_args$folds) == 0){
-                    stop("Argument folds for super learner is missing")
+
+                # NORMALIZE: if learner missing, set it
+                if (length(learner_args$learner) == 0){
+                    learner_args$learner <- "superlearn"
                 }
-                parsed_learners <- list(name = "superlearn",
-                                        learners = learners,
-                                        args = learner_args)
+
+                if (length(learner_args$folds) == 0){
+                    warning("Argument folds for super learner is missing but needed for cross-fitting.\nDefaults to 10-fold cross-validation.")
+                    learner_args$folds <- 10
+                }
+
+                parsed_learners <- list(
+                    name = "superlearn",
+                    learners = learners,
+                    args = learner_args
+                )
             }
         }
     }
     parsed_learners
 }
-
-
 ######################################################################
 ### parse_learners.R ends here

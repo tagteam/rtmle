@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: feb 24 2026 (11:04) 
 ## Version: 
-## Last-Updated: feb 24 2026 (14:58) 
+## Last-Updated: feb 26 2026 (06:32) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 21
+##     Update #: 24
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -28,6 +28,7 @@ discretize_timevarying_exposure <- function(data,
                                             point_exposure,
                                             threshold,
                                             id){
+    exposure = start_exposure = end_exposure = end_interval = start_interval = NULL
     data <- copy(data)
     grid <- copy(grid)
     if (point_exposure){
@@ -48,12 +49,12 @@ discretize_timevarying_exposure <- function(data,
         overlap[,exposure := (start_exposure <= end_interval & start_exposure >= start_interval)]
         overlap[is.na(exposure),exposure := 0]
         # summarize across interval
-        overlap <- overlap[,.(exposure = 1*(any(exposure))),by = c(id,"interval")]
+        overlap <- overlap[,data.table::data.table(exposure = 1*(any(exposure))),by = c(id,"interval")]
     }else{
         overlap[,exposure := (pmin(end_interval,end_exposure)-pmax(start_interval,start_exposure))]
         overlap[is.na(exposure),exposure := 0]
         # total duration in interval
-        overlap <- overlap[,.(exposure = sum(exposure)),by = c(id,"interval")]
+        overlap <- overlap[,data.table::data.table(exposure = sum(exposure)),by = c(id,"interval")]
         if (is.numeric(threshold)){
             set(overlap,j = "exposure",value = 1*(overlap[["exposure"]]>threshold))
         }

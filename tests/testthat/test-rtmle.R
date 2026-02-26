@@ -14,8 +14,8 @@ test_that("run rtmle on simulated data",{
     x <- target(x,name = "Outcome_risk",estimator = "tmle",protocols = "Always_A")
     x <- model_formula(x)
     suppressWarnings(x <- run_rtmle(x,time_horizon = 2,refit = TRUE,verbose = FALSE))
-    expect_equal(x$estimate$Main_analysis$Estimate,0.1893173,tolerance = 0.001)
-    expect_equal(x$estimate$Main_analysis$Standard_error,0.01976462,tolerance = 0.001)
+    expect_equal(x$estimate$Main_analysis$Estimate,0.1898482,tolerance = 0.001)
+    expect_equal(x$estimate$Main_analysis$Standard_error,0.01966602,tolerance = 0.001)
 })
 test_that("run rtmle without covariates",{
     set.seed(112)
@@ -31,8 +31,8 @@ test_that("run rtmle without covariates",{
     x <- target(x,name = "Outcome_risk",estimator = "tmle",protocols = "Always_A")
     x <- model_formula(x)
     suppressWarnings(x <- run_rtmle(x,time_horizon = 2,refit = TRUE,verbose = FALSE))
-    expect_equal(x$estimate$Main_analysis$Estimate,0.1871618,tolerance = 0.001)
-    expect_equal(x$estimate$Main_analysis$Standard_error,0.01957285,tolerance = 0.001)
+    expect_equal(x$estimate$Main_analysis$Estimate,0.1881073,tolerance = 0.001)
+    expect_equal(x$estimate$Main_analysis$Standard_error,0.01948862,tolerance = 0.001)
 })
 test_that("run rtmle without competing risks",{
     set.seed(112)

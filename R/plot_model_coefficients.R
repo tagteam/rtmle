@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: feb 23 2026 (06:38) 
 ## Version: 
-## Last-Updated: feb 23 2026 (10:41) 
+## Last-Updated: feb 25 2026 (16:13) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 10
+##     Update #: 11
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -164,7 +164,8 @@ plot_model_coefficients <- function(
   # manhattan aesthetics:
   manhattan_color_by = c("none", "node_group", "time", "term"),
   show_x_labels = FALSE
-) {
+  ) {
+    outcome <- time_k <- x_index <- node_group <- NULL
   color_by <- match.arg(color_by)
   facet_by <- match.arg(facet_by)
   plot_style <- match.arg(plot_style)

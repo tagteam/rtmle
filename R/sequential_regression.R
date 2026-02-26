@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 30 2024 (14:30)
 ## Version:
-## Last-Updated: feb 25 2026 (16:06) 
+## Last-Updated: feb 25 2026 (16:13) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 544
+##     Update #: 545
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -21,7 +21,7 @@ sequential_regression <- function(x,
                                   learner,
                                   estimator,
                                   seed = seed){
-    time = Target = Protocol = Time_horizon = Estimate = Target_parameter = Standard_error = Lower = Upper = rtmle_predicted_outcome = NULL
+    time = Target = Protocol = Time_horizon = Estimator = Estimate = Target_parameter = Standard_error = Lower = Upper = rtmle_predicted_outcome = NULL
     N <- NROW(x$prepared_data)
     intervention_table <- x$protocols[[protocol_name]]$intervention_table
     intervention_match <- x$protocols[[protocol_name]]$intervention_match

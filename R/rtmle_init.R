@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 19 2024 (07:23) 
 ## Version: 
-## Last-Updated: feb 24 2026 (15:04) 
+## Last-Updated: feb 25 2026 (16:13) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 49
+##     Update #: 50
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -97,7 +97,7 @@ rtmle_init <- function(intervals,
                           "censored_levels" = censored_levels,
                           "censored_label" = censored_label,
                           "uncensored_label" = uncensored_label),
-             version = packageVersion("rtmle"),
+             version = utils::packageVersion("rtmle"),
              times = 0:intervals,
              intervention_nodes = 0:(intervals-1),
              tuning_parameters = list(minority_threshold = minority_threshold,

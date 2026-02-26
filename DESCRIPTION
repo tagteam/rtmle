@@ -28,7 +28,6 @@ Imports:
     speedglm,
     glmnet,
     ranger,
-    # pammtools,
     rlang,
     matrixStats,
     Matrix

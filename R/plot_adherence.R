@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: dec 11 2025 (10:23) 
 ## Version: 
-## Last-Updated: feb 22 2026 (14:50) 
+## Last-Updated: feb 25 2026 (16:12) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 19
+##     Update #: 20
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -15,7 +15,7 @@
 ## 
 ### Code:
 plot_adherence <- function(x,...){
-    value = variable = first_event = event = treatment = NULL
+    time_nonadherence = last_interval = event_nonadherence = value = variable = first_event = event = treatment = NULL
     # find time to first deviation from regime where
     # death is a competing risk and data may be right censored
     dt_nonadherence <- do.call(rbind,lapply(names(x$protocols),function(pro){
@@ -33,7 +33,7 @@ plot_adherence <- function(x,...){
         adherence_data[is.na(censored_time),event_nonadherence := 2]
         # value 2 when non-adherence is observed
         adherence_data[!is.na(first_deviation),event_nonadherence := 1]
-        adherence_data[,.(protocol,time_nonadherence,event_nonadherence)]
+        adherence_data[,data.table::data.table(protocol,time_nonadherence,event_nonadherence)]
     }))
     fit_nonadherence <- prodlim::prodlim(Hist(time_nonadherence,event_nonadherence)~protocol,
                                          data = dt_nonadherence)
