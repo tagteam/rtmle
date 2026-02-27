@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: jan 25 2026 (09:26) 
 ## Version: 
-## Last-Updated: feb 26 2026 (13:29) 
+## Last-Updated: feb 27 2026 (11:04) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 60
+##     Update #: 61
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -66,6 +66,7 @@ fitter <- function(intervention_node,
                           list(learners = learner$learners,
                                parse_learners = FALSE,
                                outcome_variable = "rtmle_outcome",
+                               outcome_variable_name = current_outcome_name,
                                id_variable = id_variable))
                 if (inherits(try(
                     predicted_values <- do.call("superlearn",

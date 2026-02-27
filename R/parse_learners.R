@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Nov  9 2024 (09:55) 
 ## Version: 
-## Last-Updated: feb 26 2026 (13:27) 
+## Last-Updated: feb 27 2026 (10:14) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 113
+##     Update #: 116
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -118,8 +118,12 @@ parse_learners <- function(learners){
                 }
 
                 if (length(learner_args$folds) == 0){
-                    warning("Argument folds for super learner is missing but needed for cross-fitting.\nDefaults to 10-fold cross-validation.")
+                    warning("Argument `folds' of function super_learn is missing but needed for cross-fitting.\nDefaults to 10-fold cross-validation.")
                     learner_args$folds <- 10
+                }
+                if (length(learner_args$ensemble_method) == 0){
+                    warning("Argument `ensemble_method' of function super_learn is missing. Defaults to `discrete' which implements a discrete superlearner.")
+                    learner_args$ensemble_method <- "discrete"
                 }
 
                 parsed_learners <- list(

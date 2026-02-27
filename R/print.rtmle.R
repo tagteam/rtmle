@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 19 2024 (08:31) 
 ## Version: 
-## Last-Updated: feb 26 2026 (12:51) 
+## Last-Updated: feb 27 2026 (11:10) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 143
+##     Update #: 151
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -143,8 +143,10 @@ print.rtmle <- function(x, ...) {
         cat(sep = "","\nTODO: Use the function 'run_rtmle' to estimate the nuisance parameter models and the target parameter.")
     }
     if (length(x$diagnostics)>0){
-        n_diag = lapply(x$diagnostics,length)
-        cat("\nWarnings in x$diagnostics: ",paste0(names(n_diag),n_diag,collapse = "n="))
+        cat("\nWARN x$diagnostics:")
+        for (diag in names(x$diagnostics)){
+            cat("\n                       +: ",paste0(diag," (n=",length(x$diagnostics[[diag]]),")"))
+        }
     }
     if (length(x$estimate)>0){
         cat("\n\nResults:\n")
