@@ -11,11 +11,12 @@ superlearn(
   parse_learners = TRUE,
   character_formula,
   outcome_variable,
+  outcome_variable_name,
   id_variable,
   data,
   intervened_data,
-  ensemble,
-  diagnostics = NULL,
+  ensemble_method = "discrete",
+  diagnostics,
   ...
 )
 }
@@ -44,6 +45,8 @@ to parse the outcome and the predictor variables.}
 \code{all.vars(formula(character_formula))[[1]]} provided to
 avoid overhead in the parsing of the formula.}
 
+\item{outcome_variable_name}{For internal use when called from \code{run_rtmle} via \code{fitter}.}
+
 \item{id_variable}{The name of the subject id variable.}
 
 \item{data}{The data for learning.}
@@ -51,12 +54,14 @@ avoid overhead in the parsing of the formula.}
 \item{intervened_data}{The data were all intervention variables
 are readily set according to the intervention protocol.}
 
-\item{ensemble}{Type of superlearning. When \code{"winner"} the
-discrete super learner is the learner with the lowest
-level-one mean squared prediction error (Brier score).}
+\item{ensemble_method}{How to combine the learners. Implemented are
+non-linear least squares \code{"nnls"}, index of prediction accuracy \code{"ipa"} weighting and
+the discrete superlearner which picks the learner with the lowest Brier score. If all models
+have zero weight, the average predicted value from the learning set is applied.}
 
-\item{diagnostics}{For internal use when called from run_rtmle via fitter which is
-called from intervention_probabilities and sequential_regression.}
+\item{diagnostics}{For internal use when called from run_rtmle via
+fitter which is called from intervention_probabilities and
+sequential_regression.}
 
 \item{...}{Not (yet) used.}
 }

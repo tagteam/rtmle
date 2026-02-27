@@ -16,6 +16,7 @@ RoxygenNote: 7.3.3
 VignetteBuilder: R.rsp
 Imports:
     stats,
+    nnls,
     utils,	
     data.table,
     riskRegression,

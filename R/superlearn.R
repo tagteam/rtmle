@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Oct 31 2024 (07:29) 
 ## Version: 
-## Last-Updated: feb 27 2026 (11:11) 
+## Last-Updated: feb 27 2026 (11:39) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 278
+##     Update #: 281
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -40,15 +40,18 @@
 ##' @param outcome_variable The name of the outcome variable (same as
 ##'     \code{all.vars(formula(character_formula))[[1]]} provided to
 ##'     avoid overhead in the parsing of the formula.
+##' @param outcome_variable_name For internal use when called from \code{run_rtmle} via \code{fitter}.
 ##' @param id_variable The name of the subject id variable.
 ##' @param data The data for learning.
 ##' @param intervened_data The data were all intervention variables
 ##'     are readily set according to the intervention protocol.
-##' @param ensemble Type of superlearning. When \code{"winner"} the
-##'     discrete super learner is the learner with the lowest
-##'     level-one mean squared prediction error (Brier score).
-##' @param diagnostics For internal use when called from run_rtmle via fitter which is
-##' called from intervention_probabilities and sequential_regression.
+##' @param ensemble_method How to combine the learners. Implemented are
+##' non-linear least squares \code{"nnls"}, index of prediction accuracy \code{"ipa"} weighting and
+##' the discrete superlearner which picks the learner with the lowest Brier score. If all models
+##' have zero weight, the average predicted value from the learning set is applied.
+##' @param diagnostics For internal use when called from run_rtmle via
+##'     fitter which is called from intervention_probabilities and
+##'     sequential_regression.
 ##' @param ... Not (yet) used.
 ##' @return The level-one data column of the discrete superlearner.
 ##' @seealso \code{\link{run_rtmle}}, \code{learn_glm},
@@ -87,7 +90,7 @@ superlearn <- function(folds,
                        id_variable,
                        data,
                        intervened_data,
-                       ensemble_method,
+                       ensemble_method = "discrete",
                        diagnostics,
                        ...){
     expected_levels = NULL
@@ -271,7 +274,9 @@ superlearn <- function(folds,
         }
     }
     data.table::setattr(predicted_values,"ensemble_weights",ensemble_weights)
-    data.table::setattr(predicted_values,"diagnostics",diagnostics)
+    if (!missing(diagnostics)){
+        data.table::setattr(predicted_values,"diagnostics",diagnostics)
+    }
     return(predicted_values)
 }
 
