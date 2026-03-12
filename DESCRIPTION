@@ -1,6 +1,6 @@
 Package: rtmle
 Title: Analysing Longitudinal Observational and Randomized Data with the Targeted Minimum Loss Estimator
-Version: 2025.12.04
+Version: 2026.02.25
 Authors@R: c(
     person("Helene Charlotti Wiese", "Rytgaard", , "hely@sund.ku.dk", role = c("aut", "cre")),
     person("Thomas Alexander", "Gerds", , "tag@biostat.ku.dk", role = c("aut"),
@@ -16,6 +16,7 @@ RoxygenNote: 7.3.3
 VignetteBuilder: R.rsp
 Imports:
     stats,
+    nnls,
     utils,	
     data.table,
     riskRegression,
@@ -28,9 +29,9 @@ Imports:
     speedglm,
     glmnet,
     ranger,
-    pammtools,
     rlang,
-    matrixStats
+    matrixStats,
+    Matrix
 Suggests: 
     R.rsp,
     testthat (>= 3.0.0),

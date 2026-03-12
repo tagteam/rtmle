@@ -12,7 +12,10 @@ rtmle_init(
   name_competing,
   name_censoring = "Censored",
   censored_levels = c("uncensored", "censored"),
-  censored_label = "censored"
+  censored_label = "censored",
+  minority_threshold = 8,
+  weight_truncation = c(0, 1),
+  prediction_range = c(0.0001, 0.9999)
 )
 }
 \arguments{
@@ -36,6 +39,16 @@ potential followup time is longer than the time of the last interval.}
 
 \item{censored_label}{A single character value. Label of the values of the censoring variable(s) that indicated that
 the data of the subject at this time interval are censored. Must be an element of \code{censored_levels} too.}
+
+\item{minority_threshold}{For binary outcomes, integer value which decides about whether
+fitting nuisance parameter regression models is feasible. If the number of subjects in the minory group is
+less than or equal to this threshold then regression modelling is skipped and the predicted value is simply the mean outcome.}
+
+\item{weight_truncation}{Two values which decide about the minimum and the maximum of the weights w
+used in inverse probability weighting (1/w).}
+
+\item{prediction_range}{Two values used to force predicted outcome probabilities to the interval (0,1). This is required
+to perform a logit transformation for the fit of the fluctuation model in the tmle update step. Default is \code{c(0.0001,0.9999)}.}
 }
 \value{
 A list with class \code{"rtmle"} and the following elements:

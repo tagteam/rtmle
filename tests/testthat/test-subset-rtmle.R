@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Apr  8 2025 (14:47) 
 ## Version: 
-## Last-Updated: Jul 24 2025 (12:05) 
+## Last-Updated: jan 23 2026 (11:33) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 35
+##     Update #: 39
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -23,9 +23,9 @@ test_that("run rtmle on a subset",{
     x <- rtmle_init(intervals = tau,name_id = "id",name_outcome = "Y",name_competing = "Dead",name_censoring = "Censored",censored_label = "censored")
     x <- add_long_data(x,outcome_data=ld$outcome_data,censored_data=ld$censored_data,competing_data=ld$competing_data,timevar_data=ld$timevar_data)
     x <- add_baseline_data(x,data=ld$baseline_data)
-    x <- long_to_wide(x,intervals = seq(0,2000,30.45*12),verbose = FALSE)
-    x <- protocol(x,name = "Always_A",intervention = data.frame("A" = factor("1",levels = c("0","1"))),verbose = FALSE)
-    x <- protocol(x,name = "Never_A",intervention = data.frame("A" = factor("0",levels = c("0","1"))),verbose = FALSE)
+    x <- long_to_wide(x,breaks = seq(0,2000,30.45*12),verbose = FALSE)
+    x <- protocol(x,name = "Always_A",intervention = data.frame("time"=x$intervention_nodes,"A" = factor("1",levels = c("0","1"))),verbose = FALSE)
+    x <- protocol(x,name = "Never_A",intervention = data.frame("time"=x$intervention_nodes,"A" = factor("0",levels = c("0","1"))),verbose = FALSE)
     x <- prepare_data(x)
     x <- target(x,name = "Outcome_risk",estimator = "tmle",protocols = c("Never_A","Always_A"))
     x <- target(x,name = "Test Outcome_risk",estimator = "tmle",protocols = c("Never_A"))
@@ -40,9 +40,9 @@ test_that("run rtmle on a subset",{
     x1 <- rtmle_init(intervals = tau,name_id = "id",name_outcome = "Y",name_competing = "Dead",name_censoring = "Censored",censored_label = "censored")
     x1 <- add_long_data(x1,outcome_data=ld1$outcome_data,censored_data=ld1$censored_data,competing_data=ld1$competing_data,timevar_data=ld1$timevar_data)
     x1 <- add_baseline_data(x1,data = ld1$baseline_data)
-    x1 <- long_to_wide(x1,intervals = seq(0,2000,30.45*12),verbose = FALSE)
-    x1 <- protocol(x1,name = "Always_A",intervention = data.frame("A" = factor("1",levels = c("0","1"))),verbose = FALSE)
-    x1 <- protocol(x1,name = "Never_A",intervention = data.frame("A" = factor("0",levels = c("0","1"))),verbose = FALSE)
+    x1 <- long_to_wide(x1,breaks = seq(0,2000,30.45*12),verbose = FALSE)
+    x1 <- protocol(x1,name = "Always_A",intervention = data.frame("time"=x$intervention_nodes,"A" = factor("1",levels = c("0","1"))),verbose = FALSE)
+    x1 <- protocol(x1,name = "Never_A",intervention = data.frame("time"=x$intervention_nodes,"A" = factor("0",levels = c("0","1"))),verbose = FALSE)
     x1 <- prepare_data(x1)
     x1 <- target(x1,name = "Outcome_risk",estimator = "tmle",protocols = c("Never_A","Always_A"))
     x1 <- target(x1,name = "Test Outcome_risk",estimator = "tmle",protocols = c("Never_A"))
@@ -61,9 +61,9 @@ test_that("stratified analyses",
     x <- rtmle_init(intervals = tau,name_id = "id",name_outcome = "Y",name_competing = "Dead",name_censoring = "Censored",censored_label = "censored")
     x <- add_long_data(x,outcome_data=ld$outcome_data,censored_data=ld$censored_data,competing_data=ld$competing_data,timevar_data=ld$timevar_data)
     x <- add_baseline_data(x,data=ld$baseline_data)
-    x <- long_to_wide(x,intervals = seq(0,2000,30.45*12),verbose = FALSE)
-    x <- protocol(x,name = "Always_A",intervention = data.frame("A" = factor("1",levels = c("0","1"))),verbose = FALSE)
-    x <- protocol(x,name = "Never_A",intervention = data.frame("A" = factor("0",levels = c("0","1"))),verbose = FALSE)
+    x <- long_to_wide(x,breaks = seq(0,2000,30.45*12),verbose = FALSE)
+    x <- protocol(x,name = "Always_A",intervention = data.frame("time"=x$intervention_nodes,"A" = factor("1",levels = c("0","1"))),verbose = FALSE)
+    x <- protocol(x,name = "Never_A",intervention = data.frame("time"=x$intervention_nodes,"A" = factor("0",levels = c("0","1"))),verbose = FALSE)
     x <- prepare_data(x)
     x <- target(x,name = "Outcome_risk",estimator = "tmle",protocols = c("Always_A","Never_A"))
     x <- model_formula(x)

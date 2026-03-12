@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Apr  1 2025 (08:18) 
 ## Version: 
-## Last-Updated: Jul 31 2025 (07:21) 
+## Last-Updated: jan 20 2026 (17:31) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 38
+##     Update #: 40
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -41,7 +41,7 @@
 #'                    competing_data=ld$competing_data,
 #'                    timevar_data=ld$timevar_data)
 #' x <- add_baseline_data(x,data=ld$baseline_data)
-#' x <- long_to_wide(x,intervals=seq(0,2000,30.45*6))
+#' x <- long_to_wide(x,breaks=seq(0,2000,30.45*6))
 #' outcome_data <- x$data$outcome_data
 #' timevar_data <- x$data$timevar_data
 #' x <- rtmle_init(intervals = 3, name_id = "id",
@@ -92,7 +92,7 @@ add_wide_data <- function(x,outcome_data,timevar_data,...){
         if (inherits(timevar_data,"data.frame")){
             d <- data.table::copy(data.table::as.data.table(timevar_data))
             if (!(x$names$id %in% names(d))){
-                warning(paste0("Element 'timevar_data' does not have a variable called ",x$names$id," and is not added."))
+                stop(paste0("Element 'timevar_data' does not have a variable called ",x$names$id,"."))
             } else{
                 x$data$timevar_data <- d
             }
@@ -104,7 +104,7 @@ add_wide_data <- function(x,outcome_data,timevar_data,...){
             for (name in names(timevar_data)){
                 current_data <- copy(as.data.table(timevar_data[[name]]))
                 if (!(x$names$id %in% names(current_data))){
-                    warning(paste0("Element 'timevar_data' does not have a variable called ",x$names$id," and is not added."))
+                    stop(paste0("Element 'timevar_data' does not have a variable called ",x$names$id,"."))
                 } else{
                     x$data$timevar_data[[name]] <- current_data
                 }

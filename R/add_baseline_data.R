@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 19 2024 (08:54)
 ## Version:
-## Last-Updated: Jun 17 2025 (07:29) 
+## Last-Updated: feb 23 2026 (13:36) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 18
+##     Update #: 19
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -26,6 +26,7 @@ add_baseline_data <- function(x,data,...){
     if (!(x$names$id %in% names(data)))
         stop(paste0("'data' needs to contain the subject identifier variable: '",x$names$id,"'"))
     data.table::setDT(data)
+    if (any(duplicated(data[[x$names$id]]))) stop("Duplicated values of subject id variable ",x$names$id," are not allowed in baseline data.")
     x$data$baseline_data <- data.table::copy(data)
     x
 }

@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Nov 16 2024 (17:04) 
 ## Version: 
-## Last-Updated: sep  5 2025 (13:07) 
+## Last-Updated: feb 24 2026 (14:55) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 71
+##     Update #: 83
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -40,9 +40,12 @@ test_that("single time point compare rtmle with ltmle",{
     suppressMessages(x <- protocol(x,name = "A",treatment_variables = "A",intervention = 1))
     x <- target(x,name = "Outcome_risk",estimator = "tmle",protocols = "A")
     x <- model_formula(x)
-    x <- run_rtmle(x,refit = TRUE,verbose = FALSE)
-    expect_equal(result1$fit$g[["A"]], as.matrix(x$models[["A_0"]]$fit))
-    ## all.equal(result1$fit$Q[["Y"]], as.matrix(x$models[["Y_1"]]$fit))
+    x <- run_rtmle(x,refit = FALSE,verbose = FALSE,learner = "learn_glm")
+    expect_equal(result1$fit$g[["A"]], as.matrix(x$models[["time_0"]][["A"]][["A_0"]]$fit))
+    yfit_rtmle <- as.matrix(x$models$time_0$outcome[["A"]]$fit)
+    yfit_ltmle <- result1$fit$Q[["Y"]]
+    rownames(yfit_ltmle) = rownames(yfit_rtmle)
+    expect_equal(yfit_rtmle,yfit_ltmle)
     expect_equal(result1$estimates[["tmle"]],x$estimate$Main_analysis$Estimate,tolerance = 0.0001)
     expect_equal(result1$IC$tmle,x$IC$Outcome_risk$A$time_horizon_1,tolerance = 0.0001)
 })
@@ -50,19 +53,12 @@ test_that("single time point compare rtmle with ltmle",{
 test_that("longitudinal data compare rtmle with ltmle",{
     set.seed(17)
     ld <- simulate_long_data(n = 1291,number_visits = 20,beta = list(A_on_Y = -.2,A_0_on_Y = -0.3,A_0_on_A = 6),register_format = TRUE)
-
-    x <- rtmle_init(intervals = 3,
-                    name_id = "id",
-                    name_outcome = "Y",
-                    name_competing = "Dead",
-                    name_censoring = "Censored",
-                    censored_label = "censored")
-
+    x <- rtmle_init(intervals = 3,name_id = "id",name_outcome = "Y",name_competing = "Dead",name_censoring = "Censored",censored_label = "censored")
     x <- add_long_data(x,outcome_data=ld$outcome_data,censored_data=ld$censored_data,competing_data=ld$competing_data,timevar_data=ld$timevar_data)
     x <- add_baseline_data(x,data=ld$baseline_data)
-    suppressMessages(x <- long_to_wide(x,intervals = seq(0,2000,30.45*12)))
-    suppressMessages(x <- protocol(x,name = "Always_A",treatment_variables = "A",intervention = 1))
-    suppressMessages(x <- protocol(x,name = "Never_A",treatment_variables = "A",intervention = 0))
+    suppressMessages(x <- long_to_wide(x,breaks = seq(0,2000,30.45*12)))
+    x <- protocol(x,name = "Always_A",treatment_variables = "A",intervention = 1)
+    x <- protocol(x,name = "Never_A",treatment_variables = "A",intervention = 0)
     x <- prepare_data(x)
     x <- target(x,name = "Outcome_risk",estimator = "tmle",protocols = c("Always_A","Never_A"))
     x <- model_formula(x)
@@ -70,7 +66,6 @@ test_that("longitudinal data compare rtmle with ltmle",{
     ## summary(x)
     ldata <- copy(x$prepared_data)
     ldata[,id := NULL]
-    ldata[,rtmle_predicted_outcome := NULL]
     ldata[,c("A_0","A_1","A_2") := lapply(.SD,function(a){1*(a == 1)}),.SDcols = c("A_0","A_1","A_2")]
     detQ <- function(data, current.node, nodes, called.from.estimate.g){
         death.index <- grep("Dead_",names(data))
@@ -97,7 +92,14 @@ test_that("longitudinal data compare rtmle with ltmle",{
     # fitted g-models
     for (g in c("A_0","Censored_1","A_1","Censored_2")){
         a <- y2$fit$g[[g]]
-        b <- as.matrix(x$models[[g]]$fit)
+        is_cens <- !("A" == strsplit(g,"_")[[1]][1])
+        time <- strsplit(g,"_")[[1]][2]
+        if (is_cens){
+            time <- as.numeric(time)-1
+            b <- as.matrix(x$models[[paste0("time_",time)]][["censoring"]][[g]]$fit)
+        }else{
+            b <- as.matrix(x$models[[paste0("time_",time)]][["Always_A"]][[g]]$fit)
+        }
         rownames(b) <- sub("01","0",rownames(b))
         rownames(b) <- sub("11","1",rownames(b))
         b <- b[match(rownames(a),rownames(b)),]
@@ -105,6 +107,7 @@ test_that("longitudinal data compare rtmle with ltmle",{
     }
     expect_equal(y2$estimates[["tmle"]],x$estimate$Main_analysis$Estimate[[2]])
     expect_equal(y2$IC[["tmle"]],x$IC$Outcome_risk$Always_A[[2]])
+    suppressWarnings(suppressMessages(y3a <- ltmle(data = ldata,Anodes = c("A_0","A_1","A_2"),Cnodes = c("Censored_1","Censored_2","Censored_3"),Ynodes = c("Y_1","Y_2","Y_3"),Lnodes = c("L_0","Dead_1","L_1","Dead_2","L_2"),gform = c(A_0 = "A_0 ~ sex + age + L_0",Censored_1 = "Censored_1 ~ sex + age + L_0 + A_0",A_1 = "A_1 ~ sex + age + L_0 + A_0",Censored_2 = "Censored_2 ~ sex + age + L_0 + A_0 + L_1 + A_1",A_2 = "A_2 ~ sex + age + L_0 + A_0 + L_1 + A_1",Censored_3 = "Censored_3 ~ sex + age + L_0 + A_0 + L_1 + A_1 + L_2 + A_2"),Qform = c(Y_1 = "Q.kplus1 ~ sex + age + L_0 + A_0",Y_2 = "Q.kplus1 ~ sex + age + L_0 + A_0 + L_1 + A_1",Y_3 = "Q.kplus1 ~ sex + age + L_0 + A_0 + L_1 + A_1 + L_2 + A_2"),survivalOutcome = TRUE,deterministic.Q.function = detQ,abar = list(rep(1,3),c(1,0,1)),estimate.time = FALSE)))
     suppressWarnings(suppressMessages(y3 <- ltmle(data = ldata,Anodes = c("A_0","A_1","A_2"),Cnodes = c("Censored_1","Censored_2","Censored_3"),Ynodes = c("Y_1","Y_2","Y_3"),Lnodes = c("L_0","Dead_1","L_1","Dead_2","L_2"),gform = c(A_0 = "A_0 ~ sex + age + L_0",Censored_1 = "Censored_1 ~ sex + age + L_0 + A_0",A_1 = "A_1 ~ sex + age + L_0 + A_0",Censored_2 = "Censored_2 ~ sex + age + L_0 + A_0 + L_1 + A_1",A_2 = "A_2 ~ sex + age + L_0 + A_0 + L_1 + A_1",Censored_3 = "Censored_3 ~ sex + age + L_0 + A_0 + L_1 + A_1 + L_2 + A_2"),Qform = c(Y_1 = "Q.kplus1 ~ sex + age + L_0 + A_0",Y_2 = "Q.kplus1 ~ sex + age + L_0 + A_0 + L_1 + A_1",Y_3 = "Q.kplus1 ~ sex + age + L_0 + A_0 + L_1 + A_1 + L_2 + A_2"),survivalOutcome = TRUE,deterministic.Q.function = detQ,abar = rep(1,3),estimate.time = FALSE)))
     expect_equal(y3$estimates[["tmle"]],x$estimate$Main_analysis$Estimate[[3]])
     expect_equal(y3$IC[["tmle"]],x$IC$Outcome_risk$Always_A[[3]])

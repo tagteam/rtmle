@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 27 2024 (18:30) 
 ## Version: 
-## Last-Updated: Oct  2 2024 (16:02) 
+## Last-Updated: feb 20 2026 (09:25) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 10
+##     Update #: 13
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -41,9 +41,15 @@ glm_net <- function(formula,
     requireNamespace(c("glmnet","prodlim"))
     if (is.character(formula)) formula <- formula(formula)
     tt <- all.vars(stats::update(formula,".~1"))
-    if (missing(family)) family <- "binomial"
     sorted_x_train=bl_obj=terms=design = NULL
     y  <- data[[tt[1]]]
+    if (missing(family)) {
+        if (length(unique(y)) == 2){
+            family <- "binomial"
+        }else{
+            family <- "gaussian"
+        }
+    }
     # factor levels should be ordered. e.g., first censored than uncensored
     if (is.factor(y)) {
         y <- as.numeric(y)-1
@@ -78,6 +84,7 @@ glm_net <- function(formula,
                lambda = lambda)
     class(out) = "glm_net"
     out
+
 }
 
 

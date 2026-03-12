@@ -13,7 +13,7 @@ cheap_bootstrap(
   alpha = 0.05,
   add = TRUE,
   verbose = FALSE,
-  which_subsets = NULL,
+  analyses = NULL,
   replace = FALSE,
   ...
 )
@@ -38,7 +38,7 @@ randomness while drawing the bootstrap samples.}
 
 \item{verbose}{Logical. Passed to run_rtmle to control verbosity.}
 
-\item{which_subsets}{Character vector specifying which subsets to perform the cheap bootstrap on.}
+\item{analyses}{Character vector specifying which analyses to perform the cheap bootstrap on.}
 
 \item{replace}{Logical. Whether to sample with replacement. Default is FALSE. Should not be changed.}
 
@@ -71,11 +71,13 @@ x <- add_long_data(x,
                    competing_data=ld$competing_data,
                    timevar_data=ld$timevar_data)
 x <- add_baseline_data(x,data=ld$baseline_data)
-x <- long_to_wide(x,intervals = seq(0,2000,30.45*12))
+x <- long_to_wide(x,breaks = seq(0,2000,30.45*12))
 x <- protocol(x,name = "Always_A",
-                    intervention = data.frame("A" = factor("1",levels = c("0","1"))))
+                    intervention = data.frame(time=x$intervention_nodes,
+                                              "A" = factor("1",levels = c("0","1"))))
 x <- protocol(x,name = "Never_A",
-                    intervention = data.frame("A" = factor("0",levels = c("0","1"))))
+                    intervention = data.frame(time=x$intervention_nodes,
+                                              "A" = factor("0",levels = c("0","1"))))
 x <- prepare_data(x)
 x <- target(x,name = "Outcome_risk",
                   estimator = "tmle",

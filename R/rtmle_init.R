@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 19 2024 (07:23) 
 ## Version: 
-## Last-Updated: Jun 16 2025 (14:17) 
+## Last-Updated: feb 26 2026 (12:40) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 38
+##     Update #: 51
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -32,6 +32,13 @@
 ##' @param censored_levels Character vector with the censoring levels.
 ##' @param censored_label A single character value. Label of the values of the censoring variable(s) that indicated that
 ##' the data of the subject at this time interval are censored. Must be an element of \code{censored_levels} too.
+##' @param minority_threshold For binary outcomes, integer value which decides about whether
+##' fitting nuisance parameter regression models is feasible. If the number of subjects in the minory group is
+##' less than or equal to this threshold then regression modelling is skipped and the predicted value is simply the mean outcome.
+##' @param weight_truncation Two values which decide about the minimum and the maximum of the weights w
+##' used in inverse probability weighting (1/w).
+##' @param prediction_range Two values used to force predicted outcome probabilities to the interval (0,1). This is required
+##' to perform a logit transformation for the fit of the fluctuation model in the tmle update step. Default is \code{c(0.0001,0.9999)}.
 ##' @return A list with class \code{"rtmle"} and the following elements:
 ##' \itemize{
 ##' \item targets
@@ -60,15 +67,19 @@ rtmle_init <- function(intervals,
                        name_competing,
                        name_censoring = "Censored",
                        censored_levels = c("uncensored","censored"),
-                       censored_label = "censored"){
+                       censored_label = "censored",
+                       minority_threshold = 8,
+                       weight_truncation = c(0,1),
+                       prediction_range = c(0.0001,0.9999)){
     time_labels = paste0("time_",0:intervals)
     if (length(name_censoring)>0){
         if (length(censored_label) != 1 ||
             length(censored_levels) != 2 ||
-            !(censored_label %in% censored_levels)){
-            stop(paste0("Expect two values for censored_levels ",
+            !(censored_label %in% censored_levels) ||
+            censored_label != censored_levels[[2]]){
+            stop(paste0("Need exactly two values for censored_levels ",
                         "and one value for censored_label.\n",
-                        "The censored_label must be an element of censored_levels.")) 
+                        "The censored_label must be the second value of censored_levels.")) 
         }
         uncensored_label = setdiff(censored_levels,censored_label)
     }else{
@@ -86,7 +97,13 @@ rtmle_init <- function(intervals,
                           "censored_levels" = censored_levels,
                           "censored_label" = censored_label,
                           "uncensored_label" = uncensored_label),
-             times = 0:intervals)
+             version = utils::packageVersion("rtmle"),
+             times = 0:intervals,
+             intervention_nodes = 0:(intervals-1),
+             tuning_parameters = list(minority_threshold = minority_threshold,
+                                      weight_truncation = weight_truncation,
+                                      prediction_range = prediction_range),
+             diagnostics = NULL)
     class(x) = "rtmle"
     x
 }

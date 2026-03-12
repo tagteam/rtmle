@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Oct 28 2024 (09:26) 
 ## Version: 
-## Last-Updated: dec  4 2025 (12:09) 
+## Last-Updated: jan 30 2026 (12:53) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 123
+##     Update #: 131
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -39,11 +39,13 @@
 #'                    competing_data=ld$competing_data,
 #'                    timevar_data=ld$timevar_data)
 #' x <- add_baseline_data(x,data=ld$baseline_data)
-#' x <- long_to_wide(x,intervals = seq(0,2000,30.45*12))
+#' x <- long_to_wide(x,breaks = seq(0,2000,30.45*12))
 #' x <- protocol(x,name = "Always_A",
-#'                     intervention = data.frame("A" = factor("1",levels = c("0","1"))))
+#'                     intervention = data.frame(time=x$intervention_nodes,
+#'                                               "A" = factor("1",levels = c("0","1"))))
 #' x <- protocol(x,name = "Never_A",
-#'                     intervention = data.frame("A" = factor("0",levels = c("0","1"))))
+#'                     intervention = data.frame(time=x$intervention_nodes,
+#'                                               "A" = factor("0",levels = c("0","1"))))
 #' x <- prepare_data(x)
 #' x <- target(x,name = "Outcome_risk",
 #'                   estimator = "tmle",
@@ -77,11 +79,7 @@ learn_xgboost <- function(character_formula,
                                 data = data,
                                 specials = NULL,
                                 na.action = na.omit)
-    Y <- sf$response[[1]]
-    if (is.factor(Y)){
-        # FIXME: the reference level should be controlled better
-        Y <- as.numeric(Y == levels(Y)[[2]])
-    }
+    Y <- as.numeric(sf$response[[1]])
     ## d <- xgboost::xgb.DMatrix(sf$design, label = Y)
     if (!inherits(try(
              fit <- do.call(xgboost::xgboost,c(list(x = sf$design,y = Y),control$xgboost))

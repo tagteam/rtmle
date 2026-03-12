@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul  1 2024 (09:11)
 ## Version:
-## Last-Updated: Mar 12 2026 (15:19) 
+## Last-Updated: Mar 12 2026 (15:42) 
 ##           By: Johan Sebastian Ohlendorff
-##     Update #: 564
+##     Update #: 591
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -38,26 +38,35 @@
 #'           }
 #'       }
 #'   }
-#' @param estimator  Character specifying the estimator: either \code{'tmle'} or \code{'g-formula'}.
+#' @param estimator Character specifying the estimator: either
+#'     \code{'tmle'} or \code{'g-formula'}.
 #' @param time_horizon The time horizon at which to calculate
 #'     risks. If it is a vector the analysis will be performed for
 #'     each element of the vector.
 #' @param refit Logical. If \code{TRUE} ignore any propensity score
 #'     and censoring models learned in previous calls to this
-#'     function. This may be useful to save computation time. Default is \code{TRUE}.
+#'     function. This may be useful to save computation time. Default
+#'     is \code{TRUE}.
 #' @param seed Seed used for cross-fitting
-#' @param subsets A list structure for subset analyses. Each element is a list 
-#'                which requires a label, to name the subset, and a subset of the 
-#'                variable \code{x$names$id} in the data \code{x$prepared_data} to
-#'                identify the subset. The results of the subset analysis are stored
-#'                in \code{x$estimate[[subsets[[label]]}. An optional element of each
-#'                subset-list is called \code{append}
-#'                which should be logical: if \code{TRUE} append the estimates to the existing
-#'                estimates with rbind. This may be used for stratified analyses, to study seed dependence (Monte-Carlo error)
-#'                and bootstrap. See examples.
-#' @param keep_influence Logical: if \code{TRUE} store the estimated influence function of the estimator in the object.
-#'                       Currently this argument is only used when argument \code{subsets} is also specified.
-#' @param verbose Logical. If \code{FALSE} suppress all messages. \code{FALSE} is the default.
+#' @param subsets A list structure for subset analyses. Each element
+#'     is a list which requires a label, to name the subset, and a
+#'     subset of the variable \code{x$names$id} in the data
+#'     \code{x$prepared_data} to identify the subset. The results of
+#'     the subset analysis are stored in
+#'     \code{x$estimate[[subsets[[label]]}. An optional element of
+#'     each subset-list is called \code{append} which should be
+#'     logical: if \code{TRUE} append the estimates to the existing
+#'     estimates with rbind. This may be used for stratified analyses,
+#'     to study seed dependence (Monte-Carlo error) and bootstrap. See
+#'     examples.
+#' @param keep_influence Logical: if \code{TRUE} store the estimated
+#'     influence function of the estimator in the object.  Currently
+#'     this argument is only used when argument \code{subsets} is also
+#'     specified.
+#' @param verbose Logical. If \code{FALSE} suppress all
+#'     messages. \code{FALSE} is the default.
+#' @param ... Further arguments can change the tuning parameters. E.g., To apply weight truncation,
+#' use \code{weight_truncation=c(0.01,0.99)}.
 #' @return The modified object contains the fitted nuisance parameter
 #'     models and the estimate of the target parameter.
 #' @author Thomas A Gerds \email{tag@@biostat.ku.dk}
@@ -71,7 +80,9 @@
 #' ld <- simulate_long_data(n = 391,number_visits = 20,
 #'                          beta = list(A_on_Y = -.2,A0_on_Y = -0.3,A0_on_A = 6),
 #'                          register_format = TRUE)
-#' x <- rtmle_init(intervals = tau,name_id = "id",name_outcome = "Y",name_competing = "Dead",
+#' x <- rtmle_init(intervals = tau,name_id = "id",
+#'                 name_outcome = "Y",
+#'                 name_competing = "Dead",
 #'                 name_censoring = "Censored",censored_label = "censored")
 #' x <- add_long_data(x,
 #'                    outcome_data=ld$outcome_data,
@@ -79,11 +90,13 @@
 #'                    competing_data=ld$competing_data,
 #'                    timevar_data=ld$timevar_data)
 #' x <- add_baseline_data(x,data=ld$baseline_data)
-#' x <- long_to_wide(x,intervals = seq(0,2000,30.45*12))
+#' x <- long_to_wide(x,breaks = seq(0,2000,30.45*12))
 #' x <- protocol(x,name = "Always_A",
-#'                     intervention = data.frame("A" = factor("1",levels = c("0","1"))))
+#'                     intervention = data.frame(time=x$intervention_nodes,
+#'                                                    "A" = factor("1",levels = c("0","1"))))
 #' x <- protocol(x,name = "Never_A",
-#'                     intervention = data.frame("A" = factor("0",levels = c("0","1"))))
+#'                     intervention = data.frame(time=x$intervention_nodes,
+#'                                               "A" = factor("0",levels = c("0","1"))))
 #' x <- prepare_data(x)
 #' x <- target(x,name = "Outcome_risk",
 #'                   estimator = "tmle",
@@ -92,11 +105,15 @@
 #' # default is undersmoothing which means: take the smallest penalty
 #' # where the model still converges
 #' x <- run_rtmle(x,learner = "learn_glmnet",time_horizon = 1:tau)
+#' # with weight truncation
+#' xw <- run_rtmle(x,learner = "learn_glmnet",time_horizon = 1:tau,
+#' weight_truncation=c(0.4,0.6))
 #' # can also use lambda.min or lambda.1se
 #' \dontrun{
-#' x <- run_rtmle(x,learner = list("glmnet_cv"=list(learner_fun="learn_glmnet",
-#'                                 selector="min")),
-#'               time_horizon = tau)
+#'     x <- run_rtmle(x,learner = list(name = "glmnet_min",
+#'                                    learner_fun="learn_glmnet",
+#'                                    selector="min"),
+#'                   time_horizon = tau)
 #' summary(x)
 #' }
 #' \dontrun{
@@ -121,15 +138,27 @@ run_rtmle <- function(x,
                       seed = NULL,
                       subsets = NULL,
                       keep_influence = TRUE,
-                      verbose = FALSE){
+                      verbose = FALSE,
+                      ...){
     time <- label <- level <- NULL
     if (length(x$targets) == 0) stop("Object contains no targets. You can add one with the function rtmle::target")
+    dot_args <- list(...)
+    new_tuning_parms <- intersect(names(dot_args), names(x$tuning_parameters))
+    if (length(new_tuning_parms)>0){
+        for (ntp in new_tuning_parms) {
+            x$tuning_parameters[[ntp]] <- dot_args[[ntp]]
+        }
+    }
     ## FIXME: need to stop or adapt if learner="glmnet" instead of "learn_glmnet"
     if (length(subsets)>0){
         for (sub in subsets){
             stopifnot(is.character(sub$label[[1]]))
-            ## FIXME: is this check useful? stopifnot(all(sub$id %in% x$prepared_data[[x$names$id]]))
-            xs <- data.table::copy(x[c("targets","names","times","protocols","models")])
+            xs <- data.table::copy(x[c("targets","names","times","protocols","models","intervention_nodes","tuning_parameters")])
+            for (pp in names(xs$protocols)){
+                xs$protocols[[pp]]$intervention_match <- xs$protocols[[pp]]$intervention_match[x$prepared_data[[x$names$id]] %in% sub$id]
+                xs$protocols[[pp]]$intervention_probs <- NULL
+                xs$protocols[[pp]]$cumulative_intervention_probs <- NULL
+            }
             xs$prepared_data <- x$prepared_data[x$prepared_data[[x$names$id]] %in% sub$id]
             if (NROW(xs$prepared_data) == 0) stop(paste0("No data in subset: ",label))
             # FIXME: should check if the number at risk at the maximal time_horizon is not zero
@@ -258,7 +287,7 @@ run_rtmle <- function(x,
         }else{
             # initialize new targets, new protocols and new time_horizons
             e <- rbind(x$estimate[["Main_analysis"]],empty_estimate)
-            e <- e[e[,.I[1],by = c("Target","Protocol","Time_horizon")]$V1]
+            e <- e[e[,.I[1],by = c("Target","Protocol","Time_horizon","Estimator")]$V1]
             x$estimate[["Main_analysis"]] <- e
         }
         # for loop across targets
@@ -277,12 +306,13 @@ run_rtmle <- function(x,
                 #
                 # G-part: fit nuisance parameter models for propensity and censoring
                 #
-                x <- intervention_probabilities(x,
-                                                protocol_name = protocol_name,
-                                                refit = refit,
-                                                learner = learners,
-                                                time_horizon = time_horizon,
-                                                seed = seed)
+                if (estimator == "tmle"){
+                    x <- intervention_probabilities(x,
+                                                    protocol_name = protocol_name,
+                                                    refit = refit,
+                                                    learner = learners,
+                                                    seed = seed)
+                }
                 #
                 # Q-part: loop backwards in time through iterative condtional expectations
                 #
@@ -295,13 +325,12 @@ run_rtmle <- function(x,
                                                learner = learners,
                                                estimator = estimator,
                                                seed = seed)
-                    # FIXME: why does x loose its class in this loop?
-                    class(x) <- "rtmle"
                 }
             }
         }
         ## Keep the learner function used for cheap bootstrap
-        x$learner <- learner
+        x$unparsed_learner <- learner
+        x$learner <- learners
         return(x)
     }
 }

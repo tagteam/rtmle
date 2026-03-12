@@ -11,11 +11,12 @@ superlearn(
   parse_learners = TRUE,
   character_formula,
   outcome_variable,
-  outcome_target_level,
+  outcome_variable_name,
   id_variable,
   data,
   intervened_data,
-  ensemble,
+  ensemble_method = "discrete",
+  diagnostics,
   ...
 )
 }
@@ -24,28 +25,43 @@ superlearn(
 
 \item{seed}{Random seed}
 
-\item{learners}{List of learners. Each learner can either be a character string or a list. If the learner is a
-character string it must be the name of a learner function, such as \code{\link{learn_glm}},
- \code{\link{learn_glmnet}},  \code{\link{learn_ranger}}. If the learner is a list then either the name of the learner
-is a learner function or the list has an element \code{learner_fun} which is the name of a learner function. The other elements of the list are
-passed on as additional arguments to the learner function.}
+\item{learners}{List of learners. Each learner can either be a
+character string or a list. If the learner is a character
+string it must be the name of a learner function, such as
+\code{\link{learn_glm}}, \code{\link{learn_glmnet}},
+\code{\link{learn_ranger}}. If the learner is a list then
+either the name of the learner is a learner function or the
+list has an element \code{learner_fun} which is the name of a
+learner function. The other elements of the list are passed on
+as additional arguments to the learner function.}
 
-\item{parse_learners}{Logical. If TRUE parse learners. \code{\link{run_rtmle}} needs sets this to FALSE.}
+\item{parse_learners}{Logical. If TRUE parse
+learners. \code{\link{run_rtmle}} needs sets this to FALSE.}
 
-\item{character_formula}{A formula (passed as a character string!) to parse the outcome and the predictor variables.}
+\item{character_formula}{A formula (passed as a character string!)
+to parse the outcome and the predictor variables.}
 
-\item{outcome_variable}{The name of the outcome variable (same as \code{all.vars(formula(character_formula))[[1]]} provided to avoid overhead in the parsing of the formula.}
+\item{outcome_variable}{The name of the outcome variable (same as
+\code{all.vars(formula(character_formula))[[1]]} provided to
+avoid overhead in the parsing of the formula.}
 
-\item{outcome_target_level}{The level of the binary outcome variable for which the superlearner predicts the risk.}
+\item{outcome_variable_name}{For internal use when called from \code{run_rtmle} via \code{fitter}.}
 
 \item{id_variable}{The name of the subject id variable.}
 
 \item{data}{The data for learning.}
 
-\item{intervened_data}{The data were all intervention variables are readily set according to the intervention protocol.}
+\item{intervened_data}{The data were all intervention variables
+are readily set according to the intervention protocol.}
 
-\item{ensemble}{Type of superlearning. When \code{"winner"} the discrete super learner is the learner with the lowest
-level-one mean squared prediction error (Brier score).}
+\item{ensemble_method}{How to combine the learners. Implemented are
+non-linear least squares \code{"nnls"}, index of prediction accuracy \code{"ipa"} weighting and
+the discrete superlearner which picks the learner with the lowest Brier score. If all models
+have zero weight, the average predicted value from the learning set is applied.}
+
+\item{diagnostics}{For internal use when called from run_rtmle via
+fitter which is called from intervention_probabilities and
+sequential_regression.}
 
 \item{...}{Not (yet) used.}
 }
@@ -79,14 +95,14 @@ fit <- superlearn(folds = 2,seed = 8,
                                                      learner_fun="learn_glmnet")),
                   character_formula = "A_0~L_0+sex+age",
                   outcome_variable = "A_0",
-                  outcome_target_level="1",
                   id_variable = "id",
                   data = ld[!duplicated(id)],
                   intervened_data = ld[!duplicated(id)])
 
 }
 \seealso{
-\code{\link{run_rtmle}}, \code{learn_glm}, \code{learn_glmnet}, \code{learn_ranger}
+\code{\link{run_rtmle}}, \code{learn_glm},
+    \code{learn_glmnet}, \code{learn_ranger}
 }
 \author{
 Thomas A. Gerds <tag@biostat.ku.dk>

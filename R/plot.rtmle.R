@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 23 2024 (16:42) 
 ## Version: 
-## Last-Updated: nov 22 2025 (09:23) 
+## Last-Updated: feb 24 2026 (14:58) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 26
+##     Update #: 31
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -47,9 +47,9 @@ autoplot.rtmle <- function(object,
     if (!requireNamespace("ggplot2", quietly = TRUE)) {
         stop("Package 'ggplot2' must be installed to use autoplot.rtmle().")
     }
-    if (!requireNamespace("pammtools", quietly = TRUE)) {
-        stop("Package 'pammtools' must be installed to use autoplot.rtmle().")
-    }
+    ## if (!requireNamespace("pammtools", quietly = TRUE)) {
+        ## stop("Package 'pammtools' must be installed to use autoplot.rtmle().")
+    ## }
 
     # Collect all analyses into one data.frame
     if (!is.null(analysis)) {
@@ -73,17 +73,14 @@ autoplot.rtmle <- function(object,
     atrisk_times <- data.table::data.table(time = position_atrisk)
     atrisk <- object$followup[,.N,keyby = last_interval]
     atrisk[,N := NROW(object$followup)-cumsum(c(0,N[-length(N)]))]
-    p <- p+ggplot2::geom_step()
+    ## p <- p+ggplot2::geom_step()
+    p <- p+ggplot2::geom_line()+ggplot2::geom_point()
     color_variable <- "Protocol"
     if (match("Lower",names(est),nomatch = 0) >0 &&
         ((missing(conf_int) ||
           (length(conf_int)>0 && conf_int != FALSE)))){
-        p <- p+ pammtools::geom_stepribbon(ggplot2::aes(ymin = Lower,
-                                                        ymax = Upper,
-                                                        fill = !! if (length(color_variable)>0) {rlang::sym(color_variable)}else{NULL},
-                                                        colour = !! if (length(color_variable)>0) {rlang::sym(color_variable)}else{NULL}),
-                                           linetype = 0,
-                                           alpha = 0.2)
+        ## p <- p+ pammtools::geom_stepribbon(ggplot2::aes(ymin = Lower,ymax = Upper,fill = !! if (length(color_variable)>0) {rlang::sym(color_variable)}else{NULL},colour = !! if (length(color_variable)>0) {rlang::sym(color_variable)}else{NULL}),linetype = 0,alpha = 0.2)
+        p <- p+ geom_ribbon(ggplot2::aes(ymin = Lower,ymax = Upper,fill = !! if (length(color_variable)>0) {rlang::sym(color_variable)}else{NULL},colour = !! if (length(color_variable)>0) {rlang::sym(color_variable)}else{NULL}),linetype = 0,alpha = 0.2)
     }
     p <- p+ ggplot2::labs(x = "Time horizon",
                           y = "Estimated risk",

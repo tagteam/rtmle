@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul  3 2024 (13:54) 
 ## Version: 
-## Last-Updated: nov 20 2025 (11:07) 
+## Last-Updated: feb 26 2026 (12:45) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 54
+##     Update #: 57
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -15,10 +15,12 @@
 ## 
 ### Code:
 tmle_update <- function(Y,
-                     offset,
-                     intervention_probs, 
-                     outcome_free_and_uncensored,
-                     intervention_match) {
+                        offset,
+                        intervention_probs, 
+                        outcome_free_and_uncensored,
+                        intervention_match,
+                        k,
+                        protocol) {
     N <- length(Y)
     if (length(intervention_probs) == 0) intervention_probs <- rep(1,N)
     ## FIXME: are there better ways to remove those censored in current interval?
@@ -38,7 +40,8 @@ tmle_update <- function(Y,
                         control = stats::glm.control(maxit = 100))
         Qstar <- stats::predict(m, newdata = data.temp, type = "response")
     } else {
-        warning("No TMLE update because no subject has positive weight")
+        x$diagnostics$no_positive_weights <- c(x$diagnostics$no_positive_weights,
+                                               paste0("No TMLE update because no subject has positive weight in step ",k," for intervention protocol ",protocol,"."))
         Qstar <- stats::plogis(offset)
         m <- "no Qstar fit because no subjects alive, uncensored, following intervention"
     }

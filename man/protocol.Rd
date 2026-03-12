@@ -8,6 +8,7 @@ protocol(
   x,
   name,
   intervention,
+  expand = TRUE,
   treatment_variables,
   intervene_function = NULL,
   verbose = TRUE,
@@ -20,18 +21,24 @@ protocol(
 \item{name}{The name of the protocol of an emulated trial}
 
 \item{intervention}{A vector or a data.frame (or tibble or data.table) with names of treatment variables set
-   to the value that the protocol of an emulated trial dictates. 
-   If it is a vector, it should consist of values 0 and 1 corresponding to what the
-intervention would set for the \code{treatment_variables}. If
-it is a data.frame (tibble, data.table), the names specify the
-treatment variables and the argument
-\code{treatment_variables} is ignored.  Each column must be a
-factor with levels specifying the treatment options. In
-longitudinal settings, there can either be only one row in the
-data.frame and then it is assumed that the intervention is
-static throughout the followup period. The data.frame can also
-have a column named time and specify for each time point the
-values that the intervention sets for the treatment variables.}
+    to the value that the protocol of an emulated trial dictates. 
+    If it is a vector, it should consist of values 0 and 1 corresponding to what the
+ intervention would set for the \code{treatment_variables}. If
+ it is a data.frame (tibble, data.table), the names of the data.frame are the
+ treatment variables. (In this case the argument
+ \code{treatment_variables} is ignored.) Each column of the data.frame must be a
+ factor with levels specifying the treatment options. In
+ longitudinal settings, the data.frame should have column called \code{"time"} in
+ addition to the treatment variables. Ideally the data.frame \code{intervention} provides values
+ for all times stored in \code{x$times}. However, there are two special cases.
+ If the number of rows in the data.frame \code{intervention} is smaller than
+\code{length(x$times)}, then 1. if argument \code{expand} is \code{TRUE},
+the last value (the only value if there is only one row) is set for all later time intervals.
+ 2. if argument \code{expand} is \code{FALSE} it is assumed that no intervention is wanted at
+the time intervals that are missing in data.frame \code{intervention}.}
+
+\item{expand}{Logical. If \code{FALSE} and time is a column in the data.frame
+given by argument \code{intervention}, then do not expand static interventions across time.}
 
 \item{treatment_variables}{A vector with the name(s) of the
 variable(s) that the protocols intervenes upon. In
@@ -72,11 +79,14 @@ during followup including at time zero (baseline).
 x <- rtmle_init(intervals = 3,name_id = "id",name_outcome = "Y",name_competing = "Dead",
                 name_censoring = "Censored",censored_label = "censored")
 x <- protocol(x,name = "Always_A",
-                intervention = data.frame("A" = factor("1",levels = c("0","1"))))
+                intervention = data.frame(time=x$intervention_nodes,
+                                          "A" = factor("1",levels = c("0","1"))))
 x <- protocol(x,name = "Never_A",
-              intervention = data.frame("A" = factor("0",levels = c("0","1"))))
+              intervention = data.frame(time=x$intervention_nodes,
+                                        "A" = factor("0",levels = c("0","1"))))
 x <- protocol(x,name = "Initiate_A_then_stop",
-              intervention = data.frame("A" = factor(c("1","0","0"),levels = c("0","1"))))
+              intervention = data.frame(time=x$intervention_nodes,
+                                        "A" = factor(c("1","0","0"),levels = c("0","1"))))
 x$protocols
 # ------------------------------------------------------------------------------------------
 # Intervening on a more than one treatment variable
@@ -84,10 +94,12 @@ x$protocols
 x <- rtmle_init(intervals = 3,name_id = "id",name_outcome = "Y",name_competing = "Dead",
                 name_censoring = "Censored",censored_label = "censored")
 x <- protocol(x,name = "Always_A_never_B",
-                intervention = data.frame("A" = factor("1",levels = c("0","1")),
+                intervention = data.frame(time=x$intervention_nodes,
+                                     "A" = factor("1",levels = c("0","1")),
                                      "B" = factor("0",levels = c("0","1"))))
 x <- protocol(x,name = "Always_A_and_B_never_C",
-                    intervention = data.frame("A" = factor("1",levels = c("0","1")),
+                    intervention = data.frame(time=x$intervention_nodes,
+                                              "A" = factor("1",levels = c("0","1")),
                                               "B" = factor("1",levels = c("0","1")),
                                               "C" = factor("0",levels = c("0","1"))))
 x$protocols

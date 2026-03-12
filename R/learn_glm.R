@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 23 2024 (12:49) 
 ## Version: 
-## Last-Updated: dec  2 2025 (09:37) 
+## Last-Updated: jan 30 2026 (12:53) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 126
+##     Update #: 130
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -48,10 +48,13 @@ learn_glm <- function(character_formula,
         allvars <- all.vars(stats::formula(character_formula))
         outcome_variable <- allvars[1]
         ## keepvars <- intersect(learn_variables,allvars[-1])
-        keepvars <- grep(paste0("(^",learn_variables,"($|_[1-9][0-9]?$))",collapse = "|"),allvars[-1],value = TRUE)
+        keepvars <- grep(paste0("(^",learn_variables,"($|_[1-9][0-9]?$))",collapse = "|"),
+                         allvars[-1],
+                         value = TRUE)
         if (length(keepvars)>0){
             character_formula <- paste0(outcome_variable,"~",paste0(keepvars,collapse = "+"))
         } else{
+            # No covariates
             Y <- data[[outcome_variable]]
             # FIXME: is it only for censoring variables or can outcome/treatment be factors too?
             if (is.factor(Y)) Y <- 1*(Y == levels(Y)[[2]])
@@ -62,7 +65,7 @@ learn_glm <- function(character_formula,
                                       data = data,
                                       drop.unused.levels = TRUE,
                                       na.action = na.pass)
-    Y <- model_frame[[1]]
+    Y <- as.numeric(model_frame[[1]])
     Y_label <- names(model_frame)[[1]]
     tf <- stats::terms(model_frame)
     X <- stats::model.matrix(object = tf, data = model_frame)

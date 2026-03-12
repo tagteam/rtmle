@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Oct 31 2024 (07:29) 
 ## Version: 
-## Last-Updated: Jan  9 2026 (11:06) 
-##           By: Johan Sebastian Ohlendorff
-##     Update #: 217
+## Last-Updated: feb 27 2026 (11:39) 
+##           By: Thomas Alexander Gerds
+##     Update #: 281
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -24,23 +24,38 @@
 ##' @title Super learning for rtmle
 ##' @param folds Number of folds
 ##' @param seed Random seed
-##' @param learners List of learners. Each learner can either be a character string or a list. If the learner is a
-##' character string it must be the name of a learner function, such as \code{\link{learn_glm}},
-##'  \code{\link{learn_glmnet}},  \code{\link{learn_ranger}}. If the learner is a list then either the name of the learner
-##' is a learner function or the list has an element \code{learner_fun} which is the name of a learner function. The other elements of the list are
-##' passed on as additional arguments to the learner function.
-##' @param parse_learners Logical. If TRUE parse learners. \code{\link{run_rtmle}} needs sets this to FALSE.
-##' @param character_formula A formula (passed as a character string!) to parse the outcome and the predictor variables. 
-##' @param outcome_variable The name of the outcome variable (same as \code{all.vars(formula(character_formula))[[1]]} provided to avoid overhead in the parsing of the formula.
-##' @param outcome_target_level The level of the binary outcome variable for which the superlearner predicts the risk.  
+##' @param learners List of learners. Each learner can either be a
+##'     character string or a list. If the learner is a character
+##'     string it must be the name of a learner function, such as
+##'     \code{\link{learn_glm}}, \code{\link{learn_glmnet}},
+##'     \code{\link{learn_ranger}}. If the learner is a list then
+##'     either the name of the learner is a learner function or the
+##'     list has an element \code{learner_fun} which is the name of a
+##'     learner function. The other elements of the list are passed on
+##'     as additional arguments to the learner function.
+##' @param parse_learners Logical. If TRUE parse
+##'     learners. \code{\link{run_rtmle}} needs sets this to FALSE.
+##' @param character_formula A formula (passed as a character string!)
+##'     to parse the outcome and the predictor variables.
+##' @param outcome_variable The name of the outcome variable (same as
+##'     \code{all.vars(formula(character_formula))[[1]]} provided to
+##'     avoid overhead in the parsing of the formula.
+##' @param outcome_variable_name For internal use when called from \code{run_rtmle} via \code{fitter}.
 ##' @param id_variable The name of the subject id variable.
 ##' @param data The data for learning.
-##' @param intervened_data The data were all intervention variables are readily set according to the intervention protocol.
-##' @param ensemble Type of superlearning. When \code{"winner"} the discrete super learner is the learner with the lowest
-##' level-one mean squared prediction error (Brier score).
-##' @param ... Not (yet) used. 
-##' @return The level-one data column of the discrete superlearner. 
-##' @seealso \code{\link{run_rtmle}}, \code{learn_glm}, \code{learn_glmnet}, \code{learn_ranger}
+##' @param intervened_data The data were all intervention variables
+##'     are readily set according to the intervention protocol.
+##' @param ensemble_method How to combine the learners. Implemented are
+##' non-linear least squares \code{"nnls"}, index of prediction accuracy \code{"ipa"} weighting and
+##' the discrete superlearner which picks the learner with the lowest Brier score. If all models
+##' have zero weight, the average predicted value from the learning set is applied.
+##' @param diagnostics For internal use when called from run_rtmle via
+##'     fitter which is called from intervention_probabilities and
+##'     sequential_regression.
+##' @param ... Not (yet) used.
+##' @return The level-one data column of the discrete superlearner.
+##' @seealso \code{\link{run_rtmle}}, \code{learn_glm},
+##'     \code{learn_glmnet}, \code{learn_ranger}
 ##' @examples
 ##' # Note that the function is designed to be called from run_rtmle.  
 ##' library(ranger)
@@ -59,7 +74,6 @@
 ##'                                                      learner_fun="learn_glmnet")),
 ##'                   character_formula = "A_0~L_0+sex+age",
 ##'                   outcome_variable = "A_0",
-##'                   outcome_target_level="1",
 ##'                   id_variable = "id",
 ##'                   data = ld[!duplicated(id)],
 ##'                   intervened_data = ld[!duplicated(id)])
@@ -72,11 +86,12 @@ superlearn <- function(folds,
                        parse_learners = TRUE,
                        character_formula,
                        outcome_variable,
-                       outcome_target_level, # for treatment and censoring variables
+                       outcome_variable_name,
                        id_variable,
                        data,
                        intervened_data,
-                       ensemble,
+                       ensemble_method = "discrete",
+                       diagnostics,
                        ...){
     expected_levels = NULL
     N <- NROW(data)
@@ -100,6 +115,8 @@ superlearn <- function(folds,
         multi_factor_levels <- data[, data.table::data.table(factor = factor_cols,
                                                              expected_levels = sapply(.SD,uniqueN)),
                                     .SDcols = factor_cols][expected_levels>2]
+    }else{
+        multi_factor_levels <- NULL
     }
     # create emtpy level-1 data
     level_one_data <- data.table::data.table(id = 1:N,data[[outcome_variable]])
@@ -124,12 +141,8 @@ superlearn <- function(folds,
         # CASE: no variation in the outcome variable
         #       predict the unique outcome value
         if (outcome_variable %in% current_constants){
-            if (!is.null(outcome_target_level)){
-                outcome_value_k <- na.omit(unique(learn_data_k[[outcome_variable]]))
-                predicted_k <- rep(1*(outcome_target_level == outcome_value_k),NROW(test_data_k))
-            }else {
-                predicted_k <- rep(outcome_value_k,NROW(test_data_k))
-            }
+            outcome_value_k <- na.omit(unique(learn_data_k[[outcome_variable]]))
+            predicted_k <- rep(outcome_value_k,NROW(test_data_k))
             for (this_learner_name in learner_names) {
                 set(level_one_data,j = this_learner_name,i = which(random_split == k),value = predicted_k)
             }
@@ -146,18 +159,21 @@ superlearn <- function(folds,
                                                   expected_levels = sapply(.SD,uniqueN)),
                          .SDcols = multi_factor_levels$factor]))[duplicated(factor)]$factor
                 if (length(vars_missing_levels_k)>0){
-                    warning(paste0("Outcome: ",outcome_variable,": the following variables have not all levels in all folds: ",
-                                   paste0(vars_missing_levels_k,collapse = ", ")))
+                    if (!missing(diagnostics)){
+                        diagnostics$missing_levels <- c(diagnostics$missing_levels,
+                                                        paste0("Outcome: ",outcome_variable,": the following variables have not all levels in all folds: ",
+                                                               paste0(vars_missing_levels_k,collapse = ", ")))
+                    }
                     character_formula_k <- delete_variables_from_formula(character_formula = character_formula_k,
                                                                          delete_vars = vars_missing_levels_k)
                 }
             }
-
-
             # remove constant predictor variables
             if (length(current_constants)>0){
-                warning(paste0("Outcome: ",outcome_variable,": the following variables are constant in fold ",k,": ",
-                               paste0(current_constants,collapse = ", ")))
+                if (!missing(diagnostics)){
+                    diagnostics$constant_predictors <- c(diagnostics$constant_predictors,paste0("Outcome: ",outcome_variable,": the following variables are constant in fold ",k,": ",
+                                                                                                paste0(current_constants,collapse = ", ")))
+                }
                 character_formula_k <- delete_variables_from_formula(character_formula = character_formula_k,
                                                                      delete_vars = current_constants)
                 number_rhs_variables_k <- attr(character_formula_k,"number_rhs_variables")
@@ -167,11 +183,7 @@ superlearn <- function(folds,
             # if there are no covariates then we simply predict the mean 
             if (number_rhs_variables_k == 0){
                 # here we assume that the outcome is binary or a predicted continuous value 
-                if (!is.null(outcome_target_level)){
-                    predicted_k <- rep(mean(outcome_target_level == learn_data_k[[outcome_variable]],na.rm = TRUE),NROW(test_data_k))
-                }else {
-                    predicted_k <- rep(mean(learn_data_k[[outcome_variable]],na.rm = TRUE),NROW(test_data_k))
-                }
+                predicted_k <- rep(mean(learn_data_k[[outcome_variable]],na.rm = TRUE),NROW(test_data_k))
                 for (this_learner_name in learner_names) {
                     set(level_one_data,
                         j = this_learner_name,
@@ -198,32 +210,73 @@ superlearn <- function(folds,
             }
         }
     }
-    # discrete super learner (for now)
-    # choose the minimizer of the Brier score
-    if (!is.null(outcome_target_level)){
-        x <- sapply(learner_names, function(this_learner_name){
-            mean(((1*(level_one_data[[outcome_variable]] == outcome_target_level))-level_one_data[[this_learner_name]])^2)
-        })
-    } else{
-        # FIXME: NA values of the outcome should not make it until here
-        x <- sapply(learner_names,function(this_learner_name){
-            outcome <- level_one_data[[outcome_variable]]
-            mean((outcome-level_one_data[[this_learner_name]])^2,na.rm = TRUE)})
-    }
-    names(x) <- learner_names
-    winner_name <- names(x)[which.min(x)]
-    ## print(x)
-    ## print(winner_name)
+    ensemble_weights <- switch(tolower(ensemble_method),
+                               # Non-Negative Least Squares
+                               "nnls" = {
+                                   L1 = as.matrix(level_one_data[,learner_names,with = FALSE])
+                                   nnls_solution <- nnls::nnls(A = L1,b = level_one_data[[outcome_variable]])$x
+                                   nnls_weights <- nnls_solution / sum(nnls_solution)
+                                   names(nnls_weights) <- learner_names
+                                   nnls_weights
+                               },
+                               "ipa" = {
+                                   null_model_Brier_score <- mean((level_one_data[[outcome_variable]]-mean(data[[outcome_variable]]))^2)
+                                   Brier_score <- sapply(learner_names,function(this_learner_name){
+                                       mean(
+                                       (level_one_data[[outcome_variable]]-level_one_data[[this_learner_name]]
+                                       )^2,na.rm = TRUE)})
+                                   ipa_weights <- 1-(Brier_score/null_model_Brier_score)
+                                   # remove models that perform worse than the null model
+                                   ipa_weights <- pmax(0,ipa_weights)
+                                   if (any(ipa_weights>0)){
+                                       ipa_weights <- ipa_weights/sum(ipa_weights)
+                                   }
+                                   names(ipa_weights) <- learner_names
+                                   ipa_weights                                       
+                               }, {
+                                   # default is discrete super learner (for now)
+                                   # choose the minimizer of the Brier score
+                                   x <- sapply(learner_names,function(this_learner_name){
+                                       mean(
+                                       (level_one_data[[outcome_variable]]-level_one_data[[this_learner_name]]
+                                       )^2,na.rm = TRUE)})
+                                   names(x) <- learner_names
+                                   x <- sort(x)
+                                   discrete_weights <- c(1,rep(0,length(x)-1))
+                                   names(discrete_weights) <- names(x)
+                                   discrete_weights
+                               })
+    ## winner_name <- names(x)[1]
+    ## names(learners) <- learner_names
+    ## winner <- learners[[winner_name]]
     names(learners) <- learner_names
-    winner <- learners[[winner_name]]
-    learner_args <- c(list(character_formula = character_formula,
-                           data = data,
-                           intervened_data = intervened_data),
-                      this_learner$args)
-    predicted_values_args <- c(winner$args, learner_args[!names(learner_args)%in%names(winner$args)]) ## do not include duplicate arguments
-    predicted_values <- do.call(winner$fun,predicted_values_args)
-    data.table::setattr(predicted_values,"winner",winner)
-    data.table::setattr(predicted_values,"fit",x)
+    learner_args <- list(character_formula = character_formula,
+                         data = data,
+                         intervened_data = intervened_data)
+    if (all(ensemble_weights == 0)){
+        # NULL model prediction
+        if (!missing(diagnostics)){
+            diagnostics$superlearner_null_model <- c(diagnostics$superlearner_null_model,paste0("For outcome ",outcome_variable_name," all learners performed worse than the null model. Fall back to null model (average prediction)"))
+        }
+        predicted_values <- rep(mean(data[[outcome_variable]]),NROW(intervened_data))
+    }else{
+        predicted_value_ensemble <- lapply(names(ensemble_weights)[ensemble_weights>0],function(this_learner){
+            ## add winner's arguments but do not include duplicate arguments
+            predicted_values_args <- c(learners[[this_learner]]$args,
+                                       learner_args[!names(learner_args)%in%names(learners[[this_learner]]$args)])
+            do.call(what = learners[[this_learner]]$fun,predicted_values_args)
+        })
+        if (length(predicted_value_ensemble) == 1){
+            predicted_values <- predicted_value_ensemble[[1]]
+        }else{
+            predicted_values <- do.call(cbind,predicted_value_ensemble)%*%ensemble_weights[ensemble_weights>0]
+            if (any(is.na(predicted_values))) browser(skipCalls=1L)
+        }
+    }
+    data.table::setattr(predicted_values,"ensemble_weights",ensemble_weights)
+    if (!missing(diagnostics)){
+        data.table::setattr(predicted_values,"diagnostics",diagnostics)
+    }
     return(predicted_values)
 }
 
