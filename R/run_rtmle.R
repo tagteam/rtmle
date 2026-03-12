@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul  1 2024 (09:11)
 ## Version:
-## Last-Updated: feb 26 2026 (13:28) 
-##           By: Thomas Alexander Gerds
-##     Update #: 590
+## Last-Updated: Mar 12 2026 (15:42) 
+##           By: Johan Sebastian Ohlendorff
+##     Update #: 591
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -21,7 +21,23 @@
 #' @param targets Selection of targets to be analysed. If missing all
 #'     targets in x$targets are analysed.
 #' @param learner A function which is called to fit (learn) the
-#'     nuisance parameter models.
+#'   nuisance parameter models. Must either be:
+#'   \itemize{
+#'     \item A single string giving the name of a learner function
+#'       (e.g., `"learn_glmnet"`) or the function itself.
+#'     \item A list consisting of the elements:
+#'       \itemize{
+#'         \item \code{folds}: a character string giving the name of the
+#'           learner function (e.g., `"learn_glmnet"`) or the function itself.
+#'         \item \code{learners}: a named list of learner specifications,
+#'           each of which can either be:
+#'           \itemize{
+#'             \item A single string.
+#'             \item A list containing \code{learner_fun} and parameters to be
+#'               passed to the learner function.
+#'           }
+#'       }
+#'   }
 #' @param estimator Character specifying the estimator: either
 #'     \code{'tmle'} or \code{'g-formula'}.
 #' @param time_horizon The time horizon at which to calculate

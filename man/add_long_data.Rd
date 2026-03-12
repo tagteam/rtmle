@@ -35,7 +35,9 @@ Only subjects who exerience an competing event may have a row in the data.frame.
 name of the date variable must match \code{x$names$time} and it may contain calendar time dates
 or the pre-calculated time duration between time zero and the onset of the competing event.}
 
-\item{timevar_data}{named list of data.frames.}
+\item{timevar_data}{named list of data.frames. Must contain a data frame for the treatment
+and data frames for each time-varying variable. The data frames either contain two columns where the first is a subject identifier as initialized
+under \code{x$names$id} and the second column contains dates. The data frames may additionally contain a \code{value} column.}
 
 \item{...}{Not used (not yet)}
 }

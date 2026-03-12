@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 25 2024 (11:24)
 ## Version:
-## Last-Updated: feb 25 2026 (15:52) 
-##           By: Thomas Alexander Gerds
-##     Update #: 59
+## Last-Updated: Mar 12 2026 (15:40) 
+##           By: Johan Sebastian Ohlendorff
+##     Update #: 61
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -34,7 +34,9 @@
 #'        Only subjects who exerience an competing event may have a row in the data.frame. The 
 #'        name of the date variable must match \code{x$names$time} and it may contain calendar time dates
 #'        or the pre-calculated time duration between time zero and the onset of the competing event. 
-#' @param timevar_data named list of data.frames. 
+#' @param timevar_data named list of data.frames. Must contain a data frame for the treatment
+#' and data frames for each time-varying variable. The data frames either contain two columns where the first is a subject identifier as initialized
+#' under \code{x$names$id} and the second column contains dates. The data frames may additionally contain a \code{value} column.
 #' @param ... Not used (not yet)
 #' @seealso \link[rtmle]{add_baseline_data}, \link[rtmle]{add_wide_data}
 #' @return The modified object.

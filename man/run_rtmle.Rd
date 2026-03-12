@@ -25,7 +25,23 @@ run_rtmle(
 targets in x$targets are analysed.}
 
 \item{learner}{A function which is called to fit (learn) the
-nuisance parameter models.}
+nuisance parameter models. Must either be:
+\itemize{
+  \item A single string giving the name of a learner function
+    (e.g., `"learn_glmnet"`) or the function itself.
+  \item A list consisting of the elements:
+    \itemize{
+      \item \code{folds}: a character string giving the name of the
+        learner function (e.g., `"learn_glmnet"`) or the function itself.
+      \item \code{learners}: a named list of learner specifications,
+        each of which can either be:
+        \itemize{
+          \item A single string.
+          \item A list containing \code{learner_fun} and parameters to be
+            passed to the learner function.
+        }
+    }
+}}
 
 \item{estimator}{Character specifying the estimator: either
 \code{'tmle'} or \code{'g-formula'}.}
