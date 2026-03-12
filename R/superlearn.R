@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Oct 31 2024 (07:29) 
 ## Version: 
-## Last-Updated: feb 27 2026 (11:39) 
+## Last-Updated: mar  5 2026 (08:52) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 281
+##     Update #: 282
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -47,7 +47,7 @@
 ##'     are readily set according to the intervention protocol.
 ##' @param ensemble_method How to combine the learners. Implemented are
 ##' non-linear least squares \code{"nnls"}, index of prediction accuracy \code{"ipa"} weighting and
-##' the discrete superlearner which picks the learner with the lowest Brier score. If all models
+##' \code{"discrete"} which picks the learner with the lowest Brier score. If all models
 ##' have zero weight, the average predicted value from the learning set is applied.
 ##' @param diagnostics For internal use when called from run_rtmle via
 ##'     fitter which is called from intervention_probabilities and
