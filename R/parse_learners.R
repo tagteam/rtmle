@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Nov  9 2024 (09:55) 
 ## Version: 
-## Last-Updated: dec  2 2025 (09:35) 
-##           By: Thomas Alexander Gerds
-##     Update #: 104
+## Last-Updated: Mar 12 2026 (15:24) 
+##           By: Johan Sebastian Ohlendorff
+##     Update #: 110
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -38,6 +38,42 @@
 ##' @export 
 ##' @author Thomas A. Gerds <tag@@biostat.ku.dk>
 parse_learners <- function(learners){
+    ## Make sure that formatting is obeyed
+    ## 1. If learners is a single string
+    ## 2. Learners is a vector of strings
+    ## 3. Learners does not contain a list of learners, but must have a name and a learner_fun element
+    ## 4. Learners contains a list of learners named learners and a folds element for the super learner.
+    # learners must be one of the allowed formats
+
+    if (is.character(learners)) {
+        # Case 1: single string OR Case 2: vector of strings
+        if (!all(nzchar(learners))) {
+            stop("All learner names must be non-empty strings.")
+        }
+    } else if (is.list(learners)) {
+        # Case 3: single learner specification
+        if (!("learners" %in% names(learners))) {
+            if (!all(c("name", "learner_fun") %in% names(learners))) {
+                stop("Learner must contain 'name' and 'learner_fun'.")
+            }
+        } else {
+            # Case 4: super learner specification
+            if (!is.list(learners$learners)) {
+                stop("'learners' must be a list of learner specifications.")
+            }
+
+            if (!("folds" %in% names(learners))) {
+                stop("Super learner specification must contain 'folds'.")
+            }
+
+            if (!is.numeric(learners$folds)) {
+                stop("'folds' must be numeric.")
+            }
+        }
+    } else {
+        stop("Invalid 'learners' specification.")
+    }
+    
     if (is.character(learners) && length(learners) == 1){
         learner_fun <- learners
         if (inherits(try(has_fun <- do.call("inherits",list(x = as.name(learner_fun),"function")),silent = TRUE),
@@ -103,9 +139,6 @@ parse_learners <- function(learners){
                 learners <- lapply(X = learners$learners,FUN = parse_learners)
                 learner_args$learners <- NULL
                 learner_args$name <- NULL
-                if (length(learner_args$folds) == 0){
-                    stop("Argument folds for super learner is missing")
-                }
                 parsed_learners <- list(name = "superlearn",
                                         learners = learners,
                                         args = learner_args)
