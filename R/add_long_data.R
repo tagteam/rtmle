@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 25 2024 (11:24)
 ## Version:
-## Last-Updated: Mar 12 2026 (15:40) 
-##           By: Johan Sebastian Ohlendorff
-##     Update #: 61
+## Last-Updated: mar 13 2026 (13:38) 
+##           By: Thomas Alexander Gerds
+##     Update #: 62
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -117,7 +117,7 @@ add_long_data <- function(x,
             stop(paste0("Element ",name," does not have a variable called ",x$names$id,"."))
         else{
             if (any(duplicated(nv[[name]][[x$names$id]])))
-                stop("Duplicated values of variable '",x$names$id,"' in dataset '",name," are not allowed")
+                stop("Duplicated values of variable '",x$names$id,"' in dataset '",name,"' are not allowed")
 
             x$long_data[[name]] <- copy(as.data.table(nv[[name]]))
         }

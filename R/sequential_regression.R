@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 30 2024 (14:30)
 ## Version:
-## Last-Updated: feb 26 2026 (12:59) 
+## Last-Updated: mar 13 2026 (13:41) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 547
+##     Update #: 550
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -132,7 +132,7 @@ sequential_regression <- function(x,
                                                  intervention_match = imatch,
                                                  k = k,protocol = protocol_name)
             ),"try-error")){
-                stop(paste0("Fluctuation model used in the TMLE update step faile",
+                stop(paste0("Fluctuation model used in the TMLE update step failed",
                             " in the attempt to run function tmle_update at time point: ",k))
             }
             ## FIXME: why do we NOT need the following?

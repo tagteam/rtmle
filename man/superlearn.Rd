@@ -56,7 +56,7 @@ are readily set according to the intervention protocol.}
 
 \item{ensemble_method}{How to combine the learners. Implemented are
 non-linear least squares \code{"nnls"}, index of prediction accuracy \code{"ipa"} weighting and
-the discrete superlearner which picks the learner with the lowest Brier score. If all models
+\code{"discrete"} which picks the learner with the lowest Brier score. If all models
 have zero weight, the average predicted value from the learning set is applied.}
 
 \item{diagnostics}{For internal use when called from run_rtmle via

@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Oct 31 2024 (07:29) 
 ## Version: 
-## Last-Updated: mar  5 2026 (08:52) 
+## Last-Updated: mar 13 2026 (07:35) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 282
+##     Update #: 284
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -105,7 +105,7 @@ superlearn <- function(folds,
     random_split <- sample(1:folds,size = N,replace = TRUE)
     # count the levels of all factor variables and check for levels that do not occur in all folds
     if (length(char_variables <- names(Filter(is.character, data)))>0){
-        stop(paste0("For save machine learning all character predictor variables need to be converted to factor.\n",
+        stop(paste0("For superlearning all character predictor variables need to be converted to factor.\n",
                     "Offending variables: ",paste0(char_variables,collapse = ", ")))}
     factor_cols <- names(Filter(is.factor, data))
     if (length(factor_cols)>0){

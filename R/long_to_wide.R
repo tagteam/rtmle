@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 22 2024 (14:07) 
 ## Version: 
-## Last-Updated: feb 25 2026 (16:11) 
+## Last-Updated: mar 13 2026 (13:10) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 192
+##     Update #: 193
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -176,7 +176,7 @@ long_to_wide <- function(x,
         }
         stopifnot(is.function(vfun))
         # Deal with 3 different formats of the data
-        # case 1: id, date (exposed= there is a date in the interval)
+        # case 1: id, date (exposed = there is a date in the interval)
         # case 2: id, date, value (last value carried forward)
         # case 3: id, start, end (calculate overlap with interval)
         if ("value" %in% names(x$long_data$timevar_data[[Vname]])){

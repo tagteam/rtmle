@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 19 2024 (08:31) 
 ## Version: 
-## Last-Updated: feb 27 2026 (11:10) 
+## Last-Updated: mar 13 2026 (09:36) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 151
+##     Update #: 159
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -46,7 +46,7 @@ print.rtmle <- function(x, ...) {
     }
     cat(sep = "","\nIntervention nodes:  ", format_index(x$intervention_nodes))
     # Tuning parameters
-    cat(sep = "","\nMinority_Threshold:  ",x$tuning_parameters$minority_threshold)
+    cat(sep = "","\nMinority threshold:  ",x$tuning_parameters$minority_threshold)
     cat(sep = "","\nWeight truncation:   ",paste0(as.character(x$tuning_parameters$weight_truncation),sep = ","))
     cat(sep = "","\nPrediction range:    ",paste0(as.character(x$tuning_parameters$prediction_range),sep = ","))
     # Data
@@ -147,6 +147,8 @@ print.rtmle <- function(x, ...) {
         for (diag in names(x$diagnostics)){
             cat("\n                       +: ",paste0(diag," (n=",length(x$diagnostics[[diag]]),")"))
         }
+    }else{
+    cat("\nDiagnostics:         No warnings")
     }
     if (length(x$estimate)>0){
         cat("\n\nResults:\n")
