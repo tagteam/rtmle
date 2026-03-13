@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 30 2024 (14:30)
 ## Version:
-## Last-Updated: mar 13 2026 (13:41) 
+## Last-Updated: mar 13 2026 (14:12) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 550
+##     Update #: 551
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -125,7 +125,8 @@ sequential_regression <- function(x,
                 stop("Exactly zero intervention probabilities encountered at the attempt to run the TMLE-update fluctuation model.\nYou may have to consider changing the target parameter or bounding the intervention probabilities somehow.\nGood luck!")
             }
             if (inherits(try(
-                predicted_outcome <- tmle_update(Y = Y,
+                predicted_outcome <- tmle_update(x = x,
+                                                 Y = Y,
                                                  offset = predicted_outcome_previous,
                                                  intervention_probs = inverse_probability_weights,
                                                  outcome_free_and_uncensored = outcome_free_and_uncensored,

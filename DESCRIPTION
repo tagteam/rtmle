@@ -1,5 +1,5 @@
 Package: rtmle
-Title: Analysing Longitudinal Observational and Randomized Data with the Targeted Minimum Loss Estimator. 
+Title: Analysing Longitudinal Observational and Randomized Data with the Targeted Minimum Loss Estimator
 Version: 2026.03.11
 Authors@R: c(
     person("Helene Charlotti Wiese", "Rytgaard", , "hely@sund.ku.dk", role = c("aut", "cre")),
@@ -8,8 +8,8 @@ Authors@R: c(
     person("Joshua", "Schwab",
          role = "ctb",
          comment = "Maintainer and primary author of the ltmle package which inspired this work"),
-    person("Johan Sebastian", "Ohlendorff", , "johan.sebastian.ohlendorff@sund.ku.dk", role = "ctb"),
-    person("Michaela", "Lukacova", , "michaela.lukacova@sund.ku.dk", role = "ctb")
+    person("Anders", "Munch", , "a.munch@sund.ku.dk", role = "ctb"),
+    person("Johan Sebastian", "Ohlendorff", , "johan.sebastian.ohlendorff@sund.ku.dk", role = "ctb")
   )
 Description: Flexible implementation of the targeted minimum loss estimators.
              Some of the functions are readily optimized for large-scale register data.

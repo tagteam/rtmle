@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul  3 2024 (13:54) 
 ## Version: 
-## Last-Updated: feb 26 2026 (12:45) 
+## Last-Updated: mar 13 2026 (14:11) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 57
+##     Update #: 58
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -14,7 +14,8 @@
 #----------------------------------------------------------------------
 ## 
 ### Code:
-tmle_update <- function(Y,
+tmle_update <- function(x,
+                        Y,
                         offset,
                         intervention_probs, 
                         outcome_free_and_uncensored,
