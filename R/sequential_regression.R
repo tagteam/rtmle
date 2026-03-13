@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 30 2024 (14:30)
 ## Version:
-## Last-Updated: mar 13 2026 (15:04) 
+## Last-Updated: mar 13 2026 (15:05) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 572
+##     Update #: 573
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -90,7 +90,7 @@ sequential_regression <- function(x,
             if (is.null(x$diagnostics)){
                 x$diagnostics <- dia
             }else{
-                x$diagnostics <- modifyList(x$diagnostics,dia)
+                x$diagnostics <- utils::modifyList(x$diagnostics,dia)
             }
         }
         # remove attributes

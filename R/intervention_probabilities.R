@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Oct 17 2024 (09:26) 
 ## Version: 
-## Last-Updated: mar 13 2026 (14:57) 
+## Last-Updated: mar 13 2026 (15:05) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 458
+##     Update #: 459
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -73,7 +73,7 @@ intervention_probabilities <- function(x,
                         if (is.null(x$diagnostics)){
                             x$diagnostics <- dia
                         }else{
-                            x$diagnostics <- modifyList(x$diagnostics,dia)
+                            x$diagnostics <- utils::modifyList(x$diagnostics,dia)
                         }
                     }
                     # remove attributes predicted values
