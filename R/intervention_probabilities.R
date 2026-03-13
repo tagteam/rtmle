@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Oct 17 2024 (09:26) 
 ## Version: 
-## Last-Updated: feb 26 2026 (13:17) 
+## Last-Updated: mar 13 2026 (14:57) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 456
+##     Update #: 458
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -69,8 +69,13 @@ intervention_probabilities <- function(x,
                     # store the fit
                     x$models[[paste0("time_",k)]][[NUI]][[NP]]$fit <- attr(nuisance_fit,"fit")
                     # update diagnostics
-                    if (length(attr(nuisance_fit,"diagnostics"))>0)
-                        x$diagnostics <- attr(nuisance_fit,"diagnostics")
+                    if (length(dia <- attr(nuisance_fit,"diagnostics"))>0){
+                        if (is.null(x$diagnostics)){
+                            x$diagnostics <- dia
+                        }else{
+                            x$diagnostics <- modifyList(x$diagnostics,dia)
+                        }
+                    }
                     # remove attributes predicted values
                     nuisance_fit <- as.numeric(nuisance_fit)
                     # check predicted values

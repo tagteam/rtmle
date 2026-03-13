@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Oct 31 2024 (07:29) 
 ## Version: 
-## Last-Updated: mar 13 2026 (07:35) 
+## Last-Updated: mar 13 2026 (14:56) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 284
+##     Update #: 285
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -256,7 +256,10 @@ superlearn <- function(folds,
     if (all(ensemble_weights == 0)){
         # NULL model prediction
         if (!missing(diagnostics)){
-            diagnostics$superlearner_null_model <- c(diagnostics$superlearner_null_model,paste0("For outcome ",outcome_variable_name," all learners performed worse than the null model. Fall back to null model (average prediction)"))
+            diagnostics$superlearner_null_model <- c(diagnostics$superlearner_null_model,
+                                                     paste0("For outcome ",
+                                                            outcome_variable_name, 
+                                                            " all learners performed worse than the null model. Fall back to null model (average prediction)"))
         }
         predicted_values <- rep(mean(data[[outcome_variable]]),NROW(intervened_data))
     }else{

@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 30 2024 (14:30)
 ## Version:
-## Last-Updated: mar 13 2026 (14:12) 
+## Last-Updated: mar 13 2026 (15:04) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 551
+##     Update #: 572
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -86,7 +86,13 @@ sequential_regression <- function(x,
                                     diagnostics = x$diagnostics)
         # save fitted object
         x$models[[paste0("time_",(k-1))]][["outcome"]][[protocol_name]]$fit <- attr(fit_last_interval,"fit")
-        x$diagnostics <- attr(fit_last_interval,"diagnostics")
+        if (length(dia <- attr(fit_last_interval,"diagnostics"))>0){
+            if (is.null(x$diagnostics)){
+                x$diagnostics <- dia
+            }else{
+                x$diagnostics <- modifyList(x$diagnostics,dia)
+            }
+        }
         # remove attributes
         fit_last_interval <- as.numeric(fit_last_interval)
         # set predicted value as outcome for next regression
@@ -125,8 +131,7 @@ sequential_regression <- function(x,
                 stop("Exactly zero intervention probabilities encountered at the attempt to run the TMLE-update fluctuation model.\nYou may have to consider changing the target parameter or bounding the intervention probabilities somehow.\nGood luck!")
             }
             if (inherits(try(
-                predicted_outcome <- tmle_update(x = x,
-                                                 Y = Y,
+                predicted_outcome <- tmle_update(Y = Y,
                                                  offset = predicted_outcome_previous,
                                                  intervention_probs = inverse_probability_weights,
                                                  outcome_free_and_uncensored = outcome_free_and_uncensored,
@@ -136,66 +141,73 @@ sequential_regression <- function(x,
                 stop(paste0("Fluctuation model used in the TMLE update step failed",
                             " in the attempt to run function tmle_update at time point: ",k))
             }
-            ## FIXME: why do we NOT need the following?
-            ## predicted_outcome[!outcome_free_and_uncensored] <- Y[!outcome_free_and_uncensored]
-            #
-            # calculate contribution to influence function
-            #
-            IPW <- 1/inverse_probability_weights
-            # FIXME: what is this constant 10000? 
-            ## if (any(IPW>10000)) IPW <- pmin(IPW,10000)
-            ## if (max(IPW,na.rm = TRUE)>nrow(x$prepared_data)) IPW <- pmin(IPW,nrow(x$prepared_data))
-            if (length(x$names$censoring)>0){
-                if (nchar(intervention_node_name)>0){
-                    index <- (current_cnode%in%x$names$uncensored_label) & (intervention_match[,intervention_node_name] %in% 1)
+            if (length(dia <- attr(predicted_outcome,"diagnostics"))>0){
+                if (is.null(x$diagnostics)){
+                    x$diagnostics$no_positive_weights <- dia
                 }else{
-                    index <- (current_cnode%in%x$names$uncensored_label)
+                    x$diagnostics$no_positive_weights <- c(x$diagnostics$no_positive_weights,dia)
                 }
+            }
+        ## FIXME: why do we NOT need the following?
+        ## predicted_outcome[!outcome_free_and_uncensored] <- Y[!outcome_free_and_uncensored]
+        #
+        # calculate contribution to influence function
+        #
+        IPW <- 1/inverse_probability_weights
+        # FIXME: what is this constant 10000? 
+        ## if (any(IPW>10000)) IPW <- pmin(IPW,10000)
+        ## if (max(IPW,na.rm = TRUE)>nrow(x$prepared_data)) IPW <- pmin(IPW,nrow(x$prepared_data))
+        if (length(x$names$censoring)>0){
+            if (nchar(intervention_node_name)>0){
+                index <- (current_cnode%in%x$names$uncensored_label) & (intervention_match[,intervention_node_name] %in% 1)
             }else{
-                if (nchar(intervention_node_name)>0){
-                    index <- (intervention_match[,intervention_node_name] %in% 1)
-                }else{
-                    index <- rep(1,N)
-                    index[!outcome_free_and_uncensored] <- NA
-                }
+                index <- (current_cnode%in%x$names$uncensored_label)
             }
-            if (any(IPW[index] != 0)) {
-                x$IC[[target_name]][[protocol_name]][[label_time_horizon]][index] <- x$IC[[target_name]][[protocol_name]][[label_time_horizon]][index] + (Y[index] - predicted_outcome[index]) * IPW[index]
+        }else{
+            if (nchar(intervention_node_name)>0){
+                index <- (intervention_match[,intervention_node_name] %in% 1)
+            }else{
+                index <- rep(1,N)
+                index[!outcome_free_and_uncensored] <- NA
             }
-        } else {
-            # g-formula
-            predicted_outcome <- x$prepared_data[[paste0(x$names$outcome,"_",k)]]
-            predicted_outcome[which(outcome_free_and_uncensored)] <- fit_last_interval
-            # FIXME: how to estimate the influence function without inverse probability weights?
         }
-        # prepare next iteration
-        set(x = x$prepared_data,
-            i = which(outcome_free_and_uncensored), # atrisk: not censored, event-free, no competing risk
-            j = "rtmle_predicted_outcome",
-            value = predicted_outcome[which(outcome_free_and_uncensored)])
-        # for those who have had an event or died or censored earlier
-        # the previous value is set
-        set(x = x$prepared_data,
-            i = which(!(outcome_free_and_uncensored)), # not atrisk
-            j = "rtmle_predicted_outcome",
-            value = x$prepared_data[[paste0(x$names$outcome,"_",k)]][which(!(outcome_free_and_uncensored))])
+        if (any(IPW[index] != 0)) {
+            x$IC[[target_name]][[protocol_name]][[label_time_horizon]][index] <- x$IC[[target_name]][[protocol_name]][[label_time_horizon]][index] + (Y[index] - predicted_outcome[index]) * IPW[index]
+        }
+    } else {
+        # g-formula
+        predicted_outcome <- x$prepared_data[[paste0(x$names$outcome,"_",k)]]
+        predicted_outcome[which(outcome_free_and_uncensored)] <- fit_last_interval
+        # FIXME: how to estimate the influence function without inverse probability weights?
     }
-    target_parameter <- "Risk"
-    # g-formula and tmle estimator
-    ic <- x$IC[[target_name]][[protocol_name]][[label_time_horizon]] + x$prepared_data$rtmle_predicted_outcome - mean(x$prepared_data$rtmle_predicted_outcome)
-    SE = sqrt(stats::var(ic)/N)
-    x$estimate[["Main_analysis"]][Target == target_name & Protocol ==  protocol_name & Time_horizon == time_horizon & Target_parameter == target_parameter & Estimator == estimator,
-                                  `:=`(Estimate = mean(x$prepared_data$rtmle_predicted_outcome),
-                                       Standard_error = SE)]
-    x$estimate[["Main_analysis"]][Target == target_name & Protocol ==  protocol_name & Time_horizon == time_horizon & Target_parameter == target_parameter & Estimator == estimator,
-                                  `:=`(Lower = Estimate-stats::qnorm(.975)*SE,
-                                       Upper = Estimate+stats::qnorm(.975)*SE)][]
-    x$IC[[target_name]][[protocol_name]][[label_time_horizon]] <- ic
-    # clean up for the next run
-    data.table::setkey(x$estimate$Main_analysis,Target,Protocol,Target_parameter,Time_horizon,Estimator)
-    x$prepared_data[,rtmle_predicted_outcome := NULL]
-    # NOTE if we would return x[] instead of x then x looses its class!
-    return(x)
+    # prepare next iteration
+    set(x = x$prepared_data,
+        i = which(outcome_free_and_uncensored), # atrisk: not censored, event-free, no competing risk
+        j = "rtmle_predicted_outcome",
+        value = predicted_outcome[which(outcome_free_and_uncensored)])
+    # for those who have had an event or died or censored earlier
+    # the previous value is set
+    set(x = x$prepared_data,
+        i = which(!(outcome_free_and_uncensored)), # not atrisk
+        j = "rtmle_predicted_outcome",
+        value = x$prepared_data[[paste0(x$names$outcome,"_",k)]][which(!(outcome_free_and_uncensored))])
+}
+target_parameter <- "Risk"
+# g-formula and tmle estimator
+ic <- x$IC[[target_name]][[protocol_name]][[label_time_horizon]] + x$prepared_data$rtmle_predicted_outcome - mean(x$prepared_data$rtmle_predicted_outcome)
+SE = sqrt(stats::var(ic)/N)
+x$estimate[["Main_analysis"]][Target == target_name & Protocol ==  protocol_name & Time_horizon == time_horizon & Target_parameter == target_parameter & Estimator == estimator,
+                              `:=`(Estimate = mean(x$prepared_data$rtmle_predicted_outcome),
+                                   Standard_error = SE)]
+x$estimate[["Main_analysis"]][Target == target_name & Protocol ==  protocol_name & Time_horizon == time_horizon & Target_parameter == target_parameter & Estimator == estimator,
+                              `:=`(Lower = Estimate-stats::qnorm(.975)*SE,
+                                   Upper = Estimate+stats::qnorm(.975)*SE)][]
+x$IC[[target_name]][[protocol_name]][[label_time_horizon]] <- ic
+# clean up for the next run
+data.table::setkey(x$estimate$Main_analysis,Target,Protocol,Target_parameter,Time_horizon,Estimator)
+x$prepared_data[,rtmle_predicted_outcome := NULL]
+# NOTE if we would return x[] instead of x then x looses its class!
+return(x)
 }
 
 

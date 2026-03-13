@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul  3 2024 (13:54) 
 ## Version: 
-## Last-Updated: mar 13 2026 (14:11) 
+## Last-Updated: mar 13 2026 (14:38) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 58
+##     Update #: 60
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -14,8 +14,7 @@
 #----------------------------------------------------------------------
 ## 
 ### Code:
-tmle_update <- function(x,
-                        Y,
+tmle_update <- function(Y,
                         offset,
                         intervention_probs, 
                         outcome_free_and_uncensored,
@@ -44,7 +43,7 @@ tmle_update <- function(x,
         x$diagnostics$no_positive_weights <- c(x$diagnostics$no_positive_weights,
                                                paste0("No TMLE update because no subject has positive weight in step ",k," for intervention protocol ",protocol,"."))
         Qstar <- stats::plogis(offset)
-        m <- "no Qstar fit because no subjects alive, uncensored, following intervention"
+        attr(Qstar,"diagnostics") <- paste0("No TMLE update because no subject has positive weight in step ",k," for intervention protocol ",protocol,".")
     }
     return(Qstar)
 }
