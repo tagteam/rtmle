@@ -1,0 +1,80 @@
+
+#+TITLE: Advanced Modeling in rtmle
+#+AUTHOR: tagteam/rtmle
+#+OPTIONS: toc:t num:t
+
+* Overview
+
+This vignette covers:
+- Model customization
+- Markov assumptions
+- Inclusion/exclusion rules
+- Multi-factor interventions
+- Super Learner
+- Truncation
+- Cheap bootstrap
+
+* Markov Modeling
+
+#+BEGIN_SRC r
+fit <- run_rtmle(
+  rt_obj,
+  protocol = my_protocol,
+  target = target,
+  model_formula = list(
+    outcome = Y ~ HbA1c + GLP1 + lag(GLP1),
+    treatment = A ~ HbA1c + lag(HbA1c)
+  ),
+  Markov = TRUE
+)
+#+END_SRC
+
+* Multi-Factor Intervention
+
+#+BEGIN_SRC r
+multi_protocol <- protocol(
+  name = "combo",
+  intervention = function(data) {
+    list(
+      GLP1 = 1,
+      SGLT2 = as.numeric(HbA1c > 50),
+      DPP4  = 0
+    )
+  }
+)
+#+END_SRC
+
+* Super Learner
+
+#+BEGIN_SRC r
+fit <- run_rtmle(
+  rt_obj,
+  protocol = multi_protocol,
+  target = target,
+  learner = "SuperLearner",
+  SL.library = c("SL.glm", "SL.glmnet", "SL.ranger")
+)
+#+END_SRC
+
+* Truncation
+
+#+BEGIN_SRC r
+fit <- run_rtmle(
+  rt_obj,
+  protocol = my_protocol,
+  target = target,
+  truncation = 0.01
+)
+#+END_SRC
+
+* Cheap Bootstrap
+
+#+BEGIN_SRC r
+fit <- run_rtmle(
+  rt_obj,
+  protocol = my_protocol,
+  target = target,
+  inference = "cheap_bootstrap",
+  B = 200
+)
+#+END_SRC

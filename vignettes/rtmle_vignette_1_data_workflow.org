@@ -1,0 +1,86 @@
+
+#+TITLE: Data Preparation Workflow in rtmle
+#+AUTHOR: tagteam/rtmle
+#+OPTIONS: toc:t num:t
+
+* Overview
+
+The rtmle package follows a stateful object-modification workflow:
+1. Initialize an analysis object.
+2. Add data components (baseline, wide, long).
+3. Convert formats if needed.
+4. Prepare the object for estimation.
+
+This separates data engineering from causal modeling and estimation.
+
+We illustrate using the dataset `diabetes_population`.
+
+* Variable Types in diabetes_population
+
+- Baseline (time-invariant): U, sex, age
+- Time-varying covariates (L_t): HbA1c, changeHbA1c
+- Treatments (A_t): GLP1, SGLT2, DPP4
+- Outcome (Y_t): MACE
+- Treatment summaries: History_GLP1, History_SGLT2, History_DPP4
+
+* Step 1: Initialize
+
+#+BEGIN_SRC r
+library(rtmle)
+
+rt_obj <- rtmle_init(
+  id = "id",
+  time = "time",
+  event = "event"
+)
+#+END_SRC
+
+* Step 2: Add Baseline Data
+
+#+BEGIN_SRC r
+rt_obj <- add_baseline_data(
+  rt_obj,
+  data = diabetes_population[diabetes_population$time == 0, ],
+  baseline_vars = c("U", "sex", "age")
+)
+#+END_SRC
+
+* Step 3: Add Wide Data
+
+#+BEGIN_SRC r
+rt_obj <- add_wide_data(
+  rt_obj,
+  data = diabetes_population[diabetes_population$time == 0, ],
+  wide_vars = c("History_GLP1", "History_SGLT2", "History_DPP4")
+)
+#+END_SRC
+
+* Step 4: Add Long Data
+
+#+BEGIN_SRC r
+rt_obj <- add_long_data(
+  rt_obj,
+  data = diabetes_population,
+  time_varying_covariates = c("HbA1c", "changeHbA1c"),
+  treatment_vars = c("GLP1", "SGLT2", "DPP4"),
+  outcome_var = "MACE"
+)
+#+END_SRC
+
+* Step 5: Convert Long to Wide
+
+#+BEGIN_SRC r
+wide_data <- long_to_wide(
+  data = diabetes_population,
+  id = "id",
+  time = "time"
+)
+#+END_SRC
+
+* Step 6: Prepare for Analysis
+
+#+BEGIN_SRC r
+rt_obj <- prepare_data(rt_obj)
+#+END_SRC
+
+After prepare_data(), the object is analysis-ready.

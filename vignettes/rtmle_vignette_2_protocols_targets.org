@@ -1,0 +1,72 @@
+
+#+TITLE: Treatment Protocols and Target Parameters
+#+AUTHOR: tagteam/rtmle
+#+OPTIONS: toc:t num:t
+
+* Why an Analysis Plan Matters
+
+Causal inference requires:
+1. A well-defined intervention (protocol).
+2. A clearly stated estimand (target parameter).
+3. A defined analysis population.
+
+* Example Dynamic Protocol
+
+#+BEGIN_SRC r
+my_protocol <- protocol(
+  name = "GLP1_dynamic",
+  intervention = function(data) {
+    with(data, ifelse(HbA1c > 48 & History_GLP1 == 0, 1, GLP1))
+  },
+  treatment_var = "GLP1"
+)
+#+END_SRC
+
+* Defining the Target
+
+#+BEGIN_SRC r
+target <- define_target(
+  outcome = "MACE",
+  type = "risk_difference",
+  protocol_1 = "GLP1_dynamic",
+  protocol_0 = "natural_course",
+  horizon = 60
+)
+#+END_SRC
+
+* Running the Analysis
+
+#+BEGIN_SRC r
+fit <- run_rtmle(
+  rt_obj,
+  protocol = my_protocol,
+  target = target
+)
+#+END_SRC
+
+* Subset Argument
+
+#+BEGIN_SRC r
+fit <- run_rtmle(
+  rt_obj,
+  protocol = my_protocol,
+  target = target,
+  subset = sex == 1
+)
+#+END_SRC
+
+This restricts the target population.
+
+* Refit Argument
+
+#+BEGIN_SRC r
+fit <- run_rtmle(
+  rt_obj,
+  protocol = my_protocol,
+  target = target,
+  subset = sex == 1,
+  refit = TRUE
+)
+#+END_SRC
+
+refit = TRUE re-estimates nuisance models in the subset.
