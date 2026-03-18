@@ -14,7 +14,7 @@ List of learners
 }
 \description{
 Parsing list of learners for function superlearn. Available names are 
-substituted for missing learner_fun elements and available elements learner_fun
+substituted for missing fun elements and available elements fun
 are substituted for missing names.
 }
 \details{
@@ -26,12 +26,12 @@ parse_learners(c("learn_glm","learn_glmnet"))
 parse_learners(list(folds=5,
                learners=
                         list("learn_glm",
-                        "glm100"=list(maxit=200,learner_fun="learn_glm"))))
+                        "glm100"=list(maxit=200,fun="learn_glm"))))
 parse_learners(list(folds=10,
                learners=list(
                         "learn_glmnet",
-                        "glm"=list(learn_variables="A",learner_fun="glm"),
-                        list(name="learn_ranger", learner_fun="learn_ranger",num.trees=5))))
+                        "glm"=list(learn_variables="A",fun="glm"),
+                        list(name="learn_ranger", fun="learn_ranger",num.trees=5))))
 }
 \seealso{
 \code{\link{superlearn}}, \code{\link{run_rtmle}}

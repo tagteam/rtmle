@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 25 2024 (09:49) 
 ## Version: 
-## Last-Updated: jan 20 2026 (17:46) 
+## Last-Updated: mar 18 2026 (08:17) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 10
+##     Update #: 11
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -24,7 +24,7 @@ setwd("~/research/SoftWare/rtmle/")
 parse_learners(c(list("learn_glmnet",
                       "glm"=list(learn_variables="A")),
                  list("learn_ranger"),
-                 list(list(learner_fun="learn_ranger",num.trees=5))))
+                 list(list(fun="learn_ranger",num.trees=5))))
 
 
 set.seed(112)

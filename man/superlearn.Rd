@@ -31,7 +31,7 @@ string it must be the name of a learner function, such as
 \code{\link{learn_glm}}, \code{\link{learn_glmnet}},
 \code{\link{learn_ranger}}. If the learner is a list then
 either the name of the learner is a learner function or the
-list has an element \code{learner_fun} which is the name of a
+list has an element \code{fun} which is the name of a
 learner function. The other elements of the list are passed on
 as additional arguments to the learner function.}
 
@@ -89,10 +89,10 @@ ld <- simulate_long_data(n = 113,
                          register_format = FALSE)
 fit <- superlearn(folds = 2,seed = 8,
                   learners = list("learn_glm",
-                                  "my_ranger" = list(learner_fun = "learn_ranger",
+                                  "my_ranger" = list(fun = "learn_ranger",
                                                      num.trees = 5),
                                   "learn_glmnet" = list(alpha = 1,
-                                                     learner_fun="learn_glmnet")),
+                                                     fun="learn_glmnet")),
                   character_formula = "A_0~L_0+sex+age",
                   outcome_variable = "A_0",
                   id_variable = "id",

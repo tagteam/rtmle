@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: feb 24 2026 (11:04) 
 ## Version: 
-## Last-Updated: mar 14 2026 (06:59) 
+## Last-Updated: mar 18 2026 (08:37) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 31
+##     Update #: 34
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -28,7 +28,7 @@ discretize_timevarying_exposure <- function(data,
                                             point_exposure,
                                             threshold,
                                             id){
-    exposure = start_exposure = end_exposure = end_interval = start_interval = NULL
+    exposure = start_exposure = end_exposure = end_interval = start_interval = interval = NULL
     data <- copy(data)
     grid <- copy(grid)
     if (point_exposure){
@@ -55,7 +55,7 @@ discretize_timevarying_exposure <- function(data,
         # missing values occur in intervals without any overlap
         overlap[is.na(exposure),exposure := 0]
         # summarize across interval
-        overlap <- overlap[,data.table::data.table(exposure = 1*(any(exposure))),by = c(id,"interval")]
+        overlap <- overlap[,data.table::data.table(exposure = 1*(any(exposure == 1))),by = c(id,"interval")]
     }else{
         overlap[,exposure := (pmin(end_interval,end_exposure)-pmax(start_interval,start_exposure))]
         overlap[is.na(exposure),exposure := 0]

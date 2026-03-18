@@ -37,7 +37,7 @@ nuisance parameter models. Must either be:
         each of which can either be:
         \itemize{
           \item A single string.
-          \item A list containing \code{learner_fun} and parameters to be
+          \item A list containing \code{fun} and parameters to be
             passed to the learner function.
         }
     }
@@ -128,7 +128,7 @@ weight_truncation=c(0.4,0.6))
 # can also use lambda.min or lambda.1se
 \dontrun{
     x <- run_rtmle(x,learner = list(name = "glmnet_min",
-                                   learner_fun="learn_glmnet",
+                                   fun="learn_glmnet",
                                    selector="min"),
                   time_horizon = tau)
 summary(x)

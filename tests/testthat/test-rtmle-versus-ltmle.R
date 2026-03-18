@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Nov 16 2024 (17:04) 
 ## Version: 
-## Last-Updated: feb 24 2026 (14:55) 
+## Last-Updated: mar 18 2026 (08:38) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 83
+##     Update #: 84
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -42,7 +42,7 @@ test_that("single time point compare rtmle with ltmle",{
     x <- model_formula(x)
     x <- run_rtmle(x,refit = FALSE,verbose = FALSE,learner = "learn_glm")
     expect_equal(result1$fit$g[["A"]], as.matrix(x$models[["time_0"]][["A"]][["A_0"]]$fit))
-    yfit_rtmle <- as.matrix(x$models$time_0$outcome[["A"]]$fit)
+    yfit_rtmle <- as.matrix(x$models$time_0$outcome[["Y_1"]]$fit[["A"]]$sequence_time_1)
     yfit_ltmle <- result1$fit$Q[["Y"]]
     rownames(yfit_ltmle) = rownames(yfit_rtmle)
     expect_equal(yfit_rtmle,yfit_ltmle)
@@ -56,13 +56,13 @@ test_that("longitudinal data compare rtmle with ltmle",{
     x <- rtmle_init(intervals = 3,name_id = "id",name_outcome = "Y",name_competing = "Dead",name_censoring = "Censored",censored_label = "censored")
     x <- add_long_data(x,outcome_data=ld$outcome_data,censored_data=ld$censored_data,competing_data=ld$competing_data,timevar_data=ld$timevar_data)
     x <- add_baseline_data(x,data=ld$baseline_data)
-    suppressMessages(x <- long_to_wide(x,breaks = seq(0,2000,30.45*12)))
+    x <- long_to_wide(x,breaks = seq(0,2000,30.45*12))
     x <- protocol(x,name = "Always_A",treatment_variables = "A",intervention = 1)
     x <- protocol(x,name = "Never_A",treatment_variables = "A",intervention = 0)
     x <- prepare_data(x)
     x <- target(x,name = "Outcome_risk",estimator = "tmle",protocols = c("Always_A","Never_A"))
     x <- model_formula(x)
-    suppressWarnings(x <- run_rtmle(x,learner = "learn_glm",time_horizon = 1:3,verbose = FALSE))
+    x <- run_rtmle(x,learner = "learn_glm",time_horizon = 1:3,verbose = FALSE)
     ## summary(x)
     ldata <- copy(x$prepared_data)
     ldata[,id := NULL]
@@ -112,6 +112,8 @@ test_that("longitudinal data compare rtmle with ltmle",{
     expect_equal(y3$estimates[["tmle"]],x$estimate$Main_analysis$Estimate[[3]])
     expect_equal(y3$IC[["tmle"]],x$IC$Outcome_risk$Always_A[[3]])
 })
+
+
 if (FALSE){
     test_that("longitudinal data compare rtmle with ltmle two-dimensional treatment",{
         rexpit <- function (x) rbinom(n = length(x), size = 1, prob = plogis(x))

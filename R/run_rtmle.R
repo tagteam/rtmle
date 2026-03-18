@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul  1 2024 (09:11)
 ## Version:
-## Last-Updated: mar 17 2026 (10:17) 
+## Last-Updated: mar 18 2026 (08:17) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 597
+##     Update #: 598
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -33,7 +33,7 @@
 #'           each of which can either be:
 #'           \itemize{
 #'             \item A single string.
-#'             \item A list containing \code{learner_fun} and parameters to be
+#'             \item A list containing \code{fun} and parameters to be
 #'               passed to the learner function.
 #'           }
 #'       }
@@ -111,7 +111,7 @@
 #' # can also use lambda.min or lambda.1se
 #' \dontrun{
 #'     x <- run_rtmle(x,learner = list(name = "glmnet_min",
-#'                                    learner_fun="learn_glmnet",
+#'                                    fun="learn_glmnet",
 #'                                    selector="min"),
 #'                   time_horizon = tau)
 #' summary(x)

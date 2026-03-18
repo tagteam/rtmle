@@ -49,7 +49,6 @@ x <- rtmle_init(intervals = 3, name_id = "id",
                 name_censoring = "Censored",censored_label = "censored")
 x <- add_baseline_data(x,data=ld$baseline_data)
 x <- add_wide_data(x,outcome_data=outcome_data,timevar_data=timevar_data)
-x <- prepare_data(x)
 
 }
 \seealso{

@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: feb 23 2026 (10:42) 
 ## Version: 
-## Last-Updated: feb 25 2026 (15:08) 
+## Last-Updated: mar 18 2026 (08:17) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 4
+##     Update #: 5
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -19,8 +19,8 @@
 #
 # Single panel "manhattan style", all terms, colored by node group:
 
-z <- run_analysis(tau = 1:11,intervals = c(0,30.45,3*30.45,seq(6*30.45,9*6*30.45,6*30.45)),outcome = "primary.outcome",dt_baseline = dt_baseline,discretized_treatment_regimes = discretized_treatment_regimes,discretized_timevar_covariates = discretized_timevar_covariates,discretized_outcomes = discretized_outcomes,names_baseline_covariates = names_baseline_covariates,timevarying_covariate_groups = timevarying_covariate_groups,markov_variables = NULL,no_lira = FALSE,learner = list(name = "ridge",alpha = 1,selector = "undersmooth",learner_fun = "learn_glmnet"))
-z <- run_analysis(tau = 1:11,intervals = c(0,30.45,3*30.45,seq(6*30.45,9*6*30.45,6*30.45)),outcome = "primary.outcome",dt_baseline = dt_baseline,discretized_treatment_regimes = discretized_treatment_regimes,discretized_timevar_covariates = discretized_timevar_covariates,discretized_outcomes = discretized_outcomes,names_baseline_covariates = names_baseline_covariates,timevarying_covariate_groups = timevarying_covariate_groups,markov_variables = NULL,no_lira = FALSE,learner = list(name = "lasso",alpha = 0,selector = "undersmooth",learner_fun = "learn_glmnet"))
+z <- run_analysis(tau = 1:11,intervals = c(0,30.45,3*30.45,seq(6*30.45,9*6*30.45,6*30.45)),outcome = "primary.outcome",dt_baseline = dt_baseline,discretized_treatment_regimes = discretized_treatment_regimes,discretized_timevar_covariates = discretized_timevar_covariates,discretized_outcomes = discretized_outcomes,names_baseline_covariates = names_baseline_covariates,timevarying_covariate_groups = timevarying_covariate_groups,markov_variables = NULL,no_lira = FALSE,learner = list(name = "ridge",alpha = 1,selector = "undersmooth",fun = "learn_glmnet"))
+z <- run_analysis(tau = 1:11,intervals = c(0,30.45,3*30.45,seq(6*30.45,9*6*30.45,6*30.45)),outcome = "primary.outcome",dt_baseline = dt_baseline,discretized_treatment_regimes = discretized_treatment_regimes,discretized_timevar_covariates = discretized_timevar_covariates,discretized_outcomes = discretized_outcomes,names_baseline_covariates = names_baseline_covariates,timevarying_covariate_groups = timevarying_covariate_groups,markov_variables = NULL,no_lira = FALSE,learner = list(name = "lasso",alpha = 0,selector = "undersmooth",fun = "learn_glmnet"))
 
 res <- plot_model_coefficients(
   z,

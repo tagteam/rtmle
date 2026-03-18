@@ -30,7 +30,7 @@ value on the right hand side of the formulas.}
 \item{exclude_variables}{Variables to exclude from the formulas for the nuisance parameters.}
 
 \item{exclusion_rules}{Experimental. Additional exclusion rules given as a named list where names are variables that occur on the left hand side of a formula and
-elements are variables that should be included in the right hand side of the formula.}
+elements are variables that should be excluded from the right hand side of the formula.}
 
 \item{inclusion_rules}{Experimental. Additional inclusion rules given as a named list where names are variables that occur on the left hand side of a formula and
 elements are variables that should be included in the right hand side of the formula.}

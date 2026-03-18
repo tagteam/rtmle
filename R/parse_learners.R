@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Nov  9 2024 (09:55) 
 ## Version: 
-## Last-Updated: mar 18 2026 (08:05) 
+## Last-Updated: mar 18 2026 (08:17) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 120
+##     Update #: 121
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -54,7 +54,7 @@ parse_learners <- function(learners){
         # Case 3: single learner specification
         if (!("learners" %in% names(learners))) {
             if (!all(c("name", "fun") %in% names(learners))) {
-                stop("Learner must contain 'name' and 'fun'.")
+                stop("rtmle::parse_learners: Argument 'learners' can either be a list of learners or a single learner which must be a list that contains 'name' and 'fun'.")
             }
         } else {
             # Case 4: super learner specification

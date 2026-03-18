@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 19 2024 (08:31) 
 ## Version: 
-## Last-Updated: mar 13 2026 (14:57) 
+## Last-Updated: mar 18 2026 (08:17) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 162
+##     Update #: 163
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -114,7 +114,7 @@ print.rtmle <- function(x, ...) {
             # --------------------------------
             # SINGLE LEARNER
             # --------------------------------
-            learner_args <- setdiff(names(x),c("name","learner_fun"))
+            learner_args <- setdiff(names(x),c("name","fun"))
             args_string <- .format_args(x[learner_args])
             if (called_from_summarize_learners){
                 if (is.null(args_string)){

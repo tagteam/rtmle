@@ -2,34 +2,38 @@
 % Please edit documentation in R/plot_model_coefficients.R
 \name{plot_model_coefficients}
 \alias{plot_model_coefficients}
-\title{Plot extracted beta coefficients from nested intervention/outcome models}
+\title{Plot beta coefficients from intervention/censoring/outcome models}
 \usage{
 plot_model_coefficients(
   x,
-  node = "outcome",
+  time_horizon,
+  protocol,
+  times = NULL,
+  nodes,
   term = NULL,
   include_intercept = FALSE,
-  times = NULL,
   outcomes = NULL,
   color_by = c("time", "none"),
   facet_by = c("term", "time", "none"),
   point_alpha = 0.8,
   point_size = 2.2,
   plot_style = c("by_outcome", "manhattan"),
-  node_order = c("protocol", "censoring", "outcome"),
-  protocol_nodes = c("Placebo", "Lira"),
-  manhattan_color_by = c("none", "node_group", "time", "term"),
+  manhattan_color_by = c("none", "node", "time", "term"),
   show_x_labels = FALSE
 )
 }
 \arguments{
-\item{x}{An object containing nested fitted models. Must contain \code{x$models}, a
-named list with elements like \code{time_0}, \code{time_1}, \dots. Each
-\code{time_k} element is expected to be a list of model nodes (e.g.,
-intervention protocol nodes, \code{censoring}, \code{outcome}), each of which
-is itself a named list of model entries.}
+\item{x}{An object fitted with \link{run_rtmle} containing fitted nuisance parameter models.}
 
-\item{node}{Character scalar. For \code{plot_style = "by_outcome"}, the name of the node
+\item{time_horizon}{Optional selection of time_horizon. If \code{NULL}, \code{max(x$times)} is used.}
+
+\item{protocol}{Optional selection of protocol. If \code{NULL}, \code{names(x$protocols)[[1]])} is used.}
+
+\item{times}{Optional time selection. If \code{NULL}, all \code{time_*} elements are used.
+If numeric, values \code{0:K} are translated to names \code{time_0}, \dots.
+If character, interpreted as names of \code{time_*} elements.}
+
+\item{nodes}{Character vector. For \code{plot_style = "by_outcome"}, the name of the node
 within each \code{time_k} block from which to extract coefficients (e.g.
 \code{"outcome"} or \code{"censoring"}).}
 
@@ -41,10 +45,6 @@ explicit set of term names to keep.}
 
 \item{include_intercept}{Logical. If \code{FALSE} (default), removes \code{"(Intercept)"} from the
 extracted coefficients when present.}
-
-\item{times}{Optional time selection. If \code{NULL}, all \code{time_*} elements are used.
-If numeric, values \code{0:K} are translated to names \code{time_0}, \dots.
-If character, interpreted as names of \code{time_*} elements.}
 
 \item{outcomes}{Optional filter for model/outcome names within a node. If \code{NULL}, all
 are retained. If a length-1 character string, treated as a regular expression
@@ -69,21 +69,11 @@ time index; \code{"none"} uses a single panel.}
   x-axis and beta coefficients on the y-axis (optionally colored/faceted).}
   \item{\code{"manhattan"}}{Single-panel plot showing all coefficients from
   all selected models. The x-axis corresponds to an ordering of models by time
-  (\code{time_0}, \dots, \code{time_K}) and, within time, by node grouping as
-  specified by \code{node_order}.}
-}}
-
-\item{node_order}{For \code{plot_style = "manhattan"} only. Character vector specifying the
-within-time ordering of node groups. The special value \code{"protocol"}
-expands to \code{protocol_nodes}. Typical order is
-\code{c("protocol", "censoring", "outcome")}.}
-
-\item{protocol_nodes}{For \code{plot_style = "manhattan"} only. Character vector naming the
-intervention protocol nodes to include and order where \code{node_order}
-contains \code{"protocol"} (e.g., \code{c("Placebo", "Lira")}).}
+  (\code{time_0}, \dots, \code{time_K}) and, within time.
+}}}
 
 \item{manhattan_color_by}{For \code{plot_style = "manhattan"} only. Character scalar controlling point
-coloring: \code{"none"} (single color), \code{"node_group"} (protocol vs
+coloring: \code{"none"} (single color) (protocol vs
 censoring vs outcome), \code{"time"} (time index), or \code{"term"}
 (coefficient term).}
 
@@ -97,7 +87,7 @@ A list with components:
 \describe{
   \item{\code{data}}{A data frame in long format with one row per extracted
   coefficient. Contains at least \code{time}, \code{time_k}, \code{node},
-  \code{node_group}, \code{outcome}, \code{term}, \code{beta}, and, for
+  \code{outcome}, \code{term}, \code{beta}, and, for
   \code{plot_style = "manhattan"}, the ordering variables \code{x_cat} and
   \code{x_index}.}
   \item{\code{plot}}{A \code{ggplot} object.}
@@ -107,17 +97,11 @@ A list with components:
 }
 }
 \description{
-Extracts beta coefficients from a nested model object \code{x} (typically stored
+Extracts beta coefficients from nuisance parameter models (stored
 under \code{x$models} with elements \code{time_0}, \dots, \code{time_K}) and
 visualizes them as either (i) a dot plot with model/outcome identifiers on the
 x-axis, or (ii) a single-panel "manhattan-style" plot in which all coefficients
 from all selected models are shown in one graph.
-
-The function expects each relevant model entry to be a list containing at least
-\code{$fit}, a sparse coefficient vector (a \code{Matrix} object of class
-\code{dgCMatrix} with dimension \code{p x 1}) whose row names are coefficient
-(term) names. Optional components \code{$formula} and \code{$warnings} are
-ignored for plotting, but \code{$warnings} are returned in the output.
 }
 \details{
 Coefficients are extracted from \code{$fit} entries assumed to be sparse column

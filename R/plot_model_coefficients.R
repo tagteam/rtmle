@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: feb 23 2026 (06:38) 
 ## Version: 
-## Last-Updated: mar 17 2026 (10:26) 
+## Last-Updated: mar 18 2026 (08:43) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 121
+##     Update #: 124
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -83,7 +83,7 @@
 #'   \item{\code{"manhattan"}}{Single-panel plot showing all coefficients from
 #'   all selected models. The x-axis corresponds to an ordering of models by time
 #'   (\code{time_0}, \dots, \code{time_K}) and, within time.
-#' }
+#' }}
 #'
 #' @param manhattan_color_by
 #' For \code{plot_style = "manhattan"} only. Character scalar controlling point
@@ -144,7 +144,7 @@ plot_model_coefficients <- function(x,
                                     plot_style = c("by_outcome", "manhattan"),
                                     manhattan_color_by = c("none", "node", "time", "term"),
                                     show_x_labels = FALSE) {
-    outcome <- time_k <- x_index <- NULL
+    outcome <- time_k <- x_index <- terms <- node <- x_cat <- NULL
     color_by <- match.arg(color_by)
     facet_by <- match.arg(facet_by)
     plot_style <- match.arg(plot_style)
@@ -295,7 +295,11 @@ plot_model_coefficients <- function(x,
                                 labels = x_levels
                             )
     }
-    print(plotly::ggplotly(gg,tooltip = "text"))
+    if (requireNamespace("plotly", quietly = TRUE)) {
+        print(plotly::ggplotly(gg,tooltip = "text"))
+    }else{
+        print(gg)
+    }
     invisible(gg)
 }
 
