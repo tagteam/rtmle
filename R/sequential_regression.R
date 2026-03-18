@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 30 2024 (14:30)
 ## Version:
-## Last-Updated: mar 13 2026 (15:05) 
+## Last-Updated: mar 16 2026 (13:15) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 573
+##     Update #: 581
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -61,7 +61,7 @@ sequential_regression <- function(x,
         # the predicted outcome is available also for subjects who are censored
         # during the current interval. So, while their observed outcome is NA
         # their predicted_outcome is available.
-        interval_outcome_formula <- x$models[[paste0("time_",(k-1))]][["outcome"]][[1]]$formula
+        interval_outcome_formula <- x$models[[paste0("time_",(k-1))]][["outcome"]][[paste0(x$names$outcome,"_",k)]]$formula
         if (k == time_horizon) {        
             outcome_name <- outcome_variables[[time_horizon]]
         }else{
@@ -84,8 +84,8 @@ sequential_regression <- function(x,
                                     minority_threshold = x$tuning_parameters$minority_threshold,
                                     seed = seed,
                                     diagnostics = x$diagnostics)
-        # save fitted object
-        x$models[[paste0("time_",(k-1))]][["outcome"]][[protocol_name]]$fit <- attr(fit_last_interval,"fit")
+        # save fitted object, respect protocol and time_horizon sequence
+        x$models[[paste0("time_",(k-1))]][["outcome"]][[paste0(x$names$outcome,"_",k)]]$fit[[protocol_name]][[paste0("sequence_time_",time_horizon)]] <- attr(fit_last_interval,"fit")
         if (length(dia <- attr(fit_last_interval,"diagnostics"))>0){
             if (is.null(x$diagnostics)){
                 x$diagnostics <- dia

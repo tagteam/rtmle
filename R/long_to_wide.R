@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 22 2024 (14:07) 
 ## Version: 
-## Last-Updated: mar 13 2026 (13:10) 
+## Last-Updated: mar 14 2026 (07:02) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 193
+##     Update #: 197
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -193,7 +193,12 @@ long_to_wide <- function(x,
                 # case 3: calculate overlap
                 gg = copy(grid)
                 setnames(gg,c("date","previous_date"),c("end_interval","start_interval"))
-                x$data$timevar_data[[Vname]] <- discretize_timevarying_exposure(data = x$long_data$timevar_data[[Vname]],grid = gg,name = Vname,point_exposure = FALSE,threshold = 0,id = x$names$id)
+                x$data$timevar_data[[Vname]] <- discretize_timevarying_exposure(data = x$long_data$timevar_data[[Vname]],
+                                                                                grid = gg,
+                                                                                name = Vname,
+                                                                                point_exposure = FALSE,
+                                                                                threshold = 0,
+                                                                                id = x$names$id)
             }else{ # case 1
                 gg = copy(grid)
                 setnames(gg,c("date","previous_date"),c("end_interval","start_interval"))

@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Oct 17 2024 (09:26) 
 ## Version: 
-## Last-Updated: mar 13 2026 (15:05) 
+## Last-Updated: mar 18 2026 (08:10) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 459
+##     Update #: 461
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -81,6 +81,10 @@ intervention_probabilities <- function(x,
                     # check predicted values
                     if (any(is.na(nuisance_fit))){
                         stop(paste0("Fitting nuisance parameter model returned missing values:\n",
+                                    current_formula))
+                    }
+                    if (all(nuisance_fit == 0)){
+                        stop(paste0("Nuisance parameter model is exactly zero:\n",
                                     current_formula))
                     }
                     if (any(nuisance_fit<0) || any(nuisance_fit>1)){

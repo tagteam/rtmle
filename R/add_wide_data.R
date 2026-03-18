@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Apr  1 2025 (08:18) 
 ## Version: 
-## Last-Updated: jan 20 2026 (17:31) 
+## Last-Updated: mar 15 2026 (09:04) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 40
+##     Update #: 42
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -49,7 +49,6 @@
 #'                 name_censoring = "Censored",censored_label = "censored")
 #' x <- add_baseline_data(x,data=ld$baseline_data)
 #' x <- add_wide_data(x,outcome_data=outcome_data,timevar_data=timevar_data)
-#' x <- prepare_data(x)
 #' 
 ##' @export 
 ##' @author Thomas A. Gerds <tag@@biostat.ku.dk>

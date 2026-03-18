@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul  1 2024 (09:11)
 ## Version:
-## Last-Updated: mar 13 2026 (14:52) 
+## Last-Updated: mar 17 2026 (10:17) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 596
+##     Update #: 597
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -328,6 +328,8 @@ run_rtmle <- function(x,
                 }
             }
         }
+        ## store the time_horizon
+        x$run_time_horizons <- unique(c(x$run_time_horizons,time_horizon))
         ## Keep the learner function used for cheap bootstrap
         x$unparsed_learner <- learner
         x$learner <- learners

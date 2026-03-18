@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul  3 2024 (13:48) 
 ## Version: 
-## Last-Updated: Oct  8 2024 (18:09) 
+## Last-Updated: mar 17 2026 (10:19) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 7
+##     Update #: 36
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -16,22 +16,52 @@
 ### Code:
 #' @export
 #' @method coef rtmle
-coef.rtmle <- function(object,...){
-    res = lapply(names(object$models),function(p){
-        inner = lapply(names(object$models[[p]]),function(m){
-        process = lapply(names(object$models[[p]][[m]]),function(j){
-            if (length(object$models[[p]][[m]][[j]]$fit)>0)
-                ## coef(summary(object$models[[p]][[m]][[j]]$fit))
-                Publish::publish(object$models[[p]][[m]][[j]]$fit)
-            else
-                NULL
-        })
-        names(process) = names(object$models[[p]][[m]])
-        process
-        })
-    })
-    names(res) = names(object$models)
-    res
+coef.rtmle <- function(object,time_horizon,...){
+    if (missing(time_horizon)) {
+        time_horizon <- min(max(object$times),max(object$run_time_horizons))
+    }
+    df <- do.call(rbind,lapply(object$intervention_nodes,function(k){
+        current_outcome <- paste0(object$names$outcome,"_",k+1)
+        time_name <- paste0("time_",k)
+        time_block <- object$models[[time_name]]
+        do.call(rbind,lapply(names(time_block),function(node_name){
+            if (node_name == "outcome") {
+                model_names <- paste0("sequence_time_",time_horizon)
+            }else{
+                model_names <- names(time_block[[node_name]])
+            }
+            df <- do.call(rbind,lapply(model_names,function(this_outcome){
+                if (node_name == "outcome"){
+                    do.call(rbind,lapply(names(time_block[[node_name]][[current_outcome]]$fit),function(protocol){
+                        fit <- time_block[[node_name]][[current_outcome]]$fit[[protocol]][[this_outcome]]
+                        if (!is.null(fit) && (inherits(fit,"dgCMatrix") || inherits(fit,"data.frame")) && (is.numeric(coefs <- fit[,1]))){
+                            names(coefs) <- rownames(fit)
+                            data.table(time = time_name,
+                                       protocol = protocol,
+                                       node = node_name,
+                                       outcome = this_outcome,
+                                       terms = names(coefs),
+                                       beta = as.numeric(coefs),
+                                       stringsAsFactors = FALSE)
+                        }
+                    }))
+                }else{
+                    fit <- time_block[[node_name]][[this_outcome]]$fit
+                    if (!is.null(fit) && (inherits(fit,"dgCMatrix") || inherits(fit,"data.frame")) && (is.numeric(coefs <- fit[,1]))){
+                        names(coefs) <- rownames(fit)
+                        data.table(time = time_name,
+                                   protocol = node_name,
+                                   node = node_name,
+                                   outcome = this_outcome,
+                                   terms = names(coefs),
+                                   beta = as.numeric(coefs),
+                                   stringsAsFactors = FALSE)
+                    }
+                }
+            }))
+        }))
+    }))
+    df[]
 }
 ######################################################################
 ### coef.rtmle.R ends here

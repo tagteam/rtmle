@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: dec 11 2025 (10:23) 
 ## Version: 
-## Last-Updated: feb 26 2026 (12:38) 
+## Last-Updated: mar 14 2026 (08:03) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 21
+##     Update #: 25
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -80,9 +80,12 @@ plot_adherence <- function(x,...){
         adherence_data[!is.na(first_deviation),event_nonadherence := 1]
         adherence_data[,data.table::data.table(protocol,time_nonadherence,event_nonadherence)]
     }))
+    dt_nonadherence[,protocol := factor(protocol)]
     fit_nonadherence <- prodlim::prodlim(Hist(time_nonadherence,event_nonadherence)~protocol,
                                          data = dt_nonadherence)
-    prodlim::ggprodlim(fit_nonadherence,cause = 1,ylim = c(0,100))+ ylab("Non-adherence")
+    prodlim::ggprodlim(fit_nonadherence,
+                       cause = 1,
+                       ylim = c(0,100))+ ylab("Non-adherence")
 }
 
 

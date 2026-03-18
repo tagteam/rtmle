@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jun 16 2025 (08:58) 
 ## Version: 
-## Last-Updated: feb  5 2026 (17:42) 
+## Last-Updated: mar 16 2026 (15:26) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 128
+##     Update #: 132
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -32,7 +32,7 @@
 ##'               value on the right hand side of the formulas.
 ##' @param exclude_variables Variables to exclude from the formulas for the nuisance parameters.
 ##' @param exclusion_rules Experimental. Additional exclusion rules given as a named list where names are variables that occur on the left hand side of a formula and
-##'                        elements are variables that should be included in the right hand side of the formula. 
+##'                        elements are variables that should be excluded from the right hand side of the formula. 
 ##' @param inclusion_rules Experimental. Additional inclusion rules given as a named list where names are variables that occur on the left hand side of a formula and
 ##' elements are variables that should be included in the right hand side of the formula. 
 ##' @param verbose Logical. If \code{FALSE} suppress all messages. \code{TRUE} is the default.
@@ -83,7 +83,7 @@ model_formula <- function(x,
                           ...){
     exclude_variables = c("start_followup_date",exclude_variables)
     name_constant_variables <- x$names$name_constant_variables
-    if (length(x$protocols) == 0) {stop("No protocols registered in object, hence unclear variables are intervened upon.")}
+    if (length(x$protocols) == 0) {stop("No protocols registered in object, hence it is unclear which variables are intervened upon.")}
     all_treatment_variables <- setdiff(unlist(lapply(x$protocols,function(u)u$treatment_variables),use.names = FALSE),name_constant_variables)
     name_time_covariates <- setdiff(x$names$name_time_covariates,exclude_variables)
     name_baseline_covariates <- setdiff(x$names$name_baseline_covariates,exclude_variables)

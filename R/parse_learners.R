@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Nov  9 2024 (09:55) 
 ## Version: 
-## Last-Updated: Mar 12 2026 (15:42) 
-##           By: Johan Sebastian Ohlendorff
-##     Update #: 119
+## Last-Updated: mar 18 2026 (08:05) 
+##           By: Thomas Alexander Gerds
+##     Update #: 120
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -15,7 +15,7 @@
 ## 
 ### Code:
 ##' Parsing list of learners for function superlearn. Available names are 
-##' substituted for missing learner_fun elements and available elements learner_fun
+##' substituted for missing fun elements and available elements fun
 ##' are substituted for missing names.
 ##'
 ##' As a side effect an attribute is given to the object such that when running
@@ -29,19 +29,19 @@
 ##' parse_learners(list(folds=5,
 ##'                learners=
 ##'                         list("learn_glm",
-##'                         "glm100"=list(maxit=200,learner_fun="learn_glm"))))
+##'                         "glm100"=list(maxit=200,fun="learn_glm"))))
 ##' parse_learners(list(folds=10,
 ##'                learners=list(
 ##'                         "learn_glmnet",
-##'                         "glm"=list(learn_variables="A",learner_fun="glm"),
-##'                         list(name="learn_ranger", learner_fun="learn_ranger",num.trees=5))))
+##'                         "glm"=list(learn_variables="A",fun="glm"),
+##'                         list(name="learn_ranger", fun="learn_ranger",num.trees=5))))
 ##' @export 
 ##' @author Thomas A. Gerds <tag@@biostat.ku.dk>
 parse_learners <- function(learners){
     ## Make sure that formatting is obeyed
     ## 1. If learners is a single string
     ## 2. Learners is a vector of strings
-    ## 3. Learners does not contain a list of learners, but must have a name and a learner_fun element
+    ## 3. Learners does not contain a list of learners, but must have a name and a fun element
     ## 4. Learners contains a list of learners named learners and a folds element for the super learner.
     # learners must be one of the allowed formats
 
@@ -53,8 +53,8 @@ parse_learners <- function(learners){
     } else if (is.list(learners)) {
         # Case 3: single learner specification
         if (!("learners" %in% names(learners))) {
-            if (!all(c("name", "learner_fun") %in% names(learners))) {
-                stop("Learner must contain 'name' and 'learner_fun'.")
+            if (!all(c("name", "fun") %in% names(learners))) {
+                stop("Learner must contain 'name' and 'fun'.")
             }
         } else {
             # Case 4: super learner specification
@@ -71,10 +71,10 @@ parse_learners <- function(learners){
     }
     
     if (is.character(learners) && length(learners) == 1){
-        learner_fun <- learners
-        if (inherits(try(has_fun <- do.call("inherits",list(x = as.name(learner_fun),"function")),silent = TRUE),
+        fun <- learners
+        if (inherits(try(has_fun <- do.call("inherits",list(x = as.name(fun),"function")),silent = TRUE),
                      "try-error")|| !has_fun){
-            stop(paste0("Cannot parse the learner_fun as a function for learner '",learners,"'\nYou may need to load a library first?"))
+            stop(paste0("Cannot parse the fun as a function for learner '",learners,"'\nYou may need to load a library first?"))
         }
         # NORMALIZE: use list() instead of NULL so it matches list-form learners
         parsed_learners <- list(name = learners, fun = learners, args = list())
@@ -97,30 +97,30 @@ parse_learners <- function(learners){
                 }else{
                     learner_name <- "unnamed"
                 }
-                if (inherits(learners$learner_fun,"function")){
-                    learner_fun <- learners$learner_fun
+                if (inherits(learners$fun,"function")){
+                    fun <- learners$fun
                 } else{
-                    if (!is.character(learners$learner_fun)){
-                        stop("The learners must specify a learner function as element learner_fun.\n",
+                    if (!is.character(learners$fun)){
+                        stop("The learners must specify a learner function as element fun.\n",
                              "Problem with learner: ",
                              paste(utils::capture.output(utils::str(learners)), collapse = "\n"))
                     }
-                    learner_fun <- learners$learner_fun
-                    if (inherits(try(has_fun <- do.call("inherits",list(x = as.name(learner_fun),"function")),silent = TRUE),
+                    fun <- learners$fun
+                    if (inherits(try(has_fun <- do.call("inherits",list(x = as.name(fun),"function")),silent = TRUE),
                                  "try-error")|| !has_fun){
-                        stop(paste0("Cannot parse the learner_fun as a function for learner: ",
+                        stop(paste0("Cannot parse the fun as a function for learner: ",
                                     learner_name,
                                     "\nYou may need to load a library first?"))
                     }
                 }
                 learner_args <- learners
                 learner_args$name <- NULL
-                learner_args$learner_fun <- NULL
+                learner_args$fun <- NULL
 
                 # NORMALIZE: ensure args is list() (never NULL)
                 if (is.null(learner_args)) learner_args <- list()
 
-                parsed_learners <- list(name = learner_name, fun = learner_fun, args = learner_args)
+                parsed_learners <- list(name = learner_name, fun = fun, args = learner_args)
             } else {
                 # super learner
                 learner_args <- learners
