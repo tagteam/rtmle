@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul  1 2024 (09:11)
 ## Version:
-## Last-Updated: mar 19 2026 (14:59) 
+## Last-Updated: mar 19 2026 (15:37) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 599
+##     Update #: 600
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -318,7 +318,6 @@ run_rtmle <- function(x,
                 #
                 # loop across time-horizons
                 for (th in time_horizon){
-                    print(th)
                     x <- sequential_regression(x = x,
                                                target_name = target_name,
                                                protocol_name = protocol_name,
