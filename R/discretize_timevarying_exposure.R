@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: feb 24 2026 (11:04) 
 ## Version: 
-## Last-Updated: mar 18 2026 (08:37) 
+## Last-Updated: mar 19 2026 (15:32) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 34
+##     Update #: 43
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -62,13 +62,16 @@ discretize_timevarying_exposure <- function(data,
         # baseline exposure
         overlap[interval == 0 & start_exposure == 0, exposure := 1]
         # total duration in interval
-        overlap <- overlap[,data.table::data.table(exposure = sum(exposure)),by = c(id,"interval")]
+        setkeyv(overlap, c(id, "interval"))
+        overlap <- overlap[, list(exposure = sum(exposure)), by = c(id, "interval")]
         if (is.numeric(threshold)){
             set(overlap,j = "exposure",value = 1*(overlap[["exposure"]]>threshold))
         }
     }
-    xx <- data.table::dcast(overlap,id~interval,value.var="exposure",sep="_",fill=NA)
-    setnames(xx,c("id",paste0(name,"_",names(xx)[-1])))
+    xx <- fast_cast(overlap, id = id, value_col = "exposure", fill = NA)
+    setkey(xx,id)
+    ## xx1 <- data.table::dcast(overlap,id~interval,value.var="exposure",sep="_",fill=NA)
+    setnames(xx,c(id,paste0(name,"_",names(xx)[-1])))
     xx
 }
 

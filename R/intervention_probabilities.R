@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Oct 17 2024 (09:26) 
 ## Version: 
-## Last-Updated: mar 18 2026 (08:10) 
+## Last-Updated: mar 19 2026 (15:01) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 461
+##     Update #: 463
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -36,6 +36,7 @@ intervention_probabilities <- function(x,
         # has the correct column order
         intervention_last_nodes <- vector("character",length = length(x$intervention_nodes))
         for (k in rev(x$intervention_nodes)){
+            print(k)
             if (length(x$followup) == 0){
                 outcome_free_and_uncensored <- rep(TRUE,N)
             }else{

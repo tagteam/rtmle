@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: jan 25 2026 (09:26) 
 ## Version: 
-## Last-Updated: mar 13 2026 (14:56) 
+## Last-Updated: mar 18 2026 (08:59) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 63
+##     Update #: 64
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -36,6 +36,10 @@ fitter <- function(intervention_node,
         # when the outcome is binary but has less than threshold many occurences of the minority group
         # simply predict the mean
         (n_outcome_values == 2 && any(table(current_data[[1]])<minority_threshold))){
+        
+        diagnostics$constant_outcome_variables <- c(diagnostics$constant_outcome_variables,
+                                                    paste0("Intervention node ",intervention_node,", outcome ",current_outcome_name,": is constant or distribution below 'x$tuning_parameters$minority_threshold'.")
+                                                    )
         predicted_values <- rep(mean(outcome_variable),NROW(intervened_data))
         attr(predicted_values,"fit") <- paste0("Not enough variation in this variable.")
     }else{
@@ -44,6 +48,11 @@ fitter <- function(intervention_node,
         if (any(current_constants)) {
             current_constants <- names(current_constants[current_constants])
             current_data <- current_data[,!(names(current_data)%in%current_constants),with = FALSE]
+            if (!missing(diagnostics)){
+                diagnostics$constant_predictor_variables <- c(diagnostics$constant_predictor_variables,
+                                                              paste0("Intervention node ",intervention_node,", outcome ",current_outcome_name,": the following predictor variables are constant: ",
+                                                                     paste0(current_constants,collapse = ", ")))
+            }
             ff <- delete_variables_from_formula(character_formula = ff,delete_vars = current_constants)
             number_rhs_variables <- attr(ff,"number_rhs_variables")
         }else{

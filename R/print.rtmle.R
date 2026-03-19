@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 19 2024 (08:31) 
 ## Version: 
-## Last-Updated: mar 18 2026 (08:17) 
+## Last-Updated: mar 18 2026 (11:22) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 163
+##     Update #: 170
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -45,10 +45,11 @@ print.rtmle <- function(x, ...) {
         cat(sep = "","\nCompeting risk:      ", x$names$competing)
     }
     cat(sep = "","\nIntervention nodes:  ", format_index(x$intervention_nodes))
+    cat(sep = "","\nRun time horizons:   ", format_index(x$run_time_horizons))
     # Tuning parameters
     cat(sep = "","\nMinority threshold:  ",x$tuning_parameters$minority_threshold)
-    cat(sep = "","\nWeight truncation:   ",paste0(as.character(x$tuning_parameters$weight_truncation),sep = ","))
-    cat(sep = "","\nPrediction range:    ",paste0(as.character(x$tuning_parameters$prediction_range),sep = ","))
+    cat(sep = "","\nWeight truncation:   (",paste0(as.character(x$tuning_parameters$weight_truncation),collapse = ","),")")
+    cat(sep = "","\nPrediction range:    (",paste0(as.character(x$tuning_parameters$prediction_range),collapse = ","),")")
     # Data
     if (length(x$data$baseline_data) > 0){
     cat(sep = "","\nBaseline data:       n=",NROW(x$data$baseline_data),", p=",(NCOL(x$data$baseline_data)-1))

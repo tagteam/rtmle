@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul  3 2024 (13:48) 
 ## Version: 
-## Last-Updated: mar 17 2026 (10:19) 
+## Last-Updated: mar 18 2026 (14:32) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 36
+##     Update #: 47
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -32,14 +32,14 @@ coef.rtmle <- function(object,time_horizon,...){
             }
             df <- do.call(rbind,lapply(model_names,function(this_outcome){
                 if (node_name == "outcome"){
-                    do.call(rbind,lapply(names(time_block[[node_name]][[current_outcome]]$fit),function(protocol){
+                    outfit <- do.call(rbind,lapply(names(time_block[[node_name]][[current_outcome]]$fit),function(protocol){
                         fit <- time_block[[node_name]][[current_outcome]]$fit[[protocol]][[this_outcome]]
                         if (!is.null(fit) && (inherits(fit,"dgCMatrix") || inherits(fit,"data.frame")) && (is.numeric(coefs <- fit[,1]))){
                             names(coefs) <- rownames(fit)
                             data.table(time = time_name,
                                        protocol = protocol,
                                        node = node_name,
-                                       outcome = this_outcome,
+                                       outcome = current_outcome,
                                        terms = names(coefs),
                                        beta = as.numeric(coefs),
                                        stringsAsFactors = FALSE)
@@ -49,13 +49,15 @@ coef.rtmle <- function(object,time_horizon,...){
                     fit <- time_block[[node_name]][[this_outcome]]$fit
                     if (!is.null(fit) && (inherits(fit,"dgCMatrix") || inherits(fit,"data.frame")) && (is.numeric(coefs <- fit[,1]))){
                         names(coefs) <- rownames(fit)
-                        data.table(time = time_name,
-                                   protocol = node_name,
-                                   node = node_name,
-                                   outcome = this_outcome,
-                                   terms = names(coefs),
-                                   beta = as.numeric(coefs),
-                                   stringsAsFactors = FALSE)
+                        outfit <- data.table(time = time_name,
+                                             protocol = node_name,
+                                             node = node_name,
+                                             outcome = this_outcome,
+                                             terms = names(coefs),
+                                             beta = as.numeric(coefs),
+                                             stringsAsFactors = FALSE)
+                    } else{
+                        outfit <- NULL
                     }
                 }
             }))

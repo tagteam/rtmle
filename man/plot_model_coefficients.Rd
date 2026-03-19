@@ -17,8 +17,8 @@ plot_model_coefficients(
   facet_by = c("term", "time", "none"),
   point_alpha = 0.8,
   point_size = 2.2,
-  plot_style = c("by_outcome", "manhattan"),
-  manhattan_color_by = c("none", "node", "time", "term"),
+  plot_style = c("manhattan", "by_outcome"),
+  manhattan_color_by = c("node", "time", "term", "none"),
   show_x_labels = FALSE
 )
 }

@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: feb 23 2026 (06:38) 
 ## Version: 
-## Last-Updated: mar 18 2026 (08:43) 
+## Last-Updated: mar 18 2026 (14:41) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 124
+##     Update #: 129
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -141,8 +141,8 @@ plot_model_coefficients <- function(x,
                                     facet_by = c("term", "time", "none"),
                                     point_alpha = 0.8,
                                     point_size = 2.2,
-                                    plot_style = c("by_outcome", "manhattan"),
-                                    manhattan_color_by = c("none", "node", "time", "term"),
+                                    plot_style = c("manhattan", "by_outcome"),
+                                    manhattan_color_by = c("node", "time", "term", "none"),
                                     show_x_labels = FALSE) {
     outcome <- time_k <- x_index <- terms <- node <- x_cat <- NULL
     color_by <- match.arg(color_by)
@@ -151,7 +151,7 @@ plot_model_coefficients <- function(x,
     manhattan_color_by <- match.arg(manhattan_color_by)
 
     if (missing(time_horizon)){
-        time_horizon <- max(x$times)
+        time_horizon <- max(x$run_time_horizons)
     }else{
         stopifnot(length(time_horizon) == 1)
         stopifnot(time_horizon %in% x$times)
@@ -168,7 +168,7 @@ plot_model_coefficients <- function(x,
     if (is.null(x$models) || !is.list(x$models)) stop("Expected x$models to be a list.")
     if (!requireNamespace("Matrix", quietly = TRUE)) stop("Package 'Matrix' is required.")
     if (!requireNamespace("ggplot2", quietly = TRUE)) stop("Package 'ggplot2' is required.")
-
+    
     # ---- choose time elements ----
     time_names <- names(x$models)
     if (is.numeric(times)){
@@ -178,13 +178,19 @@ plot_model_coefficients <- function(x,
         selected_times <- paste0("time_",x$times[x$times<time_horizon])
     }
     if (length(selected_times) == 0) stop("No matching time_* elements found in x$models for 'times'.")
-
+    
     # ---- extract long table ----
     df <- coef(x)
     df[,time_k := suppressWarnings(as.integer(sub("^time_", "", time)))]
     if (!include_intercept){
         df <- df[terms != "(Intercept)"]
     }
+    
+    if (length(selected_times)>0){
+        df <- df[time %in% selected_times]
+    }
+
+
     if (!is.null(term)){
         df <- df[intersect(term,terms)]
     }

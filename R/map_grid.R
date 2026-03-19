@@ -30,13 +30,13 @@ map_grid <- function(grid,
     setkeyv(grid,c(id,"interval"))
     # note: need do.call because otherwise fun_aggregate is not
     #       interpreted correctly
-    wide <- do.call(data.table::dcast,
-                    list(grid,
-                         stats::formula(paste0(id,"~interval")),
-                         value.var="value",
-                         sep="_",
-                         fun.aggregate = fun_aggregate,
-                         fill=fill))
+    wide <- fast_cast(grid,
+                      id = id,
+                      value_col = "value",
+                      fill = fill,
+                      fun_aggregate = fun_aggregate)
+    ## wide1 <- do.call(data.table::dcast,list(grid,stats::formula(paste0(id,"~interval")),value.var="value",sep="_",fun.aggregate = fun_aggregate,fill=fill))
+    ## print(all.equal(wide,wide1))
     grid[,value:=NULL]
     data[,value:=NULL]
     # dcast assigns numeric column names when value.var
