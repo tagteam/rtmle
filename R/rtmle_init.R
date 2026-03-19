@@ -33,7 +33,7 @@
 ##' @param censored_label A single character value. Label of the values of the censoring variable(s) that indicated that
 ##' the data of the subject at this time interval are censored. Must be an element of \code{censored_levels} too.
 ##' @param minority_threshold For binary outcomes, integer value which decides about whether
-##' fitting nuisance parameter regression models is feasible. If the number of subjects in the minory group is
+##' fitting nuisance parameter regression models is feasible. If the number of subjects in the minority group is
 ##' less than or equal to this threshold then regression modelling is skipped and the predicted value is simply the mean outcome.
 ##' @param weight_truncation Two values which decide about the minimum and the maximum of the weights w
 ##' used in inverse probability weighting (1/w).
