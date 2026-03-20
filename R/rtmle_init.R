@@ -19,26 +19,30 @@
 ##' Create an empty object with class \code{"rtmle"} which waits for data
 ##' and other instructions such as   
 ##' @title Register Targeted Minimum Loss Estimation
-##' @param intervals Number of discrete time intervals for updating information in a longitudinal setting.
-##' Set this to 1 for settings where no updating of information should happen after time zero. 
+##' @param time_grid Vector of time points which define the discrete
+##'     time intervals for updating information in a longitudinal
+##'     setting. The first value must be 0 and the length of the
+##'     vector must be at least 2. When \code{time_grid} is of length
+##'     2, this is a setting where no updating of information happens
+##'     after time zero.
 ##' @param name_id Name of the subject identifier variable
 ##' @param name_time Name of the time variable, e.g., \code{"date"} would be an appropriate name when the data are recorded as calendar dates.
 ##' @param name_outcome Name of the outcome variable(s). For example, the value \code{"cvddeath"} would mean
-##' in a longitudinal setting with \code{intervals=3} that the variables in the data set are named \code{"cvddeath_1", "cvddeath_2", "cvddeath_3"}.
-##' In the setting where \code{intervals=1} this should be the full name of the outcome variable.
+##' in a longitudinal setting with \code{time_grid} of length 4 that the variables in the data set are named \code{"cvddeath_1", "cvddeath_2", "cvddeath_3"}.
+##' In the setting where \code{time_grid} is of length 2 this should be the full name of the outcome variable.
 ##' @param name_competing Name of the competing risk variable(s). Can be \code{NULL} if the data do not contain competing risks for the outcome.
 ##' @param name_censoring Name of the censoring variable(s). Can be \code{NULL} if the subjects are all uncensored, i.e., the minimum
-##' potential followup time is longer than the time of the last interval. 
+##' potential followup time is longer than the time last of \code{time_grid}. 
 ##' @param censored_levels Character vector with the censoring levels.
 ##' @param censored_label A single character value. Label of the values of the censoring variable(s) that indicated that
 ##' the data of the subject at this time interval are censored. Must be an element of \code{censored_levels} too.
+##' @param prediction_range Two values used to force predicted outcome probabilities to the interval (0,1). This is required
+##' to perform a logit transformation for the fit of the fluctuation model in the tmle update step. Default is \code{c(0.0001,0.9999)}.
 ##' @param minority_threshold For binary outcomes, integer value which decides about whether
 ##' fitting nuisance parameter regression models is feasible. If the number of subjects in the minority group is
 ##' less than or equal to this threshold then regression modelling is skipped and the predicted value is simply the mean outcome.
 ##' @param weight_truncation Two values which decide about the minimum and the maximum of the weights w
 ##' used in inverse probability weighting (1/w).
-##' @param prediction_range Two values used to force predicted outcome probabilities to the interval (0,1). This is required
-##' to perform a logit transformation for the fit of the fluctuation model in the tmle update step. Default is \code{c(0.0001,0.9999)}.
 ##' @return A list with class \code{"rtmle"} and the following elements:
 ##' \itemize{
 ##' \item targets
@@ -49,7 +53,7 @@
 ##' @seealso run_rtmle
 ##' @examples
 ##' # longitudinal setting
-##' x <- rtmle_init(intervals=3,
+##' x <- rtmle_init(time_grid=c(0,6,12,18),
 ##'                 name_id="pnr",
 ##'                 name_time="date",
 ##'                 name_outcome="cvddeath",
@@ -60,7 +64,7 @@
 ##' 
 ##' @export 
 ##' @author Thomas A. Gerds <tag@@biostat.ku.dk>
-rtmle_init <- function(intervals,
+rtmle_init <- function(time_grid,
                        name_id,
                        name_time = "date",
                        name_outcome,
@@ -71,7 +75,10 @@ rtmle_init <- function(intervals,
                        minority_threshold = 8,
                        weight_truncation = c(0,1),
                        prediction_range = c(0.0001,0.9999)){
-    time_labels = paste0("time_",0:intervals)
+    if(!(time_grid[1] == 0 & length(time_grid) > 1))
+        stop("time_grid must be a vector of length > 1 starting with 0")
+    n_intervals <- length(time_grid) - 1
+    time_labels = paste0("time_",0:n_intervals)
     if (length(name_censoring)>0){
         if (length(censored_label) != 1 ||
             length(censored_levels) != 2 ||
@@ -97,9 +104,10 @@ rtmle_init <- function(intervals,
                           "censored_levels" = censored_levels,
                           "censored_label" = censored_label,
                           "uncensored_label" = uncensored_label),
-             version = utils::packageVersion("rtmle"),
-             times = 0:intervals,
-             intervention_nodes = 0:(intervals-1),
+             version = utils::packageVersion("rtmle"),             
+             times = 0:n_intervals,
+             time_grid = time_grid,
+             intervention_notes = 0:(n_intervals-1),
              tuning_parameters = list(minority_threshold = minority_threshold,
                                       weight_truncation = weight_truncation,
                                       prediction_range = prediction_range),
