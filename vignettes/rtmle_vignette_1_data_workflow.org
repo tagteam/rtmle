@@ -1,7 +1,8 @@
-
 #+TITLE: Data Preparation Workflow in rtmle
-#+AUTHOR: tagteam/rtmle
-#+OPTIONS: toc:t num:t
+#+AUTHOR: Anders Munch
+#+OPTIONS: num:nil toc:nil ^:nil
+#+PROPERTY: header-args:R :async :results output :exports both :session *R* :cache yes
+
 
 * Overview
 
