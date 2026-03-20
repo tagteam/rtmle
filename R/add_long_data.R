@@ -37,7 +37,10 @@
 #' @param timevar_data named list of data.frames. Must contain a data frame for the treatment
 #' and data frames for each time-varying variable. The data frames either contain two columns where the first is a subject identifier as initialized
 #' under \code{x$names$id} and the second column contains dates. The data frames may additionally contain a \code{value} column.
-#' @param ... Not used (not yet)
+#' @param ... named arguments where each argument is a data.frame for
+#'     the treatment or a time-varying variable. This is just an
+#'     alternative to supplying a named list of data.frames to
+#'     timevar_data.
 #' @seealso \link[rtmle]{add_baseline_data}, \link[rtmle]{add_wide_data}
 #' @return The modified object.
 #' @author Thomas A. Gerds <tag@@biostat.ku.dk>
