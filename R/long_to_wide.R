@@ -57,7 +57,7 @@ long_to_wide <- function(x,
                          fun = function(x){1*(sum(x)>0)},
                          verbose = TRUE){
     previous_date = interval = end_followup = censored_date =  competing_date = outcome_date = NULL
-    breaks = x$times_grid
+    breaks = x$time_grid
     if (length(x$long_data) == 0) {return(NULL)}
     Vnames <- names(x$long_data$timevar_data)
     if (any(duplicated(Vnames))) stop("Duplicated names found in names(x$long_data$timevar_data). Variables must have distinct names.")
