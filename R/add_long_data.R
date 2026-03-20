@@ -78,10 +78,27 @@ add_long_data <- function(x,
                           competing_data,
                           timevar_data,
                           ...){
+    
+    if(missing(timevar_data)) timevar_data <- NULL
+    if(missing(outcome_data)) outcome_data <- NULL
+    if(missing(censored_data)) censored_data <- NULL
+    if(missing(competing_data)) competing_data <- NULL
+    
     if (length(timevar_data)>0){
         if (!is.list(timevar_data) || is.data.frame(timevar_data) || is.null(names(timevar_data))) {
             stop("Argument timevar_data must be a named list of data.frames.")
         }
+    }
+    ## Add timevar_data supplied by dots:
+    dots <- list(...)
+    if (length(dots) == 0) {
+        dots <- NULL
+    } else {
+        bad <- is.null(names(dots)) || any(names(dots) == "")
+        if (bad) stop("All ... arguments must be named.")
+    }
+    timevar_data = c(timevar_data,dots)
+    if(!is.null(timevar_data)){
         for (name in names(timevar_data)){
             current_data <- copy(as.data.table(timevar_data[[name]]))
             if (!(x$names$id %in% names(current_data))){
@@ -97,11 +114,11 @@ add_long_data <- function(x,
                                     " of argument 'timevar_data' is inconsistent with the three accepted formats:\n (id,date,value)\n (id,start_exposure,end_exposure) \n(id,date)."))
                 }
                 if (match(name,names(x$long_data$timevar_data),nomatch = 0)>0){
-                    # replace existing element
+                                        # replace existing element
                     x$long_data$timevar_data[[name]] <- current_data
                 }
                 else{
-                    # append
+                                        # append
                     tv <- list(current_data)
                     names(tv) <- name
                     x$long_data$timevar_data <- c(x$long_data$timevar_data,tv)
