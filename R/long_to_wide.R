@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 22 2024 (14:07) 
 ## Version: 
-## Last-Updated: mar 19 2026 (15:53) 
+## Last-Updated: mar 14 2026 (07:02) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 204
+##     Update #: 197
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -26,10 +26,6 @@
 #' starts or can be zero if the followup data are readily on the time
 #' on study scale
 #' @param x object of class \code{rtmle}
-#' @param breaks a vector of time points that discretize the
-#'     followup time into intervals
-#' @param intervals OBSOLETE a vector of time points that discretize the
-#'     followup time into intervals
 #' @param start_followup_date Start of followup date which is substracted from the dates of
 #' the outcomes, competing risks, censoring (end-of-followup), and time-varying covariates.
 #' If missing it is assumed to be zero for all in which case the dates of the outcomes,
@@ -57,18 +53,11 @@
 #' x
 #' @export
 long_to_wide <- function(x,
-                         breaks,
-                         intervals,
                          start_followup_date,
                          fun = function(x){1*(sum(x)>0)},
                          verbose = TRUE){
     previous_date = interval = end_followup = censored_date =  competing_date = outcome_date = NULL
-    if (!missing(intervals)){
-        warning("Argument intervals is obsolete: use breaks instead.")
-        breaks <- intervals
-    }else{
-        if (missing(breaks)) {stop("Need time points that define the discrete time scale to map the long data.")}
-    }
+    breaks = x$times_grid
     if (length(x$long_data) == 0) {return(NULL)}
     Vnames <- names(x$long_data$timevar_data)
     if (any(duplicated(Vnames))) stop("Duplicated names found in names(x$long_data$timevar_data). Variables must have distinct names.")

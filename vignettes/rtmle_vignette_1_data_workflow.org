@@ -9,6 +9,8 @@ FIX:
 - [X] add_long_data should not demand anything:
 - [X] Add functionality that allows adding timevar by name or by list
 - [ ] fix date/time naming.
+- [ ] Need to update all examples based on change to rtmle_init (wait
+  for approved from Thomas).
 
 Think about summary functions. Look at long_to_wide.
 - [ ] Write functionality with some predefined summarises. But look at
@@ -28,89 +30,6 @@ Structure:
   to transform this type of data. And also something about both using
   the and wide data.  
 - add protocols (later vignette?)
-
-
-* Sandbox                                                          :noexport:
-
-#+BEGIN_SRC R
-  devtools::install()
-  devtools::load_all()
-  diab_data <- fread("./data/diabetes_sim_data.csv")
-
-  ## Number of 6mth intervals in 3 years
-  intervals <- 3
-  time_grid <- seq(0, intervals*6, by = 6)
-
-  ## Init
-  x <- rtmle_init(intervals = intervals,
-		  name_id = "id",
-		  ## name_time = "time",  ## Later, should fix this
-		  ## name_competing = "death",
-		  name_outcome = "MACE")
-
-  ## Baseline are variables that do change over time. Here, age is age
-  ## at baseline
-  x <- add_baseline_data(x,data=diab_data[time == 0, .(id, sex, age)])
-
-  ## Time-varying covariates are variables may change over time and are not outcomes
-
-
-  diab_data[event == "MACE",.(id,date = time)][!duplicated(id)]
-  diab_data[event == "death",.(id,date = time)]
-  ## diab_data[last == 1 &event %in% c("visit","dropout"),.(id,date = time)]
-
-  diab_data[event%in%c("baseline","MACE","visit"),.(id, date = time, HbA1c)]
-
-  tv_covs <- c("HbA1c","changeHbA1c","GLP1","SGLT2","DPP4","History_GLP1","History_SGLT2","History_DPP4")
-      tv <- lapply(tv_covs, function(tv){
-	  if (tv %in% c("GLP1","SGLT2","DPP4")){
-	      d <- diab_data[,c("id","time",tv),with = FALSE]
-	      setnames(d,c("id","start_exposure","value"))
-	      d[,end_exposure := shift(x = start_exposure,n = 1,type = "lead"),by = id]
-	      # when treatment starts at the last time point in a time-series
-	      # then the duration is unknown
-	      d <- d[!is.na(end_exposure)]
-	      d <- d[value != 0]
-	      d[,value := NULL]
-	  }else{
-	      d <- diab_data[event%in%c("baseline","MACE","visit"),c("id","time",tv),with = FALSE]
-	      setnames(d,c("id","date","value"))
-	  }
-	  d[]
-      })   
-  names(tv) <- tv_covs
-
-  ## Get first MACE event time for each id
-  outcome_data <- diab_data[event == "MACE", .(date = min(time)), by = id]
-
-  x1 <- add_long_data(x, timevar_data = tv[1])
-  x2 <- add_long_data(x, HbA1c = tv[["HbA1c"]])
-  identical(x1, x2)
-
-  x <- add_long_data(x, outcome_data = outcome_data)
-  x <- add_long_data(x, timevar_data = tv[1], outcome_data = outcome_data, censored_data = NULL, competing_data = NULL)
-  x <- add_long_data(x, timevar_data = tv[1], outcome_data = outcome_data, censored_data = NULL, competing_data = NULL)
-  y <- add_long_data(x, timevar_data = tv[1], outcome_data = outcome_data, censored_data = NULL, competing_data = NULL)
-
-
-
-
-  x <- add_long_data(x, outcome_data = outcome_data, timevar_data = NULL, censored_data = NULL, competing_data = NULL)
-  x <- add_long_data(x, timevar_data = tv[1], outcome_data = outcome_data, censored_data = NULL, competing_data = NULL)
-  x <- add_long_data(x, timevar_data = tv[2], outcome_data = outcome_data, censored_data = NULL, competing_data = NULL)
-  x <- add_long_data(x, timevar_data = tv[3], outcome_data = outcome_data, censored_data = NULL, competing_data = NULL)
-
-  x <- long_to_wide(x,breaks = time_grid,start_followup_date = 0)
-
-  ## Fix something about date/time internal naming.
-
-  add_long_data(x, outcome_data = outcome_data, timevar_data = NULL, censored_data = NULL)
-
-  diab_data[event == "MACE", .(id, time)]
-
-
-#+END_SRC
-
 
 
 * Overview
