@@ -12,13 +12,10 @@ FIX:
 - [ ] Need to update all examples based on change to rtmle_init (wait
   for approved from Thomas).
 
-Think about summary functions. Look at long_to_wide.
-- [ ] Write functionality with some predefined summarises. But look at
-  what is done first. Think like this: What does the data we
-  receive/use originally look like? Look at the LEADER
-  data.
-
-- Why need intervals in _init?
+- Think about the history variables. Do we want to construct them
+  explicitly in the data, or do we want to construct them from with
+  summary function / long_to_wide? Look at how they are generated in
+  followme.
 
 - In LEADER study we work directly on pre-descritized
   datasets. Include that as an example.

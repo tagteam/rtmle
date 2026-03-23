@@ -54,8 +54,28 @@
 #' @export
 long_to_wide <- function(x,
                          start_followup_date,
-                         fun = function(x){1*(sum(x)>0)},
-                         verbose = TRUE){
+                         methods,
+                         verbose = TRUE,
+                         ...){
+
+    ##
+    ## Setup and checks
+    ##
+
+    if(missing(methods)) methods <- NULL
+    
+    ## Add methods supplied by dots:
+    dots <- list(...)
+    if (length(dots) == 0) {
+        dots <- NULL
+    } else {
+        bad <- is.null(names(dots)) || any(names(dots) == "")
+        if (bad) stop("All ... arguments must be named.")
+    }
+    methods = c(methods,dots)
+
+    ## TODO: add check for whether outcome data, errors if not.
+    
     previous_date = interval = end_followup = censored_date =  competing_date = outcome_date = NULL
     breaks = x$time_grid
     if (length(x$long_data) == 0) {return(NULL)}
@@ -101,9 +121,11 @@ long_to_wide <- function(x,
         pop <- x$data$baseline_data[,c(x$names$id,start_followup_date),with = FALSE]
         setnames(pop,start_followup_date,"start_followup_date")
     }
-    #
-    # outcome, censored and competing risk define end-of-followup
-    #
+
+    ##
+    ## outcome, censored and competing risk define end-of-followup
+    ##
+    
     if (length(x$names$competing)>0 & length(x$long_data$competing_data)>0){
         if (length(x$long_data$outcome_data)>0){
             if (!("competing_date" %in% names(x$long_data$competing_data)))
@@ -144,60 +166,21 @@ long_to_wide <- function(x,
     setnames(x$long_data$outcome_data,"outcome_date","date")
     # mapping outcome information to discrete time scale
     x$data$outcome_data <- widen_outcome(x,grid = grid,fun_aggregate = NULL)
-    # time dependent variables including treatment
+
+    ## 
+    ## Time dependent variables including treatment
+    ##
+
+    ## - Later, allow for multiple arguments to same variable.
+
     for (Vname in Vnames){
-        if (is.list(fun)){
-            if (Vname %in% names(fun)){
-                # use variable specific function
-                vfun <- fun[[Vname]]
-            } else{
-                # default to last value carried forward for non-binary variables
-                if ("value" %in% names(x$long_data$timevar_data[[Vname]])){
-                    vfun <- function(x){x}
-                }else{
-                    # default to has positive value for non-binary variables
-                    # note: in this case the function map_grid needs the values sorted 
-                    vfun <- function(x){1*(sum(x)>0)}
-                }
-            }
-        } else {
-            vfun <- fun
-        }
-        stopifnot(is.function(vfun))
-        # Deal with 3 different formats of the data
-        # case 1: id, date (exposed = there is a date in the interval)
-        # case 2: id, date, value (last value carried forward)
-        # case 3: id, start, end (calculate overlap with interval)
-        if ("value" %in% names(x$long_data$timevar_data[[Vname]])){
-            # case 2: last value carried forward
-            x$data$timevar_data[[Vname]] <- map_grid(grid=grid,
-                                                     data=x$long_data$timevar_data[[Vname]],
-                                                     name=Vname,
-                                                     fun_aggregate = vfun,
-                                                     values = NULL, 
-                                                     rollforward=Inf,
-                                                     id = x$names$id)
-        } else{
-            if (all(c("start_exposure","end_exposure") %in% names(x$long_data$timevar_data[[Vname]]))){
-                # case 3: calculate overlap
-                gg = copy(grid)
-                setnames(gg,c("date","previous_date"),c("end_interval","start_interval"))
-                x$data$timevar_data[[Vname]] <- discretize_timevarying_exposure(data = x$long_data$timevar_data[[Vname]],
-                                                                                grid = gg,
-                                                                                name = Vname,
-                                                                                point_exposure = FALSE,
-                                                                                threshold = 0,
-                                                                                id = x$names$id)
-            }else{ # case 1
-                gg = copy(grid)
-                setnames(gg,c("date","previous_date"),c("end_interval","start_interval"))
-                x$data$timevar_data[[Vname]] <- discretize_timevarying_exposure(data = x$long_data$timevar_data[[Vname]],grid = gg,name = Vname,point_exposure = TRUE,id = x$names$id)
-                # FIXME: when intervals are not equidistant the following does not work.
-                ## length_interval=unique(round(diff(breaks),0))
-                ## x$data$timevar_data[[Vname]] <- map_grid(grid=grid,data=x$long_data$timevar_data[[Vname]],name=Vname,values = c(1,0),fun_aggregate = vfun,rollforward=length_interval,id = x$names$id)
-            }
-        }
+        x$data$timevar_data[[Vname]] = history_method(data = x$long_data$timevar_data[[Vname]],
+                                                      id = x$names$id,
+                                                      grid = grid,
+                                                      name = Vname,
+                                                      method = methods[[Vname]])
     }
+    
     return(x)
 }
 
