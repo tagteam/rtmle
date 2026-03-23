@@ -25,23 +25,12 @@ Structure:
 - add protocols (later vignette?)
 
 
-* Overview
-
-The rtmle package follows a stateful object-modification workflow:
-1. Initialize an analysis object.
-2. Add data components (baseline, wide, long).
-3. Convert formats if needed.
-4. Prepare the object for estimation.
-
-This separates data engineering from causal modeling and estimation.
-
-We illustrate using the dataset `diabetes_population`.
-
 * Setup
 
-We use
+We load needed packages and a artificial, simulated dataset to
+illustrate the functionality of the =rtmle= package.
 
-#+BEGIN_SRC R
+#+BEGIN_SRC R :export code
   library(data.table)
   library(rtmle)
   diab_data <- fread("./data/diabetes_sim_data.csv")
@@ -49,112 +38,312 @@ We use
 
 #+RESULTS[384684746c78bfd0b35c54c9d3c89dcb8da7647b]:
 
+The first 20 lines of the simulated dataset =diab_data= look like this
+
 #+BEGIN_SRC R 
-head(diab_data)
+head(diab_data, n=20)
 #+END_SRC
 
 #+RESULTS[90d024ba5cac58ccab5f05c5b741b8190c9a8dce]:
 #+begin_example
-      id      time    event   sex      age   HbA1c  MACE changeHbA1c  GLP1 SGLT2  DPP4
-   <int>     <num>   <char> <int>    <num>   <num> <int>       <num> <int> <int> <int>
-1:     1  0.000000 baseline     1 57.90114 47.8233     0   0.0000000     1     0     0
-2:     1  5.158776    visit     1 57.90114 47.8233     0   0.6119453     1     0     1
-3:     1 12.936978    visit     1 57.90114 47.8233     0  -0.5831727     0     0     0
-4:     1 17.518595    visit     1 57.90114 47.8233     0   0.5532361     0     0     0
-5:     1 24.667315    visit     1 57.90114 47.8233     0  -0.5534818     1     1     1
-6:     1 31.123511    visit     1 57.90114 47.8233     0  -1.1469779     1     0     1
-   History_SGLT2 History_GLP1 History_DPP4
-           <int>        <int>        <int>
-1:             0            0            0
-2:             0            1            1
-3:             0            1            1
-4:             0            1            1
-5:             1            2            2
-6:             1            3            3
+       id   sex      age      date    event    HbA1c  GLP1 SGLT2  DPP4  MACE
+    <int> <int>    <num>     <num>   <char>    <num> <int> <int> <int> <int>
+ 1:     1     1 70.83169  0.000000 baseline 42.38161     1     0     0     0
+ 2:     1     1 70.83169  5.155612    visit 42.81016     0     1     1     0
+ 3:     1     1 70.83169 10.552336    visit 40.94586     0     0     0     0
+ 4:     1     1 70.83169 14.782062    visit 41.02639     0     0     0     0
+ 5:     1     1 70.83169 18.851708    visit 41.14244     0     0     1     0
+ 6:     1     1 70.83169 26.291746    visit 40.21101     0     0     1     0
+ 7:     1     1 70.83169 32.149679    visit 41.42865     1     1     1     0
+ 8:     1     1 70.83169 36.502307    visit 43.11753     1     1     0     0
+ 9:     1     1 70.83169 42.620083    visit 43.37236     1     0     1     0
+10:     1     1 70.83169 49.512016    visit 44.09558     1     0     0     0
+11:     1     1 70.83169 55.978340    visit 43.89561     1     1     1     0
+12:     1     1 70.83169 60.000000  dropout 43.95295     1     1     1     0
+13:     2     1 74.57255  0.000000 baseline 53.23016     1     0     0     0
+14:     2     1 74.57255  7.370287    visit 52.31920     1     0     0     0
+15:     2     1 74.57255 11.861928    visit 53.36066     1     0     0     0
+16:     2     1 74.57255 18.807641    visit 53.13922     1     1     0     0
+17:     2     1 74.57255 24.587680    visit 50.21304     0     1     0     0
+18:     2     1 74.57255 30.454014    visit 50.74158     0     0     1     0
+19:     2     1 74.57255 35.815205    visit 50.78268     0     0     1     0
+20:     2     1 74.57255 42.615748    visit 50.19543     0     0     1     0
+       id   sex      age      date    event    HbA1c  GLP1 SGLT2  DPP4  MACE
+    <int> <int>    <num>     <num>   <char>    <num> <int> <int> <int> <int>
 #+end_example
 
-* Initialize
+The for each individual (identified by the =id= variable), =sex= and
+=age= variables are fixed at baseline and does not change. The
+variables =date= and =event= provides information about when something
+happened and what that was. In our case, we have the following
+possible types of event.
+#+BEGIN_SRC R
+table(diab_data$event)
+#+END_SRC
+
+#+RESULTS[c89814af86286780f4c3b273ed93abc0e14032fa]:
+: 
+: baseline    death  dropout     MACE    visit 
+:     3000      890     2110      783    22655
+
+All subjects have exactly one baseline event where =date= equals 0,
+and where baseline variables are defined. The times at events of type
+'death', 'MACE', and 'dropout' denote time of death, MACE, and
+censoring, respectively. Death and censoring can only happens once,
+while MACE can happen several times. We will use first time of MACE as
+our event of interest and consider death as a competing event in the
+following analyses. The times for which =event= is 'visit' denotes
+times at which some time-varying variable was updated. In this case,
+the time-varying variables are =HbA1c=, =GLP1=, =SGLT2=, and
+=DDP4=. The =HbA1c= column denotes (measured) HbA1c value at the given
+=date=, while the 1/0 indicators in the =GLP1=, =SGLT2=, and =DDP4=
+columns denote on/off treatment. For instance, the subject 1 used GLP1
+at time 0 (baseline), stopped using GLP1 at time \( \approx 5.16 \)
+and then started using GLP1 again at time \( \approx 32.15 \).
+
+We extract the information we need into different data sets as
+follows:
+
+- Baseline data:
+  #+BEGIN_SRC R
+    baseline_data=diab_data[date == 0, .(id, sex, age)]
+  #+END_SRC
+
+  #+RESULTS[5d7a646537f1db2642df2c728ca52d4be036d10b]:
+
+- Outcome data:
+  #+BEGIN_SRC R
+    ## first MACE (outcome):
+    out_data <- diab_data[event == "MACE" & MACE == 1][, .(id, date)]
+
+    ## time of death (competing event):
+    comp_data <- diab_data[event == "death",.(id,date)]
+
+    ## last time seen with no event time (censoring time):
+    cens_data <- diab_data[order(id,date), .SD[.N], by = id][event%in%c("visit","dropout"),.(id,date)]
+  #+END_SRC
+
+  #+RESULTS[1af40c06cf31c06627962796307926e71a7f9625]:
+
+- Time-varying data:
+  #+BEGIN_SRC R
+    ## Get times at which HbA1c was measured for each patient:
+    hba1c_data <- diab_data[event%in%c("baseline","MACE","visit"),.(id, date, value=HbA1c)]
+
+    ## For each treatment variable, we construct exposure time datasets:
+    treat_vars <- c("GLP1","SGLT2","DPP4")
+    treat_data_list <- lapply(treat_vars, function(tv){
+      d <- diab_data[,c("id","date",tv),with = FALSE]
+      setnames(d,c("id","start_exposure","value"))
+      d[,end_exposure := shift(x = start_exposure,n = 1,type = "lead"),by = id]
+      ## when treatment starts at the last time point in a time-series
+      ## then the duration is unknown
+      d <- d[!is.na(end_exposure)]
+      d <- d[value != 0]
+      d[,value := NULL]
+    })
+    names(treat_data_list) <- treat_vars
+  #+END_SRC
+
+  #+RESULTS:
+
+  The =hba1c_data= contains the measured Hba1c values. Note that for
+  it to be compatible =rtmle= setup, we need the HbA1c value measured
+  at time =time= to be named =value=.
+  #+BEGIN_SRC R
+    head(hba1c_data)
+  #+END_SRC
+
+  #+RESULTS[d1df060475d1ad512a2472236aecaa131a5773b9]:
+  :       id      date    value
+  :    <int>     <num>    <num>
+  : 1:     1  0.000000 42.38161
+  : 2:     1  5.155612 42.81016
+  : 3:     1 10.552336 40.94586
+  : 4:     1 14.782062 41.02639
+  : 5:     1 18.851708 41.14244
+  : 6:     1 26.291746 40.21101
+
+  =treat_data_list= is a list of dataset which contains start and end
+  exposure period for a given treatment, for instance:
+  #+BEGIN_SRC R
+    head(treat_data_list[["GLP1"]])
+  #+END_SRC
+
+  #+RESULTS[bed01d9d5c5566091236d69d867b03ebbf73b84b]:
+  :       id start_exposure end_exposure
+  :    <int>          <num>        <num>
+  : 1:     1        0.00000     5.155612
+  : 2:     1       32.14968    36.502307
+  : 3:     1       36.50231    42.620083
+  : 4:     1       42.62008    49.512016
+  : 5:     1       49.51202    55.978340
+  : 6:     1       55.97834    60.000000
+
+* Initialize =rtmle= object and add data
+
+[describe init process]
 
 #+BEGIN_SRC R
-  x <- rtmle_init(intervals = 3,
+  x <- rtmle_init(time_grid = seq(0, 5*6, by = 6),
 		  name_id = "id",
 		  name_competing = "death",
 		  name_outcome = "MACE",
 		  name_censoring = "censoring")
 #+END_SRC
 
-* Add baseline data
+#+RESULTS[8419cb3193b793b20f1906475253bb2f34a192e0]:
 
-* Add outcome(s) data
+Data are then added to the empty =rtmle= object as follows.
 
-Information on outcome, competing event, and censoring. 
-
-* Variable Types in diabetes_population
-
-- Baseline (time-invariant): U, sex, age
-- Time-varying covariates (L_t): HbA1c, changeHbA1c
-- Treatments (A_t): GLP1, SGLT2, DPP4
-- Outcome (Y_t): MACE
-- Treatment summaries: History_GLP1, History_SGLT2, History_DPP4
-
-* Step 1: Initialize
-
-#+BEGIN_SRC r
-library(rtmle)
-
-rt_obj <- rtmle_init(
-  id = "id",
-  time = "time",
-  event = "event"
-)
+#+BEGIN_SRC R
+  x <- add_baseline_data(x,baseline_data)
+  x <- add_long_data(x,
+		     outcome_data = out_data,
+		     censored_data = cens_data,
+		     competing_data = comp_data)
+  x <- add_long_data(x,
+		     HbA1c = hba1c_data,
+		     timevar_data = treat_data_list)
 #+END_SRC
 
-* Step 2: Add Baseline Data
+#+RESULTS[aeba88a1bd80500fb91ca277d5f3b6fab4fa2518]:
 
-#+BEGIN_SRC r
-rt_obj <- add_baseline_data(
-  rt_obj,
-  data = diabetes_population[diabetes_population$time == 0, ],
-  baseline_vars = c("U", "sex", "age")
-)
+Above we have exemplified different ways of adding data: Information
+about outcome (=outcome_data=, =censored_data=, and =competing_data=)
+have dedicated names. Time-varying variables can be added by data set
+to user chosen arguments (=HbA1c = hba1c_data=) as a named list to the
+dedicated =timevar_data= argument (=timevar_data =
+treat_data_list=). As shown above, datasets can be added in one go
+(one =add_long_data=) or in separate steps (several =add_long_data=).
+
+The data is now stored in the =rtmle=:
+
+#+BEGIN_SRC R
+  names(x$long_data)
 #+END_SRC
 
-* Step 3: Add Wide Data
+#+RESULTS:
+: [1] "timevar_data"   "outcome_data"   "censored_data"  "competing_data"
 
-#+BEGIN_SRC r
-rt_obj <- add_wide_data(
-  rt_obj,
-  data = diabetes_population[diabetes_population$time == 0, ],
-  wide_vars = c("History_GLP1", "History_SGLT2", "History_DPP4")
-)
+#+BEGIN_SRC R
+  names(x$long_data$timevar_data)
 #+END_SRC
 
-* Step 4: Add Long Data
+#+RESULTS[9178af3079f8371fd69626c6a3e3195b03abee81]:
+: [1] "GLP1"  "SGLT2" "DPP4"  "HbA1c"
 
-#+BEGIN_SRC r
-rt_obj <- add_long_data(
-  rt_obj,
-  data = diabetes_population,
-  time_varying_covariates = c("HbA1c", "changeHbA1c"),
-  treatment_vars = c("GLP1", "SGLT2", "DPP4"),
-  outcome_var = "MACE"
-)
+* Convert long data to discretized wide data
+
+TODO
+
+* Demonstrate bug
+
+#+BEGIN_SRC R :exports code
+  library(data.table)
+  library(rtmle)
+  diab_data <- fread("./data/diabetes_sim_data.csv")
+  baseline_data=diab_data[date == 0, .(id, sex, age)]
+  out_data <- diab_data[event == "MACE" & MACE == 1][, .(id, date)]
+  sglt2_data <- diab_data[,.(id,start_exposure = date,value = SGLT2)]
+  sglt2_data[,end_exposure := shift(x = start_exposure,n = 1,type = "lead"),by = id]
+  sglt2_data <- sglt2_data[!is.na(end_exposure)]
+  sglt2_data <- sglt2_data[value != 0]
+  sglt2_data[,value := NULL]
+
+  x <- rtmle_init(time_grid = seq(0, 5*6, by = 6),name_id = "id",name_outcome = "MACE")
+  x <- add_baseline_data(x,baseline_data)
+  x <- add_long_data(x, outcome_data = out_data, timevar_data = list(SGLT2 = sglt2_data))
+  ## Construct exposed and exposure time using the function discretize_timevarying_exposure:
+  x <- long_to_wide(x, SGLT2 = c("exposed", "exposure_time"))
 #+END_SRC
 
-* Step 5: Convert Long to Wide
+#+RESULTS:
+#+begin_example
+          id start_exposure value end_exposure
+       <int>          <num> <int>        <num>
+    1:     1       0.000000     0     5.155612
+    2:     1       5.155612     1    10.552336
+    3:     1      10.552336     0    14.782062
+    4:     1      14.782062     0    18.851708
+    5:     1      18.851708     0    26.291746
+   ---                                        
+29434:  3000      37.416758     1    43.354724
+29435:  3000      43.354724     0    50.168009
+29436:  3000      50.168009     0    57.218228
+29437:  3000      57.218228     0    60.000000
+29438:  3000      60.000000     0           NA
+          id start_exposure end_exposure
+       <int>          <num>        <num>
+    1:     1       5.155612     10.55234
+    2:     1      32.149679     36.50231
+    3:     1      36.502307     42.62008
+    4:     1      55.978340     60.00000
+    5:     2      18.807641     24.58768
+   ---                                  
+12885:  2999      52.621369     58.69199
+12886:  2999      58.691987     60.00000
+12887:  3000      13.173172     18.30958
+12888:  3000      25.221473     32.71391
+12889:  3000      37.416758     43.35472
+#+end_example
 
-#+BEGIN_SRC r
-wide_data <- long_to_wide(
-  data = diabetes_population,
-  id = "id",
-  time = "time"
-)
+Looks nice for id=1:
+#+BEGIN_SRC R
+  sglt2_data[id == 1]
+  x$data$timevar_data$SGLT2_exposed[id == 1] 
+  x$data$timevar_data$SGLT2_exposure_time[id == 1]
 #+END_SRC
 
-* Step 6: Prepare for Analysis
+#+RESULTS:
+#+begin_example
+      id start_exposure end_exposure
+   <int>          <num>        <num>
+1:     1       5.155612     10.55234
+2:     1      32.149679     36.50231
+3:     1      36.502307     42.62008
+4:     1      55.978340     60.00000
+Key: <id>
+      id SGLT2_exposed_0 SGLT2_exposed_1 SGLT2_exposed_2 SGLT2_exposed_3 SGLT2_exposed_4
+   <int>           <num>           <num>           <num>           <num>           <num>
+1:     1               0               1               1               0               0
+   SGLT2_exposed_5
+             <num>
+1:               0
+Key: <id>
+      id SGLT2_exposure_time_0 SGLT2_exposure_time_1 SGLT2_exposure_time_2
+   <int>                 <num>                 <num>                 <num>
+1:     1                     0             0.8443879              4.552336
+   SGLT2_exposure_time_3 SGLT2_exposure_time_4 SGLT2_exposure_time_5
+                   <num>                 <num>                 <num>
+1:                     0                     0                     0
+#+end_example
 
-#+BEGIN_SRC r
-rt_obj <- prepare_data(rt_obj)
+Looks bad for id=5 who was exposed at baseline (time=0):
+#+BEGIN_SRC R
+  sglt2_data[id == 5]
+  x$data$timevar_data$SGLT2_exposed[id == 5]
+  x$data$timevar_data$SGLT2_exposure_time[id == 5]
 #+END_SRC
 
-After prepare_data(), the object is analysis-ready.
+#+RESULTS:
+#+begin_example
+      id start_exposure end_exposure
+   <int>          <num>        <num>
+1:     5        0.00000      5.71111
+2:     5        5.71111     13.03988
+Key: <id>
+      id SGLT2_exposed_0 SGLT2_exposed_1 SGLT2_exposed_2 SGLT2_exposed_3 SGLT2_exposed_4
+   <int>           <num>           <num>           <num>           <num>           <num>
+1:     5               1               1               1               1               0
+   SGLT2_exposed_5
+             <num>
+1:               0
+Key: <id>
+      id SGLT2_exposure_time_0 SGLT2_exposure_time_1 SGLT2_exposure_time_2
+   <int>                 <num>                 <num>                 <num>
+1:     5                     1                     6                     6
+   SGLT2_exposure_time_3 SGLT2_exposure_time_4 SGLT2_exposure_time_5
+                   <num>                 <num>                 <num>
+1:              1.039881                     0                     0
+#+end_example
