@@ -211,9 +211,9 @@ Data are then added to the empty =rtmle= object as follows.
 
 Above we have exemplified different ways of adding data: Information
 about outcome (=outcome_data=, =censored_data=, and =competing_data=)
-have dedicated names. Time-varying variables can be added by data set
-to user chosen arguments (=HbA1c = hba1c_data=) as a named list to the
-dedicated =timevar_data= argument (=timevar_data =
+have dedicated names. Time-varying variables can be added as dataset
+supplied with user chosen arguments (=HbA1c = hba1c_data=) and/or as a
+named list to the dedicated =timevar_data= argument (=timevar_data =
 treat_data_list=). As shown above, datasets can be added in one go
 (one =add_long_data=) or in separate steps (several =add_long_data=).
 
