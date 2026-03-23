@@ -4,10 +4,20 @@
 ## TODO: implement more functions
 history_method <- function(data, id, grid, name, method){
 
+    ## Just apply method if it is a function
+    if(is.function(method)){
+        out = method(data = data,
+                     grid = grid,
+                     name = name,
+                     id = id)        
+        return(out)
+    }
+
     ## Methods names check:
     method_reqs = list(last = c("date","value"),
+                       exposed = c("start_exposure","end_exposure"),
                        exposure_time = c("start_exposure","end_exposure"),
-                       exposed = c("date"))
+                       event = c("date"))
 
     ## Attempt to guess method if not specified:
     if(is.null(method)){
@@ -46,21 +56,21 @@ history_method <- function(data, id, grid, name, method){
         return(out)
     }
     
-    ## Exposure time in interval
-    if(method == "exposure_time"){
-        gg = copy(grid)
-        setnames(gg,c("date","previous_date"),c("end_interval","start_interval"))
-        out = discretize_timevarying_exposure(data = data,
-                                        grid = gg,
-                                        name = name,
-                                        point_exposure = FALSE,
-                                        threshold = 0,
-                                        id = id)
+    ## Exposed at some time in interval
+    if(method == "exposed"){
+        out = exposure_time(data = data,grid = gg,name = name,id = id,threshold = 0)
         return(out)
     }
 
-    ## Exposed in interval
-    if(method == "exposed"){
+    ## Exposure time
+    if(method == "exposure_time"){
+        out = exposure_time(data = data,grid = gg,name = name,id = id,threshold = NA)
+        return(out)
+    }
+
+    ## Some event in interval least one time point in interval
+    ## Should check this
+    if(method == "event"){
         gg = copy(grid)
         setnames(gg,c("date","previous_date"),c("end_interval","start_interval"))
         out = discretize_timevarying_exposure(data = data,
