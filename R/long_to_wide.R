@@ -178,9 +178,11 @@ long_to_wide <- function(x,
             if(is.null(names(vnm)) || any(names(vnm) == ""))
                 stop(paste0("When method for variable '", Vname, "' is a list, it must be a named list."))
         }else{
-            ## Make it into a list if it not already and name it redundantly:
-            vnm = as.list(vnm)
-            names(vnm) = vnm
+            ## Make it into a list if it not null
+            if (!is.null(vnm)){
+                vnm = as.list(vnm)            
+                names(vnm) = vnm
+            }
         }            
         ## If length>1, construct suffix to construct one or more data set based on the one timevar_data and the method(s).
         ## TODO: check if it is either a
@@ -196,11 +198,12 @@ long_to_wide <- function(x,
                                                                   method = vnm[[mm]])
             }            
         }else{ ## If not list, just stick with one name:
+            vnm <- if (is.null(vnm)) NULL else vnm[[1]]
             x$data$timevar_data[[Vname]] = history_method(data = x$long_data$timevar_data[[Vname]],
                                                           id = x$names$id,
                                                           grid = grid,
                                                           name = Vname,
-                                                          method = vnm[[1]])
+                                                          method = vnm)
         }
     }
     
