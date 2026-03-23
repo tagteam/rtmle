@@ -58,13 +58,13 @@ history_method <- function(data, id, grid, name, method){
     
     ## Exposed at some time in interval
     if(method == "exposed"){
-        out = exposure_time(data = data,grid = gg,name = name,id = id,threshold = 0)
+        out = exposure_time(data = data,grid = grid,name = name,id = id,threshold = 0)
         return(out)
     }
 
     ## Exposure time
     if(method == "exposure_time"){
-        out = exposure_time(data = data,grid = gg,name = name,id = id,threshold = NA)
+        out = exposure_time(data = data,grid = grid,name = name,id = id,threshold = NA)
         return(out)
     }
 
@@ -81,6 +81,6 @@ history_method <- function(data, id, grid, name, method){
         return(out)
     }
 
-    stop(paste0("Method ", method, "chosen for variable ", name, " is not implemented."))
+    stop(paste0("Method '", method, "' chosen for variable ", name, " is not implemented."))
 }
 

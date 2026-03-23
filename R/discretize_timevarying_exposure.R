@@ -60,7 +60,7 @@ discretize_timevarying_exposure <- function(data,
         overlap[,exposure := (pmin(end_interval,end_exposure)-pmax(start_interval,start_exposure))]
         overlap[is.na(exposure),exposure := 0]
         # baseline exposure
-        overlap[interval == 0 & start_exposure == 0, exposure := 1]
+        overlap[interval == 0 & start_exposure == 0, exposure := 1] ## What?? FIXME!
         # total duration in interval
         setkeyv(overlap, c(id, "interval"))
         overlap <- overlap[, list(exposure = sum(exposure)), by = c(id, "interval")]

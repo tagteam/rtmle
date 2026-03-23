@@ -11,11 +11,7 @@ FIX:
 - [ ] fix date/time naming.
 - [ ] Need to update all examples based on change to rtmle_init (wait
   for approved from Thomas).
-
-- Think about the history variables. Do we want to construct them
-  explicitly in the data, or do we want to construct them from with
-  summary function / long_to_wide? Look at how they are generated in
-  followme.
+- [ ] Need to fix baseline exposure time bug in discretize_timevarying_exposure.
 
 - In LEADER study we work directly on pre-descritized
   datasets. Include that as an example.

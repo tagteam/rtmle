@@ -171,14 +171,37 @@ long_to_wide <- function(x,
     ## Time dependent variables including treatment
     ##
 
-    ## - Later, allow for multiple arguments to same variable.
-
     for (Vname in Vnames){
-        x$data$timevar_data[[Vname]] = history_method(data = x$long_data$timevar_data[[Vname]],
-                                                      id = x$names$id,
-                                                      grid = grid,
-                                                      name = Vname,
-                                                      method = methods[[Vname]])
+        vnm = methods[[Vname]]
+        if(is.list(vnm)){
+            ## If already list, check if it is named:
+            if(is.null(names(vnm)) || any(names(vnm) == ""))
+                stop(paste0("When method for variable '", Vname, "' is a list, it must be a named list."))
+        }else{
+            ## Make it into a list if it not already and name it redundantly:
+            vnm = as.list(vnm)
+            names(vnm) = vnm
+        }            
+        ## If length>1, construct suffix to construct one or more data set based on the one timevar_data and the method(s).
+        ## TODO: check if it is either a
+        ## - vector of strings
+        ## - named list of function or string
+        if(length(vnm) > 1){            
+            for (mm in names(vnm)){
+                Vname_ext = paste0(Vname,"_",mm)
+                x$data$timevar_data[[Vname_ext]] = history_method(data = x$long_data$timevar_data[[Vname]],
+                                                                  id = x$names$id,
+                                                                  grid = grid,
+                                                                  name = Vname_ext,
+                                                                  method = vnm[[mm]])
+            }            
+        }else{ ## If not list, just stick with one name:
+            x$data$timevar_data[[Vname]] = history_method(data = x$long_data$timevar_data[[Vname]],
+                                                          id = x$names$id,
+                                                          grid = grid,
+                                                          name = Vname,
+                                                          method = vnm[[1]])
+        }
     }
     
     return(x)
