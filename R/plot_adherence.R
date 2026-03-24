@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: dec 11 2025 (10:23) 
 ## Version: 
-## Last-Updated: mar 14 2026 (08:03) 
+## Last-Updated: mar 20 2026 (06:39) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 25
+##     Update #: 26
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -78,7 +78,7 @@ plot_adherence <- function(x,...){
         adherence_data[is.na(censored_time),event_nonadherence := 2]
         # value 2 when non-adherence is observed
         adherence_data[!is.na(first_deviation),event_nonadherence := 1]
-        adherence_data[,data.table::data.table(protocol,time_nonadherence,event_nonadherence)]
+        adherence_data[,list(protocol,time_nonadherence,event_nonadherence)]
     }))
     dt_nonadherence[,protocol := factor(protocol)]
     fit_nonadherence <- prodlim::prodlim(Hist(time_nonadherence,event_nonadherence)~protocol,

@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: feb 23 2026 (06:38) 
 ## Version: 
-## Last-Updated: mar 18 2026 (14:41) 
+## Last-Updated: mar 23 2026 (10:40) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 129
+##     Update #: 132
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -124,10 +124,14 @@
 #'
 #' @seealso
 #' \code{\link[ggplot2]{ggplot}}, \code{\link[ggplot2]{geom_point}}
-#'
+#' @examples
+#' if (requireNamespace("plotly")){
+#' 
+#' }
+#' 
 #' @importFrom ggplot2 ggplot aes geom_point geom_hline theme_bw labs theme element_text element_blank position_jitter facet_wrap
 #' @importFrom Matrix as.matrix
-#'
+#' 
 #' @export
 plot_model_coefficients <- function(x,
                                     time_horizon,
@@ -144,6 +148,9 @@ plot_model_coefficients <- function(x,
                                     plot_style = c("manhattan", "by_outcome"),
                                     manhattan_color_by = c("node", "time", "term", "none"),
                                     show_x_labels = FALSE) {
+    if (!(x$learner$fun[[1]] %chin% c("learn_glmnet","learn_glm"))){
+        stop("Can only plot regression coefficients when fitter is either learn_glm or learn_glmnet")
+    }
     outcome <- time_k <- x_index <- terms <- node <- x_cat <- NULL
     color_by <- match.arg(color_by)
     facet_by <- match.arg(facet_by)

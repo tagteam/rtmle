@@ -114,6 +114,12 @@ distinct model identifiers defined by time, node grouping, node name and model
 name. All coefficient terms for a given model are plotted at the same x
 position, producing a vertical "stack" of points per model.
 }
+\examples{
+if (requireNamespace("plotly")){
+
+}
+
+}
 \seealso{
 \code{\link[ggplot2]{ggplot}}, \code{\link[ggplot2]{geom_point}}
 }

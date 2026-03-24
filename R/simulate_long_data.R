@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 11 2024 (13:24) 
 ## Version: 
-## Last-Updated: Jul 28 2025 (09:45) 
+## Last-Updated: mar 20 2026 (06:39) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 292
+##     Update #: 295
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -107,7 +107,7 @@ simulate_long_data <- function(n,
     # initialize amount of treatment: sum_A
     pop[, sum_A:=A_0]
     pop[, L_0:=stats::rbinom(n,1,.17)]
-    people_atrisk <- pop[,data.table::data.table(id,entrytime = time,age,sex,L_0,A_0,sum_L,A,sum_A)]
+    people_atrisk <- pop[,list(id,entrytime = time,age,sex,L_0,A_0,sum_L,A,sum_A)]
     if (interventional_distribution){
         people_atrisk[,propensity_A := 1]
     } else {
@@ -151,7 +151,7 @@ simulate_long_data <- function(n,
         # collect terminal information
         #
         has_terminal <- rbind(has_terminal,
-                              people_atrisk[is_terminal,data.table::data.table(id,terminal_time = time,terminal_event = event)])
+                              people_atrisk[is_terminal,list(id,terminal_time = time,terminal_event = event)])
         #------------------------------------------------------------------------------
         # restrict to people still at risk
         #
@@ -201,19 +201,19 @@ simulate_long_data <- function(n,
     pop[is.na(time),time := terminal_time]
     pop[,terminal_event := factor(terminal_event,levels = c("Y","D","C"))]
     if (register_format){
-        bsl <- pop[time == 0,data.table::data.table(id,sex,age)]
-        event_data <- pop[time == 0,data.table::data.table(id,terminal_time = terminal_time,terminal_event)]
-        censored_data <- event_data[terminal_event == "C",data.table::data.table(id,date = terminal_time)]
-        competing_data <- event_data[terminal_event == "D",data.table::data.table(id,date = terminal_time)]
-        outcome_data <- event_data[terminal_event == "Y",data.table::data.table(id,date = terminal_time)]
-        timevar_baseline <- pop[time == 0 & L_0 == 1,data.table::data.table(id,date = 0)]
-        timevar_data <- pop[event == "L",data.table::data.table(id,date = time)]
+        bsl <- pop[time == 0,list(id,sex,age)]
+        event_data <- pop[time == 0,list(id,terminal_time = terminal_time,terminal_event)]
+        censored_data <- event_data[terminal_event == "C",list(id,date = terminal_time)]
+        competing_data <- event_data[terminal_event == "D",list(id,date = terminal_time)]
+        outcome_data <- event_data[terminal_event == "Y",list(id,date = terminal_time)]
+        timevar_baseline <- pop[time == 0 & L_0 == 1,list(id,date = 0)]
+        timevar_data <- pop[event == "L",list(id,date = time)]
         timevar_data <- rbind(timevar_baseline,timevar_data)
         # random baseline treatment
-        # treatment_baseline <- pop[time == 0,data.table::data.table(id,date = 0, A = A_0)]
-        # treatment_data <- pop[event == "V",data.table::data.table(id,date = time, A = A)]
-        treatment_baseline <- pop[time == 0 & A_0 == 1,data.table::data.table(id,date = 0)]
-        treatment_data <- pop[event == "V" & A == 1,data.table::data.table(id,date = time)] 
+        # treatment_baseline <- pop[time == 0,list(id,date = 0, A = A_0)]
+        # treatment_data <- pop[event == "V",list(id,date = time, A = A)]
+        treatment_baseline <- pop[time == 0 & A_0 == 1,list(id,date = 0)]
+        treatment_data <- pop[event == "V" & A == 1,list(id,date = time)] 
         treatment_data <- rbind(treatment_baseline,treatment_data)
         list(baseline_data = bsl,
              timevar_data = list(L = timevar_data,A = treatment_data),

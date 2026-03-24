@@ -142,7 +142,7 @@ cheap_bootstrap <- function(x,
         data.table::set(x$estimate$Cheap_bootstrap[[v]],j = "Main",value = NULL)
       }
       data.table::setnames(x$estimate$Cheap_bootstrap[[v]],"Estimate","Bootstrap_estimate")
-      cb <- x$estimate[[v]][,data.table::data.table(Target,Protocol,Time_horizon,Main_estimate = Estimate)][x$estimate$Cheap_bootstrap[[v]],on = c("Target","Protocol","Time_horizon")]
+      cb <- x$estimate[[v]][,list(Target,Protocol,Time_horizon,Main_estimate = Estimate)][x$estimate$Cheap_bootstrap[[v]],on = c("Target","Protocol","Time_horizon")]
       if (replace){
         cheap_scale <- sqrt(M / N)
       } else {
@@ -153,7 +153,7 @@ cheap_bootstrap <- function(x,
       cb[,cheap_variance := cumsum((Main_estimate-Bootstrap_estimate)^2)/seq_len(.N),by = c("Target","Protocol","Time_horizon")]
       cb[,cheap_lower := Main_estimate - tq * cheap_scale * sqrt(cheap_variance)]
       cb[,cheap_upper := Main_estimate + tq * cheap_scale * sqrt(cheap_variance)]
-      x$estimate$Cheap_bootstrap[[v]] <- cb[,data.table::data.table(B,
+      x$estimate$Cheap_bootstrap[[v]] <- cb[,list(B,
                                                                Target,
                                                                Protocol,
                                                                Time_horizon,
@@ -176,7 +176,7 @@ cheap_bootstrap <- function(x,
           data.table::set(x$estimate[[v]],j = u,value = NULL)
         }
       }
-      cb <- cb[B == max_B,data.table::data.table(Bootstrap_standard_error = sqrt(cheap_variance),
+      cb <- cb[B == max_B,list(Bootstrap_standard_error = sqrt(cheap_variance),
                                                  Bootstrap_lower = pmax(0,cheap_lower),
                                                  Bootstrap_upper = pmin(1,cheap_upper)),by = c("Target","Protocol","Time_horizon")]
       x$estimate[[v]] <- cb[x$estimate[[v]],on = c("Target","Protocol","Time_horizon")]

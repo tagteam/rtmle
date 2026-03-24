@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: feb 26 2026 (09:52) 
 ## Version: 
-## Last-Updated: feb 26 2026 (12:32) 
+## Last-Updated: mar 20 2026 (06:40) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 34
+##     Update #: 36
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -86,7 +86,7 @@ plot_IPW <- function(
         }))
     }))
     plot_dt[, intervention_node := factor(intervention_node, levels = x$intervention_nodes)]
-    missing_values <- plot_dt[,data.table::data.table("mising value" = sum(is.na(used_cumprobs))),by = c("intervention_node","protocol")]
+    missing_values <- plot_dt[,list("mising value" = sum(is.na(used_cumprobs))),by = c("intervention_node","protocol")]
     p <- ggplot2::ggplot(plot_dt, ggplot2::aes(x = intervention_node, y = used_cumprobs)) +
         ggplot2::geom_boxplot(outlier.alpha = 0.4) +
         ggplot2::labs(

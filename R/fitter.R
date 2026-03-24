@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: jan 25 2026 (09:26) 
 ## Version: 
-## Last-Updated: mar 18 2026 (08:59) 
+## Last-Updated: mar 20 2026 (15:14) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 64
+##     Update #: 66
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -96,6 +96,7 @@ fitter <- function(intervention_node,
                 if (inherits(try(
                     predicted_values <- do.call(learner$fun,c(args,learner$args)),silent = FALSE),
                     "try-error")) {
+                    browser(skipCalls=1L)
                     stop(paste0("Failed to superlearn/crossfit with formula ",ff,"\nwhere the outcome is: ",
                                 ifelse(current_outcome_name == "rtmle_predicted_outcome",
                                        paste0("the predicted outcome at intervention node (time): ",intervention_node),

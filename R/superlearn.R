@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Oct 31 2024 (07:29) 
 ## Version: 
-## Last-Updated: mar 19 2026 (15:38) 
+## Last-Updated: mar 20 2026 (06:40) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 287
+##     Update #: 289
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -112,7 +112,7 @@ superlearn <- function(folds,
         # need only pay attention to variables with more than 2 levels
         # because 2 level variables are caught by constant variable checks
         # when 1 level is missing
-        multi_factor_levels <- data[, data.table::data.table(factor = factor_cols,
+        multi_factor_levels <- data[, list(factor = factor_cols,
                                                              expected_levels = sapply(.SD,uniqueN)),
                                     .SDcols = factor_cols][expected_levels>2]
     }else{
@@ -155,7 +155,7 @@ superlearn <- function(folds,
             if (NROW(multi_factor_levels)>0){
                 vars_missing_levels_k <- unique(rbind(
                     multi_factor_levels,
-                    data[, data.table::data.table(factor = multi_factor_levels$factor,
+                    data[, list(factor = multi_factor_levels$factor,
                                                   expected_levels = sapply(.SD,uniqueN)),
                          .SDcols = multi_factor_levels$factor]))[duplicated(factor)]$factor
                 if (length(vars_missing_levels_k)>0){

@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: feb 24 2026 (11:04) 
 ## Version: 
-## Last-Updated: mar 19 2026 (15:32) 
+## Last-Updated: mar 23 2026 (10:54) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 43
+##     Update #: 45
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -15,7 +15,7 @@
 ## 
 ### Code:
 # data contains exposure episodes
-# grid contains equidistant intervals on a discrete time scale
+# grid contains intervals on a discrete time scale
 # the function discretizes how many days a subject
 # was exposed within the interval and defines exposure when the
 # number of days exceeds threshold. E.g., when the length of the
@@ -55,7 +55,7 @@ discretize_timevarying_exposure <- function(data,
         # missing values occur in intervals without any overlap
         overlap[is.na(exposure),exposure := 0]
         # summarize across interval
-        overlap <- overlap[,data.table::data.table(exposure = 1*(any(exposure == 1))),by = c(id,"interval")]
+        overlap <- overlap[,list(exposure = 1*(any(exposure == 1))),by = c(id,"interval")]
     }else{
         overlap[,exposure := (pmin(end_interval,end_exposure)-pmax(start_interval,start_exposure))]
         overlap[is.na(exposure),exposure := 0]

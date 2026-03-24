@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 22 2024 (14:07) 
 ## Version: 
-## Last-Updated: mar 19 2026 (15:53) 
+## Last-Updated: mar 23 2026 (10:46) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 204
+##     Update #: 206
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -138,7 +138,7 @@ long_to_wide <- function(x,
     pop[,c(x$names$id,"start_followup_date","end_followup"),with = FALSE]
     if (any(is.na(pop$end_followup)))stop("Missing values in end of followup information")
     id_colname <- x$names$id
-    grid <- pop[,data.table::data.table(date=start_followup_date+breaks, end_followup = end_followup),by=id_colname]
+    grid <- pop[,list(date=start_followup_date+breaks, end_followup = end_followup),by=id_colname]
     # FIXME: check for data after the end of followup?
     grid[,previous_date := c(0,date[-.N]),by = id_colname]
     grid <- grid[previous_date<=end_followup]
@@ -202,7 +202,11 @@ long_to_wide <- function(x,
             }else{ # case 1
                 gg = copy(grid)
                 setnames(gg,c("date","previous_date"),c("end_interval","start_interval"))
-                x$data$timevar_data[[Vname]] <- discretize_timevarying_exposure(data = x$long_data$timevar_data[[Vname]],grid = gg,name = Vname,point_exposure = TRUE,id = x$names$id)
+                x$data$timevar_data[[Vname]] <- discretize_timevarying_exposure(data = x$long_data$timevar_data[[Vname]],
+                                                                                grid = gg,
+                                                                                name = Vname,
+                                                                                point_exposure = TRUE,
+                                                                                id = x$names$id)
                 # FIXME: when intervals are not equidistant the following does not work.
                 ## length_interval=unique(round(diff(breaks),0))
                 ## x$data$timevar_data[[Vname]] <- map_grid(grid=grid,data=x$long_data$timevar_data[[Vname]],name=Vname,values = c(1,0),fun_aggregate = vfun,rollforward=length_interval,id = x$names$id)
