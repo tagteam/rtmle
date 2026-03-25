@@ -14,6 +14,7 @@ run_rtmle(
   seed = NULL,
   subsets = NULL,
   keep_influence = TRUE,
+  progressbar = 0,
   verbose = FALSE,
   ...
 )
@@ -73,6 +74,8 @@ examples.}
 influence function of the estimator in the object.  Currently
 this argument is only used when argument \code{subsets} is also
 specified.}
+
+\item{progressbar}{Logical. If \code{TRUE} show progress of the loops that fit the nuisance parameter models.}
 
 \item{verbose}{Logical. If \code{FALSE} suppress all
 messages. \code{FALSE} is the default.}

@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: mar 19 2026 (15:29) 
 ## Version: 
-## Last-Updated: mar 20 2026 (06:41) 
+## Last-Updated: mar 24 2026 (12:58) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 4
+##     Update #: 5
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -19,6 +19,7 @@ fast_cast <- function(x,
                       value_col = "value",
                       fill = NA,
                       fun_aggregate = NULL) {
+    N <- NULL
     stopifnot(id %in% names(x))
     stopifnot("interval" %in% names(x))
     stopifnot(value_col %in% names(x))

@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Apr  8 2025 (14:47) 
 ## Version: 
-## Last-Updated: jan 23 2026 (11:33) 
+## Last-Updated: mar 24 2026 (11:15) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 39
+##     Update #: 40
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -48,7 +48,7 @@ test_that("run rtmle on a subset",{
     x1 <- target(x1,name = "Test Outcome_risk",estimator = "tmle",protocols = c("Never_A"))
     x1 <- model_formula(x1)
     x1 <- run_rtmle(x1,learner = "learn_glmnet",time_horizon = 2,verbose = FALSE)
-    x79 <- run_rtmle(x,learner = "learn_glmnet",time_horizon = 2,subsets = list(S = list(label = "S79",id = 1:79)),verbose = FALSE)
+    x79 <- run_rtmle(x,learner = "learn_glmnet",time_horizon = 2,subsets = list(S = list(label = "S79",id = 1:79)),verbose = FALSE,refit = TRUE)
     data.table::setattr(x79$estimate$S79,"IC",NULL)
     expect_equal(x1$estimate$Main_analysis,x79$estimate$S79)
 })

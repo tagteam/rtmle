@@ -122,20 +122,10 @@ cheap_bootstrap <- function(x,
             if (missing(time_horizon)){
                 time_horizon <- sort(unique(x$estimate[[v]]$Time_horizon))
             }
-            x <- run_rtmle(x = x,
-                           verbose = verbose,
-                           time_horizon = time_horizon,
-                           subsets = list(list(label = "CB",
-                                               id = x$prepared_data[[x$names$id]][inbag],
-                                               append = TRUE,
-                                               variable = "B",
-                                               level = b)),
-                           learner = x$unparsed_learner,
-                           ...)
+            x <- run_rtmle(x = x,refit = TRUE,verbose = verbose,time_horizon = time_horizon,subsets = list(list(label = "CB",id = x$prepared_data[[x$names$id]][inbag],append = TRUE,variable = "B",level = b)),learner = x$unparsed_learner,...)
         }
         x$estimate$Cheap_bootstrap[[v]] <- x$estimate$CB
         x$estimate$CB <- NULL
-
       # calculate the cheap lower and upper confidence limits
       # when there readily are bootstrap results we append to them
       if("Main"%in%names(x$estimate$Cheap_bootstrap[[v]])){

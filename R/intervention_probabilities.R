@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Oct 17 2024 (09:26) 
 ## Version: 
-## Last-Updated: mar 20 2026 (15:06) 
+## Last-Updated: mar 24 2026 (12:18) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 469
+##     Update #: 511
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -20,22 +20,70 @@
 ### Code:
 intervention_probabilities <- function(x,
                                        protocol_name,
+                                       max_intervention_node,
                                        refit = FALSE,
                                        learner,
-                                       seed){
+                                       seed,
+                                       progressbar){
     variable = NULL
     N <- NROW(x$prepared_data)
-    #
-    # a matrix with the cumulative intervention/censoring probabilities
-    #
+    # restrict actions to the intervention_nodes before the max of the current run 
+    action_nodes <- x$intervention_nodes[x$intervention_nodes <= max_intervention_node]
     current_protocol <- x$protocols[[protocol_name]]
-    if (refit || length(current_protocol$cumulative_intervention_probs) == 0){
-        intervention_table <- current_protocol$intervention_table
+    # always construct intervention_table for all intervention nodes
+    intervention_table <- current_protocol$intervention_table[time <= max(x$intervention_nodes)]
+    NC <- NROW(intervention_table)
+    if (length(x$names$censoring)){
+        NC <- NC + sum(paste0(x$names$censoring,"_",action_nodes+1) %chin% names(x$prepared_data))
+    }
+    #
+    # define a matrix which indicates if the intervention is followed
+    # the matrix should have a row for each individual and a column for
+    # each intervention node (time interval)
+    #
+    if (
+        length(intervention_match <- x$protocols[[protocol_name]]$intervention_match) == 0
+    ){
+        intervention_match <- matrix(0,ncol = length(x$intervention_nodes),nrow = N)
+        intervention_match_names <- vector("character",length(x$intervention_nodes))
+        previous <- rep(1,N)
+        for(k in x$intervention_nodes){
+            intervention_variables <- intervention_table[time == k][["variable"]]
+            if (length(intervention_variables)>0){
+                observed_values <- x$prepared_data[,intervention_variables,with = FALSE]
+                for (v in 1:length(intervention_variables)){
+                    # when there are multiple intervention variables
+                    # all observed values must match
+                    intervention_values <- intervention_table[time == k & variable == intervention_variables[[v]]][["value"]]
+                    intervention_match[,k+1] <- previous <- previous*(observed_values[[intervention_variables[[v]]]] %in% intervention_values)
+                    # when there are multiple treatment variables we paste-collapse the names
+                    intervention_match_names[k+1] <- paste0(intervention_variables,collapse = ",")
+                }
+            }else{
+                # FIXME: does this work when we only intervene on baseline treatment but not on subsequent treatments?
+                # last value carried forward
+                intervention_match[,k+1] <- previous
+                intervention_match_names[k+1] <- paste0("No_intervention",k)
+            }
+        }
+        ## the intervention_match matrix has one column per time point
+        colnames(intervention_match) <- intervention_match_names
+        x$protocols[[protocol_name]]$intervention_match <- intervention_match
+    }
+    #
+    # construct the matrix with the cumulative intervention/censoring probabilities
+    #
+    if (refit || (NCOL(current_protocol$cumulative_intervention_probs) < NC)){
         intervention_probs <- x$prepared_data[,x$names$id,with = FALSE]
         # run backwards through time so that intervention_probs
         # has the correct column order
-        intervention_last_nodes <- vector("character",length = length(x$intervention_nodes))
-        for (k in rev(x$intervention_nodes)){
+        intervention_last_nodes <- vector("character",length = length(action_nodes))
+        if (progressbar){
+            message("Fitting propensity score and censoring models: ",protocol_name)
+            progress <- txtProgressBar(max = NC, style = progressbar, width=20)
+            action <- 0
+        }
+        for (k in rev(action_nodes)){
             if (length(x$followup) == 0){
                 outcome_free_and_uncensored <- rep(TRUE,N)
             }else{
@@ -49,7 +97,8 @@ intervention_probabilities <- function(x,
                 stop(paste0("No intervene function defined for protocol ",protocol_name,"."))
             }
             intervened_data <- do.call(x$protocol[[protocol_name]]$intervene_function,
-                                       list(data = current_data,intervention_table = intervention_table,time = k))
+                                       list(data = current_data,
+                                            intervention_table = intervention_table,time = k))
             # loop through nuisance parameter model formulas
             mk <- x$models[[paste0("time_",k)]]
             intervention_probs_k <- current_data[,x$names$id,with = FALSE]
@@ -57,6 +106,11 @@ intervention_probabilities <- function(x,
                 nuisance_parameter_models <- mk[[NUI]]
                 for (NP in names(nuisance_parameter_models)){
                     current_formula <- nuisance_parameter_models[[NP]]$formula
+                    ## print(current_formula)
+                    if (progressbar){
+                        action <- action + 1
+                        setTxtProgressBar(progress,action)
+                    }
                     nuisance_fit <- fitter(intervention_node = k,
                                            learner = learner,
                                            formula = current_formula,
@@ -107,45 +161,8 @@ intervention_probabilities <- function(x,
         x$protocols[[protocol_name]]$intervention_last_nodes <- intervention_last_nodes
         # FIXME: write this rowCumprods in armadillo
         x$protocols[[protocol_name]]$cumulative_intervention_probs <- matrixStats::rowCumprods(as.matrix(intervention_probs[,-1,with = FALSE]))
-        #
-        # define a matrix which indicates if the intervention is followed
-        # the matrix should have a row for each individual and a column for
-        # each intervention node (time interval)
-        #
-        if (
-            length(intervention_match <- x$protocols[[protocol_name]]$intervention_match) == 0
-            ||
-            ## the previous run could have produced the matrix but maybe not for all time points
-            NCOL(x$protocols[[protocol_name]]$intervention_match)<length(x$intervention_nodes)
-        ){
-            intervention_match <- matrix(0,ncol = length(x$intervention_nodes),nrow = N)
-            intervention_match_names <- vector("character",length(x$intervention_nodes))
-            previous <- rep(1,N)
-            for(k in x$intervention_nodes){
-                intervention_variables <- intervention_table[time == k][["variable"]]
-                if (length(intervention_variables)>0){
-                    # FIXME: when there are two or more variables the code needs to be changed
-                    observed_values <- x$prepared_data[,intervention_variables,with = FALSE]
-                    for (v in 1:length(intervention_variables)){
-                        # when there are multiple intervention variables
-                        # all observed values must match
-                        intervention_values <- intervention_table[time == k & variable == intervention_variables[[v]]][["value"]]
-                        intervention_match[,k+1] <- previous <- previous*(observed_values[[intervention_variables[[v]]]] %in% intervention_values)
-                        # when there are multiple treatment variables we paste-collapse the names
-                        intervention_match_names[k+1] <- paste0(intervention_variables,collapse = ",")
-                    }
-                }else{
-                    # FIXME: does this work when we only intervene on baseline treatment but not on subsequent treatments?
-                    # last value carried forward
-                    intervention_match[,k+1] <- previous
-                    intervention_match_names[k+1] <- paste0("No_intervention",k)
-                }
-            }
-            ## the intervention_match matrix has one column per time point
-            colnames(intervention_match) <- intervention_match_names
-            x$protocols[[protocol_name]]$intervention_match <- intervention_match
-        }
     }
+    if (progressbar){cat("\n")}
     x
 }
 

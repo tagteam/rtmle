@@ -17,17 +17,19 @@ Useful links:
 
 }
 \author{
-\strong{Maintainer}: Helene Charlotti Wiese Rytgaard \email{hely@sund.ku.dk}
+\strong{Maintainer}: Thomas Alexander Gerds \email{tag@biostat.ku.dk} (\href{https://orcid.org/0000-0002-5955-816X}{ORCID})
 
 Authors:
 \itemize{
-  \item Thomas Alexander Gerds \email{tag@biostat.ku.dk} (\href{https://orcid.org/0000-0002-5955-816X}{ORCID})
+  \item Helene Charlotti Wiese Rytgaard \email{hely@sund.ku.dk}
 }
 
 Other contributors:
 \itemize{
   \item Joshua Schwab (Maintainer and primary author of the ltmle package which inspired this work) [contributor]
   \item Anders Munch \email{a.munch@sund.ku.dk} [contributor]
+  \item Kathrine Kold Sørensen \email{kathrine.kold.soerensen@regionh.dk} [contributor]
+  \item Christian Torp-Pedersen \email{ctp@heart.dk} [contributor]
   \item Johan Sebastian Ohlendorff \email{johan.sebastian.ohlendorff@sund.ku.dk} [contributor]
 }
 

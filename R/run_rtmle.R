@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul  1 2024 (09:11)
 ## Version:
-## Last-Updated: mar 20 2026 (06:40) 
+## Last-Updated: mar 24 2026 (11:21) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 602
+##     Update #: 617
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -63,6 +63,7 @@
 #'     influence function of the estimator in the object.  Currently
 #'     this argument is only used when argument \code{subsets} is also
 #'     specified.
+#' @param progressbar Logical. If \code{TRUE} show progress of the loops that fit the nuisance parameter models.
 #' @param verbose Logical. If \code{FALSE} suppress all
 #'     messages. \code{FALSE} is the default.
 #' @param ... Further arguments can change the tuning parameters. E.g., To apply weight truncation,
@@ -138,24 +139,27 @@ run_rtmle <- function(x,
                       seed = NULL,
                       subsets = NULL,
                       keep_influence = TRUE,
+                      progressbar = 0,
                       verbose = FALSE,
                       ...){
     time <- label <- level <- NULL
     if (length(x$targets) == 0) stop("Object contains no targets. You can add one with the function rtmle::target")
     dot_args <- list(...)
+    x$progressbar <- progressbar
+    ## x$runtime_start <- Sys.time()
     new_tuning_parms <- intersect(names(dot_args), names(x$tuning_parameters))
     if (length(new_tuning_parms)>0){
         for (ntp in new_tuning_parms) {
             x$tuning_parameters[[ntp]] <- dot_args[[ntp]]
         }
     }
-    ## FIXME: need to stop or adapt if learner="glmnet" instead of "learn_glmnet"
     if (length(subsets)>0){
+        refit <- TRUE
         for (sub in subsets){
             stopifnot(is.character(sub$label[[1]]))
             xs <- data.table::copy(x[c("targets","names","times","protocols","models","intervention_nodes","tuning_parameters")])
             for (pp in names(xs$protocols)){
-                xs$protocols[[pp]]$intervention_match <- xs$protocols[[pp]]$intervention_match[x$prepared_data[[x$names$id]] %in% sub$id]
+                xs$protocols[[pp]]$intervention_match <- xs$protocols[[pp]]$intervention_match[x$prepared_data[[x$names$id]] %in% sub$id,,drop = FALSE]
                 xs$protocols[[pp]]$intervention_probs <- NULL
                 xs$protocols[[pp]]$cumulative_intervention_probs <- NULL
             }
@@ -219,6 +223,14 @@ run_rtmle <- function(x,
         return(x)
     }else{
         # check data
+        learners <- parse_learners(learner)
+        ## FIXME: could adapt if user specifies learner="glmnet" instead of "learn_glmnet"
+
+        # Skipping the nuisance parameter models is only possible when the same
+        # learner was used previously
+        if ((length(x$learner) == 0)|| learners$name != x$learner$name){
+            refit <- TRUE
+        }
         Target_parameter <- "Risk"
         available_targets <- names(x$targets)
         if (!missing(targets) && length(targets)>0) {
@@ -233,7 +245,6 @@ run_rtmle <- function(x,
         } else {
             stopifnot(all(time_horizon <= max(x$times) & time_horizon>0))
         }
-        learners <- parse_learners(learner)
         ## sapply(x$prepared_data,function(x)sum(is.na(x)))
         if (!(x$names$id%in%names(x$prepared_data)))
             stop(paste0("Cannot see id variable ",x$names$id," in x$prepared_data."))
@@ -309,22 +320,28 @@ run_rtmle <- function(x,
                 if (estimator == "tmle"){
                     x <- intervention_probabilities(x,
                                                     protocol_name = protocol_name,
+                                                    max_intervention_node = max(time_horizon)-1,
                                                     refit = refit,
                                                     learner = learners,
-                                                    seed = seed)
+                                                    seed = seed,
+                                                    progressbar = progressbar)
                 }
                 #
                 # Q-part: loop backwards in time through iterative condtional expectations
                 #
                 # loop across time-horizons
                 for (th in time_horizon){
+                    if (verbose){
+                        message("Running sequential regression backwards from time ",th)
+                    }
                     x <- sequential_regression(x = x,
                                                target_name = target_name,
                                                protocol_name = protocol_name,
                                                time_horizon = th,
                                                learner = learners,
                                                estimator = estimator,
-                                               seed = seed)
+                                               seed = seed,
+                                               progressbar = progressbar)
                 }
             }
         }
