@@ -21,12 +21,13 @@ Useful links:
 
 Authors:
 \itemize{
-  \item Helene Charlotti Wiese Rytgaard \email{hely@sund.ku.dk}
+  \item Helene Charlotte Wiese Rytgaard Rytgaard \email{hely@sund.ku.dk}
 }
 
 Other contributors:
 \itemize{
   \item Joshua Schwab (Maintainer and primary author of the ltmle package which inspired this work) [contributor]
+  \item Alessandra Meddis \email{alme@sund.ku.dk} [contributor]
   \item Anders Munch \email{a.munch@sund.ku.dk} [contributor]
   \item Kathrine Kold Sørensen \email{kathrine.kold.soerensen@regionh.dk} [contributor]
   \item Christian Torp-Pedersen \email{ctp@heart.dk} [contributor]

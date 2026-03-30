@@ -30,9 +30,9 @@ protocol(
  factor with levels specifying the treatment options. In
  longitudinal settings, the data.frame should have column called \code{"time"} in
  addition to the treatment variables. Ideally the data.frame \code{intervention} provides values
- for all times stored in \code{x$times}. However, there are two special cases.
+ for all times stored in \code{x$intervention_nodes}. However, there are two special cases.
  If the number of rows in the data.frame \code{intervention} is smaller than
-\code{length(x$times)}, then 1. if argument \code{expand} is \code{TRUE},
+\code{length(x$intervention_nodes)}, then 1. if argument \code{expand} is \code{TRUE},
 the last value (the only value if there is only one row) is set for all later time intervals.
  2. if argument \code{expand} is \code{FALSE} it is assumed that no intervention is wanted at
 the time intervals that are missing in data.frame \code{intervention}.}
@@ -76,7 +76,7 @@ during followup including at time zero (baseline).
 # ------------------------------------------------------------------------------------------
 # Intervening on a single treatment variable
 # ------------------------------------------------------------------------------------------
-x <- rtmle_init(intervals = 3,name_id = "id",name_outcome = "Y",name_competing = "Dead",
+x <- rtmle_init(time_grid=0:3,name_id = "id",name_outcome = "Y",name_competing = "Dead",
                 name_censoring = "Censored",censored_label = "censored")
 x <- protocol(x,name = "Always_A",
                 intervention = data.frame(time=x$intervention_nodes,
@@ -91,7 +91,7 @@ x$protocols
 # ------------------------------------------------------------------------------------------
 # Intervening on a more than one treatment variable
 # ------------------------------------------------------------------------------------------
-x <- rtmle_init(intervals = 3,name_id = "id",name_outcome = "Y",name_competing = "Dead",
+x <- rtmle_init(time_grid=0:3,name_id = "id",name_outcome = "Y",name_competing = "Dead",
                 name_censoring = "Censored",censored_label = "censored")
 x <- protocol(x,name = "Always_A_never_B",
                 intervention = data.frame(time=x$intervention_nodes,

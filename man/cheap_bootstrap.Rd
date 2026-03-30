@@ -63,7 +63,7 @@ tau <- 3
 ld <- simulate_long_data(n = 100,number_visits = 20,
                          beta = list(A_on_Y = -.2,A0_on_Y = -0.3,A0_on_A = 6),
                          register_format = TRUE)
-x <- rtmle_init(intervals = tau,name_id = "id",name_outcome = "Y",name_competing = "Dead",
+x <- rtmle_init(time_grid = seq(0,1500,30.45*12),name_id = "id",name_outcome = "Y",name_competing = "Dead",
                 name_censoring = "Censored",censored_label = "censored")
 x <- add_long_data(x,
                    outcome_data=ld$outcome_data,
@@ -71,14 +71,14 @@ x <- add_long_data(x,
                    competing_data=ld$competing_data,
                    timevar_data=ld$timevar_data)
 x <- add_baseline_data(x,data=ld$baseline_data)
-x <- long_to_wide(x,breaks = seq(0,2000,30.45*12))
+x <- long_to_wide(x)
 x <- protocol(x,name = "Always_A",
                     intervention = data.frame(time=x$intervention_nodes,
                                               "A" = factor("1",levels = c("0","1"))))
 x <- protocol(x,name = "Never_A",
                     intervention = data.frame(time=x$intervention_nodes,
                                               "A" = factor("0",levels = c("0","1"))))
-x <- prepare_data(x)
+x <- prepare_rtmle_data(x)
 x <- target(x,name = "Outcome_risk",
                   estimator = "tmle",
                   protocols = c("Always_A","Never_A"))

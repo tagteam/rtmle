@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 22 2024 (14:07) 
 ## Version: 
-## Last-Updated: mar 23 2026 (10:46) 
+## Last-Updated: mar 30 2026 (14:08) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 206
+##     Update #: 287
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -14,10 +14,6 @@
 #----------------------------------------------------------------------
 ## 
 ### Code:
-# Argument 'fun': if more than one instance (such as treatment) happens
-#        within one interval
-#        an aggregate function determines the value inside
-#        the interval
 #' Transform data from long to wide format
 #'
 #' This function is used to prepare a discretized time analysis of longituginal data.
@@ -26,63 +22,148 @@
 #' starts or can be zero if the followup data are readily on the time
 #' on study scale
 #' @param x object of class \code{rtmle}
-#' @param breaks a vector of time points that discretize the
-#'     followup time into intervals
-#' @param intervals OBSOLETE a vector of time points that discretize the
-#'     followup time into intervals
-#' @param start_followup_date Start of followup date which is substracted from the dates of
-#' the outcomes, competing risks, censoring (end-of-followup), and time-varying covariates.
-#' If missing it is assumed to be zero for all in which case the dates of the outcomes,
+#' @param start_followup_date Date where the followup starts. This date is substracted from the dates of
+#' the outcomes, competing risks, censoring (end-of-followup), and dates where the time-varying covariates change.
+#' If missing it is assumed to be zero for all subjects in which case the dates of the outcomes,
 #' competing risks, censoring (end-of-followup), and time-varying covariates must be
 #' given on the time on study scale.
-#' @param fun function used to map time-dependent covariate information onto the intervals.
-#' Can be a single function or a named list with 
-#' @param verbose Logical. If \code{FALSE} suppress all messages. 
-#' @details The function discretizes data on a given time grid. Dates of events in long format. 
+#' @param mappings Named list of instructions for how to map the continuous time history of a variable in long-format
+#' onto the discrete time scale. The names must match \code{names(x$long_data$timevar_data)}. 
+#' @param verbose Logical. If \code{FALSE} suppress all messages.
+#' @param ... alternative way to specify elements of \code{mappings}.
+#' @details The function discretizes dates of events and concomittant marker information.
+#' Multiple wide format variables may result from a single long-format variable.
 #' @examples
 #' set.seed(17)
-#' tau <- 3
-#' ld <- simulate_long_data(n = 91,number_visits = 20,
-#'                          beta = list(A_on_Y = -.2,A0_on_Y = -0.3,A0_on_A = 6),
-#'                          register_format = TRUE)
-#' 
-#' x <- rtmle_init(intervals = tau,name_id = "id",name_outcome = "Y",name_competing = "Dead",
+#' x <- rtmle_init(time_grid = 0:2,name_id = "id",
+#'                 name_outcome = "Y",name_competing = "Dead",
 #'                 name_censoring = "Censored",censored_label = "censored")
-#' x <- add_long_data(x,outcome_data=ld$outcome_data,censored_data=ld$censored_data,
-#'                     competing_data=ld$competing_data,
-#'                     timevar_data=ld$timevar_data)
-#' x <- add_baseline_data(x,data=ld$baseline_data)
-#' x <- long_to_wide(x,breaks = seq(0,2000,30.45*12))
-#'                   
-#' x
+#' x <- add_long_data(x,outcome_data=data.frame(id=c(1,3,5),date=0.1,1.3,1.9),
+#'                      censored_data=data.frame(id=c(2,6),date=c(0.5,1.5)),
+#'                     competing_data=data.frame(id=c(4,7),date=c(1.1,1.8)),
+#'                     timevar_data=list(A=data.frame(id=c(1,1,1,2,2,3,4,4),
+#'                                            start_date=c(0,.3,1.3,0,1,0,1.1,1.5),
+#'                                              end_date=c(.3,.6,2,1,2,.5,1.4,1.9)),
+#'                                       V=data.frame(id=c(1,1,1,2,2,3,4,4),
+#'                                            start_date=c(0,.5,1,0,1.3,0,0,0.4),
+#'                                              end_date=c(.3,.8,1.8,.5,1.4,2,.4,1.6)),
+#'                                       L=data.frame(id=c(1,2,2,2,3,4,5,6,7,7),
+#'                                                  date=c(0,0,.25,.75,0,0,0,0,0,1.4),
+#'                                                 value=c(4,35,27.7,28.2,8.8,2,3.1,7,7.7,8.4))))
+#' x <- add_baseline_data(x,data=data.frame(id=1:7,age=40:46))
+#' x <- long_to_wide(x,L=list(method="locf"))
+#' x$data$timevar_data$L
+#' x$data$timevar_data$V
+#' x <- long_to_wide(x,L=list(method="measurement",fun_aggregate="median"))
+#' x$data
+#' 
 #' @export
 long_to_wide <- function(x,
-                         breaks,
-                         intervals,
                          start_followup_date,
-                         fun = function(x){1*(sum(x)>0)},
-                         verbose = TRUE){
+                         mappings,
+                         verbose = TRUE,
+                         ...){
     previous_date = interval = end_followup = censored_date =  competing_date = outcome_date = NULL
-    if (!missing(intervals)){
-        warning("Argument intervals is obsolete: use breaks instead.")
-        breaks <- intervals
-    }else{
-        if (missing(breaks)) {stop("Need time points that define the discrete time scale to map the long data.")}
+    breaks <- x$time_grid_labels
+    # check if baseline_data exists
+    if (length(x$data$baseline_data) == 0){
+        stop("To discretize the long format data we need the baseline data stored as 'x$data$baseline_data' with the subject id variable.\nUse the function 'add_baseline_data' to add this.")
     }
-    if (length(x$long_data) == 0) {return(NULL)}
+    # check if long_data exists 
+    if (length(x$long_data) == 0) {
+        stop("x$long_data has length 0.")
+    }
     Vnames <- names(x$long_data$timevar_data)
-    if (any(duplicated(Vnames))) stop("Duplicated names found in names(x$long_data$timevar_data). Variables must have distinct names.")
-    # check if all dates have the same format
-    tv_date_formats <- sapply(Vnames,function(v){
-        if ("date"%in%names(x$long_data$timevar_data[[v]])){
-            class(x$long_data$timevar_data[[v]][["date"]])
-        }else{
-            uclass <- unique(c(class(x$long_data$timevar_data[[v]][["start_exposure"]]),
-                               class(x$long_data$timevar_data[[v]][["end_exposure"]])))
-            stopifnot(length(uclass) == 1)
-            uclass
+    if (length(Vnames)>0){
+        # FIXME: this should have been taken care of by the add_long_data function 
+        if (any(duplicated(Vnames))) stop("Duplicated names found in names(x$long_data$timevar_data). Variables must have distinct names.")
+        #
+        # resolve long-to-wide mappings
+        # 
+        if(missing(mappings)) mappings <- NULL
+        ## Add fun supplied by dots
+        dots <- list(...)
+        if ((hit <- match("breaks",names(dots),nomatch = 0))>0){
+            warning("rtmle::long_to_wide: Argument 'breaks' is obsolete." )
+            dots <- dots[-hit]
         }
-    })
+        if (length(dots) == 0) {
+            dots <- NULL
+        } else {
+            bad <- is.null(names(dots)) || any(names(dots) == "")
+            if (bad) stop("All ... arguments must be named.")
+        }
+        mappings <- c(mappings,dots)
+        if (length(unused <- setdiff(names(mappings),Vnames))>0){
+            warning("The following functions that should map from long to wide are not applicable because they do not occur in x$long_data:\n",
+                    paste0(unused,collapse = ", "))   
+        }
+        ## Known methods for mapping long to wide data
+        long_to_wide_mappings <- list(list(method = "measurement",fun = "discretize",columns = c("date","value"),args = list(lookback_window = Inf)),
+                                      list(method = "locf",fun = "discretize",columns = c("date","value"),args = list(lookback_window = Inf)),
+                                      list(method = "event",fun = "discretize",columns = "date"),
+                                      list(method = "event_interval",fun = "discretize",columns = "date"),
+                                      list(method = "any_exposure",fun = "discretize",columns = c("start_date","end_date"), args = list(threshold = 0)),
+                                      list(method = "exposure_time",fun = "discretize",columns = c("start_date","end_date"), args = list(threshold = 0.5,relative = FALSE)),
+                                      list(method = "exposure_percent",fun = "discretize",columns = c("start_date","end_date"), args = list(threshold = 0.5,relative = TRUE)))
+        known_methods <- sapply(long_to_wide_mappings,function(x)x$method)
+        names(long_to_wide_mappings) <- known_methods
+        for (Vname in intersect(names(mappings),Vnames)){
+            if (is.character(mappings[[Vname]]) && (mappings[[Vname]] %chin% known_methods)){
+                mappings[[Vname]] <- long_to_wide_mappings[[mappings[[Vname]]]]
+            }else{
+                V_method <- mappings[[Vname]]$method
+                if (is.null(V_method)) stop("You need to specify at least one method for how to map variable ",Vname," to wide format")
+                ## combine arguments with default arguments
+                if (V_method %chin% known_methods){
+                    mapping_Vname <- c(mappings[[Vname]],long_to_wide_mappings[[V_method]])
+                    mapping_Vname <- mapping_Vname[!duplicated(names(mapping_Vname))]
+                    mappings[[Vname]] <- mapping_Vname
+                }else{
+                    ## user-defined mapping
+                    stopifnot(is.function(mappings[[Vname]]$fun))
+                }
+            }
+            ## Check if data is consistent with mapping
+            if(!(all(mappings[[Vname]]$columns %chin% names(x$long_data$timevar_data[[Vname]])))){
+                stop(paste0("To apply the long-to-wide mapping method '",mappings[[Vname]]$method,"' on variable ",Vname,",\nthe data for ",Vname," provided as an element of x$long_data must have the following columns:\n",paste0(mappings[[Vname]]$columns,collapse = ", "),"."))
+            }
+        }
+        ## for variables that do not occur in mappings or ... we try to find a suitable mapping
+        if (length(unmapped <- setdiff(Vnames,names(mappings)))>0){
+            unmapped_methods <- lapply(unmapped, function(v) {
+                ## Attempt to guess mapping if not specified:
+                guessed_mapping <- NULL
+                for (m in long_to_wide_mappings) {
+                    if (all(m$columns %in% names(x$long_data$timevar_data[[v]]))) {
+                        guessed_mapping <- m
+                        break
+                    }
+                }
+                if (is.null(guessed_mapping)) {
+                    stop(paste0("Could not determine method for timevarying variable ", v, " from the columns in 'data', please specify the method explicitly."))
+                }
+                guessed_mapping
+            })
+            names(unmapped_methods) <- unmapped
+            mappings <- c(mappings,unmapped_methods)
+        }
+        #
+        # check if all dates have the same format
+        #
+        tv_date_formats <- sapply(Vnames,function(v){
+            if ("date"%in%names(x$long_data$timevar_data[[v]])){
+                class(x$long_data$timevar_data[[v]][["date"]])
+            }else{
+                uclass <- unique(c(class(x$long_data$timevar_data[[v]][["start_date"]]),
+                                   class(x$long_data$timevar_data[[v]][["end_date"]])))
+                stopifnot(length(uclass) == 1)
+                uclass
+            }
+        })
+    }else{
+        tv_date_formats <- NULL
+    }
     ocd_date_formats <- sapply(intersect(c("outcome_data","censored_data","competing_data"),names(x$long_data)),function(v){
         class(x$long_data[[v]][["date"]])
     })
@@ -96,9 +177,9 @@ long_to_wide <- function(x,
         cat("\n")
         stop(paste0("All date variables in long format data need to have the same class (either numeric or Date)."))
     }
-    if (length(x$data$baseline_data) == 0){
-        stop("To discretize the long format data we need the baseline data stored as 'x$data$baseline_data' with the subject id variable.\nUse the function 'add_baseline_data' to add this.")
-    }
+    #
+    # resolve time zero
+    # 
     if (missing(start_followup_date)||start_followup_date[1] == 0){
         if (missing(start_followup_date)){
             x$details <- c(x$details,list("Missing start_followup_date variable, for now assume 0, which implies that all event times must be given on the scale: 'time since 0'."))
@@ -138,8 +219,9 @@ long_to_wide <- function(x,
     pop[,c(x$names$id,"start_followup_date","end_followup"),with = FALSE]
     if (any(is.na(pop$end_followup)))stop("Missing values in end of followup information")
     id_colname <- x$names$id
-    grid <- pop[,list(date=start_followup_date+breaks, end_followup = end_followup),by=id_colname]
-    # FIXME: check for data after the end of followup?
+    grid <- pop[,data.table::data.table(date=start_followup_date+breaks, end_followup = end_followup),by=id_colname]
+    # Note: dates after the last grid time are not used
+    #       FIXME: should we warn if there are such dates?
     grid[,previous_date := c(0,date[-.N]),by = id_colname]
     grid <- grid[previous_date<=end_followup]
     grid[,end_followup := NULL]
@@ -153,70 +235,36 @@ long_to_wide <- function(x,
         setnames(x$long_data$censored_data,"censored_date","date")
     }
     setnames(x$long_data$outcome_data,"outcome_date","date")
-    # mapping outcome information to discrete time scale
+    # map outcome information to discrete time scale
     x$data$outcome_data <- widen_outcome(x,grid = grid,fun_aggregate = NULL)
-    # time dependent variables including treatment
-    for (Vname in Vnames){
-        if (is.list(fun)){
-            if (Vname %in% names(fun)){
-                # use variable specific function
-                vfun <- fun[[Vname]]
-            } else{
-                # default to last value carried forward for non-binary variables
-                if ("value" %in% names(x$long_data$timevar_data[[Vname]])){
-                    vfun <- function(x){x}
-                }else{
-                    # default to has positive value for non-binary variables
-                    # note: in this case the function map_grid needs the values sorted 
-                    vfun <- function(x){1*(sum(x)>0)}
-                }
-            }
-        } else {
-            vfun <- fun
-        }
-        stopifnot(is.function(vfun))
-        # Deal with 3 different formats of the data
-        # case 1: id, date (exposed = there is a date in the interval)
-        # case 2: id, date, value (last value carried forward)
-        # case 3: id, start, end (calculate overlap with interval)
-        if ("value" %in% names(x$long_data$timevar_data[[Vname]])){
-            # case 2: last value carried forward
-            x$data$timevar_data[[Vname]] <- map_grid(grid=grid,
-                                                     data=x$long_data$timevar_data[[Vname]],
-                                                     name=Vname,
-                                                     fun_aggregate = vfun,
-                                                     values = NULL, 
-                                                     rollforward=Inf,
-                                                     id = x$names$id)
-        } else{
-            if (all(c("start_exposure","end_exposure") %in% names(x$long_data$timevar_data[[Vname]]))){
-                # case 3: calculate overlap
-                gg = copy(grid)
-                setnames(gg,c("date","previous_date"),c("end_interval","start_interval"))
-                x$data$timevar_data[[Vname]] <- discretize_timevarying_exposure(data = x$long_data$timevar_data[[Vname]],
-                                                                                grid = gg,
-                                                                                name = Vname,
-                                                                                point_exposure = FALSE,
-                                                                                threshold = 0,
-                                                                                id = x$names$id)
-            }else{ # case 1
-                gg = copy(grid)
-                setnames(gg,c("date","previous_date"),c("end_interval","start_interval"))
-                x$data$timevar_data[[Vname]] <- discretize_timevarying_exposure(data = x$long_data$timevar_data[[Vname]],
-                                                                                grid = gg,
-                                                                                name = Vname,
-                                                                                point_exposure = TRUE,
-                                                                                id = x$names$id)
-                # FIXME: when intervals are not equidistant the following does not work.
-                ## length_interval=unique(round(diff(breaks),0))
-                ## x$data$timevar_data[[Vname]] <- map_grid(grid=grid,data=x$long_data$timevar_data[[Vname]],name=Vname,values = c(1,0),fun_aggregate = vfun,rollforward=length_interval,id = x$names$id)
-            }
+    ## 
+    ## Time dependent variables including treatment
+    ##
+    ## Construct suffix to distinguish wide_format variables that are based on the same timevar_data
+    setnames(grid,c("previous_date","date"),c("start_interval","end_interval"))
+    data.table::setcolorder(grid,c(x$names$id,"interval","start_interval","end_interval"))
+    if (length(Vnames)>0){
+        for (Vname in names(mappings)){
+            m <- mappings[[Vname]]
+            args <- list(method = m$method,
+                         data = x$long_data$timevar_data[[Vname]],
+                         grid = grid,
+                         name = Vname,
+                         id = x$names$id,
+                         lookback_window = switch(m$method,
+                                                  "event" = Inf,
+                                                  "locf" = Inf, NA),
+                         values = c(1, 0),
+                         fun_aggregate = m$fun_aggregate,
+                         fill = NA)
+            args <- c(args,
+                      mappings[[Vname]]$args)
+            args <- args[!(duplicated(names(args)))]
+            x$data$timevar_data[[Vname]] <- do.call(m$fun,args)
         }
     }
     return(x)
 }
-
-
 
 ######################################################################
 ### long_to_wide.R ends here

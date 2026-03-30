@@ -229,7 +229,7 @@ add_baseline_data(x) <span style="color: #BFEBBF;">&lt;-</span> ld$baseline_data
 x <span style="color: #BFEBBF;">&lt;-</span> long_to_wide(x,breaks = seq(0,2000,30.45*12))
 protocol(x) <span style="color: #BFEBBF;">&lt;-</span> list(name = <span style="color: #CC9393;">"Always_A"</span>,intervention = data.frame(<span style="color: #CC9393;">"A"</span> = factor(<span style="color: #CC9393;">"1"</span>,levels = c(<span style="color: #CC9393;">"0"</span>,<span style="color: #CC9393;">"1"</span>))),verbose = <span style="color: #7CB8BB;">FALSE</span>)
 protocol(x) <span style="color: #BFEBBF;">&lt;-</span> list(name = <span style="color: #CC9393;">"Never_A"</span>,intervention = data.frame(<span style="color: #CC9393;">"A"</span> = factor(<span style="color: #CC9393;">"0"</span>,levels = c(<span style="color: #CC9393;">"0"</span>,<span style="color: #CC9393;">"1"</span>))),verbose = <span style="color: #7CB8BB;">FALSE</span>)
-prepare_data(x) <span style="color: #BFEBBF;">&lt;-</span> list()
+prepare_rtmle_data(x) <span style="color: #BFEBBF;">&lt;-</span> list()
 target(x) <span style="color: #BFEBBF;">&lt;-</span> list(name = <span style="color: #CC9393;">"Outcome_risk"</span>,strategy = <span style="color: #CC9393;">"additive"</span>,estimator = <span style="color: #CC9393;">"tmle"</span>,protocols = c(<span style="color: #CC9393;">"Always_A"</span>,<span style="color: #CC9393;">"Never_A"</span>))
 <span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">the overall analysis is stored as estimate$Main_analysis</span>
 x <span style="color: #BFEBBF;">&lt;-</span> run_rtmle(x,learner = <span style="color: #CC9393;">"learn_glmnet"</span>,time_horizon = 1:tau,verbose = <span style="color: #7CB8BB;">FALSE</span>)
@@ -330,7 +330,7 @@ add_baseline_data(x) <span style="color: #BFEBBF;">&lt;-</span> ld$baseline_data
 x <span style="color: #BFEBBF;">&lt;-</span> long_to_wide(x,breaks = seq(0,2000,30.45*12))
 protocol(x) <span style="color: #BFEBBF;">&lt;-</span> list(name = <span style="color: #CC9393;">"Always_A"</span>,intervention = data.frame(<span style="color: #CC9393;">"A"</span> = factor(<span style="color: #CC9393;">"1"</span>,levels = c(<span style="color: #CC9393;">"0"</span>,<span style="color: #CC9393;">"1"</span>))),verbose = <span style="color: #7CB8BB;">FALSE</span>)
 protocol(x) <span style="color: #BFEBBF;">&lt;-</span> list(name = <span style="color: #CC9393;">"Never_A"</span>,intervention = data.frame(<span style="color: #CC9393;">"A"</span> = factor(<span style="color: #CC9393;">"0"</span>,levels = c(<span style="color: #CC9393;">"0"</span>,<span style="color: #CC9393;">"1"</span>))),verbose = <span style="color: #7CB8BB;">FALSE</span>)
-prepare_data(x) <span style="color: #BFEBBF;">&lt;-</span> list()
+prepare_rtmle_data(x) <span style="color: #BFEBBF;">&lt;-</span> list()
 target(x) <span style="color: #BFEBBF;">&lt;-</span> list(name = <span style="color: #CC9393;">"Outcome_risk"</span>,strategy = <span style="color: #CC9393;">"additive"</span>,estimator = <span style="color: #CC9393;">"tmle"</span>,protocols = c(<span style="color: #CC9393;">"Always_A"</span>,<span style="color: #CC9393;">"Never_A"</span>))
 <span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">the overall analysis is stored as estimate$Main_analysis</span>
 x <span style="color: #BFEBBF;">&lt;-</span> run_rtmle(x,learner = <span style="color: #CC9393;">"learn_glmnet"</span>,time_horizon = tau,verbose = <span style="color: #7CB8BB;">FALSE</span>)

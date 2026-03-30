@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul  3 2024 (13:48) 
 ## Version: 
-## Last-Updated: mar 18 2026 (14:32) 
+## Last-Updated: mar 25 2026 (17:24) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 47
+##     Update #: 60
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -17,6 +17,9 @@
 #' @export
 #' @method coef rtmle
 coef.rtmle <- function(object,time_horizon,...){
+    if (!(object$learner$fun[[1]] %chin% c("learn_glmnet","learn_glm"))){
+        stop("Can only plot regression coefficients when fitter is either learn_glm or learn_glmnet")
+    }
     if (missing(time_horizon)) {
         time_horizon <- min(max(object$times),max(object$run_time_horizons))
     }
@@ -34,7 +37,10 @@ coef.rtmle <- function(object,time_horizon,...){
                 if (node_name == "outcome"){
                     outfit <- do.call(rbind,lapply(names(time_block[[node_name]][[current_outcome]]$fit),function(protocol){
                         fit <- time_block[[node_name]][[current_outcome]]$fit[[protocol]][[this_outcome]]
-                        if (!is.null(fit) && (inherits(fit,"dgCMatrix") || inherits(fit,"data.frame")) && (is.numeric(coefs <- fit[,1]))){
+                        if (!is.null(fit)
+                            ## && 
+                            ## (inherits(fit,"dgCMatrix") || inherits(fit,"data.frame") || inherits(fit,"matrix"))
+                            && (is.numeric(coefs <- fit[,1]))){
                             names(coefs) <- rownames(fit)
                             data.table(time = time_name,
                                        protocol = protocol,
@@ -47,7 +53,9 @@ coef.rtmle <- function(object,time_horizon,...){
                     }))
                 }else{
                     fit <- time_block[[node_name]][[this_outcome]]$fit
-                    if (!is.null(fit) && (inherits(fit,"dgCMatrix") || inherits(fit,"data.frame")) && (is.numeric(coefs <- fit[,1]))){
+                    if (!is.null(fit)
+                        ## && (inherits(fit,"dgCMatrix") || inherits(fit,"data.frame"))
+                        && (is.numeric(coefs <- fit[,1]))){
                         names(coefs) <- rownames(fit)
                         outfit <- data.table(time = time_name,
                                              protocol = node_name,

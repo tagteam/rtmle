@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: mar 19 2026 (15:29) 
 ## Version: 
-## Last-Updated: mar 24 2026 (12:58) 
+## Last-Updated: mar 27 2026 (07:07) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 5
+##     Update #: 8
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -47,8 +47,11 @@ fast_cast <- function(x,
     j <- match(x[["interval"]], intervals)
 
     mat <- matrix(fill, nrow = length(ids), ncol = length(intervals))
-    mat[cbind(i, j)] <- x[[value_col]]
-
+    ## mat[cbind(i, j)] <- x[[value_col]]
+    # can you improve the efficiency of the previous line?
+    linear_indices <- (j - 1L) * length(ids) + i
+    mat[linear_indices] <- x[[value_col]]
+    
     out <- data.table::data.table(tmp_id = ids)
     data.table::setnames(out, "tmp_id", id)
     out <- cbind(out, data.table::as.data.table(mat))

@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: feb 23 2026 (06:38) 
 ## Version: 
-## Last-Updated: mar 23 2026 (10:40) 
+## Last-Updated: mar 26 2026 (15:49) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 132
+##     Update #: 133
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -43,7 +43,7 @@
 #' extracted coefficients when present.
 #'
 #' @param time_horizon
-#' Optional selection of time_horizon. If \code{NULL}, \code{max(x$times)} is used.
+#' Optional selection of time_horizon. If \code{NULL}, \code{max(x$time_grid)} is used.
 #'
 #' @param protocol
 #' Optional selection of protocol. If \code{NULL}, \code{names(x$protocols)[[1]])} is used. 
@@ -161,7 +161,7 @@ plot_model_coefficients <- function(x,
         time_horizon <- max(x$run_time_horizons)
     }else{
         stopifnot(length(time_horizon) == 1)
-        stopifnot(time_horizon %in% x$times)
+        stopifnot(time_horizon %in% x$time_grid)
     }
 
     if (missing(protocol)){
@@ -182,7 +182,7 @@ plot_model_coefficients <- function(x,
         times <- paste0("time_",times)
         selected_times <- intersect(time_names, times)
     }else{
-        selected_times <- paste0("time_",x$times[x$times<time_horizon])
+        selected_times <- paste0("time_",x$time_grid[x$time_grid<time_horizon])
     }
     if (length(selected_times) == 0) stop("No matching time_* elements found in x$models for 'times'.")
     

@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Oct 31 2024 (07:29) 
 ## Version: 
-## Last-Updated: mar 20 2026 (06:40) 
+## Last-Updated: mar 25 2026 (16:52) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 289
+##     Update #: 290
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -273,7 +273,6 @@ superlearn <- function(folds,
             predicted_values <- predicted_value_ensemble[[1]]
         }else{
             predicted_values <- do.call(cbind,predicted_value_ensemble)%*%ensemble_weights[ensemble_weights>0]
-            ## if (any(is.na(predicted_values))) browser(skipCalls=1L)
         }
     }
     data.table::setattr(predicted_values,"ensemble_weights",ensemble_weights)

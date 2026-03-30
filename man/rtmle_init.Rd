@@ -5,12 +5,12 @@
 \title{Register Targeted Minimum Loss Estimation}
 \usage{
 rtmle_init(
-  intervals,
+  time_grid,
   name_id,
   name_time = "date",
   name_outcome,
-  name_competing,
-  name_censoring = "Censored",
+  name_competing = NULL,
+  name_censoring = NULL,
   censored_levels = c("uncensored", "censored"),
   censored_label = "censored",
   minority_threshold = 8,
@@ -19,21 +19,25 @@ rtmle_init(
 )
 }
 \arguments{
-\item{intervals}{Number of discrete time intervals for updating information in a longitudinal setting.
-Set this to 1 for settings where no updating of information should happen after time zero.}
+\item{time_grid}{Vector of time points which define the discrete
+time intervals for updating information in a longitudinal
+setting. The first value must be 0 and the length of the
+vector must be at least 2. When \code{time_grid} is of length
+2, this is a setting where no updating of information happens
+after time zero.}
 
 \item{name_id}{Name of the subject identifier variable}
 
 \item{name_time}{Name of the time variable, e.g., \code{"date"} would be an appropriate name when the data are recorded as calendar dates.}
 
 \item{name_outcome}{Name of the outcome variable(s). For example, the value \code{"cvddeath"} would mean
-in a longitudinal setting with \code{intervals=3} that the variables in the data set are named \code{"cvddeath_1", "cvddeath_2", "cvddeath_3"}.
-In the setting where \code{intervals=1} this should be the full name of the outcome variable.}
+in a longitudinal setting with \code{time_grid} of length 4 that the variables in the data set are named \code{"cvddeath_1", "cvddeath_2", "cvddeath_3"}.
+In the setting where \code{time_grid} has two values this should be the full name of the outcome variable.}
 
 \item{name_competing}{Name of the competing risk variable(s). Can be \code{NULL} if the data do not contain competing risks for the outcome.}
 
 \item{name_censoring}{Name of the censoring variable(s). Can be \code{NULL} if the subjects are all uncensored, i.e., the minimum
-potential followup time is longer than the time of the last interval.}
+potential followup time is longer than the maximal time of \code{time_grid}.}
 
 \item{censored_levels}{Character vector with the censoring levels.}
 
@@ -41,7 +45,7 @@ potential followup time is longer than the time of the last interval.}
 the data of the subject at this time interval are censored. Must be an element of \code{censored_levels} too.}
 
 \item{minority_threshold}{For binary outcomes, integer value which decides about whether
-fitting nuisance parameter regression models is feasible. If the number of subjects in the minory group is
+fitting nuisance parameter regression models is feasible. If the number of subjects in the minority group is
 less than or equal to this threshold then regression modelling is skipped and the predicted value is simply the mean outcome.}
 
 \item{weight_truncation}{Two values which decide about the minimum and the maximum of the weights w
@@ -68,7 +72,7 @@ and other instructions such as
 }
 \examples{
 # longitudinal setting
-x <- rtmle_init(intervals=3,
+x <- rtmle_init(time_grid=c(0,6,12,18),
                 name_id="pnr",
                 name_time="date",
                 name_outcome="cvddeath",

@@ -1,11 +1,11 @@
-### prepare_data.R ---
+### prepare_rtmle_data.R ---
 #----------------------------------------------------------------------
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 19 2024 (10:07)
 ## Version:
-## Last-Updated: feb 22 2026 (11:55) 
+## Last-Updated: mar 30 2026 (15:28) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 256
+##     Update #: 265
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -36,7 +36,7 @@
 #'                          beta = list(A_on_Y = -.2,
 #'                          A0_on_Y = -0.3,A0_on_A = 6),
 #'                                register_format = TRUE)
-#' x <- rtmle_init(intervals = 3, name_id = "id",
+#' x <- rtmle_init(time_grid = seq(0,12*30.45,30.45*6), name_id = "id",
 #'                 name_outcome = "Y", name_competing = "Dead",
 #'                 name_censoring = "Censored",censored_label = "censored")
 #' x <- add_long_data(x,
@@ -45,17 +45,17 @@
 #'                    competing_data=ld$competing_data,
 #'                    timevar_data=ld$timevar_data)
 #' x <- add_baseline_data(x,data=ld$baseline_data)
-#' x <- long_to_wide(x,breaks=seq(0,2000,30.45*6))
-#' x <- prepare_data(x)
+#' x <- long_to_wide(x)
+#' x <- prepare_rtmle_data(x)
 #' x$prepared_data
 #'
 ##' @export
 ##' @author Thomas A. Gerds <tag@@biostat.ku.dk>
-prepare_data <- function(x,...){
+prepare_rtmle_data <- function(x,...){
     
     # check object x
-    K = length(x$times)
-    max_time_horizon = max(x$times)
+    K = length(x$time_grid)
+    max_time_horizon = max(x$time_grid)
     stopifnot(max_time_horizon>0)
 
     # names of outcome, competing and censoring variables
@@ -166,11 +166,11 @@ prepare_data <- function(x,...){
     # sorting of variables should not be necessary because the formulas define the dependencies
     # but sorting is still be convenient for data inspections
     # and also our data manipulation below where we set values to NA after censoring still depends on the order
-    prepared_data <- prepared_data[,c(x$names$id, intersect(c(name_baseline_covariates,unlist(sapply(x$times, function(timepoint){
+    prepared_data <- prepared_data[,c(x$names$id, intersect(c(name_baseline_covariates,unlist(sapply(x$time_grid, function(timepoint){
         if(timepoint == 0){
             paste0(name_time_covariates,"_",timepoint)
         } else{
-            if(timepoint != x$times[K]){
+            if(timepoint != x$time_grid[K]){
                 paste0(c(x$names$censoring, x$names$outcome, x$names$competing, name_time_covariates),"_",timepoint)
             } else{
                 paste0(c(x$names$censoring, x$names$outcome),"_",timepoint)
@@ -304,4 +304,4 @@ prepare_data <- function(x,...){
 }
 
 ######################################################################
-### prepare_data.R ends here
+### prepare_rtmle_data.R ends here

@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 23 2024 (16:42) 
 ## Version: 
-## Last-Updated: mar 20 2026 (06:41) 
+## Last-Updated: mar 27 2026 (06:21) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 33
+##     Update #: 34
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -68,7 +68,7 @@ autoplot.rtmle <- function(object,
                                            group = Protocol))
     # getting data for numbers at-risk below the graph
     if (missing(position_atrisk)){
-        position_atrisk <- object$times
+        position_atrisk <- object$time_grid_labels
     }
     atrisk_times <- data.table::data.table(time = position_atrisk)
     atrisk <- object$followup[,.N,keyby = last_interval]

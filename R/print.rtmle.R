@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 19 2024 (08:31) 
 ## Version: 
-## Last-Updated: mar 18 2026 (11:22) 
+## Last-Updated: mar 27 2026 (06:32) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 170
+##     Update #: 180
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -80,7 +80,7 @@ print.rtmle <- function(x, ...) {
     cat(sep = "","\nTarget:              ", t, " [",paste(x$targets[[t]]$protocols, collapse = ", "),"]")
     }
     if (length(x$prepared_data) == 0) {
-    cat(sep = "","\nTODO: Use the function 'prepare_data' to prepare the wide format data.")
+    cat(sep = "","\nTODO: Use the function 'prepare_rtmle_data' to prepare the wide format data.")
     }
     } else {
     cat(sep = "","\nPrepared data:     n=",NROW(x$prepared_data),", p=",(NCOL(x$prepared_data)-1))
@@ -98,33 +98,38 @@ print.rtmle <- function(x, ...) {
         }
         cat(sep = "","\nNumber of models:    ", count_formulas(x$models))
     }
-    .format_args <- function(args){
-        if (length(args) == 0) return(NULL)
-        paste(
-            paste0(
-                names(args), "=",
-                vapply(args, function(a){
-                    paste0(deparse(a), collapse = "")
-                }, character(1))
-            ),
-            collapse = ", "
-        )
-    }
     summarize_learners <- function(x,called_from_summarize_learners = FALSE){
         if (is.null(x$learners)){
             # --------------------------------
             # SINGLE LEARNER
             # --------------------------------
             learner_args <- setdiff(names(x),c("name","fun"))
-            args_string <- .format_args(x[learner_args])
+            if (length(x[[learner_args]]) == 0){
+                args_string <- ""
+            } else{
+                args <- x[[learner_args]]
+                args_string <- paste(
+                    paste0(
+                        names(args), "=",
+                        vapply(args, function(a){
+                            paste0(deparse(a), collapse = "")
+                        }, character(1))
+                    ),
+                    collapse = ", "
+                )
+            }
             if (called_from_summarize_learners){
                 if (is.null(args_string)){
-                    return(paste0("                       +", x$name))
+                    return(paste0("                       +", x$fun))
                 } else {
-                    return(paste0("                       +", x$name, " (", args_string, ")"))
+                    return(paste0("                       +", x$fun, " (", args_string, ")"))
                 }
             }else{
-                paste0("", x$name, " (", args_string, ")")
+                if (args_string[[1]] == "" || length(args_string) == 0){
+                    x$fun
+                }else{
+                    paste0("", x$fun, " (", args_string, ")")
+                }
             }
         } else {
             # --------------------------------
@@ -149,7 +154,7 @@ print.rtmle <- function(x, ...) {
             cat("\n                    ",paste0(diag," (n=",length(x$diagnostics[[diag]]),")"))
         }
     }else{
-    cat("\nDiagnostics:         No warnings")
+        cat("\nDiagnostics:         No warnings")
     }
     if (length(x$estimate)>0){
         cat("\n\nResults:\n")

@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Nov 16 2024 (17:04) 
 ## Version: 
-## Last-Updated: mar 18 2026 (08:38) 
+## Last-Updated: mar 27 2026 (06:32) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 84
+##     Update #: 86
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -30,7 +30,7 @@ test_that("single time point compare rtmle with ltmle",{
     data <- data.frame(W, A, Y)
     suppressMessages(result1 <- ltmle(data, Anodes="A", Ynodes="Y", abar=1,estimate.time = FALSE,gbounds = c(0,1)))
     ## summary(result1)
-    x <- rtmle_init(intervals = 1,name_id = "id",name_outcome = "Y",name_competing = NULL,name_censoring = NULL,censored_label = "censored")
+    x <- rtmle_init(time_grid = 0:1,name_id = "id",name_outcome = "Y",name_competing = NULL,name_censoring = NULL,censored_label = "censored")
     rdata <- cbind(id = 1:NROW(data),data)
     setDT(rdata)
     setnames(rdata,c("id","W","A_0","Y_1"))
@@ -53,13 +53,13 @@ test_that("single time point compare rtmle with ltmle",{
 test_that("longitudinal data compare rtmle with ltmle",{
     set.seed(17)
     ld <- simulate_long_data(n = 1291,number_visits = 20,beta = list(A_on_Y = -.2,A_0_on_Y = -0.3,A_0_on_A = 6),register_format = TRUE)
-    x <- rtmle_init(intervals = 3,name_id = "id",name_outcome = "Y",name_competing = "Dead",name_censoring = "Censored",censored_label = "censored")
+    x <- rtmle_init(time_grid = seq(0,2000,30.45*12),name_id = "id",name_outcome = "Y",name_competing = "Dead",name_censoring = "Censored",censored_label = "censored")
     x <- add_long_data(x,outcome_data=ld$outcome_data,censored_data=ld$censored_data,competing_data=ld$competing_data,timevar_data=ld$timevar_data)
     x <- add_baseline_data(x,data=ld$baseline_data)
-    x <- long_to_wide(x,breaks = seq(0,2000,30.45*12))
+    x <- long_to_wide(x)
     x <- protocol(x,name = "Always_A",treatment_variables = "A",intervention = 1)
     x <- protocol(x,name = "Never_A",treatment_variables = "A",intervention = 0)
-    x <- prepare_data(x)
+    x <- prepare_rtmle_data(x)
     x <- target(x,name = "Outcome_risk",estimator = "tmle",protocols = c("Always_A","Never_A"))
     x <- model_formula(x)
     x <- run_rtmle(x,learner = "learn_glm",time_horizon = 1:3,verbose = FALSE)
@@ -139,13 +139,13 @@ if (FALSE){
         data <- data.frame(age, gender, L_0, A_0, B_0, Y_1, A_1, B_1, L_1, Y_2, A_2, B_2, L_2, Y_3)
         result <- ltmle(data,Anodes=c("A_0","B_0","A_1","B_1","A_2","B_2"),Lnodes=c("L_0", "L_1", "L_2"),Ynodes=grep("^Y", names(data),value = TRUE),survivalOutcome = TRUE,estimate.time = FALSE,abar=list(c(1,0,1,0,1,0),c(0,1,0,1,0,1)))
         summary(result)
-        x <- rtmle_init(intervals = 3,name_id = "id",name_outcome = "Y",name_competing = NULL,name_censoring = NULL)
+        x <- rtmle_init(time_grid = 0:3,name_id = "id",name_outcome = "Y",name_competing = NULL,name_censoring = NULL)
         rdata <- cbind(id = 1:NROW(data),data)
         setDT(rdata)
         ## setnames(rdata,c("id","age","gender","A_0","B_0","L_1","A_1","B_1","Y_1","L_2","A_2","B_2","Y_2"))
         x <- add_baseline_data(x,rdata[,.(id,age,gender)])
         x <- add_wide_data(x,outcome_data = rdata[,.(id,Y_1,Y_2,Y_3)],timevar_data = list(A = rdata[,.(id,A_0,A_1,A_2)],B = rdata[,.(id,B_0,B_1,B_2)],L = rdata[,.(id,L_0,L_1,L_2)]))
-        x <- prepare_data(x)
+        x <- prepare_rtmle_data(x)
         x <- protocol(x,name = "AnotB",treatment_variables = c("A","B"),intervention = c(1,0))
         x <- protocol(x,name = "BnotA",treatment_variables = c("A","B"),intervention = c(0,1))
         x <- target(x,name = "Outcome_risk",estimator = "tmle",protocols = c("AnotB","BnotA"))

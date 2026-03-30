@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds & Alessandra
 ## Created: Sep 30 2024 (14:30)
 ## Version:
-## Last-Updated: 11 Dec 2024 (08:59)
-##           By: Alessandra
-##     Update #: 155
+## Last-Updated: mar 26 2026 (15:49) 
+##           By: Thomas Alexander Gerds
+##     Update #: 156
 #----------------------------------------------------------------------
 ##
 ### Commentary: We want to adapt this function to stochastic intervention
@@ -30,8 +30,8 @@ sequential_regression <- function(x,
   intervention_match <- x$intervention_match[[protocol_name]] ## do not need this for the stochastic intervention
   intervention_type <- x$protocols[[protocol_name]]$intervention_type
   # we might initialize it to null and not change it in the intervention_probabilities function where it has been defined
-  if (length(x$times)>1){
-    treatment_variables <- sapply(x$times[-length(x$times)],function(tk){
+  if (length(x$time_grid)>1){
+    treatment_variables <- sapply(x$time_grid[-length(x$time_grid)],function(tk){
       paste0(x$protocols[[protocol_name]]$treatment_variables,"_",tk)
     })
   } else{

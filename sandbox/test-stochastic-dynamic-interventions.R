@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Nov  1 2024 (10:37) 
 ## Version: 
-## Last-Updated: jan 20 2026 (17:46) 
+## Last-Updated: mar 27 2026 (06:32) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 14
+##     Update #: 16
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -20,14 +20,14 @@ library(targets)
 library(prodlim)
 set.seed(17)
 ld <- simulate_long_data(n = 11130,number_visits = 20,beta = list(A_on_Y = -.2,A0_on_Y = -0.3,A0_on_A = 6),register_format = TRUE)
-x <- rtmle_init(intervals = 3,name_id = "id",name_outcome = "Y",name_competing = "Dead",name_censoring = "Censored",censored_label = "censored")
+x <- rtmle_init(time_grid = seq(0,2000,30.45*12),name_id = "id",name_outcome = "Y",name_competing = "Dead",name_censoring = "Censored",censored_label = "censored")
 x <- add_long_data(x,
                     outcome_data=ld$outcome_data,
                     censored_data=ld$censored_data,
                     competing_data=ld$competing_data,
                     timevar_data=ld$timevar_data)
 x <- add_baseline_data(x,data=ld$baseline_data)
-x <- long_to_wide(x,breaks = seq(0,2000,30.45*12))
+x <- long_to_wide(x)
 my_break <- function(data,time){
     ## browser(skipCalls=1L)
     if (time == 0)
@@ -36,7 +36,7 @@ my_break <- function(data,time){
         data[,{.SD},.SDcols = paste0("A_",0:(time-1))]
 }
 x <- protocol(x,name = "Always_A",treatment_variables = "A",intervention = "my_break")
-x <- prepare_data(x)
+x <- prepare_rtmle_data(x)
 x <- target(x,name = "Outcome_risk",estimator = "tmle",protocols = "Always_A")
 x <- model_formula(x)
 system.time(x <- run_rtmle(x,refit = TRUE,time_horizon = 2,learner = "learn_glm"))

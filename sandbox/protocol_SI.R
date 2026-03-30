@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds & Alessandra
 ## Created: Jul 3 2024 (13:46)
 ## Version:
-## Last-Updated: Nov  25 2024
-##           By: Alessandra
-##     Update #: 19
+## Last-Updated: mar 26 2026 (15:50) 
+##           By: Thomas Alexander Gerds
+##     Update #: 20
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -32,7 +32,7 @@
 "protocol<-" <- function(x,...,value) {
   stopifnot(is.list(value))
   stopifnot(all(c("name","treatment_variables","intervention","intervention_type")%in% names(value)))
-  intervention_times <- x$time[-length(x$time)]
+  intervention_times <- x$time_grid[-length(x$time_grid)]
   if( value$intervention_type=="stochastic"){
     stopifnot(length(value$intervene_function)>0)
     value$intervention<- NULL # we do not need to define this at this point

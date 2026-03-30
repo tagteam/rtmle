@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul  3 2024 (11:13)
 ## Version:
-## Last-Updated: Jul 24 2025 (09:44) 
+## Last-Updated: mar 26 2026 (15:48) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 96
+##     Update #: 98
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -33,9 +33,9 @@ additive_formalizer <- function(x,
                 stop(paste0("The following variables in argument Markov do not match time_covariates:\n",
                             paste(Markov[not_found],collapse=", ")))
     }
-    K = length(x$times)
+    K = length(x$time_grid)
     # loop across time points
-    propensity_formulas <- c(unlist(lapply(x$times,function(tk){
+    propensity_formulas <- c(unlist(lapply(x$time_grid,function(tk){
         c(unlist(lapply(paste0(treatment_variables,"_",tk), function(reg){
             formalize(timepoint = tk,
                       available_names = names(x$prepared_data),
@@ -47,7 +47,7 @@ additive_formalizer <- function(x,
         })))
     })))
     if(length(x$names$censoring)>0){
-        censoring_formulas <- c(unlist(lapply(x$times[-1],function(tk){
+        censoring_formulas <- c(unlist(lapply(x$time_grid[-1],function(tk){
             formalize(timepoint = tk,
                       available_names = names(x$prepared_data),
                       name_outcome_variable = paste0(x$names$censoring,"_",tk),
@@ -57,11 +57,11 @@ additive_formalizer <- function(x,
                       constant_variables = name_constant_variables)
         })))
     }
-    ## Note that A_k ~ V + L_0 + ... + L_(k-1) + A_(k-1) for k = 1,..., max(x$times), but A_0 ~ V + L_0
+    ## Note that A_k ~ V + L_0 + ... + L_(k-1) + A_(k-1) for k = 1,..., max(x$time_grid), but A_0 ~ V + L_0
     ## i.e., regimen at baseline depends on additional baseline covariates, whereas in general, regimen depends
     ## on the previously observed covariates and regimen.
     ## The reason for this is we do not want to mistakenly assume that L_1 -> A_1 when in reality A_1 happens before L_1
-    outcome_formulas <- unlist(lapply(x$times[-1],function(tk){
+    outcome_formulas <- unlist(lapply(x$time_grid[-1],function(tk){
         formalize(timepoint = tk,
                   available_names = names(x$prepared_data),
                   name_outcome_variable = paste0(x$names$outcome,"_",tk),
@@ -69,7 +69,7 @@ additive_formalizer <- function(x,
                   name_time_covariates  = name_time_covariates,
                   Markov = Markov, constant_variables = name_constant_variables)
     }))
-    names(outcome_formulas)=paste0(x$names$outcome,"_",x$times[-1])
+    names(outcome_formulas)=paste0(x$names$outcome,"_",x$time_grid[-1])
     # names for treatment and censoring formulas
     names(propensity_formulas) <- as.character(unlist(lapply(propensity_formulas,function(x){strsplit(x," ~ ")[[1]][[1]]})))
     if (length(x$names$censoring)>0){

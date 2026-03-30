@@ -1,11 +1,11 @@
-### rtmle_glm.R --- 
+### learn_glm.R --- 
 #----------------------------------------------------------------------
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 23 2024 (12:49) 
 ## Version: 
-## Last-Updated: jan 30 2026 (12:53) 
+## Last-Updated: mar 25 2026 (11:55) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 130
+##     Update #: 142
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -43,12 +43,11 @@ learn_glm <- function(character_formula,
     ## if (!("speed"%in%names(args))) speed <- FALSE
     speed <- TRUE
     # extract the data
-    # FIXME: should not let NA's pass until here
     if (length(learn_variables)>0){
         allvars <- all.vars(stats::formula(character_formula))
         outcome_variable <- allvars[1]
         ## keepvars <- intersect(learn_variables,allvars[-1])
-        keepvars <- grep(paste0("(^",learn_variables,"($|_[1-9][0-9]?$))",collapse = "|"),
+        keepvars <- grep(paste0("(^",learn_variables,"($|_[0-9][0-9]?$))",collapse = "|"),
                          allvars[-1],
                          value = TRUE)
         if (length(keepvars)>0){
@@ -56,9 +55,11 @@ learn_glm <- function(character_formula,
         } else{
             # No covariates
             Y <- data[[outcome_variable]]
-            # FIXME: is it only for censoring variables or can outcome/treatment be factors too?
-            if (is.factor(Y)) Y <- 1*(Y == levels(Y)[[2]])
-            return(mean(Y,na.rm = TRUE))
+            mean_Y <- mean(Y,na.rm = TRUE)
+            predicted_values <- rep(mean_Y,NROW(intervened_data))
+            intercept <- log(mean_Y/(1-mean_Y))
+            data.table::setattr(predicted_values,"fit",matrix(intercept,ncol = 1,nrow = 1,dimnames = list("(Intercept)","Estimate")))
+            return(predicted_values)
         }
     }
     model_frame <- stats::model.frame(stats::formula(character_formula),
@@ -111,4 +112,4 @@ learn_glm <- function(character_formula,
 
 
 ######################################################################
-### rtmle_glm.R ends here
+### learn_glm.R ends here

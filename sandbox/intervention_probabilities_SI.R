@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds & Alessandra
 ## Created: Oct 17 2024 (09:26)
 ## Version:
-## Last-Updated: Nov  25 2024 (08:58)
-##           By: Alessandra
-##     Update #: 100
+## Last-Updated: mar 26 2026 (16:41) 
+##           By: Thomas Alexander Gerds
+##     Update #: 102
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -33,13 +33,13 @@ intervention_probabilities <- function(x,
 
   # since time_horizon can be a vector we need the maximum
   if (missing(time_horizon))
-    max_time_horizon <- max(x$time)
+    max_time_horizon <- max(x$time_grid)
   else
     max_time_horizon <- max(time_horizon)
-  eval_times <- x$times[-length(x$times)]
+  eval_times <- x$time_grid[-length(x$time_grid)]
   ## if max_time_horizon = 5 then we need propensities up to time 4
   eval_times <- eval_times[eval_times < max_time_horizon]
-  if (length(x$times)>1){
+  if (length(x$time_grid)>1){
     treatment_variables <- sapply(eval_times,function(tk){
       paste0(x$protocols[[protocol_name]]$treatment_variables,"_",tk)
     })

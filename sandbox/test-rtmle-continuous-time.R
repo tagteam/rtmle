@@ -10,13 +10,13 @@ time_horizon <- 9
 res <- rep(NA, time_horizon)
 for (time in 1:time_horizon){
   print(paste0("time: ", time))
-  x <- rtmle_init(intervals = time,name_id = "id",name_outcome = "Y",name_competing = "Dead",name_censoring = "Censored",censored_label = "censored")
+  x <- rtmle_init(time_grid = time,name_id = "id",name_outcome = "Y",name_competing = "Dead",name_censoring = "Censored",censored_label = "censored")
   add_long_data(x) <- ld
   x <- protocol(x,name = "Always_A",
                       treatment_variables = "A",
                       intervention = 1)
   
-  x <- prepare_data(x)
+  x <- prepare_rtmle_data(x)
   x <- target(x,name = "Outcome_risk", strategy = "additive",
               estimator = "tmle", estimands = 3, protocols = "Always_A")
   x <- model_formula(x)

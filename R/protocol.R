@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds & Alessandra
 ## Created: Jul 3 2024 (13:46)
 ## Version:
-## Last-Updated: feb 23 2026 (07:05) 
+## Last-Updated: mar 27 2026 (06:25) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 129
+##     Update #: 135
 #----------------------------------------------------------------------
 ##
 ### Commentary: 
@@ -30,9 +30,9 @@
 ##'     factor with levels specifying the treatment options. In
 ##'     longitudinal settings, the data.frame should have column called \code{"time"} in
 ##'     addition to the treatment variables. Ideally the data.frame \code{intervention} provides values
-##'     for all times stored in \code{x$times}. However, there are two special cases.
+##'     for all times stored in \code{x$intervention_nodes}. However, there are two special cases.
 ##'     If the number of rows in the data.frame \code{intervention} is smaller than
-##'    \code{length(x$times)}, then 1. if argument \code{expand} is \code{TRUE},
+##'    \code{length(x$intervention_nodes)}, then 1. if argument \code{expand} is \code{TRUE},
 ##'    the last value (the only value if there is only one row) is set for all later time intervals.
 ##'     2. if argument \code{expand} is \code{FALSE} it is assumed that no intervention is wanted at
 ##'    the time intervals that are missing in data.frame \code{intervention}.
@@ -64,7 +64,7 @@
 #' # ------------------------------------------------------------------------------------------
 #' # Intervening on a single treatment variable
 #' # ------------------------------------------------------------------------------------------
-#' x <- rtmle_init(intervals = 3,name_id = "id",name_outcome = "Y",name_competing = "Dead",
+#' x <- rtmle_init(time_grid=0:3,name_id = "id",name_outcome = "Y",name_competing = "Dead",
 #'                 name_censoring = "Censored",censored_label = "censored")
 #' x <- protocol(x,name = "Always_A",
 #'                 intervention = data.frame(time=x$intervention_nodes,
@@ -79,7 +79,7 @@
 #' # ------------------------------------------------------------------------------------------
 #' # Intervening on a more than one treatment variable
 #' # ------------------------------------------------------------------------------------------
-#' x <- rtmle_init(intervals = 3,name_id = "id",name_outcome = "Y",name_competing = "Dead",
+#' x <- rtmle_init(time_grid=0:3,name_id = "id",name_outcome = "Y",name_competing = "Dead",
 #'                 name_censoring = "Censored",censored_label = "censored")
 #' x <- protocol(x,name = "Always_A_never_B",
 #'                 intervention = data.frame(time=x$intervention_nodes,
@@ -101,7 +101,6 @@ protocol <- function(x,
                      verbose = TRUE,
                      ...) {
     variable <- NULL
-    intervention_times <- x$time[-length(x$time)]
     #
     # User provided a data.frame
     #
@@ -112,18 +111,18 @@ protocol <- function(x,
         if ((time_position <- match("time",treatment_variables,nomatch = 0))>0){
             treatment_variables <- treatment_variables[-time_position]
         }else{
-            if (length(x$times)>1){
+            if (length(x$time)>1){
                 stop("Argument intervention needs a time variable with values that are equal to or a subset of x$intervention_nodes.")
             }
         }
         if (any(grepl(pattern = "_[0-9]+$",x = treatment_variables))){
             stop("Treatment variables should be given without time suffix.")
         }
-        if (any(is.na(too_many <- which(is.na(match(intervention_table[["time"]],intervention_times,nomatch = NA))))))
+        if (any(is.na(too_many <- which(is.na(match(intervention_table[["time"]],x$intervention_nodes,nomatch = NA))))))
             stop(paste0("The following time points are not registered as intervention nodes in the object:",
                         paste0(intervention_table[["time"]][too_many],collapse = ", ")))
         # FIXME: do something with missing nodes? we could add NA but not having them may have the same effect
-        ## missing_nodes <- match(intervention_times,intervention_table[["time"]],nomatch = NA)
+        ## missing_nodes <- match(x$intervention_nodes,intervention_table[["time"]],nomatch = NA)
         treatment_options <-
             sapply(treatment_variables,
                    function(v){
@@ -148,7 +147,7 @@ protocol <- function(x,
             intervention_table <- data.table::as.data.table(lapply(1:length(treatment_variables),function(v){
                 factor(intervention[[v]],levels = c(0,1))
             }))
-            intervention_table <- cbind(time = intervention_times,
+            intervention_table <- cbind(time = x$intervention_nodes,
                                         intervention_table)
             data.table::setnames(intervention_table,c("time",treatment_variables))
             treatment_options <- sapply(treatment_variables,function(x)c(0,1),simplify = FALSE)

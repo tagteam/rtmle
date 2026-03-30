@@ -133,7 +133,7 @@ $censored_data
 
 #+ATTR_LATEX: :options otherkeywords={}, deletekeywords={}
 #+BEGIN_SRC R  :results output verbatim drawer :exports both  :session *R* :cache yes  
-x <- rtmle_init(intervals = 3,name_id = "id",name_outcome = "Y",name_competing = "Dead",name_censoring = "Censored",censored_label = "censored")
+x <- rtmle_init(time_grid = seq(0,2000,30.45*6),name_id = "id",name_outcome = "Y",name_competing = "Dead",name_censoring = "Censored",censored_label = "censored")
 x
 #+END_SRC
 
@@ -183,8 +183,8 @@ TODO: The object contains no targets yet. Add them with the function 'target'.
 
 #+ATTR_LATEX: :options otherkeywords={}, deletekeywords={}
 #+BEGIN_SRC R  :results output verbatim drawer  :exports both  :session *R* :cache yes  
-x <- long_to_wide(x,breaks = seq(0,2000,30.45*6))
-x <- prepare_data(x)
+x <- long_to_wide(x)
+x <- prepare_rtmle_data(x)
 x$prepared_data
 #+END_SRC
 

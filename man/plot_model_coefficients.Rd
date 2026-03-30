@@ -25,7 +25,7 @@ plot_model_coefficients(
 \arguments{
 \item{x}{An object fitted with \link{run_rtmle} containing fitted nuisance parameter models.}
 
-\item{time_horizon}{Optional selection of time_horizon. If \code{NULL}, \code{max(x$times)} is used.}
+\item{time_horizon}{Optional selection of time_horizon. If \code{NULL}, \code{max(x$time_grid)} is used.}
 
 \item{protocol}{Optional selection of protocol. If \code{NULL}, \code{names(x$protocols)[[1]])} is used.}
 

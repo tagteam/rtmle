@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul  1 2024 (09:11)
 ## Version:
-## Last-Updated: mar 24 2026 (11:21) 
+## Last-Updated: mar 30 2026 (15:10) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 617
+##     Update #: 622
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -81,7 +81,7 @@
 #' ld <- simulate_long_data(n = 391,number_visits = 20,
 #'                          beta = list(A_on_Y = -.2,A0_on_Y = -0.3,A0_on_A = 6),
 #'                          register_format = TRUE)
-#' x <- rtmle_init(intervals = tau,name_id = "id",
+#' x <- rtmle_init(time_grid = seq(0,1500,30.45*12),name_id = "id",
 #'                 name_outcome = "Y",
 #'                 name_competing = "Dead",
 #'                 name_censoring = "Censored",censored_label = "censored")
@@ -91,14 +91,14 @@
 #'                    competing_data=ld$competing_data,
 #'                    timevar_data=ld$timevar_data)
 #' x <- add_baseline_data(x,data=ld$baseline_data)
-#' x <- long_to_wide(x,breaks = seq(0,2000,30.45*12))
+#' x <- long_to_wide(x)
 #' x <- protocol(x,name = "Always_A",
 #'                     intervention = data.frame(time=x$intervention_nodes,
 #'                                                    "A" = factor("1",levels = c("0","1"))))
 #' x <- protocol(x,name = "Never_A",
 #'                     intervention = data.frame(time=x$intervention_nodes,
 #'                                               "A" = factor("0",levels = c("0","1"))))
-#' x <- prepare_data(x)
+#' x <- prepare_rtmle_data(x)
 #' x <- target(x,name = "Outcome_risk",
 #'                   estimator = "tmle",
 #'                   protocols = c("Always_A","Never_A"))
@@ -157,7 +157,7 @@ run_rtmle <- function(x,
         refit <- TRUE
         for (sub in subsets){
             stopifnot(is.character(sub$label[[1]]))
-            xs <- data.table::copy(x[c("targets","names","times","protocols","models","intervention_nodes","tuning_parameters")])
+            xs <- data.table::copy(x[c("targets","names","time_grid","time_grid_labels","protocols","models","intervention_nodes","tuning_parameters")])
             for (pp in names(xs$protocols)){
                 xs$protocols[[pp]]$intervention_match <- xs$protocols[[pp]]$intervention_match[x$prepared_data[[x$names$id]] %in% sub$id,,drop = FALSE]
                 xs$protocols[[pp]]$intervention_probs <- NULL
@@ -241,17 +241,17 @@ run_rtmle <- function(x,
             run_these_targets <- available_targets
         }
         if (missing(time_horizon)) {
-            time_horizon <- max(x$times)
+            time_horizon <- max(x$time_grid)
         } else {
-            stopifnot(all(time_horizon <= max(x$times) & time_horizon>0))
+            stopifnot(all(time_horizon <= max(x$time_grid) & time_horizon>0))
         }
         ## sapply(x$prepared_data,function(x)sum(is.na(x)))
         if (!(x$names$id%in%names(x$prepared_data)))
             stop(paste0("Cannot see id variable ",x$names$id," in x$prepared_data."))
         ## make sure that the treatment variables are factors with levels equal to those specified by the protocols
-        ## FIXME: this could perhaps be done in prepare_data()
+        ## FIXME: this could perhaps be done in prepare_rtmle_data()
         for (v in names(x$names$treatment_options)){
-            v_treatment_variables <- intersect(paste0(v,"_",x$times),names(x$prepared_data))
+            v_treatment_variables <- intersect(paste0(v,"_",x$time_grid),names(x$prepared_data))
             for (v_j in v_treatment_variables){
                 if (inherits(x$prepared_data[[v_j]],"factor")){
                     if (!(all.equal(levels(x$prepared_data[[v_j]]),as.character(x$names$treatment_options[[v]])))){

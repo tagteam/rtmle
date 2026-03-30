@@ -52,10 +52,10 @@ L_k -> A_k when in reality A_k may happen before L_k.
 When interventions depend on more than one variable
 }
 \examples{
-ld <- simulate_long_data(n = 117,number_visits = 20,
+ld <- simulate_long_data(n = 17,number_visits = 20,
                          beta = list(A_on_Y = -.2,A0_on_Y = -0.3,A0_on_A = 6),
                          register_format = TRUE)
-x <- rtmle_init(intervals = 2,name_id = "id",name_outcome = "Y",
+x <- rtmle_init(time_grid = seq(0,1500,30.45*12),name_id = "id",name_outcome = "Y",
                 name_competing = "Dead",
                 name_censoring = "Censored",censored_label = "censored")
 x <- add_long_data(x,
@@ -64,8 +64,8 @@ x <- add_long_data(x,
                    competing_data=ld$competing_data,
                    timevar_data=ld$timevar_data)
 x <- add_baseline_data(x,data=ld$baseline_data)
-x <- long_to_wide(x,breaks = seq(0,2000,30.45*12))
-x <- prepare_data(x)
+x <- long_to_wide(x)
+x <- prepare_rtmle_data(x)
 x <- protocol(x,name = "Always_A",treatment_variables = "A",intervention = 1)
 x <- protocol(x,name = "Never_A",treatment_variables = "A",intervention = 0)
 x <- protocol(x,name = "Use_A_not_B",treatment_variables = c("A","B"),intervention = c(1,0))

@@ -4,36 +4,23 @@
 \alias{long_to_wide}
 \title{Transform data from long to wide format}
 \usage{
-long_to_wide(
-  x,
-  breaks,
-  intervals,
-  start_followup_date,
-  fun = function(x) {
-     1 * (sum(x) > 0)
- },
-  verbose = TRUE
-)
+long_to_wide(x, start_followup_date, mappings, verbose = TRUE, ...)
 }
 \arguments{
 \item{x}{object of class \code{rtmle}}
 
-\item{breaks}{a vector of time points that discretize the
-followup time into intervals}
-
-\item{intervals}{OBSOLETE a vector of time points that discretize the
-followup time into intervals}
-
-\item{start_followup_date}{Start of followup date which is substracted from the dates of
-the outcomes, competing risks, censoring (end-of-followup), and time-varying covariates.
-If missing it is assumed to be zero for all in which case the dates of the outcomes,
+\item{start_followup_date}{Date where the followup starts. This date is substracted from the dates of
+the outcomes, competing risks, censoring (end-of-followup), and dates where the time-varying covariates change.
+If missing it is assumed to be zero for all subjects in which case the dates of the outcomes,
 competing risks, censoring (end-of-followup), and time-varying covariates must be
 given on the time on study scale.}
 
-\item{fun}{function used to map time-dependent covariate information onto the intervals.
-Can be a single function or a named list with}
+\item{mappings}{Named list of instructions for how to map the continuous time history of a variable in long-format
+onto the discrete time scale. The names must match \code{names(x$long_data$timevar_data)}.}
 
 \item{verbose}{Logical. If \code{FALSE} suppress all messages.}
+
+\item{...}{alternative way to specify elements of \code{mappings}.}
 }
 \description{
 This function is used to prepare a discretized time analysis of longituginal data.
@@ -43,22 +30,31 @@ The start_followup_date is the calendar date where the follow up
 starts or can be zero if the followup data are readily on the time
 on study scale
 
-The function discretizes data on a given time grid. Dates of events in long format.
+The function discretizes dates of events and concomittant marker information.
+Multiple wide format variables may result from a single long-format variable.
 }
 \examples{
 set.seed(17)
-tau <- 3
-ld <- simulate_long_data(n = 91,number_visits = 20,
-                         beta = list(A_on_Y = -.2,A0_on_Y = -0.3,A0_on_A = 6),
-                         register_format = TRUE)
-
-x <- rtmle_init(intervals = tau,name_id = "id",name_outcome = "Y",name_competing = "Dead",
+x <- rtmle_init(time_grid = 0:2,name_id = "id",
+                name_outcome = "Y",name_competing = "Dead",
                 name_censoring = "Censored",censored_label = "censored")
-x <- add_long_data(x,outcome_data=ld$outcome_data,censored_data=ld$censored_data,
-                    competing_data=ld$competing_data,
-                    timevar_data=ld$timevar_data)
-x <- add_baseline_data(x,data=ld$baseline_data)
-x <- long_to_wide(x,breaks = seq(0,2000,30.45*12))
-                  
-x
+x <- add_long_data(x,outcome_data=data.frame(id=c(1,3,5),date=0.1,1.3,1.9),
+                     censored_data=data.frame(id=c(2,6),date=c(0.5,1.5)),
+                    competing_data=data.frame(id=c(4,7),date=c(1.1,1.8)),
+                    timevar_data=list(A=data.frame(id=c(1,1,1,2,2,3,4,4),
+                                           start_date=c(0,.3,1.3,0,1,0,1.1,1.5),
+                                             end_date=c(.3,.6,2,1,2,.5,1.4,1.9)),
+                                      V=data.frame(id=c(1,1,1,2,2,3,4,4),
+                                           start_date=c(0,.5,1,0,1.3,0,0,0.4),
+                                             end_date=c(.3,.8,1.8,.5,1.4,2,.4,1.6)),
+                                      L=data.frame(id=c(1,2,2,2,3,4,5,6,7,7),
+                                                 date=c(0,0,.25,.75,0,0,0,0,0,1.4),
+                                                value=c(4,35,27.7,28.2,8.8,2,3.1,7,7.7,8.4))))
+x <- add_baseline_data(x,data=data.frame(id=1:7,age=40:46))
+x <- long_to_wide(x,L=list(method="locf"))
+x$data$timevar_data$L
+x$data$timevar_data$V
+x <- long_to_wide(x,L=list(method="measurement",fun_aggregate="median"))
+x$data
+
 }
