@@ -22,10 +22,7 @@ given on the time on study scale.}
   the same name as the output variable.
 
   Built-in methods include "measurement", "locf", "event", "event_interval",
-  "any_exposure", "has_exposure", "exposure_time", and "exposure_percent".
-
-  User-defined methods can be supplied either as `method=<function>` or by
-  providing `fun=<function>` together with `columns=...`.}
+  "any_exposure", "has_exposure", "exposure_time", and "exposure_percent".}
 
 \item{verbose}{Logical. If \code{FALSE} suppress all messages.}
 
@@ -72,26 +69,4 @@ x <- long_to_wide(
                   A=list(method="exposure_percent"),
                   B=list(variable = "A", method="any_exposure"),
                   C=list(variable = "A", method="has_exposure",threshold=0.7))
-# custom methods
-my_mapper <- function(data, grid, name, id, threshold = 0, fill = NA) {
-out <- discretize(
-method = "exposure_time",
-data = data,
-grid = grid,
-name = name,
-id = id,
-fill = fill,
-)
-value_cols <- setdiff(names(out), id)
-out[, (value_cols) := lapply(.SD, function(z) 1 * (z > threshold)), .SDcols = value_cols]
-out[]
-}
-x <- long_to_wide(x,
-Z = list(
-variable = "A",
-method = "custom_binary",
-fun = my_mapper,
-columns = c("start_date","end_date"),
-args = list(threshold = 10)
-))
 }

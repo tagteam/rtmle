@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 22 2024 (14:07) 
 ## Version: 
-## Last-Updated: mar 31 2026 (13:57) 
+## Last-Updated: mar 31 2026 (14:16) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 306
+##     Update #: 308
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -36,8 +36,6 @@
 #'   Built-in methods include "measurement", "locf", "event", "event_interval",
 #'   "any_exposure", "has_exposure", "exposure_time", and "exposure_percent".
 #'
-#'   User-defined methods can be supplied either as `method=<function>` or by
-#'   providing `fun=<function>` together with `columns=...`.
 #' @param verbose Logical. If \code{FALSE} suppress all messages.
 #' @param ... alternative way to specify elements of \code{mappings}.
 #' @details The function discretizes dates of events and concomittant marker information.

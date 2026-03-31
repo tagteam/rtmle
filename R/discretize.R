@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: feb 24 2026 (11:04) 
 ## Version: 
-## Last-Updated: mar 31 2026 (13:55) 
+## Last-Updated: mar 31 2026 (14:11) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 106
+##     Update #: 107
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -28,8 +28,7 @@
 #' onto a discrete time grid and returns a wide-format representation with
 #' one column per time interval.
 #'
-#' It is the core engine used by \code{long_to_wide()} and can also be used
-#' directly to implement custom mappings from long to wide format.
+#' It is the core engine used by \code{long_to_wide()} and can also be used directly.
 #'
 #' @param method Character string specifying how the long-format data should
 #'   be mapped to the discrete grid. Built-in methods include:
@@ -136,21 +135,6 @@
 #'   id = "id"
 #' )
 #'
-#' ## Example 3: custom mapping using discretize
-#' my_mapper <- function(data, grid, name, id, threshold = 0) {
-#'   out <- discretize(
-#'     method = "exposure_time",
-#'     data = data,
-#'     grid = grid,
-#'     name = name,
-#'     id = id,
-#'   )
-#'   value_cols <- setdiff(names(out), id)
-#'   out[, (value_cols) := lapply(.SD, function(z) 1 * (z > threshold)), .SDcols = value_cols]
-#'   out[]
-#' }
-#'
-#' my_mapper(exposure_data, grid, name = "A_bin", id = "id", threshold = 0.5)
 #'
 #' @export
 discretize <- function(method,
