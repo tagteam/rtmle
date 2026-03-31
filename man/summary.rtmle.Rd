@@ -36,12 +36,12 @@ If a target includes multiple protocols the results includes risk differences.
 \examples{
 
 set.seed(112)
-ld <- simulate_long_data(n = 181,number_visits = 20,
+ld <- simulate_long_data(n = 81,number_visits = 20,
                          beta = list(A_on_Y = -.2,
                                      A0_on_Y = -0.3,A0_on_A = 2),
                          register_format = TRUE)
 
-x <- rtmle_init(intervals = seq(0,1500,30.45*6),name_id = "id",name_outcome = "Y",
+x <- rtmle_init(time_grid = seq(0,1500,30.45*6),name_id = "id",name_outcome = "Y",
                 name_competing = "Dead",name_censoring = "Censored",
                 censored_label = "censored")
 x <- add_long_data(x,

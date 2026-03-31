@@ -11,9 +11,9 @@ widen_outcome <- function(x,
     # Notes:
     #       a) when outcome or death has occurred the value 1 persists, i.e.,
     #          the last observation is carried forward.
-    #          this is done by map_grid.
+    #          this is done by discretize.
     #       b) when outcome occurs before death or censored then
-    #          the value of death or censored was removed before calling map_grid
+    #          the value of death or censored was removed before calling discretize.
     #       c) once censored both outcome and death variables are NA
     # 
     censored_variables <- NULL
@@ -28,14 +28,20 @@ widen_outcome <- function(x,
             data.table::setkeyv(censored_before_outcome_and_death,x$names$id)
         }
         if (NROW(censored_before_outcome_and_death)>0){
-            censored_variables <- map_grid(grid=grid,
-                                           data=x$long_data$censored_data[censored_before_outcome_and_death,on = x$names$id],
-                                           name=x$names$censoring,
-                                           rollforward=Inf,
-                                           # the order must be censored_label, uncensored_label 
-                                           values=rev(x$names$censored_levels),
-                                           fun_aggregate = fun_aggregate,
-                                           id = x$names$id)
+            censored_variables <- discretize(
+                method = "event",
+                data=x$long_data$censored_data[censored_before_outcome_and_death,on = x$names$id],
+                grid = grid,
+                name=x$names$censoring,
+                id = x$names$id,
+                threshold = NULL,
+                lookback_window = Inf,
+                # the order must be censored_label, uncensored_label 
+                values = rev(x$names$censored_levels),
+                fun_aggregate = fun_aggregate,
+                fill = NA
+            )
+            ## censored_variables <- map_grid(grid=grid,data=x$long_data$censored_data[censored_before_outcome_and_death,on = x$names$id],name=x$names$censoring,rollforward=Inf,values=rev(x$names$censored_levels),fun_aggregate = fun_aggregate,id = x$names$id)
             # this makes sure that all censored variables are
             # factors with levels order as c(uncensored,censored)
             for (cc in names(censored_variables)[-1]){
@@ -55,11 +61,20 @@ widen_outcome <- function(x,
             data.table::setkeyv(competing_risk_before_outcome,x$names$id)
         }
         if (NROW(competing_risk_before_outcome)>0){
-            competing_variables <- map_grid(grid=grid,
-                                            data=x$long_data$competing_data[competing_risk_before_outcome,on = x$names$id],
-                                            name=x$name$competing,
-                                            rollforward=Inf,
-                                            id = x$names$id)
+            competing_variables <- discretize(
+                method = "event",
+                data=x$long_data$competing_data[competing_risk_before_outcome,on = x$names$id],
+                grid = grid,
+                name=x$names$competing,
+                id = x$names$id,
+                threshold = NULL,
+                lookback_window = Inf,
+                # the order must be censored_label, uncensored_label 
+                values = c(1,0),
+                fun_aggregate = fun_aggregate,
+                fill = NA
+            )
+            ## competing_variables <- map_grid(grid=grid,data=x$long_data$competing_data[competing_risk_before_outcome,on = x$names$id],name=x$name$competing,rollforward=Inf,id = x$names$id)
         }
     }
     # -----------------------------------------------------------------------
@@ -71,11 +86,19 @@ widen_outcome <- function(x,
     ## outcome_data=outcome_data[date>start]
     ## only interested in first new outcome
     ## outcome_data=outcome_data[outcome_data[,.I[1],by=id]$V1]
-    outcome_variables <- map_grid(grid=grid,
-                                  data=x$long_data$outcome_data,
-                                  name=x$names$outcome,
-                                  rollforward=Inf,
-                                  id = x$names$id)
+    outcome_variables <- discretize(
+        method = "event",
+        data=x$long_data$outcome_data,
+        grid = grid,
+        name=x$names$outcome,
+        id = x$names$id,
+        threshold = NULL,
+        lookback_window = Inf,
+        values = c(1,0),
+        fun_aggregate = fun_aggregate,
+        fill = NA
+    )
+    ## map_grid(grid=grid,data=x$long_data$outcome_data,name=x$names$outcome,rollforward=Inf,id = x$names$id)
     # Once censoring has occurred all following competing and outcome variables
     # should be NA. Note that by construction id's where both censored dates AND
     # outcome/competing dates are available the censored dates are removed before

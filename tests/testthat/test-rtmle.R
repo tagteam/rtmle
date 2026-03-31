@@ -5,7 +5,7 @@ library(prodlim)
 test_that("run rtmle on simulated data",{
     set.seed(112)
     ld <- simulate_long_data(n = 91,number_visits = 20,beta = list(A_on_Y = -.2,A0_on_Y = -0.3,A0_on_A = 6),register_format = TRUE)
-    x <- rtmle_init(time_grid = seq(0,2000,30.45*6),name_id = "id",name_outcome = "Y",name_competing = "Dead",name_censoring = "Censored",censored_label = "censored")
+    x <- rtmle_init(time_grid = seq(0,1500,30.45*6),name_id = "id",name_outcome = "Y",name_competing = "Dead",name_censoring = "Censored",censored_label = "censored")
     x <- add_long_data(x,
                        outcome_data=ld$outcome_data,
                        censored_data=ld$censored_data,
@@ -26,7 +26,7 @@ test_that("run rtmle on simulated data",{
 test_that("run rtmle without covariates",{
     set.seed(112)
     ld <- simulate_long_data(n = 91,number_visits = 20,beta = list(A_on_Y = -.2,A0_on_Y = -0.3,A0_on_A = 6),register_format = TRUE)
-    x <- rtmle_init(time_grid = seq(0,2000,30.45*6),name_id = "id",name_outcome = "Y",name_competing = "Dead",name_censoring = "Censored",censored_label = "censored")
+    x <- rtmle_init(time_grid = seq(0,1500,30.45*6),name_id = "id",name_outcome = "Y",name_competing = "Dead",name_censoring = "Censored",censored_label = "censored")
     #  add treatment variables but no timevarying covariates
     x <- add_long_data(x,outcome_data=ld$outcome_data,censored_data=ld$censored_data,competing_data=ld$competing_data,timevar_data = ld$timevar_data["A"])
     #  need id variable in the baseline data
@@ -43,7 +43,7 @@ test_that("run rtmle without covariates",{
 test_that("run rtmle without competing risks",{
     set.seed(112)
     ld <- simulate_long_data(n = 91,number_visits = 20,beta = list(A_on_Y = -.2,A0_on_Y = -0.3,A0_on_A = 6),register_format = TRUE)
-    x <- rtmle_init(time_grid = seq(0,2000,30.45*6),name_id = "id",name_outcome = "Y",name_competing = NULL,name_censoring = "Censored",censored_label = "censored")
+    x <- rtmle_init(time_grid = seq(0,1500,30.45*6),name_id = "id",name_outcome = "Y",name_competing = NULL,name_censoring = "Censored",censored_label = "censored")
     x$long_data <- ld[c("outcome_data","censored_data","timevar_data")]
     x$long_data$outcome_data <- rbind(x$long_data$outcome_data,ld$competing_data)
     setkey(x$long_data$outcome_data,id,date)
@@ -60,7 +60,7 @@ test_that("run rtmle without competing risks",{
 test_that("rtmle can use g-formula",{
     set.seed(112)
     ld <- simulate_long_data(n = 91,number_visits = 20,beta = list(A_on_Y = -.2,A0_on_Y = -0.3,A0_on_A = 6),register_format = TRUE)
-    x <- rtmle_init(time_grid = seq(0,2000,30.45*6),name_id = "id",name_outcome = "Y",name_competing = NULL,name_censoring = "Censored",censored_label = "censored")
+    x <- rtmle_init(time_grid = seq(0,1500,30.45*6),name_id = "id",name_outcome = "Y",name_competing = NULL,name_censoring = "Censored",censored_label = "censored")
     x$long_data <- ld[c("outcome_data","censored_data","timevar_data")]
     x$long_data$outcome_data <- rbind(x$long_data$outcome_data,ld$competing_data)
     setkey(x$long_data$outcome_data,id,date)

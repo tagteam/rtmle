@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Apr  8 2025 (14:47) 
 ## Version: 
-## Last-Updated: mar 27 2026 (06:32) 
+## Last-Updated: mar 31 2026 (07:47) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 42
+##     Update #: 43
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -19,7 +19,7 @@ library(rtmle)
 test_that("run rtmle on a subset",{
     set.seed(17)
     ld <- simulate_long_data(n = 91,number_visits = 20,beta = list(A_on_Y = -.2,A0_on_Y = -0.3,A0_on_A = 6),register_format = TRUE)
-    x <- rtmle_init(time_grid = seq(0,2000,30.45*12),name_id = "id",name_outcome = "Y",name_competing = "Dead",name_censoring = "Censored",censored_label = "censored")
+    x <- rtmle_init(time_grid = seq(0,1500,30.45*12),name_id = "id",name_outcome = "Y",name_competing = "Dead",name_censoring = "Censored",censored_label = "censored")
     x <- add_long_data(x,outcome_data=ld$outcome_data,censored_data=ld$censored_data,competing_data=ld$competing_data,timevar_data=ld$timevar_data)
     x <- add_baseline_data(x,data=ld$baseline_data)
     x <- long_to_wide(x,verbose = FALSE)
@@ -36,7 +36,7 @@ test_that("run rtmle on a subset",{
     ld1$timevar_data <- lapply(ld$timevar_data,function(d){subset(d,d$id <= 79)})
     names(ld1$timevar_data) <- names(ld$timevar_data)
     # now run again on subset
-    x1 <- rtmle_init(time_grid = seq(0,2000,30.45*12),name_id = "id",name_outcome = "Y",name_competing = "Dead",name_censoring = "Censored",censored_label = "censored")
+    x1 <- rtmle_init(time_grid = seq(0,1500,30.45*12),name_id = "id",name_outcome = "Y",name_competing = "Dead",name_censoring = "Censored",censored_label = "censored")
     x1 <- add_long_data(x1,outcome_data=ld1$outcome_data,censored_data=ld1$censored_data,competing_data=ld1$competing_data,timevar_data=ld1$timevar_data)
     x1 <- add_baseline_data(x1,data = ld1$baseline_data)
     x1 <- long_to_wide(x1,verbose = FALSE)
@@ -56,7 +56,7 @@ test_that("stratified analyses",
 {
     set.seed(17)
     ld <- simulate_long_data(n = 91,number_visits = 20,beta = list(A_on_Y = -.2,A0_on_Y = -0.3,A0_on_A = 6),register_format = TRUE)
-    x <- rtmle_init(time_grid = seq(0,2000,30.45*12),name_id = "id",name_outcome = "Y",name_competing = "Dead",name_censoring = "Censored",censored_label = "censored")
+    x <- rtmle_init(time_grid = seq(0,1500,30.45*12),name_id = "id",name_outcome = "Y",name_competing = "Dead",name_censoring = "Censored",censored_label = "censored")
     x <- add_long_data(x,outcome_data=ld$outcome_data,censored_data=ld$censored_data,competing_data=ld$competing_data,timevar_data=ld$timevar_data)
     x <- add_baseline_data(x,data=ld$baseline_data)
     x <- long_to_wide(x,verbose = FALSE)

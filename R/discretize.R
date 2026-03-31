@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: feb 24 2026 (11:04) 
 ## Version: 
-## Last-Updated: mar 30 2026 (14:32) 
+## Last-Updated: mar 31 2026 (13:55) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 76
+##     Update #: 106
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -22,6 +22,137 @@
 # interval is 6 months (180 days) and the threshold is set to 91 then exposure
 # is 1 if the treatment duration exceeds 50% of the length interval
 # and 0 otherwise
+#' Discretize long-format time-dependent data onto a discrete time grid
+#'
+#' This function maps long-format event, measurement, or exposure histories
+#' onto a discrete time grid and returns a wide-format representation with
+#' one column per time interval.
+#'
+#' It is the core engine used by \code{long_to_wide()} and can also be used
+#' directly to implement custom mappings from long to wide format.
+#'
+#' @param method Character string specifying how the long-format data should
+#'   be mapped to the discrete grid. Built-in methods include:
+#'   \describe{
+#'     \item{"measurement"}{Aggregate measurements within intervals.}
+#'     \item{"locf"}{Last observation carried forward.}
+#'     \item{"event"}{Event indicator carried forward after occurrence.}
+#'     \item{"event_interval"}{Indicator for events occurring within an interval.}
+#'     \item{"exposure_time"}{Total exposure time within interval.}
+#'     \item{"exposure_percent"}{Fraction of interval exposed.}
+#'     \item{"any_exposure"}{Indicator for any exposure above threshold.}
+#'     \item{"has_exposure"}{Indicator for exposure exceeding threshold proportion.}
+#'   }
+#'
+#' @param data A \code{data.table} containing long-format observations.
+#'   Required columns depend on \code{method}:
+#'   \describe{
+#'     \item{event / locf}{\code{id}, \code{date}}
+#'     \item{measurement}{\code{id}, \code{date}, \code{value}}
+#'     \item{exposure_*}{\code{id}, \code{start_date}, \code{end_date}}
+#'   }
+#'
+#' @param grid A \code{data.table} defining the discrete time grid with
+#'   one row per subject and interval. Must contain:
+#'   \describe{
+#'     \item{\code{id}}{Subject identifier}
+#'     \item{\code{interval}}{Discrete time index}
+#'     \item{\code{start_interval}, \code{end_interval}}{Interval boundaries}
+#'   }
+#'
+#' @param name Character string used as prefix for the resulting wide-format
+#'   variables.
+#'
+#' @param id Character string naming the subject identifier column.
+#'
+#' @param threshold Numeric threshold used for methods such as
+#'   \code{"any_exposure"} and \code{"has_exposure"}.
+#'
+#' @param lookback_window Numeric or \code{Inf}. For methods using rolling joins
+#'   (e.g., \code{"locf"} and \code{"event"}), defines how far back in time
+#'   values are carried forward.
+#'
+#' @param values Length-2 vector specifying values used for binary indicators,
+#'   typically \code{c(1, 0)} for event/no event.
+#'
+#' @param fun_aggregate Optional function used to aggregate multiple values
+#'   within the same interval (e.g., \code{mean}, \code{median}). For
+#'   \code{method = "measurement"}, this determines how measurements are
+#'   summarized.
+#'
+#' @param fill Value used to fill missing cells in the wide-format output.
+#'
+#' @param ... Additional arguments passed to internal computations.
+#'
+#' @return A \code{data.table} in wide format with one row per subject and
+#'   one column per interval. Column names are constructed as
+#'   \code{paste0(name, "_", interval)}.
+#'
+#' @details
+#' The function works by aligning long-format observations with a discrete
+#' time grid using either rolling joins (for events and measurements) or
+#' interval overlap calculations (for exposures).
+#'
+#' It is designed to be composable and can be used as a building block for
+#' custom mapping functions supplied to \code{long_to_wide()}.
+#'
+#' @examples
+#' library(data.table)
+#'
+#' ## Construct a simple discrete time grid
+#' grid <- data.table(
+#'   id = rep(1:2, each = 3),
+#'   interval = rep(0:2, times = 2),
+#'   start_interval = rep(c(0, 1, 2), times = 2),
+#'   end_interval   = rep(c(1, 2, 3), times = 2)
+#' )
+#'
+#' ## Example 1: event indicator carried forward
+#' event_data <- data.table(
+#'   id = c(1, 2),
+#'   date = c(1.5, 0.5)
+#' )
+#'
+#' discretize(
+#'   method = "event",
+#'   data = event_data,
+#'   grid = grid,
+#'   name = "Y",
+#'   id = "id"
+#' )
+#'
+#' ## Example 2: exposure percent within intervals
+#' exposure_data <- data.table(
+#'   id = c(1, 1, 2),
+#'   start_date = c(0.2, 1.2, 0.0),
+#'   end_date   = c(0.8, 2.5, 1.5)
+#' )
+#'
+#' discretize(
+#'   method = "exposure_percent",
+#'   data = exposure_data,
+#'   grid = grid,
+#'   name = "A",
+#'   id = "id"
+#' )
+#'
+#' ## Example 3: custom mapping using discretize
+#' my_mapper <- function(data, grid, name, id, threshold = 0) {
+#'   out <- discretize(
+#'     method = "exposure_time",
+#'     data = data,
+#'     grid = grid,
+#'     name = name,
+#'     id = id,
+#'   )
+#'   value_cols <- setdiff(names(out), id)
+#'   out[, (value_cols) := lapply(.SD, function(z) 1 * (z > threshold)), .SDcols = value_cols]
+#'   out[]
+#' }
+#'
+#' my_mapper(exposure_data, grid, name = "A_bin", id = "id", threshold = 0.5)
+#'
+#' @export
 discretize <- function(method,
                        data,
                        grid,
@@ -38,7 +169,7 @@ discretize <- function(method,
     data <- copy(data)
     grid <- copy(grid)
     if (length(data) == 0) return(NULL)
-    if ((method == "measurement" && fun_aggregate != "last")){
+    if (method == "measurement" && (length(fun_aggregate) == 0 || fun_aggregate != "last")){
         data[, interval := NA_integer_]
         # exact zero goes to interval 0
         data[date == 0, interval := 0L]
@@ -55,7 +186,7 @@ discretize <- function(method,
         }
     }
     if ((method %chin% c("event","locf"))
-        || (method == "measurement" && fun_aggregate == "last")){
+        || (method == "measurement" && (length(fun_aggregate)>0 &&fun_aggregate == "last"))){
         setnames(grid,"end_interval","date")
         if (method == "event" && length(values) == 2) {
             data[, value := values[[1]]]
@@ -77,7 +208,7 @@ discretize <- function(method,
         setnames(data, "date", "start_date")
         set(data, j = "end_date", value = data[["start_date"]])
     }    
-    if (method %in%c("exposure_time","event_interval","any_exposure")) {
+    if (method %in%c("exposure_time","exposure_percent","event_interval","any_exposure","has_exposure")) {
         # calculate overlap of intervals in long data with grid intervals  
         setkeyv(data, c(id, "start_date", "end_date"))
         setkeyv(grid, c(id, "start_interval", "end_interval"))
@@ -99,11 +230,22 @@ discretize <- function(method,
             overlap[, exposure := (pmin(end_interval, end_date) -
                                    pmax(start_interval, start_date))]
             overlap[is.na(exposure), exposure := 0]
-            # baseline exposure
+            # FIXME: baseline exposure is often only the start of exposure
+            #        but in order to have adherence to the regimen we need to set it
             overlap[interval == 0 & start_date == 0, exposure := 1]
             setkeyv(overlap, c(id, "interval"))
-            overlap <- overlap[, list(value = sum(exposure)), by = c(id, "interval")]
-            if (is.numeric(threshold)) {
+            if (method %chin% c("exposure_time","exposure_percent","any_exposure","has_exposure")){
+                if (method == "exposure_percent"){
+                    # FIXME: the length of interval 0 is zero
+                    overlap <- rbind(
+                        overlap[interval == 0, list(interval = interval,value = sum(exposure)),by = id],
+                        overlap[interval>0, list(value = sum(exposure)/(end_interval[1]-start_interval[1])), by = c(id, "interval")]
+                    )
+                }else{
+                    overlap <- overlap[, list(value = sum(exposure)), by = c(id, "interval")]
+                }
+            }
+            if (method %chin% c("has_exposure","any_exposure")){
                 overlap[, value := 1 * (value > threshold)]
             }
         }
@@ -113,7 +255,7 @@ discretize <- function(method,
                       id = id,
                       value_col = "value",
                       fill = fill,
-                      fun_aggregate = fun_aggregate)
+                      fun_aggregate = fun_aggregate)        
     setkey(wide, id)
     setnames(wide, c(id, paste0(name, "_", names(wide)[-1])))
     setkeyv(wide, id)

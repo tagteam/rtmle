@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 29 2024 (10:44) 
 ## Version: 
-## Last-Updated: mar 30 2026 (15:10) 
+## Last-Updated: mar 31 2026 (07:45) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 200
+##     Update #: 202
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -28,12 +28,12 @@
 #' @examples
 #'
 #' set.seed(112)
-#' ld <- simulate_long_data(n = 181,number_visits = 20,
+#' ld <- simulate_long_data(n = 81,number_visits = 20,
 #'                          beta = list(A_on_Y = -.2,
 #'                                      A0_on_Y = -0.3,A0_on_A = 2),
 #'                          register_format = TRUE)
 #'
-#' x <- rtmle_init(intervals = seq(0,1500,30.45*6),name_id = "id",name_outcome = "Y",
+#' x <- rtmle_init(time_grid = seq(0,1500,30.45*6),name_id = "id",name_outcome = "Y",
 #'                 name_competing = "Dead",name_censoring = "Censored",
 #'                 censored_label = "censored")
 #' x <- add_long_data(x,

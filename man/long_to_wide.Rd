@@ -15,8 +15,17 @@ If missing it is assumed to be zero for all subjects in which case the dates of 
 competing risks, censoring (end-of-followup), and time-varying covariates must be
 given on the time on study scale.}
 
-\item{mappings}{Named list of instructions for how to map the continuous time history of a variable in long-format
-onto the discrete time scale. The names must match \code{names(x$long_data$timevar_data)}.}
+\item{mappings}{Named list of instructions for how to map long-format variables
+  onto the discrete time scale. Names of `mappings` are output variable names.
+  Each mapping may optionally contain `variable`, naming the source variable in
+  `x$long_data$timevar_data`. If omitted, the source variable is assumed to have
+  the same name as the output variable.
+
+  Built-in methods include "measurement", "locf", "event", "event_interval",
+  "any_exposure", "has_exposure", "exposure_time", and "exposure_percent".
+
+  User-defined methods can be supplied either as `method=<function>` or by
+  providing `fun=<function>` together with `columns=...`.}
 
 \item{verbose}{Logical. If \code{FALSE} suppress all messages.}
 
@@ -51,10 +60,38 @@ x <- add_long_data(x,outcome_data=data.frame(id=c(1,3,5),date=0.1,1.3,1.9),
                                                  date=c(0,0,.25,.75,0,0,0,0,0,1.4),
                                                 value=c(4,35,27.7,28.2,8.8,2,3.1,7,7.7,8.4))))
 x <- add_baseline_data(x,data=data.frame(id=1:7,age=40:46))
-x <- long_to_wide(x,L=list(method="locf"))
+x <- long_to_wide(x,L=list(method="locf"),A=list(method="exposure_percent"))
 x$data$timevar_data$L
 x$data$timevar_data$V
 x <- long_to_wide(x,L=list(method="measurement",fun_aggregate="median"))
 x$data
-
+# multiple wide format variables from a single long format variable
+x <- long_to_wide(
+                  x,
+                  L=list(method="locf"),
+                  A=list(method="exposure_percent"),
+                  B=list(variable = "A", method="any_exposure"),
+                  C=list(variable = "A", method="has_exposure",threshold=0.7))
+# custom methods
+my_mapper <- function(data, grid, name, id, threshold = 0, fill = NA) {
+out <- discretize(
+method = "exposure_time",
+data = data,
+grid = grid,
+name = name,
+id = id,
+fill = fill,
+)
+value_cols <- setdiff(names(out), id)
+out[, (value_cols) := lapply(.SD, function(z) 1 * (z > threshold)), .SDcols = value_cols]
+out[]
+}
+x <- long_to_wide(x,
+Z = list(
+variable = "A",
+method = "custom_binary",
+fun = my_mapper,
+columns = c("start_date","end_date"),
+args = list(threshold = 10)
+))
 }
