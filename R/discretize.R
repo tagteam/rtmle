@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: feb 24 2026 (11:04) 
 ## Version: 
-## Last-Updated: mar 31 2026 (14:11) 
+## Last-Updated: apr  4 2026 (07:17) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 107
+##     Update #: 116
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -164,6 +164,8 @@ discretize <- function(method,
                                                    start_interval < date,
                                                    end_interval >= date),
                                          x.interval]]
+        ## discard information beyond the last interval (outside the grid)
+        overlap <- overlap[!is.na(interval)]
         ## if (missing(fun_aggregate) || is.null(fun_aggregate)){
         if (is.function(fun_aggregate)){
             overlap[,list(value = fun_aggregate(value)),by = c(id,"interval")]
@@ -235,7 +237,8 @@ discretize <- function(method,
         }
     }
     setkeyv(overlap, c(id, "interval"))
-    wide <- fast_cast(overlap,
+    wide <- fast_cast(x = overlap,
+                      name = name,
                       id = id,
                       value_col = "value",
                       fill = fill,

@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: mar 19 2026 (15:29) 
 ## Version: 
-## Last-Updated: mar 31 2026 (13:31) 
+## Last-Updated: apr  2 2026 (07:54) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 10
+##     Update #: 15
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -25,6 +25,8 @@
 #' @param x A \code{data.table} in long format containing at least the columns
 #'   \code{id}, \code{interval}, and a value column.
 #'
+#' @param name Name of the variable which is transformed from long to wide format.
+#' 
 #' @param id Character string naming the subject identifier column.
 #'
 #' @param value_col Character string naming the column in \code{x} that contains
@@ -75,6 +77,7 @@
 #' @keywords internal
 #' @export
 fast_cast <- function(x,
+                      name = NULL,
                       id,
                       value_col = "value",
                       fill = NA,
@@ -91,6 +94,9 @@ fast_cast <- function(x,
     dup <- x[, list(N = .N), by = bycols][N > 1L]
     if (nrow(dup) > 0L) {
         if (is.null(fun_aggregate)) {
+            if (length(name)>0){
+                stop(paste0("Processing variable ",name,": duplicate (id, interval) combinations found, but fun_aggregate is NULL."))
+            }
             stop("Duplicate (id, interval) combinations found, but fun_aggregate is NULL.")
         }
         fun_aggregate <- match.fun(fun_aggregate)
@@ -116,7 +122,6 @@ fast_cast <- function(x,
     data.table::setnames(out, "tmp_id", id)
     out <- cbind(out, data.table::as.data.table(mat))
     data.table::setnames(out, c(id, as.character(intervals)))
-
     out
 }
 

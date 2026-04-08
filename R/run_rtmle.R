@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul  1 2024 (09:11)
 ## Version:
-## Last-Updated: mar 30 2026 (15:10) 
+## Last-Updated: apr  4 2026 (07:20) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 622
+##     Update #: 623
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -142,6 +142,9 @@ run_rtmle <- function(x,
                       progressbar = 0,
                       verbose = FALSE,
                       ...){
+    if (length(x$models) == 0) {
+        stop(paste0("\nTODO: Use the function 'model_formula' to initialize the formula for the nuisance parameter models."))
+    }
     time <- label <- level <- NULL
     if (length(x$targets) == 0) stop("Object contains no targets. You can add one with the function rtmle::target")
     dot_args <- list(...)
