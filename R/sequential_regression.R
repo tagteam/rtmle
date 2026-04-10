@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 30 2024 (14:30)
 ## Version:
-## Last-Updated: mar 24 2026 (11:29) 
+## Last-Updated: apr 10 2026 (15:41) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 595
+##     Update #: 598
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -100,7 +100,8 @@ sequential_regression <- function(x,
             if (is.null(x$diagnostics)){
                 x$diagnostics <- dia
             }else{
-                x$diagnostics <- utils::modifyList(x$diagnostics,dia)
+                for (dd in names(dia))
+                    x$diagnostics[[dd]] <- dia[[dd]]
             }
         }
         # remove attributes
@@ -155,7 +156,7 @@ sequential_regression <- function(x,
                 if (is.null(x$diagnostics)){
                     x$diagnostics$no_positive_weights <- dia
                 }else{
-                    x$diagnostics$no_positive_weights <- c(x$diagnostics$no_positive_weights,dia)
+                    x$diagnostics$no_positive_weights <- rbind(x$diagnostics$no_positive_weights,dia)
                 }
             }
             ## FIXME: why do we NOT need the following?

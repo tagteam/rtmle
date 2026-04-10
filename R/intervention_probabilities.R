@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Oct 17 2024 (09:26) 
 ## Version: 
-## Last-Updated: mar 25 2026 (17:07) 
+## Last-Updated: apr 10 2026 (15:40) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 516
+##     Update #: 519
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -127,7 +127,8 @@ intervention_probabilities <- function(x,
                         if (is.null(x$diagnostics)){
                             x$diagnostics <- dia
                         }else{
-                            x$diagnostics <- utils::modifyList(x$diagnostics,dia)
+                            for (dd in names(dia))
+                                x$diagnostics[[dd]] <- dia[[dd]]
                         }
                     }
                     # remove attributes predicted values
@@ -143,9 +144,10 @@ intervention_probabilities <- function(x,
                     }
                     if (any(nuisance_fit<0) || any(nuisance_fit>1)){
                         nuisance_fit <- pmax(0,pmin(1,nuisance_fit))
-                        x$diagnostics$probabilities_off_range <- c(x$diagnostics$probabilities_off_range,
-                                                                   c("Intervention probabilities outside [0,1] at intervention node ",k," for model ",NP," estimating ", NUI,"."))
-                        ## x$models[[paste0("time_",k)]][[NUI]][[NP]]$warnings <- c("Truncated intervention probabilities outside [0,1].")
+                        x$diagnostics$probabilities_off_range <- rbind(x$diagnostics$probabilities_off_range,
+                                                                       data.table(Intervention_Node = k,
+                                                                                  Nuisance_parameter = NUI,
+                                                                                  Model = NP))
                     }
                     # add columns to the intervention_probs matrix
                     intervention_probs_k <- cbind(intervention_probs_k,

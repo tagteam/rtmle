@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: feb 24 2026 (11:04) 
 ## Version: 
-## Last-Updated: apr  4 2026 (07:17) 
+## Last-Updated: apr 10 2026 (15:46) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 116
+##     Update #: 135
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -148,7 +148,7 @@ discretize <- function(method,
                        fun_aggregate = NULL,
                        fill = NA,
                        ...) {
-    value = exposure = start_date = end_date = NULL
+    value = exposure = start_date = end_date = start_followup_date = NULL
     x.interval = start_interval = end_interval = interval = date = NULL
     data <- copy(data)
     grid <- copy(grid)
@@ -171,18 +171,31 @@ discretize <- function(method,
             overlap[,list(value = fun_aggregate(value)),by = c(id,"interval")]
         }
     }
-    if ((method %chin% c("event","locf"))
+    if ((method %chin% c("event","locf","time_since_event"))
         || (method == "measurement" && (length(fun_aggregate)>0 &&fun_aggregate == "last"))){
         setnames(grid,"end_interval","date")
         if (method == "event" && length(values) == 2) {
             data[, value := values[[1]]]
         } else {
-            stopifnot("value" %in% names(data))
+            if (method == "time_since_event"){
+                set(data,j = "event_date",value = data[["date"]])
+            }else{
+                stopifnot("value" %in% names(data))
+            }
         }
         # map observations/events to the grid using rolling join
         setkeyv(grid, c(id, "date"))
         setkeyv(data, c(id, "date"))
         overlap <- data[grid, roll = lookback_window]
+        if (method == "time_since_event"){
+            if (is.function(fun_aggregate)){
+                set(overlap,j = "value",
+                    value = fun_aggregate(as.numeric(overlap[["date"]]-overlap[["event_date"]])))
+            }else{
+                set(overlap,j = "value",
+                    value = as.numeric(overlap[["date"]]-overlap[["event_date"]]))
+            }
+        }
         if (length(values) == 2) {
             # no event observed within roll window
             overlap[is.na(value), value := values[[2]]]
@@ -190,11 +203,11 @@ discretize <- function(method,
     }
     # FIXME: in equidistant grids methods 'event' and 'any_exposure' can be done without
     #        foverlaps by using roll or even faster vector comparison of dates
-    if (method %chin% c("event","event_interval")) {
+    if (method %chin% "event_interval") {
         setnames(data, "date", "start_date")
         set(data, j = "end_date", value = data[["start_date"]])
-    }    
-    if (method %in%c("exposure_time","exposure_percent","event_interval","any_exposure","has_exposure")) {
+    }
+    if (method %chin%c("exposure_time","exposure_percent","event_interval","any_exposure","has_exposure")) {
         # calculate overlap of intervals in long data with grid intervals  
         setkeyv(data, c(id, "start_date", "end_date"))
         setkeyv(grid, c(id, "start_interval", "end_interval"))
@@ -218,7 +231,9 @@ discretize <- function(method,
             overlap[is.na(exposure), exposure := 0]
             # FIXME: baseline exposure is often only the start of exposure
             #        but in order to have adherence to the regimen we need to set it
-            overlap[interval == 0 & start_date == 0, exposure := 1]
+            if ("start_followup_date" %chin%names(overlap)){
+                overlap[interval == 0 & start_date == start_followup_date, exposure := 1]
+            }
             setkeyv(overlap, c(id, "interval"))
             if (method %chin% c("exposure_time","exposure_percent","any_exposure","has_exposure")){
                 if (method == "exposure_percent"){

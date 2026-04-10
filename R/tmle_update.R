@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul  3 2024 (13:54) 
 ## Version: 
-## Last-Updated: mar 13 2026 (14:38) 
+## Last-Updated: apr 10 2026 (15:22) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 60
+##     Update #: 62
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -40,10 +40,11 @@ tmle_update <- function(Y,
                         control = stats::glm.control(maxit = 100))
         Qstar <- stats::predict(m, newdata = data.temp, type = "response")
     } else {
-        x$diagnostics$no_positive_weights <- c(x$diagnostics$no_positive_weights,
-                                               paste0("No TMLE update because no subject has positive weight in step ",k," for intervention protocol ",protocol,"."))
         Qstar <- stats::plogis(offset)
-        attr(Qstar,"diagnostics") <- paste0("No TMLE update because no subject has positive weight in step ",k," for intervention protocol ",protocol,".")
+        attr(Qstar,"diagnostics") <- data.table(Function = 'rtmle::tmle_update',
+                                                Protocol = protocol,
+                                                Step = k,
+                                                Event = "No positive weights")
     }
     return(Qstar)
 }

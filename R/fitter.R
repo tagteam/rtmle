@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: jan 25 2026 (09:26) 
 ## Version: 
-## Last-Updated: mar 25 2026 (17:34) 
+## Last-Updated: apr 10 2026 (15:31) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 82
+##     Update #: 90
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -31,21 +31,20 @@ fitter <- function(intervention_node,
     ff <- change_outcome_in_formula(formula,"rtmle_outcome")
     current_constants <- sapply(current_data, function(x){length(na.omit(unique(x)))<=1})
     n_outcome_values <- length(unique(current_data[[1]]))
+    if (current_constants[[1]] == TRUE) {minority_count <- 0}
     if (current_constants[[1]] == TRUE ||
         # when the outcome is binary but has less than threshold many occurences of the minority group
         # simply predict the mean
-        (n_outcome_values == 2 && any(table(current_data[[1]])<minority_threshold))){
+        (n_outcome_values == 2 && (minority_count <- min(table(current_data[[1]])))<minority_threshold)){
         if (!missing(diagnostics)){
+            diag_row <- data.table(Function ='rtmle::fitter',
+                                   Intervention_node = intervention_node,
+                                   Outcome = gsub("\"","'",current_outcome_name),
+                                   Event = "Constant outcome or below minority_threshold")
             if (is.null(diagnostics)){
-                diagnostics <- list(constant_outcome_variables <- c(
-                                        diagnostics$constant_outcome_variables,
-                                        paste0("Intervention node ",intervention_node,", outcome ",current_outcome_name,": is constant or the variation is below 'x$tuning_parameters$minority_threshold'.")
-                                    ))
-            } else{
-                diagnostics$constant_outcome_variables <- c(
-                    diagnostics$constant_outcome_variables,
-                    paste0("Intervention node ",intervention_node,", outcome ",current_outcome_name,": is constant or the variation is below 'x$tuning_parameters$minority_threshold'.")
-                )
+                diagnostics <- list(constant_outcome_variables = diag_row)
+            }else{
+                diagnostics$constant_outcome_variables <- rbind(diagnostics$constant_outcome_variables,diag_row)
             }
         }
         mean_Y <- mean(outcome_variable)
@@ -60,13 +59,17 @@ fitter <- function(intervention_node,
             current_constants <- names(current_constants[current_constants])
             current_data <- current_data[,!(names(current_data)%in%current_constants),with = FALSE]
             if (!missing(diagnostics)){
+                diag_row <- data.table(
+                    Function ='rtmle::fitter', 
+                    Intervention_node = intervention_node,
+                    Outcome = gsub("\"","'",current_outcome_name),
+                    Event = "Constant predictors",
+                    Info = paste0(current_constants,collapse = ", "))
                 if (is.null(diagnostics)){
-                    diagnostics <- list(constant_predictor_variables = paste0("Intervention node ",intervention_node,", outcome ",current_outcome_name,": the following predictor variables are constant: ",
-                                                                              paste0(current_constants,collapse = ", ")))
+                    diagnostics <- list(constant_predictor_variables = diag_row) 
                 }else{
-                    diagnostics$constant_predictor_variables <- c(diagnostics$constant_predictor_variables,
-                                                                  paste0("Intervention node ",intervention_node,", outcome ",current_outcome_name,": the following predictor variables are constant: ",
-                                                                         paste0(current_constants,collapse = ", ")))
+                    diagnostics$constant_predictor_variables <- rbind(diagnostics$constant_predictor_variables,
+                                                                      diag_row)
                 }
             }
             ff <- delete_variables_from_formula(character_formula = ff,delete_vars = current_constants)
@@ -79,11 +82,15 @@ fitter <- function(intervention_node,
             mean_Y <- mean(outcome_variable)
             predicted_values <- rep(mean_Y,NROW(intervened_data))
             if (!missing(diagnostics)){
+                diag_row <- data.table(
+                    Function ='rtmle::fitter', 
+                    Intervention_node = intervention_node,
+                    Outcome = gsub("\"","'",current_outcome_name),
+                    Event = "Empty rhs of formula")
                 if (is.null(diagnostics)){
-                    diagnostics <- list(empty_rhs = paste0("Intervention node ",intervention_node,", outcome ",current_outcome_name))
+                    diagnostics <- list(empty_rhs = diag_row)
                 }else{
-                    diagnostics$empty_rhs <- c(diagnostics$empty_rhs,
-                                               paste0("Intervention node ",intervention_node,", outcome ",current_outcome_name))
+                    diagnostics$empty_rhs <- rbind(diagnostics$empty_rhs,diag_row)
                 }
                 data.table::setattr(predicted_values,"diagnostics",diagnostics)
             }

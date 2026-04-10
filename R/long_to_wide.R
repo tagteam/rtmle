@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 22 2024 (14:07) 
 ## Version: 
-## Last-Updated: apr  4 2026 (07:11) 
+## Last-Updated: apr 10 2026 (15:41) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 334
+##     Update #: 373
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -86,7 +86,6 @@ long_to_wide <- function(x,
     if (length(x$long_data) == 0) {
         stop("x$long_data has length 0.")
     }
-
     Vnames <- names(x$long_data$timevar_data)
     if (length(Vnames) > 0){
         if (any(duplicated(Vnames))) {
@@ -105,20 +104,25 @@ long_to_wide <- function(x,
             if (bad) stop("All ... arguments must be named.")
         }
         mappings <- c(mappings, dots)
-        if (is.null(mappings)) mappings <- list()
+        if (is.null(mappings)) {
+            mappings <- list()
+        } 
         ## registry of built-in methods
         long_to_wide_methods <- list(
-            measurement      = list(method = "measurement",      fun = discretize, columns = c("date","value"),             args = list(lookback_window = Inf,fun_aggregate = "last")),
-            locf             = list(method = "locf",             fun = discretize, columns = c("date","value"),             args = list(lookback_window = Inf)),
-            event            = list(method = "event",            fun = discretize, columns = "date",                        args = list()),
-            event_interval   = list(method = "event_interval",   fun = discretize, columns = "date",                        args = list()),
-            any_exposure     = list(method = "any_exposure",     fun = discretize, columns = c("start_date","end_date"),   args = list(threshold = 0)),
-            has_exposure     = list(method = "has_exposure",     fun = discretize, columns = c("start_date","end_date"),   args = list(threshold = 0.5)),
-            exposure_time    = list(method = "exposure_time",    fun = discretize, columns = c("start_date","end_date"),   args = list()),
-            exposure_percent = list(method = "exposure_percent", fun = discretize, columns = c("start_date","end_date"),   args = list())
+            measurement      = list(method = "measurement",      fun = discretize, columns = c("date","value"), lookback_window = Inf,fun_aggregate = "last"),
+            locf             = list(method = "locf",             fun = discretize, columns = c("date","value"), lookback_window = Inf),
+            event            = list(method = "event",            fun = discretize, columns = "date"),
+            periodic_event   = list(method = "event_interval",   fun = discretize, columns = "date"),
+            time_since_event = list(method = "time_since_event", fun = discretize, columns = "date"),
+            chronic_disease  = list(method = "time_since_event", fun = discretize, columns = "date", fun_aggregate = function(x){cut(x,breaks = c(-Inf,0,6*30.45,Inf),labels = c("never","acute","chronic"))}),
+            event_interval   = list(method = "event_interval",   fun = discretize, columns = "date"),
+            any_exposure     = list(method = "any_exposure",     fun = discretize, columns = c("start_date","end_date"), threshold = 0),
+            has_exposure     = list(method = "has_exposure",     fun = discretize, columns = c("start_date","end_date"), threshold = 0.5),
+            exposure_time    = list(method = "exposure_time",    fun = discretize, columns = c("start_date","end_date")),
+            exposure_percent = list(method = "exposure_percent", fun = discretize, columns = c("start_date","end_date"))
         )
         known_methods <- names(long_to_wide_methods)
-
+        
         # prepare mappings
         mappings <- lapply(names(mappings), function(Variable_name){
             spec <- mappings[[Variable_name]]
@@ -130,7 +134,6 @@ long_to_wide <- function(x,
             }
             long_format_varname <- spec$variable
             if (is.null(long_format_varname)) long_format_varname <- Variable_name
-
             if (!(long_format_varname %in% Vnames)){
                 stop("Mapping '", Variable_name, "' refers to longformat variable '", long_format_varname,
                      "', which is not found in names(x$long_data$timevar_data).")
@@ -228,6 +231,10 @@ long_to_wide <- function(x,
     } else {
         tv_date_formats <- NULL
     }
+    ## print(do.call("rbind",lapply(mappings,function(x){
+        ## x$method
+    ## })))
+
     # outcome date formats
     ocd_date_formats <- sapply(intersect(c("outcome_data","censored_data","competing_data"), names(x$long_data)), function(v){
         class(x$long_data[[v]][["date"]])
@@ -247,10 +254,11 @@ long_to_wide <- function(x,
     }
     #
     # start of followup
-    # 
+    #
     if (missing(start_followup_date) || start_followup_date[1] == 0){
-        if (missing(start_followup_date) && length(x$diagnostics$long_to_wide) == 0){
-            x$diagnostics$long_to_wide <- "Missing start_followup_date variable, for now assume 0, which implies that all event times must be given on the scale: 'time since 0'."
+        # FIXME: want to store this somewhere or simply print it as a message
+        if (missing(start_followup_date)){
+            message("Missing start_followup_date variable, for now assume 0.\nThis makes only sense if all event times are given on the scale: 'time since 0'.")
         }
         pop <- x$data$baseline_data[, c(id_column), with = FALSE][, start_followup_date := rep(0, .N)]
     } else {
@@ -260,6 +268,7 @@ long_to_wide <- function(x,
         x$names$start_followup_date <- start_followup_date
         pop <- x$data$baseline_data[, c(id_column, start_followup_date), with = FALSE]
         setnames(pop, start_followup_date, "start_followup_date")
+        x$diagnostics$missing_start_followup <- NULL
     }
     #
     # competing risks
@@ -295,9 +304,10 @@ long_to_wide <- function(x,
     #
     # discrete time grid
     #
-    grid <- pop[, list(end_interval = start_followup_date + breaks,
+    grid <- pop[, list(start_followup_date = start_followup_date,
+                       end_interval = start_followup_date + breaks,
                        end_followup = end_followup), by = id_column]
-    grid[, start_interval := c(0, end_interval[-.N]), by = id_column]
+    grid[, start_interval := c(start_followup_date[1],end_interval[-.N]), by = id_column]
     grid <- grid[start_interval <= end_followup]
     grid[, end_followup := NULL]
     grid[, interval := 0:(.N - 1), by = id_column]
@@ -322,24 +332,20 @@ long_to_wide <- function(x,
             m <- mappings[[Variable_name]]
             long_format_varname <- m$variable
             fun <- m$fun
-            if (length(fun_a <- m$fun_aggregate) == 0){
-                fun_a <- m$args$fun_aggregate
+            m[["fun"]] <- m[["variable"]] <- NULL
+            if(m$method %chin% c("event","locf") && length(m$lookback_window) == 0){
+                lookback_window <- Inf
             }
-            args <- list(
-                method = m$method,
-                data = x$long_data$timevar_data[[long_format_varname]],
-                grid = grid,
-                name = Variable_name,
-                id = id_column,
-                values = c(1, 0),
-                fun_aggregate = fun_a,
-                fill = NA
-            )
-            args <- c(args, m$args)
+            args <- c(m,
+                      list(
+                          data = x$long_data$timevar_data[[long_format_varname]],
+                          grid = grid,
+                          name = Variable_name,
+                          id = id_column,
+                          values = c(1, 0),
+                          fill = NA
+                      ))
             args <- args[!duplicated(names(args))]
-            if (length(args$lookback_window) == 0 && m$method %chin% c("event","locf")){
-                args$lookback_window <- Inf
-            }
             ## keep only args accepted by fun unless it has ...
             fml <- names(formals(fun))
             if (!("..." %chin% fml)){

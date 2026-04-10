@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Nov  9 2024 (09:55) 
 ## Version: 
-## Last-Updated: mar 18 2026 (08:17) 
+## Last-Updated: apr 10 2026 (11:34) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 121
+##     Update #: 125
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -44,7 +44,6 @@ parse_learners <- function(learners){
     ## 3. Learners does not contain a list of learners, but must have a name and a fun element
     ## 4. Learners contains a list of learners named learners and a folds element for the super learner.
     # learners must be one of the allowed formats
-
     if (is.character(learners)) {
         # Case 1: single string OR Case 2: vector of strings
         if (!all(nzchar(learners))) {
@@ -61,7 +60,6 @@ parse_learners <- function(learners){
             if (!is.list(learners$learners)) {
                 stop("'learners' must be a list of learner specifications.")
             }
-
             if (!is.numeric(learners$folds)) {
                 stop("'folds' must be numeric.")
             }
@@ -69,7 +67,6 @@ parse_learners <- function(learners){
     } else {
         stop("Invalid 'learners' specification.")
     }
-    
     if (is.character(learners) && length(learners) == 1){
         fun <- learners
         if (inherits(try(has_fun <- do.call("inherits",list(x = as.name(fun),"function")),silent = TRUE),
@@ -150,11 +147,11 @@ parse_learners <- function(learners){
                 }
 
                 if (length(learner_args$folds) == 0){
-                    warning("Argument `folds' of function super_learn is missing but needed for cross-fitting.\nDefaults to 10-fold cross-validation.")
+                    warning("parse_learners: Argument `folds' of function super_learn is missing but needed for cross-fitting.\nDefaults to 10-fold cross-validation.")
                     learner_args$folds <- 10
                 }
                 if (length(learner_args$ensemble_method) == 0){
-                    warning("Argument `ensemble_method' of function super_learn is missing. Defaults to `discrete' which implements a discrete superlearner.")
+                    warning("parse_learners: Argument `ensemble_method' of function super_learn is missing. Defaults to `discrete' which implements a discrete superlearner.")
                     learner_args$ensemble_method <- "discrete"
                 }
 

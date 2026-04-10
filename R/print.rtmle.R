@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 19 2024 (08:31) 
 ## Version: 
-## Last-Updated: mar 27 2026 (06:32) 
+## Last-Updated: apr 10 2026 (15:51) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 180
+##     Update #: 189
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -45,7 +45,6 @@ print.rtmle <- function(x, ...) {
         cat(sep = "","\nCompeting risk:      ", x$names$competing)
     }
     cat(sep = "","\nIntervention nodes:  ", format_index(x$intervention_nodes))
-    cat(sep = "","\nRun time horizons:   ", format_index(x$run_time_horizons))
     # Tuning parameters
     cat(sep = "","\nMinority threshold:  ",x$tuning_parameters$minority_threshold)
     cat(sep = "","\nWeight truncation:   (",paste0(as.character(x$tuning_parameters$weight_truncation),collapse = ","),")")
@@ -64,7 +63,7 @@ print.rtmle <- function(x, ...) {
         }
     }
     if (length(x$data$outcome_data) > 0){
-    cat(sep = "","\nOutcome data:        n=",NROW(x$data$outcome_data),",p=",format_index(names(x$data$outcome_data)[-1]))
+    cat(sep = "","\nOutcome data:        n=",NROW(x$data$outcome_data),", p=",format_index(names(x$data$outcome_data)[-1]))
     }else{
         cat(sep = "","\nTODO: The object contains no outcome data yet. Add them with rtmle::add_wide_data in discretized form or with rtmle::add_long_data followed by rtmle::long_to_wide.")
     }
@@ -76,16 +75,15 @@ print.rtmle <- function(x, ...) {
     }
     
     if (length(x$targets) > 0) {
-    for (t in names(x$targets)) {
-    cat(sep = "","\nTarget:              ", t, " [",paste(x$targets[[t]]$protocols, collapse = ", "),"]")
-    }
-    if (length(x$prepared_data) == 0) {
-    cat(sep = "","\nTODO: Use the function 'prepare_rtmle_data' to prepare the wide format data.")
-    }
+        for (t in names(x$targets)) {
+            cat(sep = "","\nTarget:              ", t, " [",paste(x$targets[[t]]$protocols, collapse = ", "),"]")
+        }
+        if (length(x$prepared_data) == 0) {
+            cat(sep = "","\nTODO: Use the function 'prepare_rtmle_data' to prepare the wide format data.")
+        }
     } else {
-    cat(sep = "","\nPrepared data:     n=",NROW(x$prepared_data),", p=",(NCOL(x$prepared_data)-1))
+        cat(sep = "","\nPrepared data:       n=",NROW(x$prepared_data),", p=",(NCOL(x$prepared_data)-1))
     }
-    
     if (length(x$models) == 0) {
         cat(sep = "","\nTODO: Use the function 'model_formula' to initialize the formula for the nuisance parameter models.")
     } else {
@@ -135,7 +133,7 @@ print.rtmle <- function(x, ...) {
             # --------------------------------
             # SUPERLEARNER
             # --------------------------------
-            folds <- x$folds
+            folds <- x$args$folds
             header <- paste0("SuperLearner (", folds, "-fold CV)")
             learner_lines <- unlist(
                 lapply(x$learners, function(l){summarize_learners(l,called_from_summarize_learners = TRUE)})
@@ -148,13 +146,16 @@ print.rtmle <- function(x, ...) {
     }else{
         cat(sep = "","\nTODO: Use the function 'run_rtmle' to estimate the nuisance parameter models and the target parameter.")
     }
+    if(length(x$run_time_horizons)>0){
+        cat(sep = "","\nFitted time horizons:   ", format_index(x$run_time_horizons))
+    }
     if (length(x$diagnostics)>0){
         cat("\nDiagnostics:")
         for (diag in names(x$diagnostics)){
-            cat("\n                    ",paste0(diag," (n=",length(x$diagnostics[[diag]]),")"))
+            cat("\n                    ",paste0(diag," (n=",NROW(x$diagnostics[[diag]]),")"))
         }
     }else{
-        cat("\nDiagnostics:         No warnings")
+        cat("\nDiagnostics:         No warnings (yet)")
     }
     if (length(x$estimate)>0){
         cat("\n\nResults:\n")

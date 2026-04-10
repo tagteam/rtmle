@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: mar 19 2026 (15:29) 
 ## Version: 
-## Last-Updated: apr  2 2026 (07:54) 
+## Last-Updated: apr 10 2026 (10:28) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 15
+##     Update #: 18
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -86,10 +86,8 @@ fast_cast <- function(x,
     stopifnot(id %in% names(x))
     stopifnot("interval" %in% names(x))
     stopifnot(value_col %in% names(x))
-
     bycols <- c(id, "interval")
     x <- x[, c(bycols, value_col), with = FALSE]
-
     # Only aggregate when duplicates are present
     dup <- x[, list(N = .N), by = bycols][N > 1L]
     if (nrow(dup) > 0L) {
@@ -105,22 +103,22 @@ fast_cast <- function(x,
                .SDcols = value_col]
         value_col <- "tmp_value"
     }
-
     ids <- unique(x[[id]])
     intervals <- sort(unique(x[["interval"]]))
-
     i <- match(x[[id]], ids)
     j <- match(x[["interval"]], intervals)
-
     mat <- matrix(fill, nrow = length(ids), ncol = length(intervals))
-    ## mat[cbind(i, j)] <- x[[value_col]]
-    # can you improve the efficiency of the previous line?
     linear_indices <- (j - 1L) * length(ids) + i
     mat[linear_indices] <- x[[value_col]]
-    
-    out <- data.table::data.table(tmp_id = ids)
-    data.table::setnames(out, "tmp_id", id)
-    out <- cbind(out, data.table::as.data.table(mat))
+    out <- data.table::as.data.table(mat)
+    # deal with factor variables
+    if (length(vlevs <- levels(x[[value_col]]))>0){
+        for (j in names(out)) {
+            set(out, j = j, value = factor(out[[j]], levels = 1:length(vlevs),labels = vlevs))
+        }
+    }
+    # place id column
+    out <- cbind(data.table::data.table(tmp_id = ids),out)
     data.table::setnames(out, c(id, as.character(intervals)))
     out
 }

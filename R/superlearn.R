@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Oct 31 2024 (07:29) 
 ## Version: 
-## Last-Updated: mar 25 2026 (16:52) 
+## Last-Updated: apr 10 2026 (15:32) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 290
+##     Update #: 296
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -113,7 +113,7 @@ superlearn <- function(folds,
         # because 2 level variables are caught by constant variable checks
         # when 1 level is missing
         multi_factor_levels <- data[, list(factor = factor_cols,
-                                                             expected_levels = sapply(.SD,uniqueN)),
+                                           expected_levels = sapply(.SD,uniqueN)),
                                     .SDcols = factor_cols][expected_levels>2]
     }else{
         multi_factor_levels <- NULL
@@ -156,13 +156,15 @@ superlearn <- function(folds,
                 vars_missing_levels_k <- unique(rbind(
                     multi_factor_levels,
                     data[, list(factor = multi_factor_levels$factor,
-                                                  expected_levels = sapply(.SD,uniqueN)),
+                                expected_levels = sapply(.SD,uniqueN)),
                          .SDcols = multi_factor_levels$factor]))[duplicated(factor)]$factor
                 if (length(vars_missing_levels_k)>0){
                     if (!missing(diagnostics)){
-                        diagnostics$missing_levels <- c(diagnostics$missing_levels,
-                                                        paste0("Outcome: ",outcome_variable,": the following variables have not all levels in all folds: ",
-                                                               paste0(vars_missing_levels_k,collapse = ", ")))
+                        diagnostics$missing_levels <- rbind(diagnostics$missing_levels,
+                                                            data.table(Function = 'rtmle::superlearn',
+                                                                       Outcome = outcome_variable_name,
+                                                                       Event = "Not all levels in all folds",
+                                                                       Info = paste0(vars_missing_levels_k,collapse = ", ")))
                     }
                     character_formula_k <- delete_variables_from_formula(character_formula = character_formula_k,
                                                                          delete_vars = vars_missing_levels_k)
@@ -171,8 +173,12 @@ superlearn <- function(folds,
             # remove constant predictor variables
             if (length(current_constants)>0){
                 if (!missing(diagnostics)){
-                    diagnostics$constant_predictors <- c(diagnostics$constant_predictors,paste0("Outcome: ",outcome_variable,": the following variables are constant in fold ",k,": ",
-                                                                                                paste0(current_constants,collapse = ", ")))
+                    diagnostics$constant_predictors <- rbind(diagnostics$constant_predictors,
+                                                             data.table(Function = 'rtmle::superlearn',
+                                                                        Outcome = outcome_variable_name,
+                                                                        Event = "constant_predictors",
+                                                                        Fold = k,
+                                                                        Info = paste0(current_constants,collapse = ", ")))
                 }
                 character_formula_k <- delete_variables_from_formula(character_formula = character_formula_k,
                                                                      delete_vars = current_constants)
@@ -256,10 +262,10 @@ superlearn <- function(folds,
     if (all(ensemble_weights == 0)){
         # NULL model prediction
         if (!missing(diagnostics)){
-            diagnostics$superlearner_null_model <- c(diagnostics$superlearner_null_model,
-                                                     paste0("For outcome ",
-                                                            outcome_variable_name, 
-                                                            " all learners performed worse than the null model. Fall back to null model (average prediction)"))
+            diagnostics$superlearner_null_model <- rbind(diagnostics$superlearner_null_model,
+                                                         data.table(Function ='rtmle::superlearn',
+                                                                    Outcome = outcome_variable_name,
+                                                                    Event = "All learners performed worse than the null model"))
         }
         predicted_values <- rep(mean(data[[outcome_variable]]),NROW(intervened_data))
     }else{
