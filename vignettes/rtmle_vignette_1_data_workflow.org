@@ -4,6 +4,12 @@
 #+PROPERTY: header-args:R :async :results output :exports both :session *R* :cache yes
 * notes                                                            :noexport:
 
+Structure:
+- Make one vignette (nr=0) which uses pre-discretized data and gives
+  overview of the structure
+- Make one vignette (nr=1, this one) which focus on data preparation
+  and long to wide
+
 FIX:
 - [X] _init should not need anything else than outcome data by default
 - [X] add_long_data should not demand anything:
@@ -211,13 +217,14 @@ Data are then added to the empty =rtmle= object as follows.
 
 Above we have exemplified different ways of adding data: Information
 about outcome (=outcome_data=, =censored_data=, and =competing_data=)
-have dedicated names. Time-varying variables can be added as dataset
-supplied with user chosen arguments (=HbA1c = hba1c_data=) and/or as a
-named list to the dedicated =timevar_data= argument (=timevar_data =
-treat_data_list=). As shown above, datasets can be added in one go
-(one =add_long_data=) or in separate steps (several =add_long_data=).
+have dedicated names. Time-varying variables can be added as datasets
+supplied with user chosen arguments (e.g., =HbA1c = hba1c_data=)
+and/or as a named list to the dedicated =timevar_data= argument
+(=timevar_data = treat_data_list=). As shown above, datasets can be
+added in one go (one =add_long_data=) or in separate steps (several
+=add_long_data=).
 
-The data is now stored in the =rtmle=:
+The data is now stored in the =rtmle= object:
 
 #+BEGIN_SRC R
   names(x$long_data)
