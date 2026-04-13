@@ -1,0 +1,588 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<!-- 2026-03-23 man 20:51 -->
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Data Preparation Workflow in rtmle</title>
+<meta name="author" content="Anders Munch" />
+<meta name="generator" content="Org Mode" />
+<style>
+  #content { max-width: 60em; margin: auto; }
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #e6e6e6;
+    border-radius: 3px;
+    background-color: #f2f2f2;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: auto;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    top: -8px;
+    right: 12px;
+    padding: 3px;
+    color: #555;
+    background-color: #f2f2f299;
+  }
+  pre.src:hover:before { display: inline; margin-top: 14px;}
+  /* Languages per Org manual */
+  pre.src-asymptote:before { content: 'Asymptote'; }
+  pre.src-awk:before { content: 'Awk'; }
+  pre.src-authinfo::before { content: 'Authinfo'; }
+  pre.src-C:before { content: 'C'; }
+  /* pre.src-C++ doesn't work in CSS */
+  pre.src-clojure:before { content: 'Clojure'; }
+  pre.src-css:before { content: 'CSS'; }
+  pre.src-D:before { content: 'D'; }
+  pre.src-ditaa:before { content: 'ditaa'; }
+  pre.src-dot:before { content: 'Graphviz'; }
+  pre.src-calc:before { content: 'Emacs Calc'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-fortran:before { content: 'Fortran'; }
+  pre.src-gnuplot:before { content: 'gnuplot'; }
+  pre.src-haskell:before { content: 'Haskell'; }
+  pre.src-hledger:before { content: 'hledger'; }
+  pre.src-java:before { content: 'Java'; }
+  pre.src-js:before { content: 'Javascript'; }
+  pre.src-latex:before { content: 'LaTeX'; }
+  pre.src-ledger:before { content: 'Ledger'; }
+  pre.src-lisp:before { content: 'Lisp'; }
+  pre.src-lilypond:before { content: 'Lilypond'; }
+  pre.src-lua:before { content: 'Lua'; }
+  pre.src-matlab:before { content: 'MATLAB'; }
+  pre.src-mscgen:before { content: 'Mscgen'; }
+  pre.src-ocaml:before { content: 'Objective Caml'; }
+  pre.src-octave:before { content: 'Octave'; }
+  pre.src-org:before { content: 'Org mode'; }
+  pre.src-oz:before { content: 'OZ'; }
+  pre.src-plantuml:before { content: 'Plantuml'; }
+  pre.src-processing:before { content: 'Processing.js'; }
+  pre.src-python:before { content: 'Python'; }
+  pre.src-R:before { content: 'R'; }
+  pre.src-ruby:before { content: 'Ruby'; }
+  pre.src-sass:before { content: 'Sass'; }
+  pre.src-scheme:before { content: 'Scheme'; }
+  pre.src-screen:before { content: 'Gnu Screen'; }
+  pre.src-sed:before { content: 'Sed'; }
+  pre.src-sh:before { content: 'shell'; }
+  pre.src-sql:before { content: 'SQL'; }
+  pre.src-sqlite:before { content: 'SQLite'; }
+  /* additional languages in org.el's org-babel-load-languages alist */
+  pre.src-forth:before { content: 'Forth'; }
+  pre.src-io:before { content: 'IO'; }
+  pre.src-J:before { content: 'J'; }
+  pre.src-makefile:before { content: 'Makefile'; }
+  pre.src-maxima:before { content: 'Maxima'; }
+  pre.src-perl:before { content: 'Perl'; }
+  pre.src-picolisp:before { content: 'Pico Lisp'; }
+  pre.src-scala:before { content: 'Scala'; }
+  pre.src-shell:before { content: 'Shell Script'; }
+  pre.src-ebnf2ps:before { content: 'ebfn2ps'; }
+  /* additional language identifiers per "defun org-babel-execute"
+       in ob-*.el */
+  pre.src-cpp:before  { content: 'C++'; }
+  pre.src-abc:before  { content: 'ABC'; }
+  pre.src-coq:before  { content: 'Coq'; }
+  pre.src-groovy:before  { content: 'Groovy'; }
+  /* additional language identifiers from org-babel-shell-names in
+     ob-shell.el: ob-shell is the only babel language using a lambda to put
+     the execution function name together. */
+  pre.src-bash:before  { content: 'bash'; }
+  pre.src-csh:before  { content: 'csh'; }
+  pre.src-ash:before  { content: 'ash'; }
+  pre.src-dash:before  { content: 'dash'; }
+  pre.src-ksh:before  { content: 'ksh'; }
+  pre.src-mksh:before  { content: 'mksh'; }
+  pre.src-posh:before  { content: 'posh'; }
+  /* Additional Emacs modes also supported by the LaTeX listings package */
+  pre.src-ada:before { content: 'Ada'; }
+  pre.src-asm:before { content: 'Assembler'; }
+  pre.src-caml:before { content: 'Caml'; }
+  pre.src-delphi:before { content: 'Delphi'; }
+  pre.src-html:before { content: 'HTML'; }
+  pre.src-idl:before { content: 'IDL'; }
+  pre.src-mercury:before { content: 'Mercury'; }
+  pre.src-metapost:before { content: 'MetaPost'; }
+  pre.src-modula-2:before { content: 'Modula-2'; }
+  pre.src-pascal:before { content: 'Pascal'; }
+  pre.src-ps:before { content: 'PostScript'; }
+  pre.src-prolog:before { content: 'Prolog'; }
+  pre.src-simula:before { content: 'Simula'; }
+  pre.src-tcl:before { content: 'tcl'; }
+  pre.src-tex:before { content: 'TeX'; }
+  pre.src-plain-tex:before { content: 'Plain TeX'; }
+  pre.src-verilog:before { content: 'Verilog'; }
+  pre.src-vhdl:before { content: 'VHDL'; }
+  pre.src-xml:before { content: 'XML'; }
+  pre.src-nxml:before { content: 'XML'; }
+  /* add a generic configuration mode; LaTeX export needs an additional
+     (add-to-list 'org-latex-listings-langs '(conf " ")) in .emacs */
+  pre.src-conf:before { content: 'Configuration File'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .equation-container {
+    display: table;
+    text-align: center;
+    width: 100%;
+  }
+  .equation {
+    vertical-align: middle;
+  }
+  .equation-label {
+    display: table-cell;
+    text-align: right;
+    vertical-align: middle;
+  }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  .org-svg { }
+</style>
+<script>
+  window.MathJax = {
+    tex: {
+      ams: {
+        multlineWidth: '85%'
+      },
+      tags: 'ams',
+      tagSide: 'right',
+      tagIndent: '.8em'
+    },
+    chtml: {
+      scale: 1.0,
+      displayAlign: 'center',
+      displayIndent: '0em'
+    },
+    svg: {
+      scale: 1.0,
+      displayAlign: 'center',
+      displayIndent: '0em'
+    },
+    output: {
+      font: 'mathjax-modern',
+      displayOverflow: 'overflow'
+    }
+  };
+</script>
+
+<script
+  id="MathJax-script"
+  async
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+</script>
+</head>
+<body>
+<div id="content" class="content">
+<h1 class="title">Data Preparation Workflow in rtmle</h1>
+<div id="outline-container-org5cccaab" class="outline-2">
+<h2 id="org5cccaab">Setup</h2>
+<div class="outline-text-2" id="text-org5cccaab">
+<p>
+We load needed packages and a artificial, simulated dataset to
+illustrate the functionality of the <code>rtmle</code> package.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-R">library(data.table)
+library(rtmle)
+diab_data &lt;- fread("./data/diabetes_sim_data.csv")
+</pre>
+</div>
+
+<p>
+The first 20 lines of the simulated dataset <code>diab_data</code> look like this
+</p>
+
+<div class="org-src-container">
+<pre class="src src-R">head(diab_data, n=20)
+</pre>
+</div>
+
+<pre class="example" id="org1313a02">
+       id   sex      age      date    event    HbA1c  GLP1 SGLT2  DPP4  MACE
+    &lt;int&gt; &lt;int&gt;    &lt;num&gt;     &lt;num&gt;   &lt;char&gt;    &lt;num&gt; &lt;int&gt; &lt;int&gt; &lt;int&gt; &lt;int&gt;
+ 1:     1     1 70.83169  0.000000 baseline 42.38161     1     0     0     0
+ 2:     1     1 70.83169  5.155612    visit 42.81016     0     1     1     0
+ 3:     1     1 70.83169 10.552336    visit 40.94586     0     0     0     0
+ 4:     1     1 70.83169 14.782062    visit 41.02639     0     0     0     0
+ 5:     1     1 70.83169 18.851708    visit 41.14244     0     0     1     0
+ 6:     1     1 70.83169 26.291746    visit 40.21101     0     0     1     0
+ 7:     1     1 70.83169 32.149679    visit 41.42865     1     1     1     0
+ 8:     1     1 70.83169 36.502307    visit 43.11753     1     1     0     0
+ 9:     1     1 70.83169 42.620083    visit 43.37236     1     0     1     0
+10:     1     1 70.83169 49.512016    visit 44.09558     1     0     0     0
+11:     1     1 70.83169 55.978340    visit 43.89561     1     1     1     0
+12:     1     1 70.83169 60.000000  dropout 43.95295     1     1     1     0
+13:     2     1 74.57255  0.000000 baseline 53.23016     1     0     0     0
+14:     2     1 74.57255  7.370287    visit 52.31920     1     0     0     0
+15:     2     1 74.57255 11.861928    visit 53.36066     1     0     0     0
+16:     2     1 74.57255 18.807641    visit 53.13922     1     1     0     0
+17:     2     1 74.57255 24.587680    visit 50.21304     0     1     0     0
+18:     2     1 74.57255 30.454014    visit 50.74158     0     0     1     0
+19:     2     1 74.57255 35.815205    visit 50.78268     0     0     1     0
+20:     2     1 74.57255 42.615748    visit 50.19543     0     0     1     0
+       id   sex      age      date    event    HbA1c  GLP1 SGLT2  DPP4  MACE
+    &lt;int&gt; &lt;int&gt;    &lt;num&gt;     &lt;num&gt;   &lt;char&gt;    &lt;num&gt; &lt;int&gt; &lt;int&gt; &lt;int&gt; &lt;int&gt;
+</pre>
+
+<p>
+The for each individual (identified by the <code>id</code> variable), <code>sex</code> and
+<code>age</code> variables are fixed at baseline and does not change. The
+variables <code>date</code> and <code>event</code> provides information about when something
+happened and what that was. In our case, we have the following
+possible types of event.
+</p>
+<div class="org-src-container">
+<pre class="src src-R">table(diab_data$event)
+</pre>
+</div>
+
+<pre class="example">
+
+baseline    death  dropout     MACE    visit 
+    3000      890     2110      783    22655
+</pre>
+
+
+<p>
+All subjects have exactly one baseline event where <code>date</code> equals 0,
+and where baseline variables are defined. The times at events of type
+'death', 'MACE', and 'dropout' denote time of death, MACE, and
+censoring, respectively. Death and censoring can only happens once,
+while MACE can happen several times. We will use first time of MACE as
+our event of interest and consider death as a competing event in the
+following analyses. The times for which <code>event</code> is 'visit' denotes
+times at which some time-varying variable was updated. In this case,
+the time-varying variables are <code>HbA1c</code>, <code>GLP1</code>, <code>SGLT2</code>, and
+<code>DDP4</code>. The <code>HbA1c</code> column denotes (measured) HbA1c value at the given
+<code>date</code>, while the 1/0 indicators in the <code>GLP1</code>, <code>SGLT2</code>, and <code>DDP4</code>
+columns denote on/off treatment. For instance, the subject 1 used GLP1
+at time 0 (baseline), stopped using GLP1 at time \( \approx 5.16 \)
+and then started using GLP1 again at time \( \approx 32.15 \).
+</p>
+
+<p>
+We extract the information we need into different data sets as
+follows:
+</p>
+
+<ul class="org-ul">
+<li><p>
+Baseline data:
+</p>
+<div class="org-src-container">
+<pre class="src src-R">baseline_data=diab_data[date == 0, .(id, sex, age)]
+</pre>
+</div></li>
+
+<li><p>
+Outcome data:
+</p>
+<div class="org-src-container">
+<pre class="src src-R">## first MACE (outcome):
+out_data &lt;- diab_data[event == "MACE" &amp; MACE == 1][, .(id, date)]
+
+## time of death (competing event):
+comp_data &lt;- diab_data[event == "death",.(id,date)]
+
+## last time seen with no event time (censoring time):
+cens_data &lt;- diab_data[order(id,date), .SD[.N], by = id][event%in%c("visit","dropout"),.(id,date)]
+</pre>
+</div></li>
+
+<li><p>
+Time-varying data:
+</p>
+<div class="org-src-container">
+<pre class="src src-R">## Get times at which HbA1c was measured for each patient:
+hba1c_data &lt;- diab_data[event%in%c("baseline","MACE","visit"),.(id, date, value=HbA1c)]
+
+## For each treatment variable, we construct exposure time datasets:
+treat_vars &lt;- c("GLP1","SGLT2","DPP4")
+treat_data_list &lt;- lapply(treat_vars, function(tv){
+  d &lt;- diab_data[,c("id","date",tv),with = FALSE]
+  setnames(d,c("id","start_exposure","value"))
+  d[,end_exposure := shift(x = start_exposure,n = 1,type = "lead"),by = id]
+  ## when treatment starts at the last time point in a time-series
+  ## then the duration is unknown
+  d &lt;- d[!is.na(end_exposure)]
+  d &lt;- d[value != 0]
+  d[,value := NULL]
+})
+names(treat_data_list) &lt;- treat_vars
+</pre>
+</div>
+
+<p>
+The <code>hba1c_data</code> contains the measured Hba1c values. Note that for
+it to be compatible <code>rtmle</code> setup, we need the HbA1c value measured
+at time <code>time</code> to be named <code>value</code>.
+</p>
+<div class="org-src-container">
+<pre class="src src-R">head(hba1c_data)
+</pre>
+</div>
+
+<pre class="example">
+      id      date    value
+   &lt;int&gt;     &lt;num&gt;    &lt;num&gt;
+1:     1  0.000000 42.38161
+2:     1  5.155612 42.81016
+3:     1 10.552336 40.94586
+4:     1 14.782062 41.02639
+5:     1 18.851708 41.14244
+6:     1 26.291746 40.21101
+</pre>
+
+
+<p>
+<code>treat_data_list</code> is a list of dataset which contains start and end
+exposure period for a given treatment, for instance:
+</p>
+<div class="org-src-container">
+<pre class="src src-R">head(treat_data_list[["GLP1"]])
+</pre>
+</div>
+
+<pre class="example">
+      id start_exposure end_exposure
+   &lt;int&gt;          &lt;num&gt;        &lt;num&gt;
+1:     1        0.00000     5.155612
+2:     1       32.14968    36.502307
+3:     1       36.50231    42.620083
+4:     1       42.62008    49.512016
+5:     1       49.51202    55.978340
+6:     1       55.97834    60.000000
+</pre></li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-orgaca3e44" class="outline-2">
+<h2 id="orgaca3e44">Initialize <code>rtmle</code> object and add data</h2>
+<div class="outline-text-2" id="text-orgaca3e44">
+<p>
+[describe init process]
+</p>
+
+<div class="org-src-container">
+<pre class="src src-R">x &lt;- rtmle_init(time_grid = seq(0, 5*6, by = 6),
+                name_id = "id",
+                name_competing = "death",
+                name_outcome = "MACE",
+                name_censoring = "censoring")
+</pre>
+</div>
+
+<p>
+Data are then added to the empty <code>rtmle</code> object as follows.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-R">x &lt;- add_baseline_data(x,baseline_data)
+x &lt;- add_long_data(x,
+                   outcome_data = out_data,
+                   censored_data = cens_data,
+                   competing_data = comp_data)
+x &lt;- add_long_data(x,
+                   HbA1c = hba1c_data,
+                   timevar_data = treat_data_list)
+</pre>
+</div>
+
+<p>
+Above we have exemplified different ways of adding data: Information
+about outcome (<code>outcome_data</code>, <code>censored_data</code>, and <code>competing_data</code>)
+have dedicated names. Time-varying variables can be added as datasets
+supplied with user chosen arguments (e.g., <code>HbA1c = hba1c_data</code>)
+and/or as a named list to the dedicated <code>timevar_data</code> argument
+(<code>timevar_data = treat_data_list</code>). As shown above, datasets can be
+added in one go (one <code>add_long_data</code>) or in separate steps (several
+<code>add_long_data</code>).
+</p>
+
+<p>
+The data is now stored in the <code>rtmle</code> object:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-R">names(x$long_data)
+</pre>
+</div>
+
+<pre class="example">
+[1] "timevar_data"   "outcome_data"   "censored_data"  "competing_data"
+</pre>
+
+
+<div class="org-src-container">
+<pre class="src src-R">names(x$long_data$timevar_data)
+</pre>
+</div>
+
+<pre class="example">
+[1] "GLP1"  "SGLT2" "DPP4"  "HbA1c"
+</pre>
+</div>
+</div>
+
+<div id="outline-container-orgbe2b1da" class="outline-2">
+<h2 id="orgbe2b1da">Convert long data to discretized wide data</h2>
+<div class="outline-text-2" id="text-orgbe2b1da">
+<p>
+TODO
+</p>
+</div>
+</div>
+
+<div id="outline-container-org5011e85" class="outline-2">
+<h2 id="org5011e85">Demonstrate bug</h2>
+<div class="outline-text-2" id="text-org5011e85">
+<div class="org-src-container">
+<pre class="src src-R">library(data.table)
+library(rtmle)
+diab_data &lt;- fread("./data/diabetes_sim_data.csv")
+baseline_data=diab_data[date == 0, .(id, sex, age)]
+out_data &lt;- diab_data[event == "MACE" &amp; MACE == 1][, .(id, date)]
+sglt2_data &lt;- diab_data[,.(id,start_exposure = date,value = SGLT2)]
+sglt2_data[,end_exposure := shift(x = start_exposure,n = 1,type = "lead"),by = id]
+sglt2_data &lt;- sglt2_data[!is.na(end_exposure)]
+sglt2_data &lt;- sglt2_data[value != 0]
+sglt2_data[,value := NULL]
+
+x &lt;- rtmle_init(time_grid = seq(0, 5*6, by = 6),name_id = "id",name_outcome = "MACE")
+x &lt;- add_baseline_data(x,baseline_data)
+x &lt;- add_long_data(x, outcome_data = out_data, timevar_data = list(SGLT2 = sglt2_data))
+## Construct exposed and exposure time using the function discretize_timevarying_exposure:
+x &lt;- long_to_wide(x, SGLT2 = c("exposed", "exposure_time"))
+</pre>
+</div>
+
+<p>
+Looks nice for id=1:
+</p>
+<div class="org-src-container">
+<pre class="src src-R">sglt2_data[id == 1]
+x$data$timevar_data$SGLT2_exposed[id == 1] 
+x$data$timevar_data$SGLT2_exposure_time[id == 1]
+</pre>
+</div>
+
+<pre class="example" id="org8d61159">
+      id start_exposure end_exposure
+   &lt;int&gt;          &lt;num&gt;        &lt;num&gt;
+1:     1       5.155612     10.55234
+2:     1      32.149679     36.50231
+3:     1      36.502307     42.62008
+4:     1      55.978340     60.00000
+Key: &lt;id&gt;
+      id SGLT2_exposed_0 SGLT2_exposed_1 SGLT2_exposed_2 SGLT2_exposed_3 SGLT2_exposed_4
+   &lt;int&gt;           &lt;num&gt;           &lt;num&gt;           &lt;num&gt;           &lt;num&gt;           &lt;num&gt;
+1:     1               0               1               1               0               0
+   SGLT2_exposed_5
+             &lt;num&gt;
+1:               0
+Key: &lt;id&gt;
+      id SGLT2_exposure_time_0 SGLT2_exposure_time_1 SGLT2_exposure_time_2
+   &lt;int&gt;                 &lt;num&gt;                 &lt;num&gt;                 &lt;num&gt;
+1:     1                     0             0.8443879              4.552336
+   SGLT2_exposure_time_3 SGLT2_exposure_time_4 SGLT2_exposure_time_5
+                   &lt;num&gt;                 &lt;num&gt;                 &lt;num&gt;
+1:                     0                     0                     0
+</pre>
+
+<p>
+Looks bad for id=5 who was exposed at baseline (time=0):
+</p>
+<div class="org-src-container">
+<pre class="src src-R">sglt2_data[id == 5]
+x$data$timevar_data$SGLT2_exposed[id == 5]
+x$data$timevar_data$SGLT2_exposure_time[id == 5]
+</pre>
+</div>
+
+<pre class="example" id="org160fa27">
+      id start_exposure end_exposure
+   &lt;int&gt;          &lt;num&gt;        &lt;num&gt;
+1:     5        0.00000      5.71111
+2:     5        5.71111     13.03988
+Key: &lt;id&gt;
+      id SGLT2_exposed_0 SGLT2_exposed_1 SGLT2_exposed_2 SGLT2_exposed_3 SGLT2_exposed_4
+   &lt;int&gt;           &lt;num&gt;           &lt;num&gt;           &lt;num&gt;           &lt;num&gt;           &lt;num&gt;
+1:     5               1               1               1               1               0
+   SGLT2_exposed_5
+             &lt;num&gt;
+1:               0
+Key: &lt;id&gt;
+      id SGLT2_exposure_time_0 SGLT2_exposure_time_1 SGLT2_exposure_time_2
+   &lt;int&gt;                 &lt;num&gt;                 &lt;num&gt;                 &lt;num&gt;
+1:     5                     1                     6                     6
+   SGLT2_exposure_time_3 SGLT2_exposure_time_4 SGLT2_exposure_time_5
+                   &lt;num&gt;                 &lt;num&gt;                 &lt;num&gt;
+1:              1.039881                     0                     0
+</pre>
+</div>
+</div>
+</div>
+<div id="postamble" class="status">
+<p class="author">Author: Anders Munch</p>
+<p class="date">Created: 2026-03-23 man 20:51</p>
+<p class="validation"><a href="https://validator.w3.org/check?uri=referer">Validate</a></p>
+</div>
+</body>
+</html>
