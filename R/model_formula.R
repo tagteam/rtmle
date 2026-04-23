@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jun 16 2025 (08:58) 
 ## Version: 
-## Last-Updated: mar 30 2026 (15:10) 
+## Last-Updated: apr 23 2026 (17:41) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 136
+##     Update #: 139
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -39,9 +39,11 @@
 ##' @param ... Not used (not yet)
 ##' @return The modified \code{rtmle}object
 ##' @examples
+##' set.seed(17)
 ##' ld <- simulate_long_data(n = 17,number_visits = 20,
 ##'                          beta = list(A_on_Y = -.2,A0_on_Y = -0.3,A0_on_A = 6),
 ##'                          register_format = TRUE)
+##' ld$timevar_data$B <- ld$timevar_data$A[id %in% sort(sample(1:91,size = 75,replace = FALSE))]
 ##' x <- rtmle_init(time_grid = seq(0,1500,30.45*12),name_id = "id",name_outcome = "Y",
 ##'                 name_competing = "Dead",
 ##'                 name_censoring = "Censored",censored_label = "censored")
@@ -51,7 +53,7 @@
 ##'                    competing_data=ld$competing_data,
 ##'                    timevar_data=ld$timevar_data)
 ##' x <- add_baseline_data(x,data=ld$baseline_data)
-##' x <- long_to_wide(x)
+##' x <- long_to_wide(x,start_followup_date=0)
 ##' x <- prepare_rtmle_data(x)
 ##' x <- protocol(x,name = "Always_A",treatment_variables = "A",intervention = 1)
 ##' x <- protocol(x,name = "Never_A",treatment_variables = "A",intervention = 0)

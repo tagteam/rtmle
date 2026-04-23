@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 19 2024 (10:07)
 ## Version:
-## Last-Updated: apr 13 2026 (09:59) 
+## Last-Updated: apr 23 2026 (17:05) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 267
+##     Update #: 269
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -55,11 +55,11 @@ prepare_rtmle_data <- function(x,...){
     
     # check object x
     K = length(x$time_grid)
-    max_time_horizon = max(x$time_grid)
+    max_time_horizon <- max(x$time_grid)
     stopifnot(max_time_horizon>0)
 
     # names of outcome, competing and censoring variables
-    outcome_variables = paste0(x$names$outcome, "_", 1:max_time_horizon)
+    outcome_variables <- paste0(x$names$outcome, "_", 1:max_time_horizon)
     if(length(x$names$competing)>0){
         competing_variables = paste0(x$names$competing, "_", 1:(max_time_horizon-1))
     }else{
@@ -178,7 +178,7 @@ prepare_rtmle_data <- function(x,...){
         }
     }))), names(prepared_data))), with = FALSE]
     # now the number of columns are final and we can search for the outcome variables
-    outcome_variables_position = match(outcome_variables, names(prepared_data))
+    outcome_variables_position <- match(outcome_variables, names(prepared_data))
     if (any(this_out <- is.na(outcome_variables_position))){
         stop(paste0("Cannot find outcome variable(s):\n",paste0(outcome_variables[this_out],collapse = ", "),"\n in x$data$outcome_data"))
     }

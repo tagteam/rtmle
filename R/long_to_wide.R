@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 22 2024 (14:07) 
 ## Version: 
-## Last-Updated: apr 23 2026 (08:39) 
+## Last-Updated: apr 23 2026 (17:40) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 374
+##     Update #: 388
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -88,6 +88,76 @@ long_to_wide <- function(x,
     if (length(x$long_data) == 0) {
         stop("x$long_data has length 0.")
     }
+
+    #
+    # start of followup
+    #
+    if (missing(start_followup_date) || start_followup_date[1] == 0){
+        # FIXME: want to store this somewhere or simply print it as a message
+        if (missing(start_followup_date)){
+            message("Missing start_followup_date variable, for now assume 0.\nThis makes only sense if all event times are given on the scale: 'time since 0'.")
+        }
+        pop <- x$data$baseline_data[, c(id_column), with = FALSE][, start_followup_date := rep(0, .N)]
+    } else {
+        if (!is.character(start_followup_date) || match(start_followup_date, names(x$data$baseline_data), nomatch = 0) == 0){
+            stop("Argument start_followup_date must be the name (as character) of a variable in x$data$baseline_data")
+        }
+        x$names$start_followup_date <- start_followup_date
+        pop <- x$data$baseline_data[, c(id_column, start_followup_date), with = FALSE]
+        setnames(pop, start_followup_date, "start_followup_date")
+        x$diagnostics$missing_start_followup <- NULL
+    }
+    #
+    # rename the date columns in order to calculate the end-of-followup
+    #
+    if (length(x$names$competing) > 0 && length(x$long_data$competing_data) > 0){
+        setnames(x$long_data$competing_data, "date", "competing_date")
+        on.exit(try(setnames(x$long_data$competing_data, "competing_date", "date"),silent = TRUE))
+    }
+    if (length(x$names$censoring) > 0 && length(x$long_data$censored_data) > 0){
+        setnames(x$long_data$censored_data, "date", "censored_date")
+        on.exit(try(setnames(x$long_data$censored_data, "censored_date", "date"),silent = TRUE))
+    }
+    setnames(x$long_data$outcome_data, "date", "outcome_date")
+    on.exit(try(setnames(x$long_data$outcome_data, "outcome_date", "date"),silent = TRUE))
+    #
+    # competing risks
+    # 
+    if (length(x$names$competing) > 0 && length(x$long_data$competing_data) > 0){
+        pop <- x$long_data$competing_data[pop, on = id_column]
+    } else {
+        pop[, competing_date := as.Date(Inf)]
+    }
+    #
+    # right censoring
+    # 
+    if (length(x$names$censoring) > 0 && length(x$long_data$censored_data) > 0){
+        pop <- x$long_data$censored_data[pop, on = id_column]
+    } else {
+        pop[, censored_date := as.Date(Inf)]
+    }
+    #
+    # outcome
+    #
+    pop <- x$long_data$outcome_data[pop, on = id_column]
+    pop[, end_followup := pmin(censored_date, competing_date, outcome_date, na.rm = TRUE)]
+    pop[, c(id_column, "start_followup_date", "end_followup"), with = FALSE]
+    if (any(is.na(pop$end_followup))) stop("Missing values in end of followup information")
+    #
+    # discrete time grid
+    #
+    grid <- pop[, list(start_followup_date = start_followup_date,
+                       end_interval = start_followup_date + breaks,
+                       end_followup = end_followup), by = id_column]
+    grid[, start_interval := c(start_followup_date[1],end_interval[-.N]), by = id_column]
+    grid <- grid[start_interval <= end_followup]
+    grid[, end_followup := NULL]
+    grid[, interval := 0:(.N - 1), by = id_column]
+    grid <- pop[, .SD, .SDcols = c(id_column)][grid, on = id_column]
+    data.table::setcolorder(grid, c(id_column, "interval", "start_interval", "end_interval"))
+    #
+    # prepare mappings for all time-varying variables
+    # 
     Vnames <- names(x$long_data$timevar_data)
     if (length(Vnames) > 0){
         if (any(duplicated(Vnames))) {
@@ -233,12 +303,10 @@ long_to_wide <- function(x,
     } else {
         tv_date_formats <- NULL
     }
-    ## print(do.call("rbind",lapply(mappings,function(x){
-        ## x$method
-    ## })))
-
     # outcome date formats
     ocd_date_formats <- sapply(intersect(c("outcome_data","censored_data","competing_data"), names(x$long_data)), function(v){
+        # here we rename the date variable back to date
+        setnames(x$long_data[[v]],sub("data","date",v),"date")
         class(x$long_data[[v]][["date"]])
     })
     #
@@ -255,76 +323,8 @@ long_to_wide <- function(x,
         stop("All date variables in long format data need to have the same class (either numeric or Date).")
     }
     #
-    # start of followup
-    #
-    if (missing(start_followup_date) || start_followup_date[1] == 0){
-        # FIXME: want to store this somewhere or simply print it as a message
-        if (missing(start_followup_date)){
-            message("Missing start_followup_date variable, for now assume 0.\nThis makes only sense if all event times are given on the scale: 'time since 0'.")
-        }
-        pop <- x$data$baseline_data[, c(id_column), with = FALSE][, start_followup_date := rep(0, .N)]
-    } else {
-        if (!is.character(start_followup_date) || match(start_followup_date, names(x$data$baseline_data), nomatch = 0) == 0){
-            stop("Argument start_followup_date must be the name (as character) of a variable in x$data$baseline_data")
-        }
-        x$names$start_followup_date <- start_followup_date
-        pop <- x$data$baseline_data[, c(id_column, start_followup_date), with = FALSE]
-        setnames(pop, start_followup_date, "start_followup_date")
-        x$diagnostics$missing_start_followup <- NULL
-    }
-    #
-    # competing risks
-    # 
-    if (length(x$names$competing) > 0 && length(x$long_data$competing_data) > 0){
-        if (length(x$long_data$outcome_data) > 0){
-            if (!("competing_date" %in% names(x$long_data$competing_data)))
-                setnames(x$long_data$competing_data, "date", "competing_date")
-        }
-        pop <- x$long_data$competing_data[pop, on = id_column]
-    } else {
-        pop[, competing_date := as.Date(Inf)]
-    }
-    #
-    # right censoring
-    # 
-    if (length(x$names$censoring) > 0 && length(x$long_data$censored_data) > 0){
-        if (!("censored_date" %in% names(x$long_data$censored_data)))
-            setnames(x$long_data$censored_data, "date", "censored_date")
-        pop <- x$long_data$censored_data[pop, on = id_column]
-    } else {
-        pop[, censored_date := as.Date(Inf)]
-    }
-    #
-    # outcome
-    # 
-    if (!("outcome_date" %in% names(x$long_data$outcome_data)))
-        setnames(x$long_data$outcome_data, "date", "outcome_date")
-    pop <- x$long_data$outcome_data[pop, on = id_column]
-    pop[, end_followup := pmin(censored_date, competing_date, outcome_date, na.rm = TRUE)]
-    pop[, c(id_column, "start_followup_date", "end_followup"), with = FALSE]
-    if (any(is.na(pop$end_followup))) stop("Missing values in end of followup information")
-    #
-    # discrete time grid
-    #
-    grid <- pop[, list(start_followup_date = start_followup_date,
-                       end_interval = start_followup_date + breaks,
-                       end_followup = end_followup), by = id_column]
-    grid[, start_interval := c(start_followup_date[1],end_interval[-.N]), by = id_column]
-    grid <- grid[start_interval <= end_followup]
-    grid[, end_followup := NULL]
-    grid[, interval := 0:(.N - 1), by = id_column]
-    grid <- pop[, .SD, .SDcols = c(id_column)][grid, on = id_column]
-    data.table::setcolorder(grid, c(id_column, "interval", "start_interval", "end_interval"))
-    #
     # map outcome data
     #
-    if (length(x$names$competing) > 0 && length(x$long_data$competing_data) > 0){
-        setnames(x$long_data$competing_data, "competing_date", "date")
-    }
-    if (length(x$names$censoring) > 0 && length(x$long_data$censored_data) > 0){
-        setnames(x$long_data$censored_data, "censored_date", "date")
-    }
-    setnames(x$long_data$outcome_data, "outcome_date", "date")
     x$data$outcome_data <- widen_outcome(x, grid = grid, fun_aggregate = NULL)
     #
     # map timevarying data

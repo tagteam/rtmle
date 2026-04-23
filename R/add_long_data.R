@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 25 2024 (11:24)
 ## Version:
-## Last-Updated: apr 23 2026 (16:52) 
+## Last-Updated: apr 23 2026 (17:41) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 69
+##     Update #: 70
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -46,7 +46,6 @@
 #' @author Thomas A. Gerds <tag@@biostat.ku.dk>
 #' @examples
 #' set.seed(17)
-#' tau <- 3
 #' ld <- simulate_long_data(n = 91,number_visits = 20,
 #'                          beta = list(A_on_Y = -.2,A0_on_Y = -0.3,A0_on_A = 6),
 #'                          register_format = TRUE)
@@ -72,7 +71,7 @@
 #'                   estimator = "tmle",
 #'                   protocols = c("Always_A","Never_A"))
 #' x <- model_formula(x)
-#' x <- run_rtmle(x,learner = "learn_glmnet",time_horizon = 1:tau)
+#' x <- run_rtmle(x,learner = "learn_glmnet",time_horizon = 1:3)
 #' summary(x)
 #' @export
 add_long_data <- function(x,

@@ -55,7 +55,6 @@ This function adds a list of datasets with dates and values in long format (mult
 }
 \examples{
 set.seed(17)
-tau <- 3
 ld <- simulate_long_data(n = 91,number_visits = 20,
                          beta = list(A_on_Y = -.2,A0_on_Y = -0.3,A0_on_A = 6),
                          register_format = TRUE)
@@ -81,7 +80,7 @@ x <- target(x,name = "Outcome_risk",
                   estimator = "tmle",
                   protocols = c("Always_A","Never_A"))
 x <- model_formula(x)
-x <- run_rtmle(x,learner = "learn_glmnet",time_horizon = 1:tau)
+x <- run_rtmle(x,learner = "learn_glmnet",time_horizon = 1:3)
 summary(x)
 }
 \seealso{
