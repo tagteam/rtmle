@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 29 2024 (10:44) 
 ## Version: 
-## Last-Updated: mar 31 2026 (07:45) 
+## Last-Updated: apr 23 2026 (16:29) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 202
+##     Update #: 203
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -60,9 +60,7 @@ summary.rtmle <- function(object,analysis = "Main_analysis",targets,reference = 
     if (!(analysis %in% names(object$estimate))){
         stop(paste0("The object does not contain an analysis called '",
                     analysis,
-                    "'. It contains:\n",
-                    paste0(names(object$estimate),collapse = ", "),
-                    "."))
+                    "'."))
     }
     if (length(object$estimate) == 0) {
         message("The object contains no estimates. To obtain estimates You have to call run_rtmle first. See examples.")

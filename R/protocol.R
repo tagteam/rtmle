@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds & Alessandra
 ## Created: Jul 3 2024 (13:46)
 ## Version:
-## Last-Updated: mar 27 2026 (06:25) 
+## Last-Updated: apr 23 2026 (16:54) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 135
+##     Update #: 138
 #----------------------------------------------------------------------
 ##
 ### Commentary: 
@@ -111,7 +111,7 @@ protocol <- function(x,
         if ((time_position <- match("time",treatment_variables,nomatch = 0))>0){
             treatment_variables <- treatment_variables[-time_position]
         }else{
-            if (length(x$time)>1){
+            if (length(x$intervention_nodes)>1){
                 stop("Argument intervention needs a time variable with values that are equal to or a subset of x$intervention_nodes.")
             }
         }
@@ -181,6 +181,8 @@ protocol <- function(x,
             x$names$treatment_options <- c(x$names$treatment_options,treatment_options[new_options])
         }
     }
+    # check adherence
+    x <- intervention_match(x,protocol_name = name)
     x
 }
 

@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul  1 2024 (09:11)
 ## Version:
-## Last-Updated: apr 10 2026 (15:31) 
+## Last-Updated: apr 23 2026 (16:17) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 624
+##     Update #: 627
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -321,6 +321,9 @@ run_rtmle <- function(x,
                 # G-part: fit nuisance parameter models for propensity and censoring
                 #
                 if (estimator == "tmle"){
+                    # when protocols are defined before data are prepared then
+                    # intervention_match needs to run here
+                    x <- intervention_match(x,protocol_name = protocol_name)
                     x <- intervention_probabilities(x,
                                                     protocol_name = protocol_name,
                                                     max_intervention_node = max(time_horizon)-1,

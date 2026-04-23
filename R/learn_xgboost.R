@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Oct 28 2024 (09:26) 
 ## Version: 
-## Last-Updated: mar 30 2026 (15:10) 
+## Last-Updated: apr 23 2026 (08:41) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 134
+##     Update #: 136
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -28,7 +28,7 @@
 ##' @examples
 #' set.seed(17)
 #' tau <- 3
-#' ld <- simulate_long_data(n = 391,number_visits = 20,
+#' ld <- simulate_long_data(n = 91,number_visits = 20,
 #'                          beta = list(A_on_Y = -.2,A0_on_Y = -0.3,A0_on_A = 6),
 #'                          register_format = TRUE)
 #' x <- rtmle_init(time_grid = seq(0,1500,30.45*12),name_id = "id",name_outcome = "Y",name_competing = "Dead",
@@ -39,7 +39,7 @@
 #'                    competing_data=ld$competing_data,
 #'                    timevar_data=ld$timevar_data)
 #' x <- add_baseline_data(x,data=ld$baseline_data)
-#' x <- long_to_wide(x)
+#' x <- long_to_wide(x,start_followup_date=0)
 #' x <- protocol(x,name = "Always_A",
 #'                     intervention = data.frame(time=x$intervention_nodes,
 #'                                               "A" = factor("1",levels = c("0","1"))))
@@ -93,7 +93,8 @@ learn_xgboost <- function(character_formula,
     ivars <- all.vars(formula(character_formula))[-1]
     # remove all other variables to avoid false positive missing values
     intervened_data <- intervened_data[,ivars,with = FALSE]
-    no_missing <- !(apply(intervened_data,1,function(x)any(is.na(x))))
+    # then check for missing values
+    no_missing <- !rowSums(is.na(intervened_data))
     intervened_data = intervened_data[no_missing]
     predicted_values[!no_missing] <- as.numeric(NA)
     rhs <- stats::reformulate(attr(stats::terms(stats::formula(character_formula)), "term.labels"))

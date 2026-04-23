@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Oct 28 2024 (09:26) 
 ## Version: 
-## Last-Updated: jan 30 2026 (12:54) 
+## Last-Updated: apr 23 2026 (08:32) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 79
+##     Update #: 80
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -59,7 +59,8 @@ learn_ranger <- function(character_formula,data,intervened_data,...){
     ivars <- all.vars(formula(character_formula))[-1]
     # remove all other variables to avoid false positive missing values
     intervened_data <- intervened_data[,ivars,with = FALSE]
-    no_missing <- !(apply(intervened_data,1,function(x)any(is.na(x))))
+    # then check for missing values
+    no_missing <- !rowSums(is.na(intervened_data))
     predicted_values[!no_missing] <- as.numeric(NA)
     if (probability) {
         if (inherits(try(

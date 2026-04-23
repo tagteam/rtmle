@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 25 2024 (11:24)
 ## Version:
-## Last-Updated: mar 30 2026 (15:10) 
+## Last-Updated: apr 23 2026 (16:52) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 68
+##     Update #: 69
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -58,7 +58,7 @@
 #'                    competing_data=ld$competing_data,
 #'                    timevar_data=ld$timevar_data)
 #' x <- add_baseline_data(x,data=ld$baseline_data)
-#' x <- long_to_wide(x)
+#' x <- long_to_wide(x,start_followup_date=0)
 #' x <- protocol(x,name = "Always_A",
 #'                     intervention = data.frame(
 #'                                    time=x$time_grid,

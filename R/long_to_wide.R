@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 22 2024 (14:07) 
 ## Version: 
-## Last-Updated: apr 10 2026 (15:41) 
+## Last-Updated: apr 23 2026 (08:39) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 373
+##     Update #: 374
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -45,7 +45,7 @@
 #' x <- rtmle_init(time_grid = 0:2,name_id = "id",
 #'                 name_outcome = "Y",name_competing = "Dead",
 #'                 name_censoring = "Censored",censored_label = "censored")
-#' x <- add_long_data(x,outcome_data=data.frame(id=c(1,3,5),date=0.1,1.3,1.9),
+#' x <- add_long_data(x,outcome_data=data.frame(id=c(1,3,5),date=c(0.1,1.3,1.9)),
 #'                      censored_data=data.frame(id=c(2,6),date=c(0.5,1.5)),
 #'                     competing_data=data.frame(id=c(4,7),date=c(1.1,1.8)),
 #'                     timevar_data=list(A=data.frame(id=c(1,1,1,2,2,3,4,4),
@@ -69,7 +69,9 @@
 #'                   L=list(method="locf"),
 #'                   A=list(method="exposure_percent"),
 #'                   B=list(variable = "A", method="any_exposure"),
-#'                   C=list(variable = "A", method="has_exposure",threshold=0.7))
+#'                   C=list(variable = "A", method="has_exposure",threshold=0.7),
+#'                   start_followup_date=0
+#' )
 #' @export
 long_to_wide <- function(x,
                          start_followup_date,

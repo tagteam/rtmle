@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 30 2024 (14:30)
 ## Version:
-## Last-Updated: apr 10 2026 (15:41) 
+## Last-Updated: apr 23 2026 (13:07) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 598
+##     Update #: 599
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -39,7 +39,7 @@ sequential_regression <- function(x,
     label_time_horizon <- paste0("time_horizon_",time_horizon)
     reverse_time_scale <- rev(seq(1,time_horizon,1))
     if (progressbar){
-        message("Fitting sequential regression: ",protocol_name)
+        message("Fitting sequential regression: ",protocol_name, " for time horizon ", time_horizon)
         progress <- txtProgressBar(max = length(reverse_time_scale), style = progressbar,width=20)
         action <- 0
     }

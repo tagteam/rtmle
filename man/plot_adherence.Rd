@@ -43,6 +43,8 @@ with \code{Hist(time_nonadherence, event_nonadherence)} and plotted with
 }
 \examples{
 \dontrun{
+
+
 p <- plot_adherence(x)
 print(p)
 }

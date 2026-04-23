@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 27 2024 (18:30) 
 ## Version: 
-## Last-Updated: feb 20 2026 (09:25) 
+## Last-Updated: apr 23 2026 (08:26) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 13
+##     Update #: 15
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -38,7 +38,6 @@ glm_net <- function(formula,
                     type.measure = "deviance",
                     family,
                     ...){
-    requireNamespace(c("glmnet","prodlim"))
     if (is.character(formula)) formula <- formula(formula)
     tt <- all.vars(stats::update(formula,".~1"))
     sorted_x_train=bl_obj=terms=design = NULL

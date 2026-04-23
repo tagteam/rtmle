@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: dec 11 2025 (10:23) 
 ## Version: 
-## Last-Updated: mar 20 2026 (06:39) 
+## Last-Updated: apr 23 2026 (14:54) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 26
+##     Update #: 28
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -49,6 +49,8 @@
 #'
 #' @examples
 #' \dontrun{
+#' 
+#' 
 #' p <- plot_adherence(x)
 #' print(p)
 #' }
