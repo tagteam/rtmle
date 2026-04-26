@@ -43,7 +43,7 @@ x <- add_long_data(x,
                    competing_data=ld$competing_data,
                    timevar_data=ld$timevar_data)
 x <- add_baseline_data(x,data=ld$baseline_data)
-x <- long_to_wide(x)
+x <- long_to_wide(x,start_followup_date=0)
 x <- prepare_rtmle_data(x)
 x$prepared_data
 

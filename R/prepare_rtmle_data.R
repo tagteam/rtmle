@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 19 2024 (10:07)
 ## Version:
-## Last-Updated: apr 23 2026 (17:05) 
+## Last-Updated: apr 24 2026 (07:10) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 269
+##     Update #: 270
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -45,7 +45,7 @@
 #'                    competing_data=ld$competing_data,
 #'                    timevar_data=ld$timevar_data)
 #' x <- add_baseline_data(x,data=ld$baseline_data)
-#' x <- long_to_wide(x)
+#' x <- long_to_wide(x,start_followup_date=0)
 #' x <- prepare_rtmle_data(x)
 #' x$prepared_data
 #'

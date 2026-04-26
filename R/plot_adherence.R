@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: dec 11 2025 (10:23) 
 ## Version: 
-## Last-Updated: apr 23 2026 (14:54) 
+## Last-Updated: apr 26 2026 (08:07) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 28
+##     Update #: 30
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -61,10 +61,27 @@
 #' @importFrom prodlim prodlim ggprodlim Hist
 #' @importFrom data.table data.table :=
 #' @export
-plot_adherence <- function(x,...){
+plot_adherence <- function(x,protocols,...){
     time_nonadherence = last_interval = event_nonadherence = value = variable = first_event = event = treatment = NULL
     # find time to first deviation from regime where
     # death is a competing risk and data may be right censored
+    available_protocols <- sapply(names(protocols),function(p){NROW(x$protocols[[p]]$intervention_match)>0})
+    available_protocols <- names(available_protocols[available_protocols])
+    if (missing(protocols)){
+        protocols <- available_protocols
+    }else{
+        if (length(unavailable <- setdiff(protocols,available_protocols))>0){
+            if (NROW(x$prepared_data)>0){
+                stop(paste0("The following protocols have no element intervention_match yet:\n",
+                            paste0(unavailable,collapse = ", "),
+                            "\nRun x <- intervention_match(x,protocol_name)."))
+            }else{
+                stop(paste0("The object does not contain the prepared data yet.\n",
+                            "Run x <-  prepare_rtmle_data(x)\n",
+                            "and then x <- intervention_match(x,protocol_name)."))
+            }
+        }
+    }
     dt_nonadherence <- do.call(rbind,lapply(names(x$protocols),function(pro){
         initiators <- x$protocols[[pro]]$intervention_match[,1,drop = TRUE] == 1
         first_deviation <- apply(x$protocols[[pro]]$intervention_match[initiators == 1,,drop = FALSE], 1, function(x) match(0, x))

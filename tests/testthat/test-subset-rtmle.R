@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Apr  8 2025 (14:47) 
 ## Version: 
-## Last-Updated: mar 31 2026 (07:47) 
+## Last-Updated: apr 24 2026 (07:09) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 43
+##     Update #: 46
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -22,14 +22,14 @@ test_that("run rtmle on a subset",{
     x <- rtmle_init(time_grid = seq(0,1500,30.45*12),name_id = "id",name_outcome = "Y",name_competing = "Dead",name_censoring = "Censored",censored_label = "censored")
     x <- add_long_data(x,outcome_data=ld$outcome_data,censored_data=ld$censored_data,competing_data=ld$competing_data,timevar_data=ld$timevar_data)
     x <- add_baseline_data(x,data=ld$baseline_data)
-    x <- long_to_wide(x,verbose = FALSE)
-    x <- protocol(x,name = "Always_A",intervention = data.frame("time"=x$intervention_nodes,"A" = factor("1",levels = c("0","1"))),verbose = FALSE)
-    x <- protocol(x,name = "Never_A",intervention = data.frame("time"=x$intervention_nodes,"A" = factor("0",levels = c("0","1"))),verbose = FALSE)
+    x <- long_to_wide(x,start_followup_date = 0)
+    x <- protocol(x,name = "Always_A",intervention = data.frame("time"=x$intervention_nodes,"A" = factor("1",levels = c("0","1"))),verbose = 0L)
+    x <- protocol(x,name = "Never_A",intervention = data.frame("time"=x$intervention_nodes,"A" = factor("0",levels = c("0","1"))),verbose = 0L)
     x <- prepare_rtmle_data(x)
     x <- target(x,name = "Outcome_risk",estimator = "tmle",protocols = c("Never_A","Always_A"))
     x <- target(x,name = "Test Outcome_risk",estimator = "tmle",protocols = c("Never_A"))
     x <- model_formula(x)
-    x <- run_rtmle(x,learner = "learn_glmnet",time_horizon = 1:2,verbose = FALSE)
+    x <- run_rtmle(x,learner = "learn_glmnet",time_horizon = 1:2,verbose = 0L)
     # subset to first 79
     ld1 <- lapply(ld,function(d){subset(d,d$id <= 79)})
     names(ld1) <- names(ld)
@@ -39,15 +39,15 @@ test_that("run rtmle on a subset",{
     x1 <- rtmle_init(time_grid = seq(0,1500,30.45*12),name_id = "id",name_outcome = "Y",name_competing = "Dead",name_censoring = "Censored",censored_label = "censored")
     x1 <- add_long_data(x1,outcome_data=ld1$outcome_data,censored_data=ld1$censored_data,competing_data=ld1$competing_data,timevar_data=ld1$timevar_data)
     x1 <- add_baseline_data(x1,data = ld1$baseline_data)
-    x1 <- long_to_wide(x1,verbose = FALSE)
-    x1 <- protocol(x1,name = "Always_A",intervention = data.frame("time"=x$intervention_nodes,"A" = factor("1",levels = c("0","1"))),verbose = FALSE)
-    x1 <- protocol(x1,name = "Never_A",intervention = data.frame("time"=x$intervention_nodes,"A" = factor("0",levels = c("0","1"))),verbose = FALSE)
+    x1 <- long_to_wide(x1,start_followup_date = 0)
+    x1 <- protocol(x1,name = "Always_A",intervention = data.frame("time"=x$intervention_nodes,"A" = factor("1",levels = c("0","1"))),verbose = 0L)
+    x1 <- protocol(x1,name = "Never_A",intervention = data.frame("time"=x$intervention_nodes,"A" = factor("0",levels = c("0","1"))),verbose = 0L)
     x1 <- prepare_rtmle_data(x1)
     x1 <- target(x1,name = "Outcome_risk",estimator = "tmle",protocols = c("Never_A","Always_A"))
     x1 <- target(x1,name = "Test Outcome_risk",estimator = "tmle",protocols = c("Never_A"))
     x1 <- model_formula(x1)
-    x1 <- run_rtmle(x1,learner = "learn_glmnet",time_horizon = 2,verbose = FALSE)
-    x79 <- run_rtmle(x,learner = "learn_glmnet",time_horizon = 2,subsets = list(S = list(label = "S79",id = 1:79)),verbose = FALSE,refit = TRUE)
+    x1 <- run_rtmle(x1,learner = "learn_glmnet",time_horizon = 2,verbose = 0L)
+    x79 <- run_rtmle(x,learner = "learn_glmnet",time_horizon = 2,subsets = list(S = list(label = "S79",id = 1:79)),verbose = 0L,refit = TRUE)
     data.table::setattr(x79$estimate$S79,"IC",NULL)
     expect_equal(x1$estimate$Main_analysis,x79$estimate$S79)
 })
@@ -59,13 +59,13 @@ test_that("stratified analyses",
     x <- rtmle_init(time_grid = seq(0,1500,30.45*12),name_id = "id",name_outcome = "Y",name_competing = "Dead",name_censoring = "Censored",censored_label = "censored")
     x <- add_long_data(x,outcome_data=ld$outcome_data,censored_data=ld$censored_data,competing_data=ld$competing_data,timevar_data=ld$timevar_data)
     x <- add_baseline_data(x,data=ld$baseline_data)
-    x <- long_to_wide(x,verbose = FALSE)
-    x <- protocol(x,name = "Always_A",intervention = data.frame("time"=x$intervention_nodes,"A" = factor("1",levels = c("0","1"))),verbose = FALSE)
-    x <- protocol(x,name = "Never_A",intervention = data.frame("time"=x$intervention_nodes,"A" = factor("0",levels = c("0","1"))),verbose = FALSE)
+    x <- long_to_wide(x,start_followup_date = 0)
+    x <- protocol(x,name = "Always_A",intervention = data.frame("time"=x$intervention_nodes,"A" = factor("1",levels = c("0","1"))),verbose = 0L)
+    x <- protocol(x,name = "Never_A",intervention = data.frame("time"=x$intervention_nodes,"A" = factor("0",levels = c("0","1"))),verbose = 0L)
     x <- prepare_rtmle_data(x)
     x <- target(x,name = "Outcome_risk",estimator = "tmle",protocols = c("Always_A","Never_A"))
     x <- model_formula(x)
-    x <- run_rtmle(x,learner = "learn_glmnet",time_horizon = 1:2,verbose = FALSE)
+    x <- run_rtmle(x,learner = "learn_glmnet",time_horizon = 1:2,verbose = 0L)
     # stratified analyses
     sex_strata <- list(list(label="Sex",append = TRUE,variable="Sex",level="Female",id=x$prepared_data[sex==0,id]),
                        list(label="Sex",append = TRUE,variable="Sex",level="Male",id=x$prepared_data[sex==1,id]))

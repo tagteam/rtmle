@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Oct 17 2024 (09:26) 
 ## Version: 
-## Last-Updated: apr 23 2026 (16:52) 
+## Last-Updated: apr 25 2026 (08:13) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 550
+##     Update #: 559
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -35,16 +35,24 @@ intervention_probabilities <- function(x,
     action_nodes <- x$intervention_nodes[x$intervention_nodes <= max_intervention_node]
     current_protocol <- x$protocols[[protocol_name]]
     # extract intervention_table for the intervention nodes before max_intervention_node
-    intervention_table <- current_protocol$intervention_table[time <= max_intervention_node]
-    # the number of columns is defined by the number of rows in the intervention table
-    NC <- NROW(intervention_table)
-    # plus the number of censoring variables
-    if (length(x$names$censoring)){
-        NC <- NC + sum(paste0(x$names$censoring,"_",action_nodes+1) %chin% names(x$prepared_data))
-    }
+    intervention_table <- na.omit(current_protocol$intervention_table[time <= max_intervention_node])
     #
     # construct a matrices with the intervention/censoring probabilities
     #
+    task_list <- do.call(rbind,lapply(action_nodes, function(k){
+        rbind(do.call(rbind,lapply(x$models[[paste0("time_",k)]][protocol_name],function(w){
+            do.call(rbind,lapply(names(w),function(v){
+                data.table(time = k,type = protocol_name,variable = v,formula = w[[v]]$formula)
+            }))})),
+            do.call(rbind,lapply(x$models[[paste0("time_",k)]]["censoring"],function(w){
+                do.call(rbind,lapply(names(w),function(v){
+                    data.table(time = k,type = "censoring",variable = v,formula = w[[v]]$formula)
+                }))})))
+    }))
+    # the number of columns is defined by the number of censoring models plus the
+    # number of propensitity scores models which in case of multiple treatment variables
+    # depends on the type of propensity score modelling (joint vs sequential)
+    NC <- NROW(task_list)
     if (refit ||
         # only run the necessary models for the current maximal time
         # horizon which is here defined by NC via max_intervention_node 
@@ -54,17 +62,9 @@ intervention_probabilities <- function(x,
             progress <- txtProgressBar(max = NC, style = progressbar, width=20)
             action <- 0
         }
+        # FIXME: if the first time points were readily run but not yet all then
+        #        (unless refit is TRUE) we would like to preserve the probs
         intervention_probs <- matrix(NA_real_,nrow = N,ncol = NC)
-        task_list <- do.call(rbind,lapply(action_nodes, function(k){
-            rbind(do.call(rbind,lapply(x$models[[paste0("time_",k)]][protocol_name],function(w){
-                do.call(rbind,lapply(names(w),function(v){
-                    data.table(time = k,type = protocol_name,variable = v,formula = w[[v]]$formula)
-                }))})),
-                do.call(rbind,lapply(x$models[[paste0("time_",k)]]["censoring"],function(w){
-                    do.call(rbind,lapply(names(w),function(v){
-                        data.table(time = k,type = "censoring",variable = v,formula = w[[v]]$formula)
-                    }))})))
-        }))
         colnames(intervention_probs) <- task_list$variable
         intervention_last_nodes <- task_list[,variable[.N],by = time]$V1
         task_column <- NC

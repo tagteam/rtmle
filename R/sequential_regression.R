@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 30 2024 (14:30)
 ## Version:
-## Last-Updated: apr 23 2026 (13:07) 
+## Last-Updated: apr 25 2026 (08:24) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 599
+##     Update #: 604
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -24,7 +24,7 @@ sequential_regression <- function(x,
                                   progressbar){
     time = Target = Protocol = Time_horizon = Estimator = Estimate = Target_parameter = Standard_error = Lower = Upper = rtmle_predicted_outcome = NULL
     N <- NROW(x$prepared_data)
-    intervention_table <- x$protocols[[protocol_name]]$intervention_table
+    intervention_table <- na.omit(x$protocols[[protocol_name]]$intervention_table)
     intervention_match <- x$protocols[[protocol_name]]$intervention_match
     if (length(x$names$censoring)>0){
         censoring_variables <- paste0(x$names$censoring,"_",1:time_horizon)

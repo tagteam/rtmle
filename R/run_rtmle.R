@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul  1 2024 (09:11)
 ## Version:
-## Last-Updated: apr 23 2026 (16:17) 
+## Last-Updated: apr 25 2026 (06:56) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 627
+##     Update #: 629
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -91,7 +91,7 @@
 #'                    competing_data=ld$competing_data,
 #'                    timevar_data=ld$timevar_data)
 #' x <- add_baseline_data(x,data=ld$baseline_data)
-#' x <- long_to_wide(x)
+#' x <- long_to_wide(x,start_followup_date=0)
 #' x <- protocol(x,name = "Always_A",
 #'                     intervention = data.frame(time=x$intervention_nodes,
 #'                                                    "A" = factor("1",levels = c("0","1"))))
@@ -160,7 +160,7 @@ run_rtmle <- function(x,
         refit <- TRUE
         for (sub in subsets){
             stopifnot(is.character(sub$label[[1]]))
-            xs <- data.table::copy(x[c("targets","names","time_grid","time_grid_labels","protocols","models","intervention_nodes","tuning_parameters")])
+            xs <- data.table::copy(x[c("targets","names","time_grid","time_grid_scale","protocols","models","intervention_nodes","tuning_parameters")])
             for (pp in names(xs$protocols)){
                 xs$protocols[[pp]]$intervention_match <- xs$protocols[[pp]]$intervention_match[x$prepared_data[[x$names$id]] %in% sub$id,,drop = FALSE]
                 xs$protocols[[pp]]$intervention_probs <- NULL

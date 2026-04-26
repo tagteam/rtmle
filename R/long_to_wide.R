@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 22 2024 (14:07) 
 ## Version: 
-## Last-Updated: apr 23 2026 (17:40) 
+## Last-Updated: apr 25 2026 (07:02) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 388
+##     Update #: 393
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -36,7 +36,6 @@
 #'   Built-in methods include "measurement", "locf", "event", "event_interval",
 #'   "any_exposure", "has_exposure", "exposure_time", and "exposure_percent".
 #'
-#' @param verbose Logical. If \code{FALSE} suppress all messages.
 #' @param ... alternative way to specify elements of \code{mappings}.
 #' @details The function discretizes dates of events and concomittant marker information.
 #' Multiple wide format variables may result from a single long-format variable.
@@ -76,11 +75,10 @@
 long_to_wide <- function(x,
                          start_followup_date,
                          mappings,
-                         verbose = TRUE,
                          ...){
     start_interval = end_interval = interval = end_followup = censored_date =  competing_date = outcome_date = NULL
     id_column <- x$names$id
-    breaks <- x$time_grid_labels
+    breaks <- x$time_grid_scale
 
     if (length(x$data$baseline_data) == 0){
         stop("To discretize the long format data we need the baseline data stored as 'x$data$baseline_data' with the subject id variable.\nUse the function 'add_baseline_data' to add this.")
@@ -143,6 +141,11 @@ long_to_wide <- function(x,
     pop[, end_followup := pmin(censored_date, competing_date, outcome_date, na.rm = TRUE)]
     pop[, c(id_column, "start_followup_date", "end_followup"), with = FALSE]
     if (any(is.na(pop$end_followup))) stop("Missing values in end of followup information")
+    if (max(pop$end_followup) < rev(x$time_grid_scale)[2]){
+        stop(paste0("The maximal followup time in the data is ",max(pop$end_followup),",\n",
+                    "but the last interval on the time grid starts at ",rev(x$time_grid_scale)[2],".\n",
+                    "Please remove all time-grid values that are beyond the maximal followup time."))
+    }
     #
     # discrete time grid
     #
@@ -166,7 +169,7 @@ long_to_wide <- function(x,
         if (missing(mappings)) mappings <- NULL
         dots <- list(...)
         if ((hit <- match("breaks", names(dots), nomatch = 0)) > 0){
-            warning("rtmle::long_to_wide: Argument 'breaks' is obsolete. Break points are stored in the object as x$time_grid and x$time_grid_labels.")
+            warning("rtmle::long_to_wide: Argument 'breaks' is obsolete. Break points are stored in the object as x$time_grid and x$time_grid_scale.")
             dots <- dots[-hit]
         }
         if (length(dots) == 0) {

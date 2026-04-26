@@ -27,7 +27,7 @@ Imports:
     riskRegression,
     Publish,
     xgboost (>= 3.1.2),
-    prodlim,
+    prodlim (>= 2026.3.11),
     ggplot2,
     survival,
     lava,

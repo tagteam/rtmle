@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jun 16 2025 (08:58) 
 ## Version: 
-## Last-Updated: apr 23 2026 (17:41) 
+## Last-Updated: apr 25 2026 (08:19) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 139
+##     Update #: 157
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -84,9 +84,7 @@ model_formula <- function(x,
                           inclusion_rules = NULL,
                           ...){
     exclude_variables = c("start_followup_date",exclude_variables)
-    name_constant_variables <- x$names$name_constant_variables
     if (length(x$protocols) == 0) {stop("No protocols registered in object, hence it is unclear which variables are intervened upon.")}
-    all_treatment_variables <- setdiff(unlist(lapply(x$protocols,function(u)u$treatment_variables),use.names = FALSE),name_constant_variables)
     name_time_covariates <- setdiff(x$names$name_time_covariates,exclude_variables)
     name_baseline_covariates <- setdiff(x$names$name_baseline_covariates,exclude_variables)
     if (length(name_time_covariates)>0){
@@ -97,18 +95,22 @@ model_formula <- function(x,
     }
     #
     # loop across time points looking at treatments, censoring, outcomes from the beginning of the interval
-    # 
+    #
     model_formulas <- lapply(x$intervention_nodes,function(tk){
         all_vars <- c(lapply(x$protocols,function(pro){
+            # no intervention corresponds to setting NA or to not
+            # have a line for the variable(s) in the intervention_table
             vals <- pro$intervention_table[time == tk][["value"]]
-            if (length(vals) == 0){
+            if (length(vals) == 0 || all(is.na(vals))){
                 NULL
             }else{
-                names(vals) <- pro$intervention_table[time == tk][["variable"]]
+                names_vals <- pro$intervention_table[time == tk][["variable"]][!is.na(vals)]
+                vals <- vals[!is.na(vals)]
+                names(vals) <- names_vals
                 vals
             }
         }))
-        all_vars <- all_vars[!sapply(all_vars, is.null)]
+        all_vars <- Filter(Negate(is.null),all_vars)
         # censoring variables before outcome (no model for censoring at time zero)
         if(length(x$names$censoring)>0){
             censvalue <- paste0("'",x$names$uncensored_label,"'")
@@ -125,10 +127,11 @@ model_formula <- function(x,
             ## this may be confusing but at intervention node k
             ## we evaluate treatment in the previous interval [t_{k-1},t_k] but
             ## censoring and outcome in the next interval [t_{k},t_{k+1}]
-            if (nav%in% c("censoring","outcome"))
+            if (nav%in% c("censoring","outcome")){
                 eval_time <- tk+1
-            else
+            } else{
                 eval_time <- tk
+            }
             ff <- formalize(timepoint = eval_time,
                             available_names = names(x$prepared_data),
                             name_outcome_variable = names(vv),
@@ -136,7 +139,7 @@ model_formula <- function(x,
                             name_baseline_covariates = name_baseline_covariates,
                             name_time_covariates  = name_time_covariates,
                             Markov = Markov,
-                            constant_variables = name_constant_variables,
+                            constant_variables = x$names$name_constant_variables,
                             exclusion_rules = exclusion_rules,
                             inclusion_rules = inclusion_rules,
                             handle_concomitant_variables = propensity_model,

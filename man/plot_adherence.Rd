@@ -4,7 +4,7 @@
 \alias{plot_adherence}
 \title{Plot cumulative non-adherence by protocol}
 \usage{
-plot_adherence(x, ...)
+plot_adherence(x, protocols, ...)
 }
 \arguments{
 \item{x}{An object containing protocol-specific adherence information and follow-up

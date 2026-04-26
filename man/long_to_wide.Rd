@@ -4,7 +4,7 @@
 \alias{long_to_wide}
 \title{Transform data from long to wide format}
 \usage{
-long_to_wide(x, start_followup_date, mappings, verbose = TRUE, ...)
+long_to_wide(x, start_followup_date, mappings, ...)
 }
 \arguments{
 \item{x}{object of class \code{rtmle}}
@@ -23,8 +23,6 @@ given on the time on study scale.}
 
   Built-in methods include "measurement", "locf", "event", "event_interval",
   "any_exposure", "has_exposure", "exposure_time", and "exposure_percent".}
-
-\item{verbose}{Logical. If \code{FALSE} suppress all messages.}
 
 \item{...}{alternative way to specify elements of \code{mappings}.}
 }

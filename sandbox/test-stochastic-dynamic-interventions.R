@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Nov  1 2024 (10:37) 
 ## Version: 
-## Last-Updated: mar 27 2026 (06:32) 
+## Last-Updated: apr 24 2026 (07:11) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 16
+##     Update #: 17
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -27,7 +27,7 @@ x <- add_long_data(x,
                     competing_data=ld$competing_data,
                     timevar_data=ld$timevar_data)
 x <- add_baseline_data(x,data=ld$baseline_data)
-x <- long_to_wide(x)
+x <- long_to_wide(x,start_followup_date = 0)
 my_break <- function(data,time){
     ## browser(skipCalls=1L)
     if (time == 0)

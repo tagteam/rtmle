@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 25 2024 (09:50) 
 ## Version: 
-## Last-Updated: mar 27 2026 (06:32) 
+## Last-Updated: apr 25 2026 (07:55) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 105
+##     Update #: 108
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -48,7 +48,7 @@ ld <- simulate_long_data(n = 1891,number_visits = 20,beta = list(A_on_Y = -.2,A0
 x <- rtmle_init(time_grid = seq(0,2000,30.45*6),name_id = "id",name_outcome = "Y",name_competing = "Dead",name_censoring = "Censored",censored_label = "censored")
 x <- add_long_data(x,outcome_data=ld$outcome_data,censored_data=ld$censored_data,competing_data=ld$competing_data,timevar_data=ld$timevar_data)
 x <- add_baseline_data(x,data=ld$baseline_data)
-x <- long_to_wide(x)
+x <- long_to_wide(x,start_followup_date = 0)
 x <- protocol(x,name = "Always_A",intervention = data.frame(time = 0:tau,"A" = factor(1,levels = c(0,1))))
 x <- prepare_rtmle_data(x) 
 x <- target(x,name = "Outcome_risk",estimator = "tmle",protocols = "Always_A")
@@ -81,16 +81,13 @@ tau <- 2
 ld <- simulate_long_data(n = 91,number_visits = 20,beta = list(A_on_Y = -.2,A0_on_Y = -0.3,A0_on_A = 6),register_format = TRUE)
 # generate a second treatment B at random
 ld$timevar_data$B <- ld$timevar_data$A[id %in% sort(sample(1:91,size = 75,replace = FALSE))]
-x <- rtmle_init(time_grid = seq(0,2000,30.45*6),name_id = "id",name_outcome = "Y",name_competing = "Dead",name_censoring = "Censored",censored_label = "censored")
+x <- rtmle_init(time_grid = seq(0,1600,30.45*6),name_id = "id",name_outcome = "Y",name_competing = "Dead",name_censoring = "Censored",censored_label = "censored")
 x <- add_long_data(x,outcome_data = ld[["outcome_data"]],censored_data = ld[["censored_data"]],competing_data = ld[["competing_data"]],timevar_data = ld[["timevar_data"]])
 x <- add_baseline_data(x,data = ld$baseline_data)
-x <- long_to_wide(x)
-x <- protocol(x,name = "Always_A_Never_B",intervention = data.frame(time = 0:(tau-1),"A" = factor(rep(1,2),levels = c(0,1)),"B" = factor(rep(0,2),levels = c(0,1))))
-x <- protocol(x,name = "Always_B_Never_A",intervention = data.frame(time = 0:(tau-1),"A" = factor(rep(0,2),levels = c(0,1)),"B" = factor(rep(1,2),levels = c(0,1))))
+x <- long_to_wide(x,start_followup_date = 0)
 x <- prepare_rtmle_data(x)
-# modifying the prepared data 
-x$prepared_data[,B_0 := rep(0,.N)]
-x$names$name_constant_variables <- c("B_0",x$names$name_constant_variables)
+x <- protocol(x,name = "Always_A_Never_B",intervention = data.frame(time = 0:(tau-1),"A" = factor(rep(1,2),levels = c(0,1)),"B" = factor(c(NA,0),levels = c(0,1))))
+x <- protocol(x,name = "Always_B_Never_A",intervention = data.frame(time = 0:(tau-1),"A" = factor(c(NA,0),levels = c(0,1)),"B" = factor(rep(1,2),levels = c(0,1))))
 x <- model_formula(x)
 x <- target(x,name = "Outcome_risk",estimator = "tmle",protocols = c("Always_A_Never_B","Always_B_Never_A"))
 x <- model_formula(x,propensity_model = "independent")
@@ -152,7 +149,7 @@ if (FALSE){
                     competing_data=ld$competing_data,
                     timevar_data=ld$timevar_data)
     x <- add_baseline_data(x,data=ld$baseline_data)
-    x <- long_to_wide(x)
+    x <- long_to_wide(x,start_followup_date = 0)
     x <- protocol(x,name = "Always_A",intervention = data.frame(time = 0:(tau-1),"A" = factor(1,levels = c(0,1))))
     x <- prepare_rtmle_data(x)
     x <- target(x,name = "Outcome_risk",estimator = "tmle",protocols = "Always_A")

@@ -69,11 +69,11 @@ x <- add_baseline_data(x,data=ld$baseline_data)
 x <- long_to_wide(x,start_followup_date=0)
 x <- protocol(x,name = "Always_A",
                     intervention = data.frame(
-                                   time=x$time_grid,
+                                   time=x$intervention_nodes,
                                    "A" = factor("1",levels = c("0","1"))))
 x <- protocol(x,name = "Never_A",
                     intervention = data.frame(
-                                              time=x$time_grid,
+                                              time=x$intervention_nodes,
                                               "A" = factor("0",levels = c("0","1"))))
 x <- prepare_rtmle_data(x)
 x <- target(x,name = "Outcome_risk",

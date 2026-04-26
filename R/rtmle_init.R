@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 19 2024 (07:23) 
 ## Version: 
-## Last-Updated: mar 27 2026 (06:40) 
+## Last-Updated: apr 25 2026 (06:56) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 56
+##     Update #: 57
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -103,7 +103,7 @@ rtmle_init <- function(time_grid,
                           "censored_label" = censored_label,
                           "uncensored_label" = uncensored_label),
              version = utils::packageVersion("rtmle"),
-             time_grid_labels = time_grid,
+             time_grid_scale = time_grid,
              time_grid = 0:(length(time_grid)-1),
              intervention_nodes = 0:(length(time_grid)-2),
              tuning_parameters = list(minority_threshold = minority_threshold,

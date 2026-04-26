@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 29 2024 (10:44) 
 ## Version: 
-## Last-Updated: apr 23 2026 (16:29) 
+## Last-Updated: apr 26 2026 (07:27) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 203
+##     Update #: 204
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -61,19 +61,21 @@ summary.rtmle <- function(object,analysis = "Main_analysis",targets,reference = 
         stop(paste0("The object does not contain an analysis called '",
                     analysis,
                     "'."))
+    }else{
+        available_targets <- levels(object$estimate[[analysis]]$Target)
     }
     if (length(object$estimate) == 0) {
         message("The object contains no estimates. To obtain estimates You have to call run_rtmle first. See examples.")
         return(NULL)
     }
     if (missing(targets)) {
-        targets <- names(object$targets)
+        targets <- available_targets
     }
     else {
-        stopifnot(all(targets %in% names(object$targets)))
+        stopifnot(all(targets %chin% available_targets))
     }
     outcome_scale <- function(x){pmin(pmax(0,100*x),100)}
-    sum <- do.call(rbind,lapply(targets,function(target_name){
+    sum <- lapply(targets,function(target_name){
         target <- object$targets[[target_name]]
         protocols <- target$protocols
         risk <- do.call(rbind,lapply(protocols,function(protocol_name){
@@ -201,7 +203,8 @@ summary.rtmle <- function(object,analysis = "Main_analysis",targets,reference = 
             ## contrast <- NULL
             return(risk)
         }
-    }))
+    })
+    sum <- rbindlist(sum,fill = TRUE)
     sum
 }
 

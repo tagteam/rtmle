@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: feb 26 2026 (09:52) 
 ## Version: 
-## Last-Updated: mar 20 2026 (06:40) 
+## Last-Updated: apr 25 2026 (09:19) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 36
+##     Update #: 39
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -50,15 +50,19 @@ plot_IPW <- function(
     intervention_node <- intervention_nodes <- used_cumprobs <- NULL
     stopifnot(!is.null(x$protocols),!is.null(x$followup),!is.null(x$intervention_nodes))
     protocol_names <- names(x$protocols)
+    if (length(protocol_names) == 0) stop("rtmle::plot_IPW: Object contains no protocols yet. You need to apply 'rtmle::protocol'.") 
+    run_protocols <- sapply(protocol_names,function(pn){length(x$protocols[[pn]]$intervention_last_nodes)})
+    if (all(run_protocols == 0)) stop("rtmle::plot_IPW: None of the protocols has been fitted to data yet. You need to apply 'rtmle::run_rtmle'.") 
     if (!is.null(protocols)) {
-        missing_protocols <- setdiff(protocols, protocol_names)
-        if (length(missing_protocols) > 0) stop("Unknown protocols: ", paste(missing_protocols, collapse = ", "))
-        protocol_names <- protocols
-    }else{
-        protocols <- protocol_names
+        unavailable_protocols <- setdiff(protocols, protocol_names)
+        if (length(unavailable_protocols) > 0) {
+            stop(paste0("run_rtmle::plot_IPW: Unavailable protocol(s): ", paste(unavailable_protocols, collapse = ", "), "\nAvailable are: ",paste(names(run_protocols), collapse = ", ")))
+        }
+        run_protocols <- run_protocols[intersect(names(run_protocols),protocols)]
     }
-    plot_dt <- do.call(rbind,lapply(protocol_names,function(this_protocol){
-        do.call(rbind,lapply(x$intervention_nodes,function(k){
+    plot_dt <- do.call(rbind,lapply(names(run_protocols),function(this_protocol){
+        # restrict to those time horizons that have run
+        do.call(rbind,lapply(x$intervention_nodes[x$intervention_nodes <= run_protocols[[this_protocol]]],function(k){
             outcome_free_and_uncensored <- (x$followup$last_interval >= (k-1))
             if (length(x$names$censoring)>0){
                 current_cnode <- as.character(x$prepared_data[[paste0(x$names$censoring,"_",(k+1))]])
