@@ -13,6 +13,9 @@ data. Must include at least \code{x$protocols} (a named list where each element 
 \code{x$prepared_data} (optional; used for censoring indicators), and
 \code{x$names$censoring}.}
 
+\item{protocols}{Names of the protocols to plot. If missing use all elements of \code{x$protocols}
+that readily have the intervention_match table prepared.}
+
 \item{...}{Currently unused. Included for future extensions.}
 }
 \value{
