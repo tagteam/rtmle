@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 19 2024 (10:07)
 ## Version:
-## Last-Updated: apr 24 2026 (07:10) 
+## Last-Updated: apr 29 2026 (07:31) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 270
+##     Update #: 272
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -74,7 +74,7 @@ prepare_rtmle_data <- function(x,...){
         warning("Overwriting existing prepared data object")
     }
     if (FALSE){
-        # FIXME: are these checks obsolete, now that the add_data function perform these checks?
+        # NOTE: these checks are obsolete, now that the add_data function perform these checks?
         check_id <- function(data,id,allow_null = TRUE, name = ""){
             if (NROW(data)>0){
                 if (!inherits(data,"data.table")){
@@ -95,13 +95,17 @@ prepare_rtmle_data <- function(x,...){
         }
         check_id(data = x$data$outcome_data, id = x$names$id,allow_null = FALSE,name = "x$data$outcome_data")
         check_id(data = x$data$baseline_data, id = x$names$id,name = "x$data$baseline_data")
-        # FIXME: do something else when data were added via add_wide_data
+        # do something else when data were added via add_wide_data
         nix = lapply(names(x$data$timevar_data),function(nn){
             check_id(data = x$data$timevar_data[[nn]], id = x$names$id,name = paste0("x$data$timevar_data$",nn))
         })
     }
     # initialize dataset with outcome data
     prepared_data <- x$data$outcome_data
+    if (NROW(prepared_data) == 0){
+        # sanity check
+        stop("The data set x$data$outcome_data contains no subjects.")
+    }
     # sort by id
     data.table::setDT(prepared_data)
     data.table::setkeyv(prepared_data,x$names$id)
@@ -201,8 +205,6 @@ prepare_rtmle_data <- function(x,...){
     } else{
         constant_variables <- NULL}
     name_baseline_covariates <- intersect(name_baseline_covariates,names(prepared_data))
-    # FIXME: remove or elaborate this sanity check
-    stopifnot(nrow(prepared_data)>0)
     ## make sure that the order of the censoring variables are factors with ordered labels
     ## such that we estimate the probability of being uncensored and not the probability being censored
     if(length(x$names$censoring)>0){

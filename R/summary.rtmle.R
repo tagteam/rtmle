@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 29 2024 (10:44) 
 ## Version: 
-## Last-Updated: apr 26 2026 (07:27) 
+## Last-Updated: apr 29 2026 (07:23) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 204
+##     Update #: 206
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -103,7 +103,7 @@ summary.rtmle <- function(object,analysis = "Main_analysis",targets,reference = 
             }
             contrast <- do.call(rbind,lapply(setdiff(protocols,ref),function(protocol_name){
                 do.call(rbind,lapply(unique(risk$Time_horizon),function(tp){
-                    # FIXME: can the reference be taken out of the loop?
+                    # the estimate of the reference intervention
                     reference_estimate <- object$estimate[[analysis]][Target == target_name & Protocol == ref & Time_horizon == tp]$Estimate
                     if (analysis == "Main_analysis"){
                         analysis_levels <- 1

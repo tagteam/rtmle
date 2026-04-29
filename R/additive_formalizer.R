@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul  3 2024 (11:13)
 ## Version:
-## Last-Updated: mar 26 2026 (15:48) 
+## Last-Updated: apr 29 2026 (07:35) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 98
+##     Update #: 99
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -20,10 +20,12 @@ additive_formalizer <- function(x,
                                 include_variables = NULL,
                                 exclude_variables = NULL,
                                 Markov = NULL) {
-    # FIXME: improve the stopping message
-    if (missing(treatment_variables))
+    if (missing(treatment_variables)){
         treatment_variables <- x$protocols[[protocol]]$treatment_variables
-    stopifnot(length(treatment_variables)>0)
+    }
+    if (length(treatment_variables) == 0) {
+        stop(paste0("rtmle:::additive_formalizer: protocol ",protocol," has no element treatment_variables."))
+    }
     name_time_covariates <- setdiff(x$names$name_time_covariates,exclude_variables)
     name_baseline_covariates <- setdiff(x$names$name_baseline_covariates,exclude_variables)
     name_constant_variables <- x$names$name_constant_variables

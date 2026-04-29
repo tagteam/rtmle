@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Oct 28 2024 (09:26) 
 ## Version: 
-## Last-Updated: apr 23 2026 (08:32) 
+## Last-Updated: apr 29 2026 (07:32) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 80
+##     Update #: 81
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -29,19 +29,12 @@
 ##' @author Thomas A. Gerds <tag@@biostat.ku.dk>
 learn_ranger <- function(character_formula,data,intervened_data,...){
     # extract the data
-    # FIXME: should not let NA's pass until here
     model_frame <- stats::model.frame(stats::formula(character_formula),
                                       data = data,
                                       drop.unused.levels = TRUE,
                                       na.action = na.omit)
     Y <- as.numeric(model_frame[[1]])
     if (length(unique(Y)) == 2) probability <- TRUE else probability <- FALSE
-    if (probability) {
-        if (!is.factor(Y))
-            # FIXME: rtmle_predicted_outcome may only have two levels,
-            #       and the values can be different from 0 and 1
-            model_frame[[1]] <- factor(Y,levels = sort(unique(Y)))
-    }
     if (!inherits(
              try(
                  fit <- ranger::ranger(formula = stats::formula(character_formula),

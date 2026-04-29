@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: apr 23 2026 (16:09) 
 ## Version: 
-## Last-Updated: apr 26 2026 (08:10) 
+## Last-Updated: apr 29 2026 (07:36) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 12
+##     Update #: 13
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -23,7 +23,6 @@
 ##' @param protocol_name Name of the protocol to check.
 ##' @return The modified object
 ##' @seealso protocol 
-##' @examples 
 ##' @export 
 ##' @author Thomas A. Gerds <tag@@biostat.ku.dk>
 intervention_match <- function(x,protocol_name){

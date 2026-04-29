@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 23 2024 (12:49) 
 ## Version: 
-## Last-Updated: mar 25 2026 (11:55) 
+## Last-Updated: apr 29 2026 (07:08) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 142
+##     Update #: 145
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -38,7 +38,7 @@ learn_glm <- function(character_formula,
                       learn_variables = NULL,
                       maxit = 100,
                       ...){
-    # FIXME: speedglm should be handled by own learner 
+    # NOTE: speedglm could be handled by own learner 
     ## args <- as.list(match.call())
     ## if (!("speed"%in%names(args))) speed <- FALSE
     speed <- TRUE
@@ -70,10 +70,6 @@ learn_glm <- function(character_formula,
     Y_label <- names(model_frame)[[1]]
     tf <- stats::terms(model_frame)
     X <- stats::model.matrix(object = tf, data = model_frame)
-    ## FIXME: need to check missing values much earlier
-    if (any(is.na(X))) {
-        stop("Missing values in X")
-    }
     if (speed && !inherits(try(
                       fit <- speedglm::speedglm.wfit(y = Y[!is.na(Y)],
                                                      X = X[!is.na(Y),],
@@ -104,8 +100,7 @@ learn_glm <- function(character_formula,
         }
     }
     fit$terms <- tf
-    # FIXME: need to collect these warnings instead of preventing them
-    suppressWarnings(predicted_values <- predict(fit,type = "response",newdata = intervened_data,se = FALSE))
+    predicted_values <- predict(fit,type = "response",newdata = intervened_data,se = FALSE)
     data.table::setattr(predicted_values,"fit",coef(summary(fit)))
     return(predicted_values)
 }

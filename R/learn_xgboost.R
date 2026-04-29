@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Oct 28 2024 (09:26) 
 ## Version: 
-## Last-Updated: apr 23 2026 (08:41) 
+## Last-Updated: apr 29 2026 (07:35) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 136
+##     Update #: 137
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -74,7 +74,6 @@ learn_xgboost <- function(character_formula,
                                      forced=NULL,
                                      verbose=TRUE)
     # extract the data
-    # FIXME: should not let NA's pass until here
     sf <- Publish::specialFrame(stats::formula(character_formula),
                                 data = data,
                                 specials = NULL,

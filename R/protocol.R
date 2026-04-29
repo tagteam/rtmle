@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds & Alessandra
 ## Created: Jul 3 2024 (13:46)
 ## Version:
-## Last-Updated: apr 23 2026 (16:54) 
+## Last-Updated: apr 29 2026 (07:33) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 138
+##     Update #: 139
 #----------------------------------------------------------------------
 ##
 ### Commentary: 
@@ -121,22 +121,19 @@ protocol <- function(x,
         if (any(is.na(too_many <- which(is.na(match(intervention_table[["time"]],x$intervention_nodes,nomatch = NA))))))
             stop(paste0("The following time points are not registered as intervention nodes in the object:",
                         paste0(intervention_table[["time"]][too_many],collapse = ", ")))
-        # FIXME: do something with missing nodes? we could add NA but not having them may have the same effect
-        ## missing_nodes <- match(x$intervention_nodes,intervention_table[["time"]],nomatch = NA)
-        treatment_options <-
-            sapply(treatment_variables,
-                   function(v){
-                       if (is.factor(intervention[[v]])){
-                           if (length(levels(intervention[[v]])) == 2){
-                               levels(intervention[[v]])
-                           }else{
-                               stop(paste0("All treatment variables must have exactly 2 levels. Problem with variable ",
-                                           v),".")
-                           }
-                       } else{
-                           stop(paste0("The treatment variables must be factors. Problem with variable ",v,"."))
-                       }
-                   },simplify = FALSE)
+        treatment_options <- sapply(treatment_variables,
+                                    function(v){
+                                        if (is.factor(intervention[[v]])){
+                                            if (length(levels(intervention[[v]])) == 2){
+                                                levels(intervention[[v]])
+                                            }else{
+                                                stop(paste0("All treatment variables must have exactly 2 levels. Problem with variable ",
+                                                            v),".")
+                                            }
+                                        } else{
+                                            stop(paste0("The treatment variables must be factors. Problem with variable ",v,"."))
+                                        }
+                                    },simplify = FALSE)
     }else{
         #
         # User provided a intervention values and separately names of treatment variables 

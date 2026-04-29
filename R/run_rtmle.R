@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul  1 2024 (09:11)
 ## Version:
-## Last-Updated: apr 25 2026 (06:56) 
+## Last-Updated: apr 29 2026 (07:30) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 629
+##     Update #: 631
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -168,8 +168,6 @@ run_rtmle <- function(x,
             }
             xs$prepared_data <- x$prepared_data[x$prepared_data[[x$names$id]] %in% sub$id]
             if (NROW(xs$prepared_data) == 0) stop(paste0("No data in subset: ",label))
-            # FIXME: should check if the number at risk at the maximal time_horizon is not zero
-            #        and that there is still variation in the outcome at that time
             xs$followup <- x$followup[x$followup[[x$names$id]] %in% sub$id]
             xs <- run_rtmle(xs,
                             targets = targets,
@@ -227,8 +225,6 @@ run_rtmle <- function(x,
     }else{
         # check data
         learners <- parse_learners(learner)
-        ## FIXME: could adapt if user specifies learner="glmnet" instead of "learn_glmnet"
-
         # Skipping the nuisance parameter models is only possible when the same
         # learner was used previously
         if ((length(x$learner) == 0)|| learners$name != x$learner$name){
@@ -248,11 +244,10 @@ run_rtmle <- function(x,
         } else {
             stopifnot(all(time_horizon <= max(x$time_grid) & time_horizon>0))
         }
-        ## sapply(x$prepared_data,function(x)sum(is.na(x)))
         if (!(x$names$id%in%names(x$prepared_data)))
             stop(paste0("Cannot see id variable ",x$names$id," in x$prepared_data."))
-        ## make sure that the treatment variables are factors with levels equal to those specified by the protocols
-        ## FIXME: this could perhaps be done in prepare_rtmle_data()
+        ## make sure that the treatment variables are factors with levels equal to
+        # those specified by the protocols
         for (v in names(x$names$treatment_options)){
             v_treatment_variables <- intersect(paste0(v,"_",x$time_grid),names(x$prepared_data))
             for (v_j in v_treatment_variables){

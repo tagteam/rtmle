@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 30 2024 (14:30)
 ## Version:
-## Last-Updated: apr 25 2026 (08:24) 
+## Last-Updated: apr 29 2026 (07:10) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 604
+##     Update #: 606
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -159,15 +159,10 @@ sequential_regression <- function(x,
                     x$diagnostics$no_positive_weights <- rbind(x$diagnostics$no_positive_weights,dia)
                 }
             }
-            ## FIXME: why do we NOT need the following?
-            ## predicted_outcome[!outcome_free_and_uncensored] <- Y[!outcome_free_and_uncensored]
             #
             # calculate contribution to influence function
             #
             IPW <- 1/inverse_probability_weights
-            # FIXME: what is this constant 10000? 
-            ## if (any(IPW>10000)) IPW <- pmin(IPW,10000)
-            ## if (max(IPW,na.rm = TRUE)>nrow(x$prepared_data)) IPW <- pmin(IPW,nrow(x$prepared_data))
             if (length(x$names$censoring)>0){
                 if (nchar(intervention_node_name)>0){
                     index <- (current_cnode%in%x$names$uncensored_label) & (intervention_match[,intervention_node_name] %in% 1)
@@ -189,7 +184,6 @@ sequential_regression <- function(x,
             # g-formula
             predicted_outcome <- x$prepared_data[[paste0(x$names$outcome,"_",k)]]
             predicted_outcome[which(outcome_free_and_uncensored)] <- fit_last_interval
-            # FIXME: how to estimate the influence function without inverse probability weights?
         }
         # prepare next iteration
         set(x = x$prepared_data,

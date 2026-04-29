@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Oct 31 2024 (07:29) 
 ## Version: 
-## Last-Updated: apr 10 2026 (15:32) 
+## Last-Updated: apr 29 2026 (07:25) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 296
+##     Update #: 297
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -136,8 +136,6 @@ superlearn <- function(folds,
         # check for constant outcome and predictor variables
         current_constants <- sapply(learn_data_k, function(x){length(na.omit(unique(x)))==1})
         current_constants <- names(current_constants[current_constants])
-        # CASE: no variation in one of the treatment variables
-        # FIXME: should we report this or just stop the algorithm?
         # CASE: no variation in the outcome variable
         #       predict the unique outcome value
         if (outcome_variable %in% current_constants){

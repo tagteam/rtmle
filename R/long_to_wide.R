@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 22 2024 (14:07) 
 ## Version: 
-## Last-Updated: apr 25 2026 (07:02) 
+## Last-Updated: apr 29 2026 (07:35) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 393
+##     Update #: 395
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -91,9 +91,8 @@ long_to_wide <- function(x,
     # start of followup
     #
     if (missing(start_followup_date) || start_followup_date[1] == 0){
-        # FIXME: want to store this somewhere or simply print it as a message
         if (missing(start_followup_date)){
-            message("Missing start_followup_date variable, for now assume 0.\nThis makes only sense if all event times are given on the scale: 'time since 0'.")
+            x$diagnostics$missing_start_followup_variable <- "Assume 0 is time zero."
         }
         pop <- x$data$baseline_data[, c(id_column), with = FALSE][, start_followup_date := rep(0, .N)]
     } else {

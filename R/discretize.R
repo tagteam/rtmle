@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: feb 24 2026 (11:04) 
 ## Version: 
-## Last-Updated: apr 10 2026 (15:46) 
+## Last-Updated: apr 29 2026 (07:26) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 135
+##     Update #: 139
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -201,7 +201,7 @@ discretize <- function(method,
             overlap[is.na(value), value := values[[2]]]
         }
     }
-    # FIXME: in equidistant grids methods 'event' and 'any_exposure' can be done without
+    # NOTE: in equidistant grids methods 'event' and 'any_exposure' could be done without
     #        foverlaps by using roll or even faster vector comparison of dates
     if (method %chin% "event_interval") {
         setnames(data, "date", "start_date")
@@ -229,15 +229,15 @@ discretize <- function(method,
             overlap[, exposure := (pmin(end_interval, end_date) -
                                    pmax(start_interval, start_date))]
             overlap[is.na(exposure), exposure := 0]
-            # FIXME: baseline exposure is often only the start of exposure
-            #        but in order to have adherence to the regimen we need to set it
+            # NOTE: baseline exposure is often only the start of exposure
+            #       but in order to have adherence to the regimen we need to set it to 1
             if ("start_followup_date" %chin%names(overlap)){
                 overlap[interval == 0 & start_date == start_followup_date, exposure := 1]
             }
             setkeyv(overlap, c(id, "interval"))
             if (method %chin% c("exposure_time","exposure_percent","any_exposure","has_exposure")){
                 if (method == "exposure_percent"){
-                    # FIXME: the length of interval 0 is zero
+                    # NOTE: at time zero the length of interval 0 is zero
                     overlap <- rbind(
                         overlap[interval == 0, list(interval = interval,value = sum(exposure)),by = id],
                         overlap[interval>0, list(value = sum(exposure)/(end_interval[1]-start_interval[1])), by = c(id, "interval")]

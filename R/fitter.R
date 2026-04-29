@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: jan 25 2026 (09:26) 
 ## Version: 
-## Last-Updated: apr 10 2026 (15:31) 
+## Last-Updated: apr 28 2026 (08:58) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 90
+##     Update #: 92
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -127,19 +127,36 @@ fitter <- function(intervention_node,
                 #
                 # this is a single learner 
                 #
-                if (inherits(try(
-                    predicted_values <- do.call(learner$fun,c(args,learner$args)),silent = FALSE),
-                    "try-error")) {
-                    stop(paste0("Failed to superlearn/crossfit with formula ",ff,"\nwhere the outcome is: ",
-                                ifelse(current_outcome_name == "rtmle_predicted_outcome",
-                                       paste0("the predicted outcome at intervention node (time): ",intervention_node),
-                                       current_outcome_name)))
-                }else{
-                    if (!missing(diagnostics) && !is.null(diagnostics)){
-                        if (is.null(attr(predicted_values,"diagnostics"))){
-                            data.table::setattr(predicted_values,"diagnostics",diagnostics)
-                        }
+                learner_warnings <- list()
+                result <- withCallingHandlers({
+                    if (inherits(
+                        try(
+                            predicted_values <- do.call(learner$fun,c(args,learner$args)),
+                            silent = FALSE
+                        ),
+                        "try-error"
+                    )) {
+                        stop(paste0(
+                            "Failed to superlearn/crossfit with formula ", ff,
+                            "\nwhere the outcome is: ",
+                            ifelse(
+                                current_outcome_name == "rtmle_predicted_outcome",
+                                paste0("the predicted outcome at intervention node (time): ", intervention_node),
+                                current_outcome_name
+                            )
+                        ))
                     }
+                    predicted_values
+                },
+                warning = function(w) {
+                    learner_warnings <<- c(learner_warnings, conditionMessage(w))
+                    invokeRestart("muffleWarning")
+                })
+                if (length(learner_warnings)>0){
+                    if (length(learner_warnings)>1){
+                        learner_warnings <- paste0("warning 1: ",learner_warnings[1]," warning 2: ",learner_warnings[2]," ...")
+                    }
+                    data.table::setattr(predicted_values,"diagnostics",list(learner_warnings = data.table(learner = learner$name,warning = learner_warnings)))
                 }
             }
         }
