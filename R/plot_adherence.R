@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: dec 11 2025 (10:23) 
 ## Version: 
-## Last-Updated: apr 26 2026 (08:30) 
+## Last-Updated: apr 29 2026 (08:52) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 33
+##     Update #: 34
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -67,7 +67,7 @@ plot_adherence <- function(x,protocols,...){
     time_nonadherence = last_interval = event_nonadherence = value = variable = first_event = event = treatment = NULL
     # find time to first deviation from regime where
     # death is a competing risk and data may be right censored
-    available_protocols <- sapply(names(protocols),function(p){NROW(x$protocols[[p]]$intervention_match)>0})
+    available_protocols <- sapply(names(x$protocols),function(p){NROW(x$protocols[[p]]$intervention_match)>0})
     available_protocols <- names(available_protocols[available_protocols])
     if (missing(protocols)){
         protocols <- available_protocols
