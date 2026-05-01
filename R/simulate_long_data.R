@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 11 2024 (13:24) 
 ## Version: 
-## Last-Updated: apr 30 2026 (06:27) 
+## Last-Updated: apr 30 2026 (09:06) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 297
+##     Update #: 299
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -16,26 +16,25 @@
 ### Code:
 #' Simulating longitudinal data for illustration purposes 
 #'
-#' This function produces longitudinal data where a timevarying treatment variables A and B
-#' and a timevarying confounder L have effects on the rates of outcome, a competing risk
-#' and censoring.
+#' FIXME
 #' @title Simulating longitudinal data
 #' @param n Sample size
 #' @param number_visits Number of doctor visit times covariates and treatment change 
 #' @param baseline_rate Vector of hazard rates
 #' @param beta List of regression coefficients
 #' @param register_format Logical. If \code{TRUE} the result is not in wide format but re-formatted as a list of register data. 
-#' @param interventional_distribution Experimental. If \code{TRUE} the data generating mechanism produces uncensored data under the intervention
+#' @param interventional_distribution Logical. If \code{TRUE} the data generating mechanism produces uncensored data under the intervention
+#' @param baseline_hazard_outcomes Baseline hazard function 
 #' @examples
 #' simulate_long_data(10)
-#' simulate_long_data(10,register_format=TRUE)
 #' @export
 simulate_long_data <- function(n,
                                number_visits = 10,
                                baseline_rate,
                                beta,
                                register_format = FALSE,
-                               interventional_distribution=FALSE) {
+                               interventional_distribution=FALSE,
+                               baseline_hazard_outcomes = 0.001) {
     hazard_ratio_C <- hazard_ratio_D <- hazard_ratio_L <- hazard_ratio_A <- hazard_ratio_Y <- event <- terminal_time <- terminal_event <- entrytime <- NULL
     A_0 <- L_0 <- id <- age <- sex <- sum_L <- A <- sum_A <- propensity_A <- NULL
     beta_init <- list(A0_on_A = 0,
@@ -72,20 +71,19 @@ simulate_long_data <- function(n,
     nt <- length(time)
     # V = doctor visit time where treatment A is decided 
     # L = onset time of comorbidity (recurrent event)
-    Baseline_Rate = list(L = cumsum(rep(0.001,nt)),
-                         Y = cumsum(rep(0.001,nt)),
+    baseline_init = list(L = cumsum(rep(baseline_hazard_outcomes,nt)),
+                         Y = cumsum(rep(baseline_hazard_outcomes,nt)),
                          D = cumsum(rep(baseline_hazard_outcomes,nt)),
                          C = cumsum(rep(baseline_hazard_outcomes,nt)))
     if (missing(baseline_rate)) {
-        baseline_hazard_outcomes = 0.001
-
+        Baseline_Rate <- baseline_init
     } else {
         Baseline_Rate <- c(baseline_rate,baseline_init)
         # remove the now obsolete init values
         Baseline_Rate <- Baseline_Rate[unique(names(Baseline_Rate))]
     }
     if (interventional_distribution){
-        Baseline_Rate[["C"]] <- rep(0,nt)
+      Baseline_Rate[["C"]] <- rep(0,nt)
     }
     
     # baseline variables
