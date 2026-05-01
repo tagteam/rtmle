@@ -22,9 +22,11 @@ devtools::install_github("tagteam/rtmle")
 
 ** Misc 
 
-https://github.com/tagteam/rtmle/actions/workflows/R-CMD-check.yaml/badge.svg [[https://github.com/tagteam/rtmle/actions/workflows/R-CMD-check.yaml][R-CMD-check]]
+[[https://github.com/tagteam/rtmle/actions/workflows/R-CMD-check.yaml][https://github.com/tagteam/rtmle/actions/workflows/R-CMD-check.yaml/badge.svg]]
 
-https://codecov.io/gh/tagteam/rtmle/graph/badge.svg?token=FLEY02HKN3 [[https://codecov.io/gh/tagteam/rtmle][Code coverage]]
+[[https://github.com/tagteam/rtmle/actions/workflows/test-coverage.yaml][https://github.com/tagteam/rtmle/actions/workflows/test-coverage.yaml/badge.svg]]
+
+[[https://codecov.io/gh/tagteam/rtmle][https://codecov.io/gh/tagteam/rtmle/graph/badge.svg?token=FLEY02HKN3]]
 
 
 #+TITLE: Development of R-package rtmle
