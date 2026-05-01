@@ -22,11 +22,9 @@ devtools::install_github("tagteam/rtmle")
 
 ** Checks
 
-#+begin_src org
 # [[https://www.r-pkg.org/badges/version/rtmle][CRAN_Status_Badge]] 
 # [[https://CRAN.R-project.org/package=rtmle][![](https://cranlogs.r-pkg.org/badges/rtmle)]]
 [[https://github.com/tagteam/rtmle/actions/workflows/R-CMD-check.yaml][R-CMD-check]]
-#+end_src
 
 #+TITLE: Development area for R-package rtmle
 #+Author: 
