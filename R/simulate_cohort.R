@@ -32,7 +32,33 @@
 #' @examples
 #' library(lava)
 #' library(data.table)
-
+#' simulate_cohort(
+#' n = 3,
+#' seed = 977,
+#' max_follow = 20,
+#' baseline_variables = list(age = "normal",sex = "binomial",BMI = "normal"),
+#' baseline_visit = list(treatment = "binomial"),
+#' visit_schedule = list(mean = 1,sd = 0.1,skip = 0),
+#' visit_events = list(treatment = "binomial"),
+#' visit_measurements = list("changeBMI" = "normal"),
+#' absorbing_events = list(death = "Weibull",outcome = "Weibull",dropout = "Weibull"),
+#' intermediate_events = list(stroke = "Weibull"),
+#' parameter_values = list(
+#' intercept_sex=.3,
+#' intercept_age=60,
+#' var_age=10,
+#' intercept_BMI=30,
+#' var_BMI=3,
+#' intercept_treatment=0.3,
+#' effect_treatment_death = -0.7,
+#' effect_treatment_outcome = 0.1,
+#' effect_treatment_dropout = 0,
+#' effect_treatment_changeBMI = 0.5,
+#' scale_death=0.01,
+#' scale_outcome=0.03,
+#' scale_stroke=0.02,
+#' scale_dropout = 0.04
+#' )
 #' )
 #'
 #' @export
@@ -54,6 +80,7 @@ simulate_cohort <- function(n,
                             parameter_values, 
                             intervention = NULL, 
                             regime = NULL){
+    id <- event <- NULL
     if (!is.null(seed)) set.seed(seed) 
     ##
     ## Helper function which initially removes all the variables from X
@@ -73,7 +100,7 @@ simulate_cohort <- function(n,
                     &&
                     length(autovars <- intersect(paste0("auto_",variables),rownames(x$M)))>0){
                     X <- X[, setdiff(names(X),paste0("auto_",variables)),drop = FALSE, with = FALSE]
-                    setnames(X,variables,paste0("auto_",variables))
+                    data.table::setnames(X,variables,paste0("auto_",variables))
                 }
                 # remove variables that should be drawn and not passed in this call
                 X <- X[, setdiff(names(X),variables),drop = FALSE, with = FALSE]
@@ -169,7 +196,7 @@ simulate_cohort <- function(n,
     # initialize event_history at time 0 only for variables that do not occur in X_baseline_visit
     still_uninitialized <- setdiff(names(visit_events), names(X_baseline_visit))
     if (length(still_uninitialized)>0){
-        init_visit_events <- data.table::as.data.table(setNames(rep(list(0), length(still_uninitialized)), 
+        init_visit_events <- data.table::as.data.table(stats::setNames(rep(list(0), length(still_uninitialized)), 
                                                                 still_uninitialized))
     }else{
         init_visit_events <- NULL
@@ -194,10 +221,10 @@ simulate_cohort <- function(n,
         nrisk <- nrow(last_entry)
         if (has_visits){
             # FIXME: document skipped_visits and minimum_time_between_visits
-            skipped_visits <- rbinom(n = nrisk, 1, visit_schedule[["skip"]])
+            skipped_visits <- stats::rbinom(n = nrisk, 1, visit_schedule[["skip"]])
             next_visit <- skipped_visits*visit_schedule[["mean"]] +
                 pmax(
-                    rnorm(n = nrisk,
+                    stats::rnorm(n = nrisk,
                           mean = visit_schedule[["mean"]],
                           sd = visit_schedule[["sd"]]),
                     visit_schedule[["minimum_time_between_visits"]]
@@ -246,8 +273,8 @@ simulate_cohort <- function(n,
             time = last_entry[, time] + latent_times[cbind(seq_len(nrow(latent_times)), idx)]
         )
         ## Divide subjects at risk into two categories
-        subjects_with_intermediate_events <- current_event[event %chin% c("visit",names(intermediate_events)), .(id, time, event)]
-        subjects_absorbed <- current_event[event %chin% names(absorbing_events), .(id, time, event)]
+        subjects_with_intermediate_events <- current_event[event %chin% c("visit",names(intermediate_events)), list(id, time, event)]
+        subjects_absorbed <- current_event[event %chin% names(absorbing_events), list(id, time, event)]
 
         ## Cases of intermediate events
         if(NROW(subjects_with_intermediate_events)>0){

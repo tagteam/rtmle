@@ -42,8 +42,8 @@ make_regression_model <- function(outcome_variables,parameter_values) {
         # Regression parameters (if any)
         v_effects <- parameter_values[grep(paste0("^effect_.*_",v,"$"),names(parameter_values),value = TRUE)]
         v_effects <- v_effects[v_effects != 0]
-        v_effects <- setNames(v_effects,sub("^effect_","",names(v_effects)))
-        v_effects <- setNames(v_effects,sub(paste0("_",v,"$"),"",names(v_effects)))
+        v_effects <- stats::setNames(v_effects,sub("^effect_","",names(v_effects)))
+        v_effects <- stats::setNames(v_effects,sub(paste0("_",v,"$"),"",names(v_effects)))
         if (length(v_effects)>0){
             lava::regression(m) <- formula(paste0(v," ~ ",paste0(sapply(names(v_effects),function(e){paste0("f(",e,",",v_effects[[e]],")")}),collapse = "+")))
         }
