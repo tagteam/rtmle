@@ -15,3 +15,9 @@
 This print function informs about the current state of the object and
 about how to proceed.
 }
+\examples{
+x <- rtmle_init(time_grid = 0:2,
+                name_id = "id",
+                name_outcome = "Y")
+print(x)
+}

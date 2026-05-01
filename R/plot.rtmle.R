@@ -28,6 +28,21 @@
 #' @param position_atrisk Vector of positions on the x-axis where numbers at-risk are shown below the graph.
 #' @param conf_int Logical. If \code{TRUE} add confidence shadows to the graph.
 #' @param ... Not used 
+#' @examples
+#' x <- list(
+#'   estimate = list(Main_analysis = data.table::data.table(
+#'     Time_horizon = c(1, 2, 1, 2),
+#'     Time = c(1, 2, 1, 2),
+#'     Protocol = rep(c("Always_A", "Never_A"), each = 2),
+#'     Estimate = c(.12, .20, .18, .30),
+#'     Lower = c(.08, .15, .12, .24),
+#'     Upper = c(.18, .27, .25, .38))),
+#'   followup = data.table::data.table(id = 1:5,
+#'                                     last_interval = c(0, 1, 2, 2, 2)),
+#'   time_grid_scale = 0:2)
+#' class(x) <- "rtmle"
+#' p <- ggplot2::autoplot(x, xlim = c(0, 2))
+#' class(p)
 #' @importFrom ggplot2 ggplot aes geom_line geom_ribbon labs
 #'     theme_minimal facet_wrap
 #' @rdname plot.rtmle

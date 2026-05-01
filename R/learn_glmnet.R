@@ -35,6 +35,14 @@
 ##'        E.g., setting alpha affects the elastic net.
 ##' @return A vector of predicted probabilities which has the fit as an attribute.  
 ##' @seealso \code{link{superlearn}}, \code{link{learn_ranger}}, \code{link{learn_glm}}
+##' @examples
+##' d <- data.table::data.table(Y = rep(c(0, 1), 10),
+##'                             A = rep(c(0, 1, 1, 0), 5),
+##'                             L = seq(-1, 1, length.out = 20))
+##' predicted <- learn_glmnet("Y ~ A + L", data = d, intervened_data = d,
+##'                           lambda = 0.01)
+##' head(predicted)
+##' attr(predicted, "selected.lambda")
 #' @export
 learn_glmnet <- function(character_formula,
                          data,

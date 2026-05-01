@@ -39,3 +39,22 @@ intervention nodes, restricted to subjects who are:
 You can optionally plot \emph{all} columns of `cumulative_intervention_probs`
 (e.g., including \code{A_0}, \code{A_1}, etc.) instead of only the censored columns.
 }
+\examples{
+x <- list(
+  protocols = list(Always_A = list(
+    intervention_last_nodes = c(1, 2),
+    cumulative_intervention_probs = matrix(c(.9, .8, .7, .6, .9, .7, .5, .3), nrow = 4),
+    intervention_match = matrix(c(1, 1, 0, 1, 1, 0, 0, 1), nrow = 4,
+                                dimnames = list(NULL, c("A_0", "A_1"))),
+    intervention_table = data.table::data.table(time = c(0, 1), variable = c("A_0", "A_1")))),
+  followup = data.table::data.table(id = 1:4, last_interval = c(2, 2, 1, 2)),
+  intervention_nodes = 0:1,
+  names = list(censoring = "Censored", outcome = "Y",
+               censored_label = "censored", uncensored_label = "uncensored"),
+  prepared_data = data.table::data.table(
+    id = 1:4, Y_1 = 0, Y_2 = 0, Censored_1 = "uncensored",
+    Censored_2 = c("uncensored", "censored", "uncensored", "uncensored")),
+  tuning_parameters = list(weight_truncation = c(0, 1)))
+p <- plot_IPW(x)
+class(p)
+}

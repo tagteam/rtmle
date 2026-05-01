@@ -20,6 +20,11 @@
 #' about how to proceed.
 #' @param x Object to be printed
 #' @param ... Not used for now
+#' @examples
+#' x <- rtmle_init(time_grid = 0:2,
+#'                 name_id = "id",
+#'                 name_outcome = "Y")
+#' print(x)
 #' @method print rtmle
 #' @export
 print.rtmle <- function(x, ...) {

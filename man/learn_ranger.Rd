@@ -25,6 +25,14 @@ probabilities in intervened data based on \code{\link[ranger]{ranger}}
 \details{
 Hyperparameters are set via ...
 }
+\examples{
+d <- data.table::data.table(Y = factor(rep(c(0, 1), 10)),
+                            A = rep(c(0, 1, 1, 0), 5),
+                            L = seq(-1, 1, length.out = 20))
+predicted <- learn_ranger("Y ~ A + L", data = d, intervened_data = d,
+                          num.trees = 10, min.node.size = 1)
+head(predicted)
+}
 \seealso{
 \code{link{superlearn}}, \code{link{learn_glm}}, \code{link{learn_glmnet}}
 }

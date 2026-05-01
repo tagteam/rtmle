@@ -28,6 +28,12 @@
 #' @param type.measure loss to use for cross-validation. Default is deviance.
 #' @param family passed to \code{glmnet}. Defaults for binary outcome to \code{"binomial"} and for survival to \code{"cox"}.
 #' @param \dots Additional arguments that are passed on to the glmnet.
+#' @examples
+#' d <- data.frame(Y = rep(c(0, 1), 10),
+#'                 A = rep(c(0, 1, 1, 0), 5),
+#'                 L = seq(-1, 1, length.out = 20))
+#' fit <- glm_net(Y ~ A + L, data = d, lambda = 0.01, cv = FALSE)
+#' riskRegression::predictRisk(fit, newdata = d[1:3, ], times = 1, lambda = 0.01)
 #' @export
 glm_net <- function(formula,
                     data,

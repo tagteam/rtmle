@@ -30,6 +30,13 @@
 ##' @param ... Additional arguments for the learning phase. Not used at the moment.
 ##' @return A vector of predicted probabilities which has the fit as an attribute.  
 ##' @seealso \code{link{superlearn}}, \code{link{learn_ranger}}, \code{link{learn_glmnet}}
+##' @examples
+##' d <- data.table::data.table(Y = rep(c(0, 1), 10),
+##'                             A = rep(c(0, 1, 1, 0), 5),
+##'                             L = seq(-1, 1, length.out = 20))
+##' predicted <- learn_glm("Y ~ A + L", data = d, intervened_data = d)
+##' head(predicted)
+##' attr(predicted, "fit")
 ##' @export 
 ##' @author Thomas A. Gerds <tag@@biostat.ku.dk>
 learn_glm <- function(character_formula,

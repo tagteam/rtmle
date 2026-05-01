@@ -21,6 +21,19 @@ Create a matrix called intervention_match
 This function is run by \code{protocol} only if \code{prepare_rtmle_data} is run before adding a protocol.
 It is also run by \code{run_rtmle} if needed at that stage.
 }
+\examples{
+x <- rtmle_init(time_grid = 0:2, name_id = "id", name_outcome = "Y")
+x$prepared_data <- data.table::data.table(
+    id = 1:4,
+    A_0 = factor(c("1", "1", "0", "1"), levels = c("0", "1")),
+    A_1 = factor(c("1", "0", "0", "1"), levels = c("0", "1")))
+x <- protocol(x, name = "Always_A",
+              intervention = data.frame(time = x$intervention_nodes,
+                                        A = factor("1", levels = c("0", "1"))))
+x$protocols$Always_A$intervention_match <- NULL
+x <- intervention_match(x, "Always_A")
+x$protocols$Always_A$intervention_match
+}
 \seealso{
 protocol
 }

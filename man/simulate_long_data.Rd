@@ -36,5 +36,11 @@ Simulating longitudinal data for illustration purposes
 FIXME
 }
 \examples{
-simulate_long_data(10)
+set.seed(7)
+wide_data <- simulate_long_data(n = 20, number_visits = 4)
+head(wide_data)
+
+register_data <- simulate_long_data(n = 20, number_visits = 4,
+                                    register_format = TRUE)
+names(register_data)
 }

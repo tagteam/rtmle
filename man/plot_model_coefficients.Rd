@@ -115,9 +115,25 @@ name. All coefficient terms for a given model are plotted at the same x
 position, producing a vertical "stack" of points per model.
 }
 \examples{
-if (requireNamespace("plotly")){
-
-}
+beta <- matrix(c(-1, 0.4), ncol = 1,
+               dimnames = list(c("(Intercept)", "A_0"), "Estimate"))
+x <- list(
+  learner = list(name = "glm", fun = list("learn_glm")),
+  times = 0:2,
+  run_time_horizons = 2,
+  time_grid = 0:2,
+  intervention_nodes = 0:1,
+  protocols = list(Always_A = list()),
+  names = list(outcome = "Y"),
+  models = list(
+    time_0 = list(outcome = list(
+      Y_1 = list(fit = list(Always_A = list(sequence_time_2 = beta))))),
+    time_1 = list(outcome = list(
+      Y_2 = list(fit = list(Always_A = list(sequence_time_2 = beta)))))))
+class(x) <- "rtmle"
+out <- plot_model_coefficients(x, time_horizon = 2, protocol = "Always_A",
+                               nodes = "outcome", plot_style = "by_outcome")
+names(out)
 
 }
 \seealso{

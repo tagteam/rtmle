@@ -26,7 +26,13 @@
 #' @param interventional_distribution Logical. If \code{TRUE} the data generating mechanism produces uncensored data under the intervention
 #' @param baseline_hazard_outcomes Baseline hazard function 
 #' @examples
-#' simulate_long_data(10)
+#' set.seed(7)
+#' wide_data <- simulate_long_data(n = 20, number_visits = 4)
+#' head(wide_data)
+#'
+#' register_data <- simulate_long_data(n = 20, number_visits = 4,
+#'                                     register_format = TRUE)
+#' names(register_data)
 #' @export
 simulate_long_data <- function(n,
                                number_visits = 10,

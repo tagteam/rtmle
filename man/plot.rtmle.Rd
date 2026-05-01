@@ -43,3 +43,19 @@
 \description{
 Plot risk predictions and average treatment effects from rtmle objects
 }
+\examples{
+x <- list(
+  estimate = list(Main_analysis = data.table::data.table(
+    Time_horizon = c(1, 2, 1, 2),
+    Time = c(1, 2, 1, 2),
+    Protocol = rep(c("Always_A", "Never_A"), each = 2),
+    Estimate = c(.12, .20, .18, .30),
+    Lower = c(.08, .15, .12, .24),
+    Upper = c(.18, .27, .25, .38))),
+  followup = data.table::data.table(id = 1:5,
+                                    last_interval = c(0, 1, 2, 2, 2)),
+  time_grid_scale = 0:2)
+class(x) <- "rtmle"
+p <- ggplot2::autoplot(x, xlim = c(0, 2))
+class(p)
+}

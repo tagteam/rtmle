@@ -4,6 +4,9 @@
 ^presentations
 ^.*\.o$
 ^.*\.so$
+(^|/)#.*#$
+(^|/)\.#.*$
+~$
 ^README.org$
 ^TODO.org$
 ^vignettes/.*\.org$

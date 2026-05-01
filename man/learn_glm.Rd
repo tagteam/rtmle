@@ -39,6 +39,14 @@ The function attempts to run \code{speedglm} and uses \code{glm} only as a fallb
 Optional argument learn_variables can be used to restrict the learning to a subset of variables.
 This can be useful to avoid too many parameters in the model.
 }
+\examples{
+d <- data.table::data.table(Y = rep(c(0, 1), 10),
+                            A = rep(c(0, 1, 1, 0), 5),
+                            L = seq(-1, 1, length.out = 20))
+predicted <- learn_glm("Y ~ A + L", data = d, intervened_data = d)
+head(predicted)
+attr(predicted, "fit")
+}
 \seealso{
 \code{link{superlearn}}, \code{link{learn_ranger}}, \code{link{learn_glmnet}}
 }

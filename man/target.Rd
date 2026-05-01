@@ -21,3 +21,17 @@ target(x, name, protocols, estimator, ...)
 A target defines a target parameter, an estimator and models
 for the nuisance parameters.
 }
+\examples{
+x <- rtmle_init(time_grid = 0:2, name_id = "id", name_outcome = "Y")
+x <- protocol(x, name = "Always_A",
+              intervention = data.frame(time = x$intervention_nodes,
+                                        A = factor("1", levels = c("0", "1"))))
+x <- protocol(x, name = "Never_A",
+              intervention = data.frame(time = x$intervention_nodes,
+                                        A = factor("0", levels = c("0", "1"))))
+x <- target(x, name = "Outcome_risk",
+            protocols = c("Always_A", "Never_A"),
+            estimator = "tmle")
+x$targets
+x$estimator
+}

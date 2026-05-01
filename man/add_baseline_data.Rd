@@ -16,3 +16,11 @@ add_baseline_data(x, data, ...)
 \description{
 This function adds a baseline dataset to an existing rtmle object
 }
+\examples{
+x <- rtmle_init(time_grid = 0:2, name_id = "id", name_outcome = "Y")
+baseline <- data.frame(id = 1:3,
+                       age = c(55, 60, 65),
+                       sex = c(0, 1, 0))
+x <- add_baseline_data(x, baseline)
+x$data$baseline_data
+}

@@ -25,6 +25,13 @@
 ##' @param ... Additional arguments for the learning phase passed to \code{\link[ranger]{ranger}}. These can include hyperparameters.
 ##' @return A vector of predicted probabilities which has the fit as an attribute.  
 ##' @seealso \code{link{superlearn}}, \code{link{learn_glm}}, \code{link{learn_glmnet}}
+##' @examples
+##' d <- data.table::data.table(Y = factor(rep(c(0, 1), 10)),
+##'                             A = rep(c(0, 1, 1, 0), 5),
+##'                             L = seq(-1, 1, length.out = 20))
+##' predicted <- learn_ranger("Y ~ A + L", data = d, intervened_data = d,
+##'                           num.trees = 10, min.node.size = 1)
+##' head(predicted)
 ##' @export 
 ##' @author Thomas A. Gerds <tag@@biostat.ku.dk>
 learn_ranger <- function(character_formula,data,intervened_data,...){

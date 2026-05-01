@@ -22,6 +22,19 @@
 ##' @param protocols The names of the protocol(s) involved in the target parameters.
 ##' @param estimator Character specifying the estimator: either \code{'tmle'} or \code{'g-formula'}.
 ##' @param ... Not (yet) used
+##' @examples
+##' x <- rtmle_init(time_grid = 0:2, name_id = "id", name_outcome = "Y")
+##' x <- protocol(x, name = "Always_A",
+##'               intervention = data.frame(time = x$intervention_nodes,
+##'                                         A = factor("1", levels = c("0", "1"))))
+##' x <- protocol(x, name = "Never_A",
+##'               intervention = data.frame(time = x$intervention_nodes,
+##'                                         A = factor("0", levels = c("0", "1"))))
+##' x <- target(x, name = "Outcome_risk",
+##'             protocols = c("Always_A", "Never_A"),
+##'             estimator = "tmle")
+##' x$targets
+##' x$estimator
 ##' @export
 target <- function(x,
                    name,
