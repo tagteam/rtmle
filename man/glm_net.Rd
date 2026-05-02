@@ -2,7 +2,7 @@
 % Please edit documentation in R/glm_net.R
 \name{glm_net}
 \alias{glm_net}
-\title{Fitting glm_net for use with rtmle}
+\title{Fit glm_net models for use with rtmle}
 \usage{
 glm_net(
   formula,
@@ -21,22 +21,30 @@ glm_net(
 
 \item{data}{The data on which to fit the model.}
 
-\item{lambda}{The tuning parameters for glm_net. If set to NULL, then it the parameters are chosen for you.}
+\item{lambda}{Tuning parameter for \code{glm_net}. If \code{NULL}, the
+parameter is chosen by \code{glmnet}.}
 
-\item{cv}{Whether to use cross-validation or not. Default is TRUE.}
+\item{cv}{Logical. If \code{TRUE}, use cross-validation.}
 
-\item{alpha}{The elasticnet mixing parameter. See the ?glmnet for more details.}
+\item{alpha}{Elastic-net mixing parameter. See
+\code{\link[glmnet]{glmnet}}.}
 
 \item{nfolds}{Number of folds for cross-validation. Default is 10.}
 
-\item{type.measure}{loss to use for cross-validation. Default is deviance.}
+\item{type.measure}{Loss function used for cross-validation. Default is
+deviance.}
 
-\item{family}{passed to \code{glmnet}. Defaults for binary outcome to \code{"binomial"} and for survival to \code{"cox"}.}
+\item{family}{Passed to \code{\link[glmnet]{glmnet}}. Defaults to
+\code{"binomial"} for binary outcomes and \code{"gaussian"} otherwise.}
 
-\item{\dots}{Additional arguments that are passed on to the glmnet.}
+\item{...}{Additional arguments passed to \code{\link[glmnet]{glmnet}}.}
+}
+\value{
+A fitted object of class \code{"glm_net"}.
 }
 \description{
-Fit glm_net models via a formula and a data set for use with learn_glmnet
+Fits \code{glm_net} models from a formula and data set for use
+with \code{\link{learn_glmnet}}.
 }
 \examples{
 d <- data.frame(Y = rep(c(0, 1), 10),
@@ -44,4 +52,7 @@ d <- data.frame(Y = rep(c(0, 1), 10),
                 L = seq(-1, 1, length.out = 20))
 fit <- glm_net(Y ~ A + L, data = d, lambda = 0.01, cv = FALSE)
 riskRegression::predictRisk(fit, newdata = d[1:3, ], times = 1, lambda = 0.01)
+}
+\seealso{
+\code{\link{learn_glmnet}}, \code{\link{run_rtmle}}
 }

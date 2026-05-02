@@ -14,35 +14,50 @@
 #----------------------------------------------------------------------
 ## 
 ### Code:
-##' Initialize an emulated trial analysis of register data for targeted minimum loss estimation  
+##' Initialize an rtmle analysis
 ##'
-##' Create an empty object with class \code{"rtmle"} which waits for data
-##' and other instructions such as   
+##' Creates an empty object of class \code{"rtmle"} that stores analysis
+##' settings and can then be populated with data, protocols, targets, and model
+##' formulas.
+##'
 ##' @title Register Targeted Minimum Loss Estimation
-##' @param time_grid Vector of time points which define the discrete
+##' @param time_grid Vector of time points that define the discrete
 ##'     time intervals for updating information in a longitudinal
 ##'     setting. The first value must be 0 and the length of the
 ##'     vector must be at least 2. When \code{time_grid} is of length
-##'     2, this is a setting where no updating of information happens
+##'     2, no information is updated
 ##'     after time zero.
-##' @param name_id Name of the subject identifier variable
-##' @param name_time Name of the time variable, e.g., \code{"date"} would be an appropriate name when the data are recorded as calendar dates.
-##' @param name_outcome Name of the outcome variable(s). For example, the value \code{"cvddeath"} would mean
-##' in a longitudinal setting with \code{time_grid} of length 4 that the variables in the data set are named \code{"cvddeath_1", "cvddeath_2", "cvddeath_3"}.
-##' In the setting where \code{time_grid} has two values this should be the full name of the outcome variable.
-##' @param name_competing Name of the competing risk variable(s). Can be \code{NULL} if the data do not contain competing risks for the outcome.
-##' @param name_censoring Name of the censoring variable(s). Can be \code{NULL} if the subjects are all uncensored, i.e., the minimum
-##' potential followup time is longer than the maximal time of \code{time_grid}.
+##' @param name_id Name of the subject identifier variable.
+##' @param name_time Name of the time variable. For example, \code{"date"} is
+##'   appropriate when the data are recorded as calendar dates.
+##' @param name_outcome Name of the outcome variable or variable prefix. For
+##'   example, if \code{name_outcome = "cvddeath"} in a longitudinal setting
+##'   with \code{time_grid} of length 4, the wide-format outcome variables are
+##'   expected to be named \code{"cvddeath_1"}, \code{"cvddeath_2"}, and
+##'   \code{"cvddeath_3"}. If \code{time_grid} has length 2, this should be
+##'   the full name of the outcome variable.
+##' @param name_competing Name of the competing-risk variable or variable
+##'   prefix. Can be \code{NULL} if there are no competing risks for the
+##'   outcome.
+##' @param name_censoring Name of the censoring variable or variable prefix.
+##'   Can be \code{NULL} if all subjects are uncensored; that is, if the
+##'   minimum potential follow-up time is longer than the maximum value of
+##'   \code{time_grid}.
 ##' @param censored_levels Character vector with the censoring levels.
-##' @param censored_label A single character value. Label of the values of the censoring variable(s) that indicated that
-##' the data of the subject at this time interval are censored. Must be an element of \code{censored_levels} too.
-##' @param minority_threshold For binary outcomes, integer value which decides about whether
-##' fitting nuisance parameter regression models is feasible. If the number of subjects in the minority group is
-##' less than or equal to this threshold then regression modelling is skipped and the predicted value is simply the mean outcome.
-##' @param weight_truncation Two values which decide about the minimum and the maximum of the weights w
-##' used in inverse probability weighting (1/w).
-##' @param prediction_range Two values used to force predicted outcome probabilities to the interval (0,1). This is required
-##' to perform a logit transformation for the fit of the fluctuation model in the tmle update step. Default is \code{c(0.0001,0.9999)}.
+##' @param censored_label A single character value identifying the censoring
+##'   level that indicates censored observations. Must be an element of
+##'   \code{censored_levels}.
+##' @param minority_threshold For binary outcomes, an integer threshold used to
+##'   decide whether fitting nuisance-parameter regression models is feasible.
+##'   If the number of subjects in the minority group is less than or equal to
+##'   this threshold, regression modeling is skipped and the predicted value is
+##'   the mean outcome.
+##' @param weight_truncation Two values defining the minimum and maximum
+##'   inverse-probability weights.
+##' @param prediction_range Two values used to constrain predicted outcome
+##'   probabilities to the interval \code{(0, 1)}. This is required for the
+##'   logit transformation used in the TMLE fluctuation model. The default is
+##'   \code{c(0.0001, 0.9999)}.
 ##' @return A list with class \code{"rtmle"} and the following elements:
 ##' \itemize{
 ##' \item targets
@@ -50,7 +65,11 @@
 ##' \item names
 ##' \item times
 ##' }
-##' @seealso run_rtmle
+##' @seealso \code{\link{add_baseline_data}}, \code{\link{add_long_data}},
+##'   \code{\link{add_wide_data}}, \code{\link{long_to_wide}},
+##'   \code{\link{prepare_rtmle_data}}, \code{\link{protocol}},
+##'   \code{\link{target}}, \code{\link{model_formula}},
+##'   \code{\link{run_rtmle}}
 ##' @examples
 ##' # longitudinal setting
 ##' x <- rtmle_init(time_grid=c(0,6,12,18),

@@ -14,6 +14,21 @@
 #----------------------------------------------------------------------
 ## 
 ### Code:
+#' Extract fitted nuisance-model coefficients
+#'
+#' Extracts regression coefficients from fitted nuisance-parameter models in an
+#' \code{rtmle} object. This method is used by
+#' \code{\link{plot_model_coefficients}}.
+#'
+#' @param object A fitted \code{rtmle} object.
+#' @param time_horizon Optional time horizon used when extracting outcome-model
+#'   coefficients. Defaults to the largest fitted time horizon not exceeding the
+#'   object time grid.
+#' @param ... Not used.
+#' @return A \code{\link[data.table]{data.table}} with columns identifying the
+#'   time point, protocol, node, outcome, coefficient term, and coefficient
+#'   value.
+#' @seealso \code{\link{run_rtmle}}, \code{\link{plot_model_coefficients}}
 #' @export
 #' @method coef rtmle
 coef.rtmle <- function(object,time_horizon,...){

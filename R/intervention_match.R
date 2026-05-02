@@ -14,15 +14,19 @@
 #----------------------------------------------------------------------
 ## 
 ### Code:
-##' Create a matrix called intervention_match 
+##' Check adherence to a protocol
 ##'
-##' This function is run by \code{protocol} only if \code{prepare_rtmle_data} is run before adding a protocol.
-##' It is also run by \code{run_rtmle} if needed at that stage.
-##' @title Checking adherence to a given protocol (treatment regimen, intervention).
-##' @param x An rtmle object as obtained with \code{rtmle_init}.
+##' Builds the \code{intervention_match} matrix for a protocol. The function is
+##' called by \code{\link{protocol}} when \code{\link{prepare_rtmle_data}} has
+##' already been run, and by \code{\link{run_rtmle}} if the matrix is still
+##' missing at estimation time.
+##'
+##' @title Check adherence to a protocol
+##' @param x An \code{rtmle} object as returned by \code{\link{rtmle_init}}.
 ##' @param protocol_name Name of the protocol to check.
-##' @return The modified object
-##' @seealso protocol 
+##' @return The modified \code{rtmle} object.
+##' @seealso \code{\link{protocol}}, \code{\link{prepare_rtmle_data}},
+##'   \code{\link{run_rtmle}}, \code{\link{plot_adherence}}
 ##' @examples
 ##' x <- rtmle_init(time_grid = 0:2, name_id = "id", name_outcome = "Y")
 ##' x$prepared_data <- data.table::data.table(

@@ -6,7 +6,7 @@
 \alias{rtmle-package}
 \title{rtmle: Analysing Longitudinal Observational and Randomized Data with the Targeted Minimum Loss Estimator}
 \description{
-Flexible implementation of the targeted minimum loss estimators. Some of the functions are readily optimized for large-scale register data. Some of the functions in this package were inspired by the 'ltmle' package developed by Joshua Schwab, Samuel Lendle, Maya Petersen, and Mark J. van der Laan, but rtmle provides an independent implementation with a different architecture and extensions to competing risks.
+Flexible implementation of targeted minimum loss estimators. Some functions are optimized for large-scale register data. Some functions in this package were inspired by the 'ltmle' package developed by Joshua Schwab, Samuel Lendle, Maya Petersen, and Mark J. van der Laan, but rtmle provides an independent implementation with a different architecture and extensions to competing risks.
 }
 \seealso{
 Useful links:

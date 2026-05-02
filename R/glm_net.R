@@ -14,20 +14,27 @@
 #----------------------------------------------------------------------
 ## 
 ### Code:
-#' @title Fitting glm_net for use with rtmle
+#' @title Fit glm_net models for use with rtmle
 #'
-#' @description Fit glm_net models via a formula and a data set for use with learn_glmnet
+#' @description Fits \code{glm_net} models from a formula and data set for use
+#' with \code{\link{learn_glmnet}}.
 #' @name glm_net
 #'
 #' @param formula A formula.
 #' @param data The data on which to fit the model. 
-#' @param lambda The tuning parameters for glm_net. If set to NULL, then it the parameters are chosen for you.
-#' @param cv Whether to use cross-validation or not. Default is TRUE.
-#' @param alpha The elasticnet mixing parameter. See the ?glmnet for more details.
+#' @param lambda Tuning parameter for \code{glm_net}. If \code{NULL}, the
+#'   parameter is chosen by \code{glmnet}.
+#' @param cv Logical. If \code{TRUE}, use cross-validation.
+#' @param alpha Elastic-net mixing parameter. See
+#'   \code{\link[glmnet]{glmnet}}.
 #' @param nfolds Number of folds for cross-validation. Default is 10.
-#' @param type.measure loss to use for cross-validation. Default is deviance.
-#' @param family passed to \code{glmnet}. Defaults for binary outcome to \code{"binomial"} and for survival to \code{"cox"}.
-#' @param \dots Additional arguments that are passed on to the glmnet.
+#' @param type.measure Loss function used for cross-validation. Default is
+#'   deviance.
+#' @param family Passed to \code{\link[glmnet]{glmnet}}. Defaults to
+#'   \code{"binomial"} for binary outcomes and \code{"gaussian"} otherwise.
+#' @param ... Additional arguments passed to \code{\link[glmnet]{glmnet}}.
+#' @return A fitted object of class \code{"glm_net"}.
+#' @seealso \code{\link{learn_glmnet}}, \code{\link{run_rtmle}}
 #' @examples
 #' d <- data.frame(Y = rep(c(0, 1), 10),
 #'                 A = rep(c(0, 1, 1, 0), 5),

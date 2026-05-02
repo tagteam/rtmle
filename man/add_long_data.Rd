@@ -2,7 +2,7 @@
 % Please edit documentation in R/add_long_data.R
 \name{add_long_data}
 \alias{add_long_data}
-\title{Adding long format data}
+\title{Add long-format data}
 \usage{
 add_long_data(
   x,
@@ -14,44 +14,45 @@ add_long_data(
 )
 }
 \arguments{
-\item{x}{object of class \code{rtmle}}
+\item{x}{An object of class \code{"rtmle"}, typically created by
+\code{\link{rtmle_init}}.}
 
-\item{outcome_data}{data.frame with two columns where the first is a subject identifier as initialized
-under \code{x$names$id} and the second column contains dates of outcome events. 
-Only subjects who exerience an outcome may have a row in the data.frame. The 
-name of the date variable must match \code{x$names$time} and it may contain calendar time dates
-or the pre-calculated time duration between time zero and the onset of the outcome.}
+\item{outcome_data}{A data frame whose first relevant column is the subject
+identifier initialized as \code{x$names$id} and whose date column records
+outcome event times. Only subjects who experience the outcome need rows.
+The date column must match \code{x$names$time}; it may contain calendar
+dates or precomputed durations since time zero.}
 
-\item{censored_data}{data.frame with two columns where the first is a subject identifier as initialized
-under \code{x$names$id} and the second column contains dates of end of followup.
-All subjects can have a row in the data.frame. But the entries about the end of followup for people who experience the outcome or 
-a competing risk are ignored.
-The name of the date variable must match \code{x$names$time} and it may contain calendar time dates
-or the pre-calculated time duration between time zero and the end of followup.}
+\item{censored_data}{A data frame whose first relevant column is the subject
+identifier initialized as \code{x$names$id} and whose date column records
+end-of-follow-up times. Rows for subjects who experience the outcome or a
+competing risk are ignored. The date column must match \code{x$names$time};
+it may contain calendar dates or precomputed durations since time zero.}
 
-\item{competing_data}{data.frame with two columns where the first is a subject identifier as initialized
-under \code{x$names$id} and the second column contains dates of competing events. 
-Only subjects who exerience an competing event may have a row in the data.frame. The 
-name of the date variable must match \code{x$names$time} and it may contain calendar time dates
-or the pre-calculated time duration between time zero and the onset of the competing event.}
+\item{competing_data}{A data frame whose first relevant column is the subject
+identifier initialized as \code{x$names$id} and whose date column records
+competing event times. Only subjects who experience a competing event need
+rows. The date column must match \code{x$names$time}; it may contain
+calendar dates or precomputed durations since time zero.}
 
-\item{timevar_data}{named list of data.frames. Must contain a data frame for the treatment
-and data frames for each time-varying variable. The data frames either contain two columns where the first is a subject identifier as initialized
-under \code{x$names$id} and the second column contains dates. The data frames may additionally contain a \code{value} column.}
+\item{timevar_data}{A named list of data frames for treatment and
+time-varying covariates. Each data frame must contain the subject
+identifier initialized as \code{x$names$id} and date information; it may
+also contain a \code{value} column.}
 
-\item{...}{named arguments where each argument is a data.frame for
-the treatment or a time-varying variable. This is an
-alternative way to communicate the time-varying information instead of using 
+\item{...}{Named data-frame arguments for treatment or time-varying
+covariates. This is an alternative to passing those data frames through
 \code{timevar_data}.}
 }
 \value{
-The modified object.
+The modified \code{rtmle} object.
 }
 \description{
-Adding long format data to a rtmle object
+Add long-format data to an rtmle object
 }
 \details{
-This function adds a list of datasets with dates and values in long format (multiple lines per subject) to an existing rtmle object
+Adds event, censoring, competing-risk, treatment, and time-varying covariate
+data in long format, with potentially multiple rows per subject.
 }
 \examples{
 set.seed(17)
@@ -84,7 +85,9 @@ x <- run_rtmle(x,learner = "learn_glmnet",time_horizon = 1:3)
 summary(x)
 }
 \seealso{
-\link[rtmle]{add_baseline_data}, \link[rtmle]{add_wide_data}
+\code{\link{rtmle_init}}, \code{\link{add_baseline_data}},
+  \code{\link{add_wide_data}}, \code{\link{long_to_wide}},
+  \code{\link{prepare_rtmle_data}}
 }
 \author{
 Thomas A. Gerds <tag@biostat.ku.dk>

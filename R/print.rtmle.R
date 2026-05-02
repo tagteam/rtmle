@@ -14,12 +14,16 @@
 #----------------------------------------------------------------------
 ## 
 ### Code:
-#' Printing an object for register data analysis with the targeted minimum loss estimator 
+#' Print an rtmle object
 #'
-#' This print function informs about the current state of the object and
-#' about how to proceed.
-#' @param x Object to be printed
-#' @param ... Not used for now
+#' Prints the current state of an \code{rtmle} object and indicates the next
+#' analysis steps that are still missing.
+#'
+#' @param x Object to print.
+#' @param ... Not used.
+#' @return Invisibly returns \code{NULL}.
+#' @seealso \code{\link{rtmle_init}}, \code{\link{prepare_rtmle_data}},
+#'   \code{\link{run_rtmle}}, \code{\link{summary.rtmle}}
 #' @examples
 #' x <- rtmle_init(time_grid = 0:2,
 #'                 name_id = "id",
@@ -36,7 +40,7 @@ print.rtmle <- function(x, ...) {
             paste0(x[1], ", ", x[2], ", ..., ", x[n])
         }
     }
-    cat(sep = "","\nTargeted minimum loss based analysis of longitudinal data on a discretized time scale.\n")
+    cat(sep = "","\nTargeted minimum loss-based analysis of longitudinal data on a discretized time scale.\n")
     # Package version
     if (!is.null(x$version)) {
         cat(sep = "","\nPackage version:     ", as.character(x$version))

@@ -14,50 +14,54 @@
 #----------------------------------------------------------------------
 ## 
 ### Code:
-##' Super learning nuisance parameter models for longitudinal TMLE analyses
+##' Super learn nuisance-parameter models
 ##'
-##' The function collaborates with \code{run_rtmle}. It 
-##' It uses cross-fitting to produce level-one data, where the predicted probability of each learner
-##' is a column which can be compared with the outcome. The discrete super learner chooses the
-##' learner lowest quadratic prediction error. The ensemble super learner combines the learners.
+##' Uses cross-fitting to produce level-one data for learners used by
+##' \code{\link{run_rtmle}}. The predicted probability from each learner is
+##' stored as one column and compared with the outcome. The discrete super
+##' learner chooses the learner with the lowest quadratic prediction error; the
+##' ensemble super learner combines the candidate learners.
 ##' 
 ##' @title Super learning for rtmle
-##' @param folds Number of folds
-##' @param seed Random seed
+##' @param folds Number of folds.
+##' @param seed Random seed.
 ##' @param learners List of learners. Each learner can either be a
 ##'     character string or a list. If the learner is a character
 ##'     string it must be the name of a learner function, such as
 ##'     \code{\link{learn_glm}}, \code{\link{learn_glmnet}},
-##'     \code{\link{learn_ranger}}. If the learner is a list then
-##'     either the name of the learner is a learner function or the
-##'     list has an element \code{fun} which is the name of a
-##'     learner function. The other elements of the list are passed on
+##'     \code{\link{learn_ranger}}, or \code{\link{learn_xgboost}}. If the
+##'     learner is a list, either the name of the learner is a learner function
+##'     or the list has an element \code{fun} naming a learner function. The
+##'     other elements of the list are passed
 ##'     as additional arguments to the learner function.
-##' @param parse_learners Logical. If TRUE parse
-##'     learners. \code{\link{run_rtmle}} needs sets this to FALSE.
+##' @param parse_learners Logical. If \code{TRUE}, parse learner
+##'     specifications with \code{\link{parse_learners}}.
 ##' @param character_formula A formula (passed as a character string!)
 ##'     to parse the outcome and the predictor variables.
 ##' @param outcome_variable The name of the outcome variable (same as
-##'     \code{all.vars(formula(character_formula))[[1]]} provided to
+##'     \code{all.vars(formula(character_formula))[[1]]}), provided to
 ##'     avoid overhead in the parsing of the formula.
-##' @param outcome_variable_name For internal use when called from \code{run_rtmle} via \code{fitter}.
-##' @param id_variable The name of the subject id variable.
-##' @param data The data for learning.
-##' @param intervened_data The data were all intervention variables
-##'     are readily set according to the intervention protocol.
-##' @param ensemble_method How to combine the learners. Implemented are
-##' non-linear least squares \code{"nnls"}, index of prediction accuracy \code{"ipa"} weighting and
-##' \code{"discrete"} which picks the learner with the lowest Brier score. If all models
-##' have zero weight, the average predicted value from the learning set is applied.
-##' @param diagnostics For internal use when called from run_rtmle via
-##'     fitter which is called from intervention_probabilities and
-##'     sequential_regression.
-##' @param ... Not (yet) used.
-##' @return The level-one data column of the discrete superlearner.
-##' @seealso \code{\link{run_rtmle}}, \code{learn_glm},
-##'     \code{learn_glmnet}, \code{learn_ranger}
+##' @param outcome_variable_name For internal use when called from
+##'   \code{\link{run_rtmle}} via \code{fitter()}.
+##' @param id_variable Name of the subject identifier variable.
+##' @param data Data used for learning.
+##' @param intervened_data Data in which all intervention variables have already
+##'     been set according to the intervention protocol.
+##' @param ensemble_method How to combine learners. Implemented methods are
+##'   non-linear least squares (\code{"nnls"}), index-of-prediction-accuracy
+##'   weighting (\code{"ipa"}), and \code{"discrete"}, which selects the learner
+##'   with the lowest Brier score. If all models have zero weight, the average
+##'   predicted value from the learning set is used.
+##' @param diagnostics For internal use when called from \code{\link{run_rtmle}}
+##'   via \code{fitter()}, which is called from
+##'   \code{intervention_probabilities()} and \code{sequential_regression()}.
+##' @param ... Not used.
+##' @return The level-one data column of the discrete super learner.
+##' @seealso \code{\link{run_rtmle}}, \code{\link{parse_learners}},
+##'   \code{\link{learn_glm}}, \code{\link{learn_glmnet}},
+##'   \code{\link{learn_ranger}}, \code{\link{learn_xgboost}}
 ##' @examples
-##' # Note that the function is designed to be called from run_rtmle.  
+##' # Note that the function is designed to be called from run_rtmle.
 ##' library(ranger)
 ##' library(glmnet)
 ##' set.seed(17)
@@ -118,7 +122,7 @@ superlearn <- function(folds,
     }else{
         multi_factor_levels <- NULL
     }
-    # create emtpy level-1 data
+    # create empty level-1 data
     level_one_data <- data.table::data.table(id = 1:N,data[[outcome_variable]])
     setnames(level_one_data,c(id_variable,outcome_variable))
     # initialize a column in the level-1 data

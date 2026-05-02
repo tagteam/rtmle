@@ -13,36 +13,39 @@
 ### Change Log:
 #----------------------------------------------------------------------
 ## ### Code:
-#' Adding long format data to a rtmle object
+#' Add long-format data to an rtmle object
 #'
-#' This function adds a list of datasets with dates and values in long format (multiple lines per subject) to an existing rtmle object
-##' @title Adding long format data
-#' @param x object of class \code{rtmle}
-#' @param outcome_data data.frame with two columns where the first is a subject identifier as initialized
-#'        under \code{x$names$id} and the second column contains dates of outcome events. 
-#'        Only subjects who exerience an outcome may have a row in the data.frame. The 
-#'        name of the date variable must match \code{x$names$time} and it may contain calendar time dates
-#'        or the pre-calculated time duration between time zero and the onset of the outcome. 
-#' @param censored_data data.frame with two columns where the first is a subject identifier as initialized
-#'        under \code{x$names$id} and the second column contains dates of end of followup.
-#'        All subjects can have a row in the data.frame. But the entries about the end of followup for people who experience the outcome or 
-#'        a competing risk are ignored.
-#'        The name of the date variable must match \code{x$names$time} and it may contain calendar time dates
-#'        or the pre-calculated time duration between time zero and the end of followup. 
-#' @param competing_data data.frame with two columns where the first is a subject identifier as initialized
-#'        under \code{x$names$id} and the second column contains dates of competing events. 
-#'        Only subjects who exerience an competing event may have a row in the data.frame. The 
-#'        name of the date variable must match \code{x$names$time} and it may contain calendar time dates
-#'        or the pre-calculated time duration between time zero and the onset of the competing event. 
-#' @param timevar_data named list of data.frames. Must contain a data frame for the treatment
-#' and data frames for each time-varying variable. The data frames either contain two columns where the first is a subject identifier as initialized
-#' under \code{x$names$id} and the second column contains dates. The data frames may additionally contain a \code{value} column.
-#' @param ... named arguments where each argument is a data.frame for
-#'     the treatment or a time-varying variable. This is an
-#'     alternative way to communicate the time-varying information instead of using 
-#'     \code{timevar_data}.
-#' @seealso \link[rtmle]{add_baseline_data}, \link[rtmle]{add_wide_data}
-#' @return The modified object.
+#' Adds event, censoring, competing-risk, treatment, and time-varying covariate
+#' data in long format, with potentially multiple rows per subject.
+##' @title Add long-format data
+#' @param x An object of class \code{"rtmle"}, typically created by
+#'   \code{\link{rtmle_init}}.
+#' @param outcome_data A data frame whose first relevant column is the subject
+#'   identifier initialized as \code{x$names$id} and whose date column records
+#'   outcome event times. Only subjects who experience the outcome need rows.
+#'   The date column must match \code{x$names$time}; it may contain calendar
+#'   dates or precomputed durations since time zero.
+#' @param censored_data A data frame whose first relevant column is the subject
+#'   identifier initialized as \code{x$names$id} and whose date column records
+#'   end-of-follow-up times. Rows for subjects who experience the outcome or a
+#'   competing risk are ignored. The date column must match \code{x$names$time};
+#'   it may contain calendar dates or precomputed durations since time zero.
+#' @param competing_data A data frame whose first relevant column is the subject
+#'   identifier initialized as \code{x$names$id} and whose date column records
+#'   competing event times. Only subjects who experience a competing event need
+#'   rows. The date column must match \code{x$names$time}; it may contain
+#'   calendar dates or precomputed durations since time zero.
+#' @param timevar_data A named list of data frames for treatment and
+#'   time-varying covariates. Each data frame must contain the subject
+#'   identifier initialized as \code{x$names$id} and date information; it may
+#'   also contain a \code{value} column.
+#' @param ... Named data-frame arguments for treatment or time-varying
+#'   covariates. This is an alternative to passing those data frames through
+#'   \code{timevar_data}.
+#' @seealso \code{\link{rtmle_init}}, \code{\link{add_baseline_data}},
+#'   \code{\link{add_wide_data}}, \code{\link{long_to_wide}},
+#'   \code{\link{prepare_rtmle_data}}
+#' @return The modified \code{rtmle} object.
 #' @author Thomas A. Gerds <tag@@biostat.ku.dk>
 #' @examples
 #' set.seed(17)

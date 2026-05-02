@@ -16,32 +16,29 @@
 ### Code:
 #' Boxplots of cumulative intervention probabilities among adherent, at-risk subjects
 #'
-#' For each protocol in `x$protocols`, this function extracts cumulative intervention
-#' probabilities from `cumulative_intervention_probs` and produces boxplots across
-#' intervention nodes, restricted to subjects who are:
+#' For each protocol in \code{x$protocols}, extracts cumulative intervention
+#' probabilities from \code{cumulative_intervention_probs} and produces
+#' boxplots across intervention nodes, restricted to subjects who are:
 #' \itemize{
-#'   \item \strong{Adherent} at the corresponding intervention decision: `intervention_match[, A_t] == 1`
-#'   \item \strong{At risk} at node `t`: `x$followup$last_interval >= t`
+#'   \item \strong{Adherent} at the corresponding intervention decision:
+#'   \code{intervention_match[, A_t] == 1}
+#'   \item \strong{At risk} at node \code{t}: \code{x$followup$last_interval >= t}
 #' }
 #'
-#' \strong{Default column mapping (requested):}
-#' \itemize{
-#'   \item Node 0 uses cumulative probability column \code{"Censored_1"} (paired with \code{"A_0"})
-#'   \item Node 1 uses cumulative probability column \code{"Censored_2"} (paired with \code{"A_1"})
-#' }
+#' The cumulative probability column is selected from the protocol-specific
+#' \code{intervention_last_nodes} index created by \code{\link{run_rtmle}}.
 #'
-#' You can optionally plot \emph{all} columns of `cumulative_intervention_probs`
-#' (e.g., including \code{A_0}, \code{A_1}, etc.) instead of only the censored columns.
-#'
-#' @param x An object containing:
+#' @param x An \code{rtmle} object containing:
 #'   \itemize{
 #'     \item \code{x$protocols}: named list; each protocol has matrices
 #'       \code{$cumulative_intervention_probs} and \code{$intervention_match}
-#'     \item \code{x$followup}: data.frame/data.table with columns \code{id} and \code{last_interval}
+#'     \item \code{x$followup}: data frame or data table with columns \code{id} and \code{last_interval}
 #'     \item \code{x$intervention_nodes}: integer vector of decision nodes (e.g. \code{c(0,1)})
 #'   }
 #' @param protocols Character vector of protocol names to include. Default \code{NULL} uses all.
-#' @return A \code{ggplot} object.
+#' @return A \code{\link[ggplot2]{ggplot}} object.
+#' @seealso \code{\link{run_rtmle}}, \code{\link{plot_adherence}},
+#'   \code{\link{plot.rtmle}}
 #' @examples
 #' x <- list(
 #'   protocols = list(Always_A = list(
@@ -108,7 +105,7 @@ plot_IPW <- function(
         }))
     }))
     plot_dt[, intervention_node := factor(intervention_node, levels = x$intervention_nodes)]
-    missing_values <- plot_dt[,list("mising value" = sum(is.na(used_cumprobs))),by = c("intervention_node","protocol")]
+    missing_values <- plot_dt[,list("missing value" = sum(is.na(used_cumprobs))),by = c("intervention_node","protocol")]
     p <- ggplot2::ggplot(plot_dt, ggplot2::aes(x = intervention_node, y = used_cumprobs)) +
         ggplot2::geom_boxplot(outlier.alpha = 0.4) +
         ggplot2::labs(

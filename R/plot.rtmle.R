@@ -14,20 +14,25 @@
 #----------------------------------------------------------------------
 ## 
 ### Code:
-##' @title ggplot rtmle objects
-#' @description Plot risk predictions and average treatment effects from rtmle objects
+#' @title Plot rtmle objects
+#' @description Plot risk estimates and risk contrasts from fitted
+#'   \code{rtmle} objects.
 #' @name plot.rtmle
 #' @aliases autoplot.rtmle
-#' @param object Object of class \code{"rtmle"} prepared and fitted
-#' @param x Object of class \code{"rtmle"} prepared and fitted
-#' @param analysis Name of the analysis. Default is NULL which refers to object[["Main_analysis"]].
-#' @param xlim Limits for x-axis
-#' @param ylim Limits for y-axis
-#' @param y_breaks Breaks for y-axis
-#' @param x_breaks Breaks for x-axis
+#' @param object A prepared and fitted object of class \code{"rtmle"}.
+#' @param x A prepared and fitted object of class \code{"rtmle"}.
+#' @param analysis Name of the analysis. If \code{NULL}, use
+#'   \code{object$estimate[["Main_analysis"]]}.
+#' @param xlim Limits for the x-axis.
+#' @param ylim Limits for the y-axis.
+#' @param y_breaks Breaks for the y-axis.
+#' @param x_breaks Breaks for the x-axis.
 #' @param position_atrisk Vector of positions on the x-axis where numbers at-risk are shown below the graph.
-#' @param conf_int Logical. If \code{TRUE} add confidence shadows to the graph.
-#' @param ... Not used 
+#' @param conf_int Logical. If \code{TRUE}, add confidence bands to the graph.
+#' @param ... Not used.
+#' @return A \code{\link[ggplot2]{ggplot}} object.
+#' @seealso \code{\link{run_rtmle}}, \code{\link{summary.rtmle}},
+#'   \code{\link{plot_adherence}}, \code{\link{plot_IPW}}
 #' @examples
 #' x <- list(
 #'   estimate = list(Main_analysis = data.table::data.table(

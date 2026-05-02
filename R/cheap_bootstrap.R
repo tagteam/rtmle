@@ -1,26 +1,31 @@
-##' Method implementing the cheap subsampling method for confidence intervals
+##' Cheap subsampling bootstrap confidence intervals
 ##'
-##' Given a model object or a function that returns a vector of coefficients
-##' and a data set,
-##' this function computes confidence intervals using
-##' the cheap subsampling method.
+##' Computes confidence intervals with the cheap subsampling bootstrap for a
+##' fitted \code{rtmle} object.
 ##'
 ##' @title Cheap subsampling bootstrap
-#' @param x object of class \code{rtmle}
-#' @param time_horizon  The time horizon at which to calculate
-#'     the bootstrap confidence intervals. If it is a vector the analysis will be performed for
-#'     each element of the vector.
+#' @param x An object of class \code{"rtmle"} with estimates produced by
+#'   \code{\link{run_rtmle}}.
+#' @param time_horizon The time horizon at which to calculate bootstrap
+#'     confidence intervals. If this is a vector, the analysis is performed for
+#'     each element.
 #' @param B Number of bootstrap samples.
-#' @param M Size of the bootstrap samples. The defaults is \code{0.632 * NROW(x$prepared_data)}.
+#' @param M Size of the bootstrap samples. The default is
+#'   \code{0.632 * NROW(x$prepared_data)}.
 #' @param seeds A vector of random seeds for controlling the
 #'     randomness while drawing the bootstrap samples.
 #' @param alpha Significance level. Defaults to 0.05.
-#' @param add Logical. If \code{TRUE} add new bootstrap results to the existing bootstrap results
-#' @param verbose Logical. Passed to run_rtmle to control verbosity.
-#' @param analyses Character vector specifying which analyses to perform the cheap bootstrap on.
-#' @param replace Logical. Whether to sample with replacement. Default is FALSE. Should not be changed.
+#' @param add Logical. If \code{TRUE}, add new bootstrap results to existing
+#'   bootstrap results.
+#' @param verbose Logical. Passed to \code{\link{run_rtmle}} to control
+#'   verbosity.
+#' @param analyses Character vector specifying which analyses should receive
+#'   cheap-bootstrap confidence intervals.
+#' @param replace Logical. Whether to sample with replacement. The default is
+#'   \code{FALSE} and should usually not be changed.
 #' @param ... Additional arguments passed to \code{run_rtmle}.
-##' @return The modified object
+##' @return The modified \code{rtmle} object.
+##' @seealso \code{\link{run_rtmle}}, \code{\link{summary.rtmle}}
 ##' @author Johan Sebastian Ohlendorff
 ##'     \email{johan.ohlendorff@@sund.ku.dk} and Thomas A Gerds
 ##'     \email{tag@@biostat.ku.dk}
@@ -127,7 +132,7 @@ cheap_bootstrap <- function(x,
         x$estimate$Cheap_bootstrap[[v]] <- x$estimate$CB
         x$estimate$CB <- NULL
       # calculate the cheap lower and upper confidence limits
-      # when there readily are bootstrap results we append to them
+      # append to existing bootstrap results when present
       if("Main"%in%names(x$estimate$Cheap_bootstrap[[v]])){
         data.table::set(x$estimate$Cheap_bootstrap[[v]],j = "Main",value = NULL)
       }

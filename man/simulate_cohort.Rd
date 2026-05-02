@@ -68,11 +68,11 @@ over time.}
 \item{regime}{Reserved for future use.}
 }
 \value{
-A longitudinal event-history [data.table::data.table()].
+A longitudinal event-history \code{\link[data.table]{data.table}}.
 }
 \description{
-This cohort simulator is adapted from `tagteam/followme/functions/
-simulate_cohort.R`.
+Simulates a configurable longitudinal event-history cohort. The simulator is
+adapted from \code{tagteam/followme/functions/simulate_cohort.R}.
 }
 \examples{
 library(lava)
@@ -106,4 +106,7 @@ scale_dropout = 0.04
 )
 )
 
+}
+\seealso{
+\code{\link{simulate_long_data}}, \code{\link{long_to_wide}}
 }

@@ -2,19 +2,25 @@
 % Please edit documentation in R/add_baseline_data.R
 \name{add_baseline_data}
 \alias{add_baseline_data}
-\title{Adding baseline data to a rtmle object}
+\title{Add baseline data to an rtmle object}
 \usage{
 add_baseline_data(x, data, ...)
 }
 \arguments{
-\item{x}{object of class \code{rtmle}}
+\item{x}{An object of class \code{"rtmle"}, typically created by
+\code{\link{rtmle_init}}.}
 
-\item{data}{data.frame with baseline data and id variable and a start_followup_date.}
+\item{data}{A data frame with one row per subject and a subject identifier
+column matching \code{x$names$id}. If follow-up starts at a subject-specific
+date, include that start-of-follow-up column here.}
 
-\item{...}{Not used (not yet)}
+\item{...}{Not used.}
+}
+\value{
+The modified \code{rtmle} object.
 }
 \description{
-This function adds a baseline dataset to an existing rtmle object
+Adds a baseline data set to an existing \code{rtmle} object.
 }
 \examples{
 x <- rtmle_init(time_grid = 0:2, name_id = "id", name_outcome = "Y")
@@ -23,4 +29,8 @@ baseline <- data.frame(id = 1:3,
                        sex = c(0, 1, 0))
 x <- add_baseline_data(x, baseline)
 x$data$baseline_data
+}
+\seealso{
+\code{\link{add_long_data}}, \code{\link{add_wide_data}},
+  \code{\link{long_to_wide}}, \code{\link{prepare_rtmle_data}}
 }

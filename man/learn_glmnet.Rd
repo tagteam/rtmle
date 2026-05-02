@@ -2,7 +2,7 @@
 % Please edit documentation in R/learn_glmnet.R
 \name{learn_glmnet}
 \alias{learn_glmnet}
-\title{Nuisance parameter learner based on \code{\link[glmnet]{glmnet}}}
+\title{Nuisance-parameter learner based on glmnet}
 \usage{
 learn_glmnet(
   character_formula,
@@ -18,39 +18,46 @@ learn_glmnet(
 )
 }
 \arguments{
-\item{character_formula}{Formula for nuisance parameter as a character}
+\item{character_formula}{Formula for the nuisance parameter, supplied as a
+character string.}
 
-\item{data}{Data for learning}
+\item{data}{Data used for learning.}
 
-\item{intervened_data}{Data for prediction}
+\item{intervened_data}{Data used for prediction after intervention variables
+have been set according to a protocol.}
 
-\item{selector}{Character value deciding about how to select the penalty parameter lambda:
-If \code{"undersmooth"} use the lambda value which results in the least amount of
-penalty such that the model still fits. The other options are \code{"min"} and \code{"1se"} which are 
-described in the documentation of \link[glmnet]{cv.glmnet}.}
+\item{selector}{Character value controlling how the penalty parameter
+\code{lambda} is selected. If \code{"undersmooth"}, use the least
+penalized value that still fits the model. The other options,
+\code{"min"} and \code{"1se"}, are described in
+\code{\link[glmnet]{cv.glmnet}}.}
 
-\item{lambda}{Penalty parameter passed to \link[glmnet]{glmnet} or \link[glmnet]{cv.glmnet}.}
+\item{lambda}{Penalty parameter passed to \code{\link[glmnet]{glmnet}} or
+\code{\link[glmnet]{cv.glmnet}}.}
 
-\item{alpha}{The elasticnet mixing parameter. See \link[glmnet]{glmnet} for more details.}
+\item{alpha}{Elastic-net mixing parameter. See
+\code{\link[glmnet]{glmnet}}.}
 
-\item{family}{Passed to \link[glmnet]{glmnet} or \link[glmnet]{cv.glmnet}.}
+\item{family}{Passed to \code{\link[glmnet]{glmnet}} or
+\code{\link[glmnet]{cv.glmnet}}.}
 
 \item{nfolds}{Number of folds for cross-validation. Default is 10.}
 
-\item{type.measure}{loss to use for cross-validation. Default is deviance.}
+\item{type.measure}{Loss function used for cross-validation. Default is
+deviance.}
 
-\item{...}{Additional arguments for the learning phase passed to \code{\link[glmnet]{glmnet}}. 
-E.g., setting alpha affects the elastic net.}
+\item{...}{Additional arguments passed to \code{\link[glmnet]{glmnet}}.}
 }
 \value{
-A vector of predicted probabilities which has the fit as an attribute.
+A vector of predicted probabilities with the fitted model stored in
+  the \code{"fit"} attribute.
 }
 \description{
-Learning nuisance parameter models for TMLE and predicting
-probabilities in intervened data based on \code{\link[glmnet]{glmnet}}
+Learn nuisance-parameter models with glmnet
 }
 \details{
-This can be useful to avoid too many parameters in the model.
+Learns nuisance-parameter models for TMLE and predicts probabilities in
+intervention-updated data using \code{\link[glmnet]{glmnet}}.
 }
 \examples{
 d <- data.table::data.table(Y = rep(c(0, 1), 10),
@@ -62,5 +69,6 @@ head(predicted)
 attr(predicted, "selected.lambda")
 }
 \seealso{
-\code{link{superlearn}}, \code{link{learn_ranger}}, \code{link{learn_glm}}
+\code{\link{superlearn}}, \code{\link{learn_ranger}},
+  \code{\link{learn_glm}}, \code{\link{learn_xgboost}}
 }

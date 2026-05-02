@@ -2,31 +2,34 @@
 % Please edit documentation in R/add_wide_data.R
 \name{add_wide_data}
 \alias{add_wide_data}
-\title{Adding wide format data}
+\title{Add wide-format data}
 \usage{
 add_wide_data(x, outcome_data, timevar_data, ...)
 }
 \arguments{
-\item{x}{object of class \code{rtmle}}
+\item{x}{An object of class \code{"rtmle"}, typically created by
+\code{\link{rtmle_init}}.}
 
-\item{outcome_data}{Data frame in a wide format. It should contain outcome variables,
-possibly also censoring and/or competing risk variables, and time-varying covariates.}
+\item{outcome_data}{A wide-format data frame containing outcome variables and,
+when present, censoring and competing-risk variables.}
 
-\item{timevar_data}{Data frame in a wide format. It should contain the time-varying covariates.}
+\item{timevar_data}{A wide-format data frame, or a named list of data frames,
+containing time-varying covariates.}
 
-\item{...}{Not used (not yet)}
+\item{...}{Not used.}
 }
 \value{
-The modified object.
+The modified \code{rtmle} object.
 }
 \description{
-Adding wide format data to a rtmle object
+Add wide-format data to an rtmle object
 }
 \details{
-This function adds a list of datasets in wide format (one line per subject) to an existing rtmle object
+Adds one-row-per-subject data in wide format to an existing \code{rtmle}
+object.
 }
 \examples{
-# FIXME: this is a detour to produce wide format data
+# Create wide-format data from simulated long-format data.
 set.seed(112)
 ld <- simulate_long_data(n = 11,number_visits = 20,
                          beta = list(A_on_Y = -.2,
@@ -52,7 +55,8 @@ x <- add_wide_data(x,outcome_data=outcome_data,timevar_data=timevar_data)
 
 }
 \seealso{
-\link[rtmle]{add_baseline_data}, \link[rtmle]{add_long_data}
+\code{\link{add_baseline_data}}, \code{\link{add_long_data}},
+  \code{\link{long_to_wide}}, \code{\link{prepare_rtmle_data}}
 }
 \author{
 Thomas A. Gerds <tag@biostat.ku.dk>

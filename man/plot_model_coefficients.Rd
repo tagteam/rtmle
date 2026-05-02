@@ -23,11 +23,14 @@ plot_model_coefficients(
 )
 }
 \arguments{
-\item{x}{An object fitted with \link{run_rtmle} containing fitted nuisance parameter models.}
+\item{x}{An object fitted with \code{\link{run_rtmle}} containing fitted
+nuisance-parameter models.}
 
-\item{time_horizon}{Optional selection of time_horizon. If \code{NULL}, \code{max(x$time_grid)} is used.}
+\item{time_horizon}{Optional selection of time horizon. If \code{NULL},
+\code{max(x$time_grid)} is used.}
 
-\item{protocol}{Optional selection of protocol. If \code{NULL}, \code{names(x$protocols)[[1]])} is used.}
+\item{protocol}{Optional protocol selection. If \code{NULL},
+\code{names(x$protocols)[[1]]} is used.}
 
 \item{times}{Optional time selection. If \code{NULL}, all \code{time_*} elements are used.
 If numeric, values \code{0:K} are translated to names \code{time_0}, \dots.
@@ -69,13 +72,14 @@ time index; \code{"none"} uses a single panel.}
   x-axis and beta coefficients on the y-axis (optionally colored/faceted).}
   \item{\code{"manhattan"}}{Single-panel plot showing all coefficients from
   all selected models. The x-axis corresponds to an ordering of models by time
-  (\code{time_0}, \dots, \code{time_K}) and, within time.
+  (\code{time_0}, \dots, \code{time_K}) and, within each time, by node and
+  outcome.
 }}}
 
 \item{manhattan_color_by}{For \code{plot_style = "manhattan"} only. Character scalar controlling point
-coloring: \code{"none"} (single color) (protocol vs
-censoring vs outcome), \code{"time"} (time index), or \code{"term"}
-(coefficient term).}
+coloring: \code{"node"} (protocol, censoring, or outcome), \code{"time"}
+(time index), \code{"term"} (coefficient term), or \code{"none"} (single
+color).}
 
 \item{show_x_labels}{For \code{plot_style = "manhattan"} only. Logical. If \code{TRUE}, shows the
 full categorical labels for each model position on the x-axis. For large
@@ -100,7 +104,7 @@ A list with components:
 Extracts beta coefficients from nuisance parameter models (stored
 under \code{x$models} with elements \code{time_0}, \dots, \code{time_K}) and
 visualizes them as either (i) a dot plot with model/outcome identifiers on the
-x-axis, or (ii) a single-panel "manhattan-style" plot in which all coefficients
+x-axis, or (ii) a single-panel "Manhattan-style" plot in which all coefficients
 from all selected models are shown in one graph.
 }
 \details{
@@ -137,5 +141,6 @@ names(out)
 
 }
 \seealso{
+\code{\link{run_rtmle}}, \code{\link{coef.rtmle}},
 \code{\link[ggplot2]{ggplot}}, \code{\link[ggplot2]{geom_point}}
 }

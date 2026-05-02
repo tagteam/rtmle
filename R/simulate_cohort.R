@@ -1,7 +1,7 @@
 #' Simulate a longitudinal event-history cohort.
 #'
-#' This cohort simulator is adapted from `tagteam/followme/functions/
-#' simulate_cohort.R`.
+#' Simulates a configurable longitudinal event-history cohort. The simulator is
+#' adapted from \code{tagteam/followme/functions/simulate_cohort.R}.
 #'
 #' @param n Number of subjects.
 #' @param seed Optional random seed.
@@ -27,7 +27,9 @@
 #' @param intervention Optional named list of constant intervention values.
 #' @param regime Reserved for future use.
 #'
-#' @returns A longitudinal event-history [data.table::data.table()].
+#' @returns A longitudinal event-history \code{\link[data.table]{data.table}}.
+#'
+#' @seealso \code{\link{simulate_long_data}}, \code{\link{long_to_wide}}
 #'
 #' @examples
 #' library(lava)
@@ -354,5 +356,4 @@ simulate_cohort <- function(n,
     data.table::setkey(event_history,id,time,event)
     return(event_history[])
 }
-
 

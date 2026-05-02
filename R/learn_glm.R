@@ -14,22 +14,29 @@
 #----------------------------------------------------------------------
 ## 
 ### Code:
-##' Learning nuisance parameter models for TMLE and predicting
-##' probabilities in intervened data based on \code{\link{glm}}
+##' Learn nuisance-parameter models with glm
 ##'
-##' The function attempts to run \code{speedglm} and uses \code{glm} only as a fallback option.
-##' Optional argument learn_variables can be used to restrict the learning to a subset of variables.
-##' This can be useful to avoid too many parameters in the model.
-##' @title Nuisance parameter learner based on \code{\link{glm}}
-##' @param character_formula Formula for nuisance parameter as a character
-##' @param data Data for learning 
-##' @param intervened_data Data for prediction 
-##' @param learn_variables Vector of variable names. Only include these in the learning.
-##' Can be \code{"NONE"} which means to not use any variables and simply predict the mean outcome.
-##' @param maxit Number of iterations passed to \code{link[stats]{glm.fit}} and \code{link[speedglm]{speedglm.wfit}} 
-##' @param ... Additional arguments for the learning phase. Not used at the moment.
-##' @return A vector of predicted probabilities which has the fit as an attribute.  
-##' @seealso \code{link{superlearn}}, \code{link{learn_ranger}}, \code{link{learn_glmnet}}
+##' Learns nuisance-parameter models for TMLE and predicts probabilities in
+##' intervention-updated data using \code{\link[stats]{glm}}. The function first
+##' attempts to use \code{\link[speedglm]{speedglm.wfit}} and falls back to
+##' \code{\link[stats]{glm.fit}} if needed.
+##'
+##' @title Nuisance-parameter learner based on glm
+##' @param character_formula Formula for the nuisance parameter, supplied as a
+##'   character string.
+##' @param data Data used for learning.
+##' @param intervened_data Data used for prediction after intervention variables
+##'   have been set according to a protocol.
+##' @param learn_variables Optional vector of variable names to include in the
+##'   learner. Use \code{"NONE"} to fit an intercept-only model that predicts
+##'   the mean outcome.
+##' @param maxit Number of iterations passed to \code{\link[stats]{glm.fit}}
+##'   and \code{\link[speedglm]{speedglm.wfit}}.
+##' @param ... Additional arguments for the learning phase. Not currently used.
+##' @return A vector of predicted probabilities with the fitted model stored in
+##'   the \code{"fit"} attribute.
+##' @seealso \code{\link{superlearn}}, \code{\link{learn_ranger}},
+##'   \code{\link{learn_glmnet}}, \code{\link{learn_xgboost}}
 ##' @examples
 ##' d <- data.table::data.table(Y = rep(c(0, 1), 10),
 ##'                             A = rep(c(0, 1, 1, 0), 5),

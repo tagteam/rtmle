@@ -3,7 +3,7 @@
 \name{plot.rtmle}
 \alias{plot.rtmle}
 \alias{autoplot.rtmle}
-\title{ggplot rtmle objects}
+\title{Plot rtmle objects}
 \usage{
 \method{autoplot}{rtmle}(
   object,
@@ -20,28 +20,33 @@
 \method{plot}{rtmle}(x, ...)
 }
 \arguments{
-\item{object}{Object of class \code{"rtmle"} prepared and fitted}
+\item{object}{A prepared and fitted object of class \code{"rtmle"}.}
 
-\item{analysis}{Name of the analysis. Default is NULL which refers to object[["Main_analysis"]].}
+\item{analysis}{Name of the analysis. If \code{NULL}, use
+\code{object$estimate[["Main_analysis"]]}.}
 
-\item{xlim}{Limits for x-axis}
+\item{xlim}{Limits for the x-axis.}
 
-\item{ylim}{Limits for y-axis}
+\item{ylim}{Limits for the y-axis.}
 
-\item{y_breaks}{Breaks for y-axis}
+\item{y_breaks}{Breaks for the y-axis.}
 
-\item{x_breaks}{Breaks for x-axis}
+\item{x_breaks}{Breaks for the x-axis.}
 
 \item{position_atrisk}{Vector of positions on the x-axis where numbers at-risk are shown below the graph.}
 
-\item{conf_int}{Logical. If \code{TRUE} add confidence shadows to the graph.}
+\item{conf_int}{Logical. If \code{TRUE}, add confidence bands to the graph.}
 
-\item{...}{Not used}
+\item{...}{Not used.}
 
-\item{x}{Object of class \code{"rtmle"} prepared and fitted}
+\item{x}{A prepared and fitted object of class \code{"rtmle"}.}
+}
+\value{
+A \code{\link[ggplot2]{ggplot}} object.
 }
 \description{
-Plot risk predictions and average treatment effects from rtmle objects
+Plot risk estimates and risk contrasts from fitted
+  \code{rtmle} objects.
 }
 \examples{
 x <- list(
@@ -58,4 +63,8 @@ x <- list(
 class(x) <- "rtmle"
 p <- ggplot2::autoplot(x, xlim = c(0, 2))
 class(p)
+}
+\seealso{
+\code{\link{run_rtmle}}, \code{\link{summary.rtmle}},
+  \code{\link{plot_adherence}}, \code{\link{plot_IPW}}
 }

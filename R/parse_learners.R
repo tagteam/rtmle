@@ -14,15 +14,19 @@
 #----------------------------------------------------------------------
 ## 
 ### Code:
-##' Parsing list of learners for function superlearn. Available names are 
-##' substituted for missing fun elements and available elements fun
-##' are substituted for missing names.
+##' Parse learner specifications
 ##'
-##' As a side effect an attribute is given to the object such that when running
-##' on its own output the function does nothing.
-##' @title Parsing list of learners
-##' @param learners List of learners 
-##' @return List of learners
+##' Normalizes learner specifications for \code{\link{run_rtmle}} and
+##' \code{\link{superlearn}}. Available names are used to fill missing
+##' \code{fun} elements, and available \code{fun} elements are used to fill
+##' missing names. The returned object receives an attribute so repeated parsing
+##' leaves it unchanged.
+##'
+##' @title Parse learner specifications
+##' @param learners A learner specification: a character vector of learner names,
+##'   a single learner list, or a super-learner list containing \code{folds} and
+##'   \code{learners}.
+##' @return A normalized learner list.
 ##' @seealso \code{\link{superlearn}}, \code{\link{run_rtmle}}
 ##' @examples
 ##' parse_learners(c("learn_glm","learn_glmnet"))

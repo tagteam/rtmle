@@ -7,35 +7,44 @@
 long_to_wide(x, start_followup_date, mappings, ...)
 }
 \arguments{
-\item{x}{object of class \code{rtmle}}
+\item{x}{An object of class \code{"rtmle"} containing long-format data added
+with \code{\link{add_long_data}} and baseline data added with
+\code{\link{add_baseline_data}}.}
 
-\item{start_followup_date}{Date where the followup starts. This date is substracted from the dates of
-the outcomes, competing risks, censoring (end-of-followup), and dates where the time-varying covariates change.
-If missing it is assumed to be zero for all subjects in which case the dates of the outcomes,
-competing risks, censoring (end-of-followup), and time-varying covariates must be
-given on the time on study scale.}
+\item{start_followup_date}{Date at which follow-up starts. This date is
+subtracted from outcome, competing-risk, censoring, and time-varying
+covariate dates. If missing, follow-up is assumed to start at zero for all
+subjects, in which case all dates must already be given on the
+time-on-study scale.}
 
 \item{mappings}{Named list of instructions for how to map long-format variables
-  onto the discrete time scale. Names of `mappings` are output variable names.
-  Each mapping may optionally contain `variable`, naming the source variable in
-  `x$long_data$timevar_data`. If omitted, the source variable is assumed to have
+  onto the discrete time scale. Names of \code{mappings} are output variable
+  names. Each mapping may optionally contain \code{variable}, naming the
+  source variable in \code{x$long_data$timevar_data}. If omitted, the source
+  variable is assumed to have
   the same name as the output variable.
 
-  Built-in methods include "measurement", "locf", "event", "event_interval",
-  "any_exposure", "has_exposure", "exposure_time", and "exposure_percent".}
+  Built-in methods include \code{"measurement"}, \code{"locf"},
+  \code{"event"}, \code{"event_interval"}, \code{"any_exposure"},
+  \code{"has_exposure"}, \code{"exposure_time"}, and
+  \code{"exposure_percent"}.}
 
 \item{...}{alternative way to specify elements of \code{mappings}.}
 }
+\value{
+The modified \code{rtmle} object with wide-format outcome and
+  time-varying covariate data stored in \code{x$data}.
+}
 \description{
-This function is used to prepare a discretized time analysis of longituginal data.
+Prepares long-format longitudinal data for analysis on a discrete time grid.
 }
 \details{
-The start_followup_date is the calendar date where the follow up
-starts or can be zero if the followup data are readily on the time
-on study scale
+\code{start_followup_date} is the calendar date at which follow-up starts, or
+zero when the supplied dates are already on the time-on-study scale.
 
-The function discretizes dates of events and concomittant marker information.
-Multiple wide format variables may result from a single long-format variable.
+The function discretizes dates of events and concomitant marker
+information. Multiple wide-format variables may result from a single
+long-format variable.
 }
 \examples{
 set.seed(17)
@@ -69,4 +78,9 @@ x <- long_to_wide(
                   C=list(variable = "A", method="has_exposure",threshold=0.7),
                   start_followup_date=0
 )
+}
+\seealso{
+\code{\link{rtmle_init}}, \code{\link{add_baseline_data}},
+  \code{\link{add_long_data}}, \code{\link{discretize}},
+  \code{\link{prepare_rtmle_data}}
 }

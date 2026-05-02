@@ -14,30 +14,37 @@
 #----------------------------------------------------------------------
 ## 
 ### Code:
-##' Specify model formulas for the estimators of the nuisance parameters
+##' Specify formulas for nuisance-parameter models
 ##' 
 ##'
-##' Note that due to the discretized nature of the data, we do not include
-##' the time-dependent covariates at time k in the models for treatment at time k,
-##' except at time 0. The reason for this is that we do not want to mistakenly assume that
-##' L_k -> A_k when in reality A_k may happen before L_k.
+##' Because the data are discretized, time-dependent covariates at time \code{k}
+##' are not included in treatment models at time \code{k}, except at time 0.
+##' This avoids encoding an ordering assumption in which \code{L_k} precedes
+##' \code{A_k} when, in the original event history, \code{A_k} may occur before
+##' \code{L_k}.
 ##'
-##' When interventions depend on more than one variable
 ##' @title Model formulas for nuisance parameters
-##' @param x  object of class \code{rtmle}
-##' @param propensity_model Only relevant for interventions which depend on multiple treatment variables:
-##' Decide how to model the propensity of the regimen that the protocol dictates:
-##' Possible values are \code{"joint"}, \code{"sequential"} or \code{"independent"}.
-##' @param Markov Names of time-dependent variables which should only occur with the most recent
-##'               value on the right hand side of the formulas.
+##' @param x An object of class \code{"rtmle"} with prepared data and at least
+##'   one protocol defined by \code{\link{protocol}}.
+##' @param propensity_model Relevant only for interventions depending on
+##'   multiple treatment variables. Controls how to model the propensity of the
+##'   regimen dictated by the protocol. Possible values are \code{"joint"},
+##'   \code{"sequential"}, and \code{"independent"}.
+##' @param Markov Names of time-dependent variables that should appear only with
+##'   their most recent values on the right-hand side of formulas.
 ##' @param exclude_variables Variables to exclude from the formulas for the nuisance parameters.
-##' @param exclusion_rules Experimental. Additional exclusion rules given as a named list where names are variables that occur on the left hand side of a formula and
-##'                        elements are variables that should be excluded from the right hand side of the formula. 
-##' @param inclusion_rules Experimental. Additional inclusion rules given as a named list where names are variables that occur on the left hand side of a formula and
-##' elements are variables that should be included in the right hand side of the formula. 
+##' @param exclusion_rules Experimental. Additional exclusion rules given as a
+##'   named list. Names are variables occurring on the left-hand side of a
+##'   formula, and elements are variables to exclude from the right-hand side.
+##' @param inclusion_rules Experimental. Additional inclusion rules given as a
+##'   named list. Names are variables occurring on the left-hand side of a
+##'   formula, and elements are variables to include on the right-hand side.
 ##' @param verbose Logical. If \code{FALSE} suppress all messages. \code{TRUE} is the default.
-##' @param ... Not used (not yet)
-##' @return The modified \code{rtmle}object
+##' @param ... Not used.
+##' @return The modified \code{rtmle} object.
+##' @seealso \code{\link{prepare_rtmle_data}}, \code{\link{protocol}},
+##'   \code{\link{target}}, \code{\link{make_exclusion_rule}},
+##'   \code{\link{run_rtmle}}
 ##' @examples
 ##' set.seed(17)
 ##' ld <- simulate_long_data(n = 17,number_visits = 20,

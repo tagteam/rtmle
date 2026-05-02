@@ -13,8 +13,8 @@ data. Must include at least \code{x$protocols} (a named list where each element 
 \code{x$prepared_data} (optional; used for censoring indicators), and
 \code{x$names$censoring}.}
 
-\item{protocols}{Names of the protocols to plot. If missing use all elements of \code{x$protocols}
-that readily have the intervention_match table prepared.}
+\item{protocols}{Names of the protocols to plot. If missing, use all elements
+of \code{x$protocols} that already have an \code{intervention_match} table.}
 
 \item{...}{Currently unused. Included for future extensions.}
 }
@@ -24,7 +24,7 @@ A \code{ggplot2} object (as returned by \code{prodlim::ggprodlim}) showing the
 }
 \description{
 Computes time to first deviation from a treatment regime for each protocol in a
-\code{speff2trial}-like object \code{x}, allowing for right censoring and competing
+fitted \code{rtmle} object \code{x}, allowing for right censoring and competing
 risks (e.g., death/outcome). The result is plotted as the cumulative incidence
 (in percent) of non-adherence over follow-up time, stratified by protocol.
 }
@@ -60,6 +60,8 @@ class(p)
 
 }
 \seealso{
-\code{\link[prodlim:prodlim]{prodlim}}, \code{\link[prodlim:ggprodlim]{ggprodlim}},
+\code{\link{intervention_match}}, \code{\link{protocol}},
+  \code{\link{plot_IPW}}, \code{\link[prodlim:prodlim]{prodlim}},
+  \code{\link[prodlim:ggprodlim]{ggprodlim}},
   \code{\link[prodlim:Hist]{Hist}}
 }

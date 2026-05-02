@@ -17,7 +17,7 @@
 #' Plot cumulative non-adherence by protocol
 #'
 #' Computes time to first deviation from a treatment regime for each protocol in a
-#' \code{speff2trial}-like object \code{x}, allowing for right censoring and competing
+#' fitted \code{rtmle} object \code{x}, allowing for right censoring and competing
 #' risks (e.g., death/outcome). The result is plotted as the cumulative incidence
 #' (in percent) of non-adherence over follow-up time, stratified by protocol.
 #'
@@ -26,8 +26,8 @@
 #'   \code{$intervention_match}), \code{x$followup} (with \code{last_interval}),
 #'   \code{x$prepared_data} (optional; used for censoring indicators), and
 #'   \code{x$names$censoring}.
-#' @param protocols Names of the protocols to plot. If missing use all elements of \code{x$protocols}
-#' that readily have the intervention_match table prepared.
+#' @param protocols Names of the protocols to plot. If missing, use all elements
+#' of \code{x$protocols} that already have an \code{intervention_match} table.
 #' @param ... Currently unused. Included for future extensions.
 #'
 #' @details
@@ -63,7 +63,9 @@
 #' p <- plot_adherence(x)
 #' class(p)
 #'
-#' @seealso \code{\link[prodlim:prodlim]{prodlim}}, \code{\link[prodlim:ggprodlim]{ggprodlim}},
+#' @seealso \code{\link{intervention_match}}, \code{\link{protocol}},
+#'   \code{\link{plot_IPW}}, \code{\link[prodlim:prodlim]{prodlim}},
+#'   \code{\link[prodlim:ggprodlim]{ggprodlim}},
 #'   \code{\link[prodlim:Hist]{Hist}}
 #'
 #' @importFrom prodlim prodlim ggprodlim Hist

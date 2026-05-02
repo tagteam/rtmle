@@ -2,31 +2,31 @@
 % Please edit documentation in R/prepare_rtmle_data.R
 \name{prepare_rtmle_data}
 \alias{prepare_rtmle_data}
-\title{Preparing a targeted minimum loss based analysis}
+\title{Prepare a targeted minimum loss-based analysis}
 \usage{
 prepare_rtmle_data(x, ...)
 }
 \arguments{
-\item{x}{Object initialized with \code{rtmle_init} which contains wide format data.}
+\item{x}{An object initialized with \code{\link{rtmle_init}} containing
+wide-format data, usually added with \code{\link{add_wide_data}} or
+created from long-format data with \code{\link{long_to_wide}}.}
 
-\item{...}{not used (not yet)
-\itemize{
-\item \code{"intervals"} The time intervals
-}}
+\item{...}{Not used.}
 }
 \value{
-The object augmented with a new element called \code{prepared_data}.
+The object augmented with a new element called
+  \code{prepared_data}.
 }
 \description{
-If the object contains data in long format these are
-transformed to wide format. The wide format data are sorted and
-checked for the analysis and added as \code{x$prepared_data}.
+Prepare an \code{rtmle} object for estimation by checking the supplied data
+and storing the analysis data in \code{x$prepared_data}.
 }
 \details{
-As a wanted side effect the function identifies the variables
-for the intervention variables (A_variables), the time dependent covariates (B_variables)
-the outcome variables (outcome_variables), the competing risk variables (competing_variables) and the
-censoring variables (censoring_variables) and adds them to the object.
+As part of this preparation, the function identifies intervention variables
+(\code{A_variables}), time-dependent covariates (\code{B_variables}),
+outcome variables (\code{outcome_variables}), competing-risk variables
+(\code{competing_variables}), and censoring variables
+(\code{censoring_variables}), and stores those names in the object.
 }
 \examples{
 set.seed(112)
@@ -49,7 +49,10 @@ x$prepared_data
 
 }
 \seealso{
-rtmle_init
+\code{\link{rtmle_init}}, \code{\link{add_long_data}},
+  \code{\link{add_wide_data}}, \code{\link{long_to_wide}},
+  \code{\link{protocol}}, \code{\link{target}},
+  \code{\link{model_formula}}, \code{\link{run_rtmle}}
 }
 \author{
 Thomas A. Gerds <tag@biostat.ku.dk>

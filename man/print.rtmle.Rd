@@ -2,22 +2,29 @@
 % Please edit documentation in R/print.rtmle.R
 \name{print.rtmle}
 \alias{print.rtmle}
-\title{Printing an object for register data analysis with the targeted minimum loss estimator}
+\title{Print an rtmle object}
 \usage{
 \method{print}{rtmle}(x, ...)
 }
 \arguments{
-\item{x}{Object to be printed}
+\item{x}{Object to print.}
 
-\item{...}{Not used for now}
+\item{...}{Not used.}
+}
+\value{
+Invisibly returns \code{NULL}.
 }
 \description{
-This print function informs about the current state of the object and
-about how to proceed.
+Prints the current state of an \code{rtmle} object and indicates the next
+analysis steps that are still missing.
 }
 \examples{
 x <- rtmle_init(time_grid = 0:2,
                 name_id = "id",
                 name_outcome = "Y")
 print(x)
+}
+\seealso{
+\code{\link{rtmle_init}}, \code{\link{prepare_rtmle_data}},
+  \code{\link{run_rtmle}}, \code{\link{summary.rtmle}}
 }

@@ -16,19 +16,22 @@
 ### Code:
 #' Sequential regression with TMLE update step for discretized follow-up data
 #'
-#' This function runs the analysis defined in previous steps.
-#' @param x object of class \code{rtmle}
-#' @param targets Selection of targets to be analysed. If missing all
-#'     targets in x$targets are analysed.
-#' @param learner A function which is called to fit (learn) the
-#'   nuisance parameter models. Must either be:
+#' Runs the analysis defined by \code{\link{rtmle_init}},
+#' \code{\link{protocol}}, \code{\link{target}}, and
+#' \code{\link{model_formula}}.
+#'
+#' @param x Object of class \code{"rtmle"}.
+#' @param targets Selection of targets to analyze. If missing, all targets in
+#'     \code{x$targets} are analyzed.
+#' @param learner A function, function name, or learner specification used to
+#'   fit nuisance-parameter models. Must be one of:
 #'   \itemize{
 #'     \item A single string giving the name of a learner function
-#'       (e.g., `"learn_glmnet"`) or the function itself.
+#'       (e.g., \code{"learn_glmnet"}) or the function itself.
 #'     \item A list consisting of the elements:
 #'       \itemize{
 #'         \item \code{folds}: a character string giving the name of the
-#'           learner function (e.g., `"learn_glmnet"`) or the function itself.
+#'           learner function (e.g., \code{"learn_glmnet"}) or the function itself.
 #'         \item \code{learners}: a named list of learner specifications,
 #'           each of which can either be:
 #'           \itemize{
@@ -39,37 +42,42 @@
 #'       }
 #'   }
 #' @param estimator Character specifying the estimator: either
-#'     \code{'tmle'} or \code{'g-formula'}.
+#'     \code{"tmle"} or \code{"g-formula"}.
 #' @param time_horizon The time horizon at which to calculate
-#'     risks. If it is a vector the analysis will be performed for
-#'     each element of the vector.
-#' @param refit Logical. If \code{TRUE} ignore any propensity score
+#'     risks. If this is a vector, the analysis is performed for
+#'     each element.
+#' @param refit Logical. If \code{TRUE}, ignore any propensity score
 #'     and censoring models learned in previous calls to this
-#'     function. This may be useful to save computation time. Default
+#'     function. This may be useful to save computation time. The default
 #'     is \code{TRUE}.
-#' @param seed Seed used for cross-fitting
+#' @param seed Seed used for cross-fitting.
 #' @param subsets A list structure for subset analyses. Each element
-#'     is a list which requires a label, to name the subset, and a
+#'     is a list requiring a label, to name the subset, and a
 #'     subset of the variable \code{x$names$id} in the data
 #'     \code{x$prepared_data} to identify the subset. The results of
 #'     the subset analysis are stored in
-#'     \code{x$estimate[[subsets[[label]]}. An optional element of
-#'     each subset-list is called \code{append} which should be
-#'     logical: if \code{TRUE} append the estimates to the existing
-#'     estimates with rbind. This may be used for stratified analyses,
-#'     to study seed dependence (Monte-Carlo error) and bootstrap. See
+#'     \code{x$estimate[[subsets[[label]]]]}. An optional element of
+#'     each subset list is called \code{append}; if \code{TRUE}, append the
+#'     estimates to the existing estimates with \code{rbind}. This may be used
+#'     for stratified analyses, seed-dependence studies (Monte Carlo error), and
+#'     bootstrap analyses. See
 #'     examples.
-#' @param keep_influence Logical: if \code{TRUE} store the estimated
+#' @param keep_influence Logical. If \code{TRUE}, store the estimated
 #'     influence function of the estimator in the object.  Currently
-#'     this argument is only used when argument \code{subsets} is also
+#'     this argument is used only when argument \code{subsets} is also
 #'     specified.
-#' @param progressbar Logical. If \code{TRUE} show progress of the loops that fit the nuisance parameter models.
+#' @param progressbar Logical. If \code{TRUE}, show progress of the loops that
+#'   fit the nuisance-parameter models.
 #' @param verbose Logical. If \code{FALSE} suppress all
 #'     messages. \code{FALSE} is the default.
-#' @param ... Further arguments can change the tuning parameters. E.g., To apply weight truncation,
-#' use \code{weight_truncation=c(0.01,0.99)}.
+#' @param ... Further arguments can change tuning parameters. For example, use
+#'   \code{weight_truncation = c(0.01, 0.99)} to apply weight truncation.
 #' @return The modified object contains the fitted nuisance parameter
 #'     models and the estimate of the target parameter.
+#' @seealso \code{\link{rtmle_init}}, \code{\link{prepare_rtmle_data}},
+#'   \code{\link{protocol}}, \code{\link{target}}, \code{\link{model_formula}},
+#'   \code{\link{learn_glm}}, \code{\link{learn_glmnet}},
+#'   \code{\link{superlearn}}, \code{\link{summary.rtmle}}
 #' @author Thomas A Gerds \email{tag@@biostat.ku.dk}
 #' @examples
 #' # ------------------------------------------------------------------------------------------

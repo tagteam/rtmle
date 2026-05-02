@@ -17,7 +17,7 @@ fast_cast(
 \item{x}{A \code{data.table} in long format containing at least the columns
 \code{id}, \code{interval}, and a value column.}
 
-\item{name}{Name of the variable which is transformed from long to wide format.}
+\item{name}{Name of the variable transformed from long to wide format.}
 
 \item{id}{Character string naming the subject identifier column.}
 
@@ -39,7 +39,7 @@ A \code{data.table} in wide format with:
   }
 }
 \description{
-This function efficiently transforms a long-format \code{data.table}
+Efficiently transforms a long-format \code{data.table}
 with one row per \code{(id, interval)} into a wide-format table with
 one row per subject and one column per interval.
 }
@@ -76,5 +76,8 @@ x_dup <- rbind(x, data.table(id = 1, interval = 1, value = 25))
 
 fast_cast(x_dup, id = "id", fun_aggregate = mean)
 
+}
+\seealso{
+\code{\link{discretize}}, \code{\link{long_to_wide}}
 }
 \keyword{internal}

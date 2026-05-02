@@ -14,27 +14,36 @@
 #----------------------------------------------------------------------
 ## 
 ### Code:
-##' Learning nuisance parameter models for TMLE and predicting
-##' probabilities in intervened data based on \code{\link[glmnet]{glmnet}}
+##' Learn nuisance-parameter models with glmnet
 ##'
-##' This can be useful to avoid too many parameters in the model.
-##' @title Nuisance parameter learner based on \code{\link[glmnet]{glmnet}}
-##' @param character_formula Formula for nuisance parameter as a character
-##' @param data Data for learning 
-##' @param intervened_data Data for prediction
-##' @param selector Character value deciding about how to select the penalty parameter lambda:
-##' If \code{"undersmooth"} use the lambda value which results in the least amount of
-##' penalty such that the model still fits. The other options are \code{"min"} and \code{"1se"} which are 
-##' described in the documentation of \link[glmnet]{cv.glmnet}.
-##' @param lambda Penalty parameter passed to \link[glmnet]{glmnet} or \link[glmnet]{cv.glmnet}.
-##' @param alpha The elasticnet mixing parameter. See \link[glmnet]{glmnet} for more details.
-##' @param family Passed to \link[glmnet]{glmnet} or \link[glmnet]{cv.glmnet}.
+##' Learns nuisance-parameter models for TMLE and predicts probabilities in
+##' intervention-updated data using \code{\link[glmnet]{glmnet}}.
+##'
+##' @title Nuisance-parameter learner based on glmnet
+##' @param character_formula Formula for the nuisance parameter, supplied as a
+##'   character string.
+##' @param data Data used for learning.
+##' @param intervened_data Data used for prediction after intervention variables
+##'   have been set according to a protocol.
+##' @param selector Character value controlling how the penalty parameter
+##'   \code{lambda} is selected. If \code{"undersmooth"}, use the least
+##'   penalized value that still fits the model. The other options,
+##'   \code{"min"} and \code{"1se"}, are described in
+##'   \code{\link[glmnet]{cv.glmnet}}.
+##' @param lambda Penalty parameter passed to \code{\link[glmnet]{glmnet}} or
+##'   \code{\link[glmnet]{cv.glmnet}}.
+##' @param alpha Elastic-net mixing parameter. See
+##'   \code{\link[glmnet]{glmnet}}.
+##' @param family Passed to \code{\link[glmnet]{glmnet}} or
+##'   \code{\link[glmnet]{cv.glmnet}}.
 ##' @param nfolds Number of folds for cross-validation. Default is 10.
-##' @param type.measure loss to use for cross-validation. Default is deviance.
-##' @param ... Additional arguments for the learning phase passed to \code{\link[glmnet]{glmnet}}. 
-##'        E.g., setting alpha affects the elastic net.
-##' @return A vector of predicted probabilities which has the fit as an attribute.  
-##' @seealso \code{link{superlearn}}, \code{link{learn_ranger}}, \code{link{learn_glm}}
+##' @param type.measure Loss function used for cross-validation. Default is
+##'   deviance.
+##' @param ... Additional arguments passed to \code{\link[glmnet]{glmnet}}.
+##' @return A vector of predicted probabilities with the fitted model stored in
+##'   the \code{"fit"} attribute.
+##' @seealso \code{\link{superlearn}}, \code{\link{learn_ranger}},
+##'   \code{\link{learn_glm}}, \code{\link{learn_xgboost}}
 ##' @examples
 ##' d <- data.table::data.table(Y = rep(c(0, 1), 10),
 ##'                             A = rep(c(0, 1, 1, 0), 5),

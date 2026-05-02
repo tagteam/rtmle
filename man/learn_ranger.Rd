@@ -2,28 +2,32 @@
 % Please edit documentation in R/learn_ranger.R
 \name{learn_ranger}
 \alias{learn_ranger}
-\title{Nuisance parameter learner based on \code{\link[ranger]{ranger}}}
+\title{Nuisance-parameter learner based on ranger}
 \usage{
 learn_ranger(character_formula, data, intervened_data, ...)
 }
 \arguments{
-\item{character_formula}{Formula for nuisance parameter as a character}
+\item{character_formula}{Formula for the nuisance parameter, supplied as a
+character string.}
 
-\item{data}{Data for learning}
+\item{data}{Data used for learning.}
 
-\item{intervened_data}{Data for prediction}
+\item{intervened_data}{Data used for prediction after intervention variables
+have been set according to a protocol.}
 
-\item{...}{Additional arguments for the learning phase passed to \code{\link[ranger]{ranger}}. These can include hyperparameters.}
+\item{...}{Additional arguments passed to \code{\link[ranger]{ranger}},
+including hyperparameters.}
 }
 \value{
-A vector of predicted probabilities which has the fit as an attribute.
+A vector of predicted probabilities with the fitted model stored in
+  the \code{"fit"} attribute.
 }
 \description{
-Learning nuisance parameter models for TMLE and predicting
-probabilities in intervened data based on \code{\link[ranger]{ranger}}
+Learn nuisance-parameter models with ranger
 }
 \details{
-Hyperparameters are set via ...
+Learns nuisance-parameter models for TMLE and predicts probabilities in
+intervention-updated data using \code{\link[ranger]{ranger}}.
 }
 \examples{
 d <- data.table::data.table(Y = factor(rep(c(0, 1), 10)),
@@ -34,7 +38,8 @@ predicted <- learn_ranger("Y ~ A + L", data = d, intervened_data = d,
 head(predicted)
 }
 \seealso{
-\code{link{superlearn}}, \code{link{learn_glm}}, \code{link{learn_glmnet}}
+\code{\link{superlearn}}, \code{\link{learn_glm}},
+  \code{\link{learn_glmnet}}, \code{\link{learn_xgboost}}
 }
 \author{
 Thomas A. Gerds <tag@biostat.ku.dk>

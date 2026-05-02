@@ -2,28 +2,32 @@
 % Please edit documentation in R/learn_xgboost.R
 \name{learn_xgboost}
 \alias{learn_xgboost}
-\title{Nuisance parameter learner based on \code{\link[xgboost]{xgboost}}}
+\title{Nuisance-parameter learner based on xgboost}
 \usage{
 learn_xgboost(character_formula, data, intervened_data, ...)
 }
 \arguments{
-\item{character_formula}{Formula for nuisance parameter as a character}
+\item{character_formula}{Formula for the nuisance parameter, supplied as a
+character string.}
 
-\item{data}{Data for learning}
+\item{data}{Data used for learning.}
 
-\item{intervened_data}{Data for prediction}
+\item{intervened_data}{Data used for prediction after intervention variables
+have been set according to a protocol.}
 
-\item{...}{Additional arguments for the learning phase passed to \code{\link[xgboost]{xgboost}}. These can include hyperparameters.}
+\item{...}{Additional arguments passed to \code{\link[xgboost]{xgboost}},
+including hyperparameters.}
 }
 \value{
-A vector of predicted probabilities which has the fit as an attribute.
+A vector of predicted probabilities with the fitted model stored in
+  the \code{"fit"} attribute.
 }
 \description{
-Learning nuisance parameter models for TMLE and predicting
-probabilities in intervened data based on \code{\link[xgboost]{xgboost}}
+Learn nuisance-parameter models with xgboost
 }
 \details{
-Hyperparameters are set via ...
+Learns nuisance-parameter models for TMLE and predicts probabilities in
+intervention-updated data using \code{\link[xgboost]{xgboost}}.
 }
 \examples{
 set.seed(17)
@@ -54,7 +58,8 @@ x <- model_formula(x)
 x <- run_rtmle(x,learner = "learn_xgboost",time_horizon = 3)
 }
 \seealso{
-\code{link{superlearn}}, \code{link{learn_glm}}, \code{link{learn_glmnet}}
+\code{\link{superlearn}}, \code{\link{learn_glm}},
+  \code{\link{learn_glmnet}}, \code{\link{learn_ranger}}
 }
 \author{
 Thomas A. Gerds <tag@biostat.ku.dk>

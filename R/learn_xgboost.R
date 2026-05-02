@@ -14,17 +14,23 @@
 #----------------------------------------------------------------------
 ## 
 ### Code:
-##' Learning nuisance parameter models for TMLE and predicting
-##' probabilities in intervened data based on \code{\link[xgboost]{xgboost}}
+##' Learn nuisance-parameter models with xgboost
 ##'
-##' Hyperparameters are set via ...
-##' @title Nuisance parameter learner based on \code{\link[xgboost]{xgboost}}
-##' @param character_formula Formula for nuisance parameter as a character
-##' @param data Data for learning 
-##' @param intervened_data Data for prediction 
-##' @param ... Additional arguments for the learning phase passed to \code{\link[xgboost]{xgboost}}. These can include hyperparameters.
-##' @return A vector of predicted probabilities which has the fit as an attribute.  
-##' @seealso \code{link{superlearn}}, \code{link{learn_glm}}, \code{link{learn_glmnet}}
+##' Learns nuisance-parameter models for TMLE and predicts probabilities in
+##' intervention-updated data using \code{\link[xgboost]{xgboost}}.
+##'
+##' @title Nuisance-parameter learner based on xgboost
+##' @param character_formula Formula for the nuisance parameter, supplied as a
+##'   character string.
+##' @param data Data used for learning.
+##' @param intervened_data Data used for prediction after intervention variables
+##'   have been set according to a protocol.
+##' @param ... Additional arguments passed to \code{\link[xgboost]{xgboost}},
+##'   including hyperparameters.
+##' @return A vector of predicted probabilities with the fitted model stored in
+##'   the \code{"fit"} attribute.
+##' @seealso \code{\link{superlearn}}, \code{\link{learn_glm}},
+##'   \code{\link{learn_glmnet}}, \code{\link{learn_ranger}}
 ##' @examples
 #' set.seed(17)
 #' tau <- 3

@@ -19,42 +19,46 @@ cheap_bootstrap(
 )
 }
 \arguments{
-\item{x}{object of class \code{rtmle}}
+\item{x}{An object of class \code{"rtmle"} with estimates produced by
+\code{\link{run_rtmle}}.}
 
-\item{time_horizon}{The time horizon at which to calculate
-the bootstrap confidence intervals. If it is a vector the analysis will be performed for
-each element of the vector.}
+\item{time_horizon}{The time horizon at which to calculate bootstrap
+confidence intervals. If this is a vector, the analysis is performed for
+each element.}
 
 \item{B}{Number of bootstrap samples.}
 
-\item{M}{Size of the bootstrap samples. The defaults is \code{0.632 * NROW(x$prepared_data)}.}
+\item{M}{Size of the bootstrap samples. The default is
+\code{0.632 * NROW(x$prepared_data)}.}
 
 \item{seeds}{A vector of random seeds for controlling the
 randomness while drawing the bootstrap samples.}
 
 \item{alpha}{Significance level. Defaults to 0.05.}
 
-\item{add}{Logical. If \code{TRUE} add new bootstrap results to the existing bootstrap results}
+\item{add}{Logical. If \code{TRUE}, add new bootstrap results to existing
+bootstrap results.}
 
-\item{verbose}{Logical. Passed to run_rtmle to control verbosity.}
+\item{verbose}{Logical. Passed to \code{\link{run_rtmle}} to control
+verbosity.}
 
-\item{analyses}{Character vector specifying which analyses to perform the cheap bootstrap on.}
+\item{analyses}{Character vector specifying which analyses should receive
+cheap-bootstrap confidence intervals.}
 
-\item{replace}{Logical. Whether to sample with replacement. Default is FALSE. Should not be changed.}
+\item{replace}{Logical. Whether to sample with replacement. The default is
+\code{FALSE} and should usually not be changed.}
 
 \item{...}{Additional arguments passed to \code{run_rtmle}.}
 }
 \value{
-The modified object
+The modified \code{rtmle} object.
 }
 \description{
-Method implementing the cheap subsampling method for confidence intervals
+Cheap subsampling bootstrap confidence intervals
 }
 \details{
-Given a model object or a function that returns a vector of coefficients
-and a data set,
-this function computes confidence intervals using
-the cheap subsampling method.
+Computes confidence intervals with the cheap subsampling bootstrap for a
+fitted \code{rtmle} object.
 }
 \examples{
 \dontrun{
@@ -88,6 +92,9 @@ x <- target(x,name = "Outcome_risk",
  summary(x)
 }
 
+}
+\seealso{
+\code{\link{run_rtmle}}, \code{\link{summary.rtmle}}
 }
 \author{
 Johan Sebastian Ohlendorff

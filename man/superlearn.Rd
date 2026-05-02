@@ -21,64 +21,67 @@ superlearn(
 )
 }
 \arguments{
-\item{folds}{Number of folds}
+\item{folds}{Number of folds.}
 
-\item{seed}{Random seed}
+\item{seed}{Random seed.}
 
 \item{learners}{List of learners. Each learner can either be a
 character string or a list. If the learner is a character
 string it must be the name of a learner function, such as
 \code{\link{learn_glm}}, \code{\link{learn_glmnet}},
-\code{\link{learn_ranger}}. If the learner is a list then
-either the name of the learner is a learner function or the
-list has an element \code{fun} which is the name of a
-learner function. The other elements of the list are passed on
+\code{\link{learn_ranger}}, or \code{\link{learn_xgboost}}. If the
+learner is a list, either the name of the learner is a learner function
+or the list has an element \code{fun} naming a learner function. The
+other elements of the list are passed
 as additional arguments to the learner function.}
 
-\item{parse_learners}{Logical. If TRUE parse
-learners. \code{\link{run_rtmle}} needs sets this to FALSE.}
+\item{parse_learners}{Logical. If \code{TRUE}, parse learner
+specifications with \code{\link{parse_learners}}.}
 
 \item{character_formula}{A formula (passed as a character string!)
 to parse the outcome and the predictor variables.}
 
 \item{outcome_variable}{The name of the outcome variable (same as
-\code{all.vars(formula(character_formula))[[1]]} provided to
+\code{all.vars(formula(character_formula))[[1]]}), provided to
 avoid overhead in the parsing of the formula.}
 
-\item{outcome_variable_name}{For internal use when called from \code{run_rtmle} via \code{fitter}.}
+\item{outcome_variable_name}{For internal use when called from
+\code{\link{run_rtmle}} via \code{fitter()}.}
 
-\item{id_variable}{The name of the subject id variable.}
+\item{id_variable}{Name of the subject identifier variable.}
 
-\item{data}{The data for learning.}
+\item{data}{Data used for learning.}
 
-\item{intervened_data}{The data were all intervention variables
-are readily set according to the intervention protocol.}
+\item{intervened_data}{Data in which all intervention variables have already
+been set according to the intervention protocol.}
 
-\item{ensemble_method}{How to combine the learners. Implemented are
-non-linear least squares \code{"nnls"}, index of prediction accuracy \code{"ipa"} weighting and
-\code{"discrete"} which picks the learner with the lowest Brier score. If all models
-have zero weight, the average predicted value from the learning set is applied.}
+\item{ensemble_method}{How to combine learners. Implemented methods are
+non-linear least squares (\code{"nnls"}), index-of-prediction-accuracy
+weighting (\code{"ipa"}), and \code{"discrete"}, which selects the learner
+with the lowest Brier score. If all models have zero weight, the average
+predicted value from the learning set is used.}
 
-\item{diagnostics}{For internal use when called from run_rtmle via
-fitter which is called from intervention_probabilities and
-sequential_regression.}
+\item{diagnostics}{For internal use when called from \code{\link{run_rtmle}}
+via \code{fitter()}, which is called from
+\code{intervention_probabilities()} and \code{sequential_regression()}.}
 
-\item{...}{Not (yet) used.}
+\item{...}{Not used.}
 }
 \value{
-The level-one data column of the discrete superlearner.
+The level-one data column of the discrete super learner.
 }
 \description{
-Super learning nuisance parameter models for longitudinal TMLE analyses
+Super learn nuisance-parameter models
 }
 \details{
-The function collaborates with \code{run_rtmle}. It 
-It uses cross-fitting to produce level-one data, where the predicted probability of each learner
-is a column which can be compared with the outcome. The discrete super learner chooses the
-learner lowest quadratic prediction error. The ensemble super learner combines the learners.
+Uses cross-fitting to produce level-one data for learners used by
+\code{\link{run_rtmle}}. The predicted probability from each learner is
+stored as one column and compared with the outcome. The discrete super
+learner chooses the learner with the lowest quadratic prediction error; the
+ensemble super learner combines the candidate learners.
 }
 \examples{
-# Note that the function is designed to be called from run_rtmle.  
+# Note that the function is designed to be called from run_rtmle.
 library(ranger)
 library(glmnet)
 set.seed(17)
@@ -101,8 +104,9 @@ fit <- superlearn(folds = 2,seed = 8,
 
 }
 \seealso{
-\code{\link{run_rtmle}}, \code{learn_glm},
-    \code{learn_glmnet}, \code{learn_ranger}
+\code{\link{run_rtmle}}, \code{\link{parse_learners}},
+  \code{\link{learn_glm}}, \code{\link{learn_glmnet}},
+  \code{\link{learn_ranger}}, \code{\link{learn_xgboost}}
 }
 \author{
 Thomas A. Gerds <tag@biostat.ku.dk>

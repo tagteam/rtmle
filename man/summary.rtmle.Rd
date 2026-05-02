@@ -2,7 +2,7 @@
 % Please edit documentation in R/summary.rtmle.R
 \name{summary.rtmle}
 \alias{summary.rtmle}
-\title{Summarizing the results of a register data analysis with the targeted minimum loss estimator}
+\title{Summarize an rtmle analysis}
 \usage{
 \method{summary}{rtmle}(
   object,
@@ -14,24 +14,30 @@
 )
 }
 \arguments{
-\item{object}{Object to be summarized}
+\item{object}{Object to summarize.}
 
-\item{analysis}{Name of the analysis to be summarized}
+\item{analysis}{Name of the analysis to summarize.}
 
-\item{targets}{Names of targets for which to compute the summary. Defaults to all targets in the object.}
+\item{targets}{Names of targets to summarize. Defaults to all targets in the
+object.}
 
 \item{reference}{(Optional) Named list of reference protocols, one for each target.}
 
-\item{digits}{Number of decimals for the confidence intervals}
+\item{digits}{Number of decimals for confidence intervals.}
 
-\item{...}{not used}
+\item{...}{Not used.}
+}
+\value{
+A \code{\link[data.table]{data.table}} with estimates, confidence
+  limits, and, when relevant, protocol contrasts.
 }
 \description{
-For each target in the object the risk estimates are summarized in a table with their
-95% confidence limits.
+Summarize rtmle estimates
 }
 \details{
-If a target includes multiple protocols the results includes risk differences.
+For each target in the object, summarizes risk estimates and their 95%
+confidence limits. If a target includes multiple protocols, the summary also
+includes risk differences and risk ratios.
 }
 \examples{
 
@@ -60,4 +66,8 @@ x <- model_formula(x)
 x <- run_rtmle(x,time_horizon=1:2)
 summary(x)
 
+}
+\seealso{
+\code{\link{run_rtmle}}, \code{\link{target}},
+  \code{\link{cheap_bootstrap}}, \code{\link{plot.rtmle}}
 }

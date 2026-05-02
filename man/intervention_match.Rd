@@ -2,24 +2,26 @@
 % Please edit documentation in R/intervention_match.R
 \name{intervention_match}
 \alias{intervention_match}
-\title{Checking adherence to a given protocol (treatment regimen, intervention).}
+\title{Check adherence to a protocol}
 \usage{
 intervention_match(x, protocol_name)
 }
 \arguments{
-\item{x}{An rtmle object as obtained with \code{rtmle_init}.}
+\item{x}{An \code{rtmle} object as returned by \code{\link{rtmle_init}}.}
 
 \item{protocol_name}{Name of the protocol to check.}
 }
 \value{
-The modified object
+The modified \code{rtmle} object.
 }
 \description{
-Create a matrix called intervention_match
+Check adherence to a protocol
 }
 \details{
-This function is run by \code{protocol} only if \code{prepare_rtmle_data} is run before adding a protocol.
-It is also run by \code{run_rtmle} if needed at that stage.
+Builds the \code{intervention_match} matrix for a protocol. The function is
+called by \code{\link{protocol}} when \code{\link{prepare_rtmle_data}} has
+already been run, and by \code{\link{run_rtmle}} if the matrix is still
+missing at estimation time.
 }
 \examples{
 x <- rtmle_init(time_grid = 0:2, name_id = "id", name_outcome = "Y")
@@ -35,7 +37,8 @@ x <- intervention_match(x, "Always_A")
 x$protocols$Always_A$intervention_match
 }
 \seealso{
-protocol
+\code{\link{protocol}}, \code{\link{prepare_rtmle_data}},
+  \code{\link{run_rtmle}}, \code{\link{plot_adherence}}
 }
 \author{
 Thomas A. Gerds <tag@biostat.ku.dk>

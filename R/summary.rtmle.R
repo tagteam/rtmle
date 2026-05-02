@@ -14,17 +14,24 @@
 #----------------------------------------------------------------------
 ##
 ### Code:
-#' For each target in the object the risk estimates are summarized in a table with their
-#' 95% confidence limits.
+#' Summarize rtmle estimates
 #'
-#' If a target includes multiple protocols the results includes risk differences.
-#' @title Summarizing the results of a register data analysis with the targeted minimum loss estimator
-#' @param object Object to be summarized
-#' @param analysis Name of the analysis to be summarized
-#' @param digits Number of decimals for the confidence intervals
-#' @param targets Names of targets for which to compute the summary. Defaults to all targets in the object.
+#' For each target in the object, summarizes risk estimates and their 95%
+#' confidence limits. If a target includes multiple protocols, the summary also
+#' includes risk differences and risk ratios.
+#'
+#' @title Summarize an rtmle analysis
+#' @param object Object to summarize.
+#' @param analysis Name of the analysis to summarize.
+#' @param digits Number of decimals for confidence intervals.
+#' @param targets Names of targets to summarize. Defaults to all targets in the
+#'   object.
 #' @param reference (Optional) Named list of reference protocols, one for each target.
-#' @param ... not used
+#' @param ... Not used.
+#' @return A \code{\link[data.table]{data.table}} with estimates, confidence
+#'   limits, and, when relevant, protocol contrasts.
+#' @seealso \code{\link{run_rtmle}}, \code{\link{target}},
+#'   \code{\link{cheap_bootstrap}}, \code{\link{plot.rtmle}}
 #' @examples
 #'
 #' set.seed(112)

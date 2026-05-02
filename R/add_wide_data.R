@@ -14,19 +14,24 @@
 #----------------------------------------------------------------------
 ## 
 ### Code:
-#' Adding wide format data to a rtmle object
+#' Add wide-format data to an rtmle object
 ##'
-#' This function adds a list of datasets in wide format (one line per subject) to an existing rtmle object
-#' @title Adding wide format data
-#' @param x object of class \code{rtmle}
-#' @param outcome_data Data frame in a wide format. It should contain outcome variables,
-#'             possibly also censoring and/or competing risk variables, and time-varying covariates.
-#' @param timevar_data Data frame in a wide format. It should contain the time-varying covariates.
-#' @param ... Not used (not yet)
-#' @return The modified object.
-##' @seealso \link[rtmle]{add_baseline_data}, \link[rtmle]{add_long_data}
+#' Adds one-row-per-subject data in wide format to an existing \code{rtmle}
+#' object.
+#'
+#' @title Add wide-format data
+#' @param x An object of class \code{"rtmle"}, typically created by
+#'   \code{\link{rtmle_init}}.
+#' @param outcome_data A wide-format data frame containing outcome variables and,
+#'   when present, censoring and competing-risk variables.
+#' @param timevar_data A wide-format data frame, or a named list of data frames,
+#'   containing time-varying covariates.
+#' @param ... Not used.
+#' @return The modified \code{rtmle} object.
+##' @seealso \code{\link{add_baseline_data}}, \code{\link{add_long_data}},
+##'   \code{\link{long_to_wide}}, \code{\link{prepare_rtmle_data}}
 ##' @examples
-#' # FIXME: this is a detour to produce wide format data
+#' # Create wide-format data from simulated long-format data.
 #' set.seed(112)
 #' ld <- simulate_long_data(n = 11,number_visits = 20,
 #'                          beta = list(A_on_Y = -.2,

@@ -2,24 +2,27 @@
 % Please edit documentation in R/target.R
 \name{target}
 \alias{target}
-\title{Define a target parameter and specify formulas for the estimators of the nuisance parameters}
+\title{Define a target parameter}
 \usage{
 target(x, name, protocols, estimator, ...)
 }
 \arguments{
-\item{x}{An rtmle object as obtained with \code{rtmle_init}.}
+\item{x}{An \code{rtmle} object as returned by \code{\link{rtmle_init}}.}
 
-\item{name}{the name of the target parameter.}
+\item{name}{Name of the target parameter.}
 
-\item{protocols}{The names of the protocol(s) involved in the target parameters.}
+\item{protocols}{Names of the protocol(s) involved in the target parameter.}
 
-\item{estimator}{Character specifying the estimator: either \code{'tmle'} or \code{'g-formula'}.}
+\item{estimator}{Character string specifying the estimator: either
+\code{"tmle"} or \code{"g-formula"}.}
 
-\item{...}{Not (yet) used}
+\item{...}{Not used.}
+}
+\value{
+The modified \code{rtmle} object.
 }
 \description{
-A target defines a target parameter, an estimator and models
-for the nuisance parameters.
+A target records the protocol(s) and estimator used for a target parameter.
 }
 \examples{
 x <- rtmle_init(time_grid = 0:2, name_id = "id", name_outcome = "Y")
@@ -34,4 +37,8 @@ x <- target(x, name = "Outcome_risk",
             estimator = "tmle")
 x$targets
 x$estimator
+}
+\seealso{
+\code{\link{protocol}}, \code{\link{model_formula}},
+  \code{\link{run_rtmle}}, \code{\link{summary.rtmle}}
 }

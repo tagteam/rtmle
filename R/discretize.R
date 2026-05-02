@@ -24,11 +24,12 @@
 # and 0 otherwise
 #' Discretize long-format time-dependent data onto a discrete time grid
 #'
-#' This function maps long-format event, measurement, or exposure histories
+#' Maps long-format event, measurement, or exposure histories
 #' onto a discrete time grid and returns a wide-format representation with
 #' one column per time interval.
 #'
-#' It is the core engine used by \code{long_to_wide()} and can also be used directly.
+#' This is the core engine used by \code{\link{long_to_wide}} and can also be
+#' used directly.
 #'
 #' @param method Character string specifying how the long-format data should
 #'   be mapped to the discrete grid. Built-in methods include:
@@ -46,7 +47,7 @@
 #' @param data A \code{data.table} containing long-format observations.
 #'   Required columns depend on \code{method}:
 #'   \describe{
-#'     \item{event / locf}{\code{id}, \code{date}}
+#'     \item{\code{"event"} or \code{"locf"}}{\code{id}, \code{date}}
 #'     \item{measurement}{\code{id}, \code{date}, \code{value}}
 #'     \item{exposure_*}{\code{id}, \code{start_date}, \code{end_date}}
 #'   }
@@ -93,7 +94,9 @@
 #' interval overlap calculations (for exposures).
 #'
 #' It is designed to be composable and can be used as a building block for
-#' custom mapping functions supplied to \code{long_to_wide()}.
+#' custom mapping functions supplied to \code{\link{long_to_wide}}.
+#'
+#' @seealso \code{\link{long_to_wide}}, \code{\link{fast_cast}}
 #'
 #' @examples
 #' library(data.table)

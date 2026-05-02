@@ -16,7 +16,7 @@
 ### Code:
 #' Fast casting from long to wide format on a discrete time grid
 #'
-#' This function efficiently transforms a long-format \code{data.table}
+#' Efficiently transforms a long-format \code{data.table}
 #' with one row per \code{(id, interval)} into a wide-format table with
 #' one row per subject and one column per interval.
 #'
@@ -25,7 +25,7 @@
 #' @param x A \code{data.table} in long format containing at least the columns
 #'   \code{id}, \code{interval}, and a value column.
 #'
-#' @param name Name of the variable which is transformed from long to wide format.
+#' @param name Name of the variable transformed from long to wide format.
 #' 
 #' @param id Character string naming the subject identifier column.
 #'
@@ -57,6 +57,8 @@
 #'
 #' Rows are ordered by the first occurrence of each id,
 #' and columns are ordered by sorted interval values.
+#'
+#' @seealso \code{\link{discretize}}, \code{\link{long_to_wide}}
 #'
 #' @examples
 #' library(data.table)

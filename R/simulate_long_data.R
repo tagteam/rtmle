@@ -14,17 +14,28 @@
 #----------------------------------------------------------------------
 ## 
 ### Code:
-#' Simulating longitudinal data for illustration purposes 
+#' Simulate longitudinal data for examples
 #'
-#' FIXME
-#' @title Simulating longitudinal data
-#' @param n Sample size
-#' @param number_visits Number of doctor visit times covariates and treatment change 
-#' @param baseline_rate Vector of hazard rates
-#' @param beta List of regression coefficients
-#' @param register_format Logical. If \code{TRUE} the result is not in wide format but re-formatted as a list of register data. 
-#' @param interventional_distribution Logical. If \code{TRUE} the data generating mechanism produces uncensored data under the intervention
-#' @param baseline_hazard_outcomes Baseline hazard function 
+#' Simulates a simple longitudinal data-generating mechanism used in examples
+#' and tests.
+#'
+#' @title Simulate longitudinal data
+#' @param n Sample size.
+#' @param number_visits Number of possible doctor visit times at which
+#'   covariates and treatment may change.
+#' @param baseline_rate Vector or list of baseline hazard rates.
+#' @param beta List of regression coefficients.
+#' @param register_format Logical. If \code{TRUE}, return a list of
+#'   register-style data sets instead of one wide-format data set.
+#' @param interventional_distribution Logical. If \code{TRUE}, simulate
+#'   uncensored data under the intervention.
+#' @param baseline_hazard_outcomes Baseline hazard used for outcomes.
+#' @return If \code{register_format = FALSE}, a wide-format
+#'   \code{\link[data.table]{data.table}}. If \code{register_format = TRUE}, a
+#'   list containing baseline, outcome, censoring, competing-risk, and
+#'   time-varying covariate data.
+#' @seealso \code{\link{simulate_cohort}}, \code{\link{add_long_data}},
+#'   \code{\link{long_to_wide}}
 #' @examples
 #' set.seed(7)
 #' wide_data <- simulate_long_data(n = 20, number_visits = 4)

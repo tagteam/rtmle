@@ -2,24 +2,27 @@
 % Please edit documentation in R/parse_learners.R
 \name{parse_learners}
 \alias{parse_learners}
-\title{Parsing list of learners}
+\title{Parse learner specifications}
 \usage{
 parse_learners(learners)
 }
 \arguments{
-\item{learners}{List of learners}
+\item{learners}{A learner specification: a character vector of learner names,
+a single learner list, or a super-learner list containing \code{folds} and
+\code{learners}.}
 }
 \value{
-List of learners
+A normalized learner list.
 }
 \description{
-Parsing list of learners for function superlearn. Available names are 
-substituted for missing fun elements and available elements fun
-are substituted for missing names.
+Parse learner specifications
 }
 \details{
-As a side effect an attribute is given to the object such that when running
-on its own output the function does nothing.
+Normalizes learner specifications for \code{\link{run_rtmle}} and
+\code{\link{superlearn}}. Available names are used to fill missing
+\code{fun} elements, and available \code{fun} elements are used to fill
+missing names. The returned object receives an attribute so repeated parsing
+leaves it unchanged.
 }
 \examples{
 parse_learners(c("learn_glm","learn_glmnet"))

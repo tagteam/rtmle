@@ -13,52 +13,50 @@
 ### Change Log:
 #----------------------------------------------------------------------
 ## ### Code:
-##' Define a named protocol for an emulated trial
+##' Define a treatment protocol for an emulated trial
 ##'
-##' This function adds a protocol to an existing object.  A protocol
+##' Adds a named protocol to an existing \code{rtmle} object. A protocol
 ##' defines the values of the treatment variable(s) at each time point
-##' during followup including at time zero (baseline).
-##' @param x An rtmle object as obtained with \code{rtmle_init}.
-##' @param name The name of the protocol of an emulated trial
-##' @param intervention A vector or a data.frame (or tibble or data.table) with names of treatment variables set
-##'        to the value that the protocol of an emulated trial dictates. 
-##'        If it is a vector, it should consist of values 0 and 1 corresponding to what the
-##'     intervention would set for the \code{treatment_variables}. If
-##'     it is a data.frame (tibble, data.table), the names of the data.frame are the
-##'     treatment variables. (In this case the argument
-##'     \code{treatment_variables} is ignored.) Each column of the data.frame must be a
-##'     factor with levels specifying the treatment options. In
-##'     longitudinal settings, the data.frame should have column called \code{"time"} in
-##'     addition to the treatment variables. Ideally the data.frame \code{intervention} provides values
-##'     for all times stored in \code{x$intervention_nodes}. However, there are two special cases.
-##'     If the number of rows in the data.frame \code{intervention} is smaller than
-##'    \code{length(x$intervention_nodes)}, then 1. if argument \code{expand} is \code{TRUE},
-##'    the last value (the only value if there is only one row) is set for all later time intervals.
-##'     2. if argument \code{expand} is \code{FALSE} it is assumed that no intervention is wanted at
-##'    the time intervals that are missing in data.frame \code{intervention}.
-##' @param expand Logical. If \code{FALSE} and time is a column in the data.frame
-##'     given by argument \code{intervention}, then do not expand static interventions across time. 
+##' during follow-up, including time zero (baseline).
+##'
+##' @param x An \code{rtmle} object as returned by \code{\link{rtmle_init}}.
+##' @param name Name of the protocol.
+##' @param intervention A vector, data frame, tibble, or data table specifying
+##'   the treatment values dictated by the protocol. If a vector is supplied, it
+##'   should contain 0/1 values corresponding to \code{treatment_variables}. If a
+##'   data frame, tibble, or data table is supplied, its treatment columns must
+##'   be factors whose levels specify the treatment options; in this case
+##'   \code{treatment_variables} is ignored. In longitudinal settings, include a
+##'   \code{"time"} column in addition to the treatment variables. Ideally,
+##'   \code{intervention} supplies values for every value in
+##'   \code{x$intervention_nodes}. If fewer rows are supplied and \code{expand =
+##'   TRUE}, the last supplied value is used for later time intervals. If
+##'   \code{expand = FALSE}, missing time intervals are interpreted as having no
+##'   intervention.
+##' @param expand Logical. If \code{FALSE} and \code{intervention} contains a
+##'   \code{"time"} column, do not expand static interventions across time.
 ##' @param treatment_variables A vector with the name(s) of the
-##'     variable(s) that the protocols intervenes upon. In
-##'     longitudinal settings, when a treatment variable is named "A"
-##'     then the prepared data will contain a column for each of the
-##'     variables A_0,A_1,----,A_k. This argument can be left
+##'     variable(s) that the protocol intervenes on. In
+##'     longitudinal settings, when a treatment variable is named \code{"A"},
+##'     the prepared data contain one column for each of
+##'     \code{A_0}, \code{A_1}, \dots, \code{A_k}. This argument can be left
 ##'     unspecified in which case the argument \code{intervention}
 ##'     must be given.
-##' @param intervene_function A character string: The name of a function
-##'        used to intervene under the protocol. Defaults to \code{"intervene"}
-##'        which implements static interventions. The function will be called from
-##'     the internal function intervention_probabilities with two arguments: the
+##' @param intervene_function A character string naming the function used to
+##'     intervene under the protocol. Defaults to \code{"intervene"}, which
+##'     implements static interventions. The function is called from the internal
+##'     function \code{intervention_probabilities()} with two arguments: the
 ##'     current time interval and the current history of all
-##'     variables. The function determines the value(s) of the
-##'     treatment variable(s) under the intervention and should return
-##'     a matrix with as many columns as there are treatment variables
+##'     variables. It determines the treatment value(s) under the intervention
+##'     and should return a matrix with as many columns as there are treatment
+##'     variables.
 ##' @param verbose Logical. If \code{FALSE} suppress all messages. \code{TRUE} is the default.
-##' @param ... Not (yet) used
+##' @param ... Not used.
 #' @return The modified object contains the treatment variables and
-#'     the intervention_table as list elemens of
-#'     \code{x$protocols[[name]]} where name is given by
-#'     \code{value$name}
+#'     \code{intervention_table} as list elements of \code{x$protocols[[name]]}.
+#' @seealso \code{\link{rtmle_init}}, \code{\link{prepare_rtmle_data}},
+#'   \code{\link{intervention_match}}, \code{\link{target}},
+#'   \code{\link{model_formula}}, \code{\link{run_rtmle}}
 #' @author Thomas A Gerds \email{tag@@biostat.ku.dk}
 #' @examples
 #' # ------------------------------------------------------------------------------------------
@@ -77,7 +75,7 @@
 #'                                         "A" = factor(c("1","0","0"),levels = c("0","1"))))
 #' x$protocols
 #' # ------------------------------------------------------------------------------------------
-#' # Intervening on a more than one treatment variable
+#' # Intervening on more than one treatment variable
 #' # ------------------------------------------------------------------------------------------
 #' x <- rtmle_init(time_grid=0:3,name_id = "id",name_outcome = "Y",name_competing = "Dead",
 #'                 name_censoring = "Censored",censored_label = "censored")

@@ -7,37 +7,32 @@
 plot_IPW(x, protocols = NULL)
 }
 \arguments{
-\item{x}{An object containing:
+\item{x}{An \code{rtmle} object containing:
 \itemize{
   \item \code{x$protocols}: named list; each protocol has matrices
     \code{$cumulative_intervention_probs} and \code{$intervention_match}
-  \item \code{x$followup}: data.frame/data.table with columns \code{id} and \code{last_interval}
+  \item \code{x$followup}: data frame or data table with columns \code{id} and \code{last_interval}
   \item \code{x$intervention_nodes}: integer vector of decision nodes (e.g. \code{c(0,1)})
 }}
 
 \item{protocols}{Character vector of protocol names to include. Default \code{NULL} uses all.}
 }
 \value{
-A \code{ggplot} object.
+A \code{\link[ggplot2]{ggplot}} object.
 }
 \description{
-For each protocol in `x$protocols`, this function extracts cumulative intervention
-probabilities from `cumulative_intervention_probs` and produces boxplots across
-intervention nodes, restricted to subjects who are:
+For each protocol in \code{x$protocols}, extracts cumulative intervention
+probabilities from \code{cumulative_intervention_probs} and produces
+boxplots across intervention nodes, restricted to subjects who are:
 \itemize{
-  \item \strong{Adherent} at the corresponding intervention decision: `intervention_match[, A_t] == 1`
-  \item \strong{At risk} at node `t`: `x$followup$last_interval >= t`
+  \item \strong{Adherent} at the corresponding intervention decision:
+  \code{intervention_match[, A_t] == 1}
+  \item \strong{At risk} at node \code{t}: \code{x$followup$last_interval >= t}
 }
 }
 \details{
-\strong{Default column mapping (requested):}
-\itemize{
-  \item Node 0 uses cumulative probability column \code{"Censored_1"} (paired with \code{"A_0"})
-  \item Node 1 uses cumulative probability column \code{"Censored_2"} (paired with \code{"A_1"})
-}
-
-You can optionally plot \emph{all} columns of `cumulative_intervention_probs`
-(e.g., including \code{A_0}, \code{A_1}, etc.) instead of only the censored columns.
+The cumulative probability column is selected from the protocol-specific
+\code{intervention_last_nodes} index created by \code{\link{run_rtmle}}.
 }
 \examples{
 x <- list(
@@ -57,4 +52,8 @@ x <- list(
   tuning_parameters = list(weight_truncation = c(0, 1)))
 p <- plot_IPW(x)
 class(p)
+}
+\seealso{
+\code{\link{run_rtmle}}, \code{\link{plot_adherence}},
+  \code{\link{plot.rtmle}}
 }

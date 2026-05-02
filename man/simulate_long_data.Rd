@@ -2,7 +2,7 @@
 % Please edit documentation in R/simulate_long_data.R
 \name{simulate_long_data}
 \alias{simulate_long_data}
-\title{Simulating longitudinal data}
+\title{Simulate longitudinal data}
 \usage{
 simulate_long_data(
   n,
@@ -15,25 +15,35 @@ simulate_long_data(
 )
 }
 \arguments{
-\item{n}{Sample size}
+\item{n}{Sample size.}
 
-\item{number_visits}{Number of doctor visit times covariates and treatment change}
+\item{number_visits}{Number of possible doctor visit times at which
+covariates and treatment may change.}
 
-\item{baseline_rate}{Vector of hazard rates}
+\item{baseline_rate}{Vector or list of baseline hazard rates.}
 
-\item{beta}{List of regression coefficients}
+\item{beta}{List of regression coefficients.}
 
-\item{register_format}{Logical. If \code{TRUE} the result is not in wide format but re-formatted as a list of register data.}
+\item{register_format}{Logical. If \code{TRUE}, return a list of
+register-style data sets instead of one wide-format data set.}
 
-\item{interventional_distribution}{Logical. If \code{TRUE} the data generating mechanism produces uncensored data under the intervention}
+\item{interventional_distribution}{Logical. If \code{TRUE}, simulate
+uncensored data under the intervention.}
 
-\item{baseline_hazard_outcomes}{Baseline hazard function}
+\item{baseline_hazard_outcomes}{Baseline hazard used for outcomes.}
+}
+\value{
+If \code{register_format = FALSE}, a wide-format
+  \code{\link[data.table]{data.table}}. If \code{register_format = TRUE}, a
+  list containing baseline, outcome, censoring, competing-risk, and
+  time-varying covariate data.
 }
 \description{
-Simulating longitudinal data for illustration purposes
+Simulate longitudinal data for examples
 }
 \details{
-FIXME
+Simulates a simple longitudinal data-generating mechanism used in examples
+and tests.
 }
 \examples{
 set.seed(7)
@@ -43,4 +53,8 @@ head(wide_data)
 register_data <- simulate_long_data(n = 20, number_visits = 4,
                                     register_format = TRUE)
 names(register_data)
+}
+\seealso{
+\code{\link{simulate_cohort}}, \code{\link{add_long_data}},
+  \code{\link{long_to_wide}}
 }
