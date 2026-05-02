@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: dec 11 2025 (10:23) 
 ## Version: 
-## Last-Updated: apr 29 2026 (08:52) 
+## Last-Updated: maj  2 2026 (08:06) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 34
+##     Update #: 38
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -77,6 +77,9 @@ plot_adherence <- function(x,protocols,...){
     # death is a competing risk and data may be right censored
     available_protocols <- sapply(names(x$protocols),function(p){NROW(x$protocols[[p]]$intervention_match)>0})
     available_protocols <- names(available_protocols[available_protocols])
+    if (length(available_protocols) == 0){
+        stop("rtmle::plot_adherence: No protocol has prepared the intervention_match table yet.\nTo fix this apply protocol() after rtmle_prepare_data() or apply run_rtmle() or call intervention_match().")
+    }
     if (missing(protocols)){
         protocols <- available_protocols
     }else{

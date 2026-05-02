@@ -98,9 +98,12 @@ simulate_cohort <- function(n,
         if (length(x$M)>0){
             if (sum(x$M)>0 && NROW(X)>0){
                 # extract autoregression parameters
-                if (length(variables)>0
-                    &&
-                    length(autovars <- intersect(paste0("auto_",variables),rownames(x$M)))>0){
+                if ((length(variables)>0)
+                    && # find auto-regression parameters in the lava model
+                    (length(autovars <- intersect(paste0("auto_",variables),rownames(x$M)))>0)
+                    && # at the first ever draw there is no previous value and hence no auto-regression:
+                    (variables %chin% names(X))){
+                    # 
                     X <- X[, setdiff(names(X),paste0("auto_",variables)),drop = FALSE, with = FALSE]
                     data.table::setnames(X,variables,paste0("auto_",variables))
                 }
@@ -140,10 +143,17 @@ simulate_cohort <- function(n,
     ##
     ## Baseline variables
     ##
-    baseline_model <- make_regression_model(baseline_variables,parameter_values)
-    X_baseline <- simX(x = baseline_model,X = NULL,n = n,format = "data.table")
+    baseline_model <- make_regression_model(
+        baseline_variables,
+        parameter_values
+    )
+    X_baseline <- simX(
+        x = baseline_model,
+        X = NULL,
+        n = n,
+        format = "data.table"
+    )
     X_baseline[, id := 1:.N]
-    
     # post-baseline hook
     if (is.function(post_baseline_variables_hook)){
         X_baseline <- do.call(post_baseline_variables_hook,list(X = X_baseline))
@@ -158,7 +168,13 @@ simulate_cohort <- function(n,
     ## baseline visit (e.g., randomization)
     if (length(baseline_visit)>0){
         baseline_visit_model <- make_regression_model(baseline_visit,parameter_values)
-        X_baseline_visit <- simX(x = baseline_visit_model,X = X_baseline,n = n,format = "data.table")
+        X_baseline_visit <- simX(
+            x = baseline_visit_model,
+            X = X_baseline,
+            variables = names(baseline_visit),
+            n = n,
+            format = "data.table"
+        )
     }else{
         X_baseline_visit <- NULL
     }
@@ -289,7 +305,7 @@ simulate_cohort <- function(n,
             ## Increase count of intermediate events
             for(vv in names(intermediate_events)){
                 vv_update <- which(update_visit$event == vv)
-                set(update_visit, j = vv, i = vv_update, value = update_visit[vv_update][[vv]] + 1L)
+                data.table::set(update_visit, j = vv, i = vv_update, value = update_visit[vv_update][[vv]] + 1L)
             }
 
             ## draw visit measurements conditional on updated history
@@ -354,6 +370,8 @@ simulate_cohort <- function(n,
                                 intersect(c(names(absorbing_events),"dropout"),elevels))
                    )]
     data.table::setkey(event_history,id,time,event)
-    return(event_history[])
+    class(event_history) <- c("simulated_cohort",class(event_history))
+    attr(event_history,"call") <- match.call()
+    return(event_history)
 }
 
