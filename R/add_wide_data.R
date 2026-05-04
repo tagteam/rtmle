@@ -32,26 +32,23 @@
 ##'   \code{\link{long_to_wide}}, \code{\link{prepare_rtmle_data}}
 ##' @examples
 #' # Create wide-format data from simulated long-format data.
-#' set.seed(112)
-#' ld <- simulate_long_data(n = 11,number_visits = 20,
-#'                          beta = list(A_on_Y = -.2,
-#'                          A0_on_Y = -0.3,A0_on_A = 6),
-#'                                register_format = TRUE)
-#' x <- rtmle_init(time_grid = seq(0,1000,30.45*6), name_id = "id",
-#'                 name_outcome = "Y", name_competing = "Dead",
-#'                 name_censoring = "Censored",censored_label = "censored")
+#' data(simulated_cohort)
+#' ld <- register_format(simulated_cohort)
+#' x <- rtmle_init(time_grid = seq(0,20,4), name_id = "id",
+#'                 name_outcome = "stroke", name_competing = "death",
+#'                 name_censoring = "dropout",censored_label = "censored")
 #' x <- add_long_data(x,
-#'                    outcome_data=ld$outcome_data,
-#'                    censored_data=ld$censored_data,
-#'                    competing_data=ld$competing_data,
-#'                    timevar_data=ld$timevar_data)
+#'                    outcome_data=ld$timevar_data$stroke[!duplicated(id)],
+#'                    censored_data=ld$timevar_data$dropout,
+#'                    competing_data=ld$timevar_data$death,
+#'                    timevar_data=ld$timevar_data[c("bleeding","changeSBP","A","B")])
 #' x <- add_baseline_data(x,data=ld$baseline_data)
 #' x <- long_to_wide(x,start_followup_date=0)
 #' outcome_data <- x$data$outcome_data
 #' timevar_data <- x$data$timevar_data
-#' x <- rtmle_init(time_grid = seq(0,1000,30.45*6), name_id = "id",
-#'                 name_outcome = "Y", name_competing = "Dead",
-#'                 name_censoring = "Censored",censored_label = "censored")
+#' x <- rtmle_init(time_grid = seq(0,20,4), name_id = "id",
+#'                 name_outcome = "stroke", name_competing = "death",
+#'                 name_censoring = "dropout",censored_label = "censored")
 #' x <- add_baseline_data(x,data=ld$baseline_data)
 #' x <- add_wide_data(x,outcome_data=outcome_data,timevar_data=timevar_data)
 #' 

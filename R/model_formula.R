@@ -46,39 +46,43 @@
 ##'   \code{\link{target}}, \code{\link{make_exclusion_rule}},
 ##'   \code{\link{run_rtmle}}
 ##' @examples
-##' set.seed(17)
-##' ld <- simulate_long_data(n = 17,number_visits = 20,
-##'                          beta = list(A_on_Y = -.2,A0_on_Y = -0.3,A0_on_A = 6),
-##'                          register_format = TRUE)
-##' ld$timevar_data$B <- ld$timevar_data$A[id %in% sort(sample(1:91,size = 75,replace = FALSE))]
-##' x <- rtmle_init(time_grid = seq(0,1500,30.45*12),name_id = "id",name_outcome = "Y",
-##'                 name_competing = "Dead",
-##'                 name_censoring = "Censored",censored_label = "censored")
+##' data(simulated_cohort)
+##' ld <- register_format(simulated_cohort)
+##' x <- rtmle_init(time_grid = seq(0,20,4),name_id = "id",name_outcome = "stroke",
+##'                 name_competing = "death",
+##'                 name_censoring = "dropout",censored_label = "censored")
 ##' x <- add_long_data(x,
-##'                    outcome_data=ld$outcome_data,
-##'                    censored_data=ld$censored_data,
-##'                    competing_data=ld$competing_data,
-##'                    timevar_data=ld$timevar_data)
+##'                    outcome_data=ld$timevar_data$stroke[!duplicated(id)],
+##'                    censored_data=ld$timevar_data$dropout,
+##'                    competing_data=ld$timevar_data$death,
+##'                    timevar_data=ld$timevar_data[c("bleeding","changeSBP","A","B")])
 ##' x <- add_baseline_data(x,data=ld$baseline_data)
 ##' x <- long_to_wide(x,start_followup_date=0)
 ##' x <- prepare_rtmle_data(x)
-##' x <- protocol(x,name = "Always_A",treatment_variables = "A",intervention = 1)
-##' x <- protocol(x,name = "Never_A",treatment_variables = "A",intervention = 0)
-##' x <- protocol(x,name = "Use_A_not_B",treatment_variables = c("A","B"),intervention = c(1,0))
+##' x <- protocol(x,name = "Always_A",
+##'               intervention = data.frame(time=x$intervention_nodes,
+##'                                         "A" = factor("1",levels = c("0","1"))))
+##' x <- protocol(x,name = "Never_A",
+##'               intervention = data.frame(time=x$intervention_nodes,
+##'                                         "A" = factor("0",levels = c("0","1"))))
+##' x <- protocol(x,name = "Use_A_not_B",
+##'               intervention = data.frame(time=x$intervention_nodes,
+##'                                         "A" = factor("1",levels = c("0","1")),
+##'                                         "B" = factor("0",levels = c("0","1"))))
 ##' x <- model_formula(x)
 ##' x$models
 ##' # remove age from all formulas
 ##' x <- model_formula(x,exclusion_rules=list("*"="age"))
-##' # remove age from all Y_1 formula
-##' x <- model_formula(x,exclusion_rules=list("Y_1"="age"))
+##' # remove age from the stroke_1 formula
+##' x <- model_formula(x,exclusion_rules=list("stroke_1"="age"))
 ##' x$models
-##' # remove age from all Y formula
-##' x <- model_formula(x,exclusion_rules=list("Y_*"="age"))
-##' # remove age and L_0 from Censored_1 and from Censored_2 formula
-##' x <- model_formula(x,exclusion_rules=list("Censored_[1:2]"="age|L_0"))
+##' # remove age from all stroke formulas
+##' x <- model_formula(x,exclusion_rules=list("stroke_*"="age"))
+##' # remove age and changeSBP_0 from dropout_1 and dropout_2 formulas
+##' x <- model_formula(x,exclusion_rules=list("dropout_[1:2]"="age|changeSBP_0"))
 ##' x$models
-##' # remove all L_t variables from Censored_1 and from Censored_2 formula
-##' x <- model_formula(x,exclusion_rules=list("Censored_[1:2]"="L_*"))
+##' # remove all changeSBP_t variables from dropout_1 and dropout_2 formulas
+##' x <- model_formula(x,exclusion_rules=list("dropout_[1:2]"="changeSBP_*"))
 ##' x$models
 ##' @export 
 ##' @author Thomas A. Gerds <tag@@biostat.ku.dk>

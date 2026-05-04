@@ -1,7 +1,6 @@
 ^sandbox
-^simulation
+^data-raw$
 ^attic
-^presentations
 ^.*\.o$
 ^.*\.so$
 (^|/)#.*#$

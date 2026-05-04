@@ -45,17 +45,8 @@ with \code{Hist(time_nonadherence, event_nonadherence)} and plotted with
 \code{prodlim::ggprodlim} for cause 1 (non-adherence).
 }
 \examples{
-x <- list(
-  protocols = list(Always_A = list(
-    intervention_match = matrix(c(1, 1, 1, 1, 1, 0, 1, 0), nrow = 4,
-                                dimnames = list(NULL, c("A_0", "A_1"))))),
-  followup = data.table::data.table(id = 1:4, last_interval = c(2, 2, 1, 2)),
-  names = list(censoring = "Censored"),
-  prepared_data = data.table::data.table(
-    id = 1:4,
-    Censored_1 = "uncensored",
-    Censored_2 = c("uncensored", "censored", "uncensored", "uncensored")))
-p <- plot_adherence(x)
+data(rtmle_object)
+p <- plot_adherence(rtmle_object)
 class(p)
 
 }

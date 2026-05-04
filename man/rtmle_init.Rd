@@ -15,7 +15,8 @@ rtmle_init(
   censored_label = "censored",
   minority_threshold = 8,
   weight_truncation = c(0, 1),
-  prediction_range = c(0.0001, 0.9999)
+  prediction_range = c(0.0001, 0.9999),
+  time_grid_labels = time_grid
 )
 }
 \arguments{
@@ -66,6 +67,9 @@ inverse-probability weights.}
 probabilities to the interval \code{(0, 1)}. This is required for the
 logit transformation used in the TMLE fluctuation model. The default is
 \code{c(0.0001, 0.9999)}.}
+
+\item{time_grid_labels}{Labels used for the time-grid points on plot
+x-axes. Defaults to \code{time_grid}.}
 }
 \value{
 A list with class \code{"rtmle"} and the following elements:

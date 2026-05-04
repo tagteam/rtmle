@@ -102,7 +102,7 @@ simulate_cohort <- function(n,
                     && # find auto-regression parameters in the lava model
                     (length(autovars <- intersect(paste0("auto_",variables),rownames(x$M)))>0)
                     && # at the first ever draw there is no previous value and hence no auto-regression:
-                    (variables %chin% names(X))){
+                    any(variables %chin% names(X))){
                     # 
                     X <- X[, setdiff(names(X),paste0("auto_",variables)),drop = FALSE, with = FALSE]
                     data.table::setnames(X,variables,paste0("auto_",variables))

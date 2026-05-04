@@ -48,19 +48,19 @@
 #' @return The modified \code{rtmle} object.
 #' @author Thomas A. Gerds <tag@@biostat.ku.dk>
 #' @examples
-#' set.seed(17)
-#' ld <- simulate_long_data(n = 91,number_visits = 20,
-#'                          beta = list(A_on_Y = -.2,A0_on_Y = -0.3,A0_on_A = 6),
-#'                          register_format = TRUE)
-#' x <- rtmle_init(time_grid = seq(0,1500,30.45*12),name_id = "id",name_outcome = "Y",name_competing = "Dead",
-#'                 name_censoring = "Censored",censored_label = "censored")
+#' data(simulated_cohort)
+#' ld <- register_format(simulated_cohort)
+#' x <- rtmle_init(time_grid = seq(0,20,4),name_id = "id",
+#'                 name_outcome = "stroke",name_competing = "death",
+#'                 name_censoring = "dropout",censored_label = "censored")
 #' x <- add_long_data(x,
-#'                    outcome_data=ld$outcome_data,
-#'                    censored_data=ld$censored_data,
-#'                    competing_data=ld$competing_data,
-#'                    timevar_data=ld$timevar_data)
+#'                    outcome_data=ld$timevar_data$stroke[!duplicated(id)],
+#'                    censored_data=ld$timevar_data$dropout,
+#'                    competing_data=ld$timevar_data$death,
+#'                    timevar_data=ld$timevar_data[c("bleeding","changeSBP","A","B")])
 #' x <- add_baseline_data(x,data=ld$baseline_data)
 #' x <- long_to_wide(x,start_followup_date=0)
+#' x <- prepare_rtmle_data(x)
 #' x <- protocol(x,name = "Always_A",
 #'                     intervention = data.frame(
 #'                                    time=x$intervention_nodes,
@@ -69,7 +69,6 @@
 #'                     intervention = data.frame(
 #'                                               time=x$intervention_nodes,
 #'                                               "A" = factor("0",levels = c("0","1"))))
-#' x <- prepare_rtmle_data(x)
 #' x <- target(x,name = "Outcome_risk",
 #'                   estimator = "tmle",
 #'                   protocols = c("Always_A","Never_A"))

@@ -58,6 +58,8 @@
 ##'   probabilities to the interval \code{(0, 1)}. This is required for the
 ##'   logit transformation used in the TMLE fluctuation model. The default is
 ##'   \code{c(0.0001, 0.9999)}.
+##' @param time_grid_labels Labels used for the time-grid points on plot
+##'   x-axes. Defaults to \code{time_grid}.
 ##' @return A list with class \code{"rtmle"} and the following elements:
 ##' \itemize{
 ##' \item targets
@@ -93,9 +95,13 @@ rtmle_init <- function(time_grid,
                        censored_label = "censored",
                        minority_threshold = 8,
                        weight_truncation = c(0,1),
-                       prediction_range = c(0.0001,0.9999)){
+                       prediction_range = c(0.0001,0.9999),
+                       time_grid_labels = time_grid){
     if(!(time_grid[1] == 0 & length(time_grid) > 1))
         stop("time_grid must be a vector of length > 1 starting with 0")
+    if (length(time_grid_labels) != length(time_grid)){
+        stop("time_grid_labels must have the same length as time_grid")
+    }
     if (length(name_censoring)>0){
         if (length(censored_label) != 1 ||
             length(censored_levels) != 2 ||
@@ -123,6 +129,7 @@ rtmle_init <- function(time_grid,
                           "uncensored_label" = uncensored_label),
              version = utils::packageVersion("rtmle"),
              time_grid_scale = time_grid,
+             time_grid_labels = as.character(time_grid_labels),
              time_grid = 0:(length(time_grid)-1),
              intervention_nodes = 0:(length(time_grid)-2),
              tuning_parameters = list(minority_threshold = minority_threshold,

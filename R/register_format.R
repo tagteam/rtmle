@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: maj  2 2026 (07:14) 
 ## Version: 
-## Last-Updated: maj  2 2026 (08:10) 
+## Last-Updated: maj  3 2026 (08:23) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 11
+##     Update #: 12
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -21,7 +21,7 @@
 #' a list with separate components for baseline and time-varying information, 
 #' facilitating further analysis.
 #'
-#' @param x A data object of class \code{"simulated_cohort"}.
+#' @param cohort A data object of class \code{"simulated_cohort"}.
 #' @return A list with two components:
 #'   \itemize{
 #'     \item \code{baseline_data}: A data.table containing baseline variables for each individual.
@@ -33,7 +33,6 @@
 #' for each category and organizes it into a structured format.
 #'
 #' @examples
-#' # Example usage (assuming `simulated_cohort` object is defined with required attributes):
 #' data(simulated_cohort)
 #' result <- register_format(simulated_cohort)
 #'

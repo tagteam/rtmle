@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul  3 2024 (13:48) 
 ## Version: 
-## Last-Updated: mar 25 2026 (17:24) 
+## Last-Updated: maj  3 2026 (07:25) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 60
+##     Update #: 61
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -36,7 +36,8 @@ coef.rtmle <- function(object,time_horizon,...){
         stop("Can only plot regression coefficients when fitter is either learn_glm or learn_glmnet")
     }
     if (missing(time_horizon)) {
-        time_horizon <- min(max(object$times),max(object$run_time_horizons))
+
+        time_horizon <- min(max(object$time_grid),max(object$run_time_horizons))
     }
     df <- do.call(rbind,lapply(object$intervention_nodes,function(k){
         current_outcome <- paste0(object$names$outcome,"_",k+1)

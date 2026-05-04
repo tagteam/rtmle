@@ -84,29 +84,27 @@
 #' # Intervening on a single treatment variable
 #' # ------------------------------------------------------------------------------------------
 #'
-#' set.seed(17)
 #' tau <- 3
-#' ld <- simulate_long_data(n = 391,number_visits = 20,
-#'                          beta = list(A_on_Y = -.2,A0_on_Y = -0.3,A0_on_A = 6),
-#'                          register_format = TRUE)
-#' x <- rtmle_init(time_grid = seq(0,1500,30.45*12),name_id = "id",
-#'                 name_outcome = "Y",
-#'                 name_competing = "Dead",
-#'                 name_censoring = "Censored",censored_label = "censored")
+#' data(simulated_cohort)
+#' ld <- register_format(simulated_cohort)
+#' x <- rtmle_init(time_grid = seq(0,20,4),name_id = "id",
+#'                 name_outcome = "stroke",
+#'                 name_competing = "death",
+#'                 name_censoring = "dropout",censored_label = "censored")
 #' x <- add_long_data(x,
-#'                    outcome_data=ld$outcome_data,
-#'                    censored_data=ld$censored_data,
-#'                    competing_data=ld$competing_data,
-#'                    timevar_data=ld$timevar_data)
+#'                    outcome_data=ld$timevar_data$stroke[!duplicated(id)],
+#'                    censored_data=ld$timevar_data$dropout,
+#'                    competing_data=ld$timevar_data$death,
+#'                    timevar_data=ld$timevar_data[c("bleeding","changeSBP","A","B")])
 #' x <- add_baseline_data(x,data=ld$baseline_data)
 #' x <- long_to_wide(x,start_followup_date=0)
+#' x <- prepare_rtmle_data(x)
 #' x <- protocol(x,name = "Always_A",
 #'                     intervention = data.frame(time=x$intervention_nodes,
 #'                                                    "A" = factor("1",levels = c("0","1"))))
 #' x <- protocol(x,name = "Never_A",
 #'                     intervention = data.frame(time=x$intervention_nodes,
 #'                                               "A" = factor("0",levels = c("0","1"))))
-#' x <- prepare_rtmle_data(x)
 #' x <- target(x,name = "Outcome_risk",
 #'                   estimator = "tmle",
 #'                   protocols = c("Always_A","Never_A"))
@@ -168,7 +166,7 @@ run_rtmle <- function(x,
         refit <- TRUE
         for (sub in subsets){
             stopifnot(is.character(sub$label[[1]]))
-            xs <- data.table::copy(x[c("targets","names","time_grid","time_grid_scale","protocols","models","intervention_nodes","tuning_parameters")])
+            xs <- data.table::copy(x[c("targets","names","time_grid","time_grid_scale","time_grid_labels","protocols","models","intervention_nodes","tuning_parameters")])
             for (pp in names(xs$protocols)){
                 xs$protocols[[pp]]$intervention_match <- xs$protocols[[pp]]$intervention_match[x$prepared_data[[x$names$id]] %in% sub$id,,drop = FALSE]
                 xs$protocols[[pp]]$intervention_probs <- NULL

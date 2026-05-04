@@ -4,10 +4,10 @@
 \alias{register_format}
 \title{Register Format Conversion for Simulated Cohort Data}
 \usage{
-register_format(x)
+register_format(cohort)
 }
 \arguments{
-\item{x}{A data object of class \code{"simulated_cohort"}.}
+\item{cohort}{A data object of class \code{"simulated_cohort"}.}
 }
 \value{
 A list with two components:
@@ -28,7 +28,6 @@ absorbing events, baseline visits, visit events, and visit measurements. It extr
 for each category and organizes it into a structured format.
 }
 \examples{
-# Example usage (assuming `simulated_cohort` object is defined with required attributes):
 data(simulated_cohort)
 result <- register_format(simulated_cohort)
 

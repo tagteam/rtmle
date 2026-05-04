@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 23 2024 (16:42) 
 ## Version: 
-## Last-Updated: apr 25 2026 (06:56) 
+## Last-Updated: maj  4 2026 (07:21) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 35
+##     Update #: 38
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -34,19 +34,8 @@
 #' @seealso \code{\link{run_rtmle}}, \code{\link{summary.rtmle}},
 #'   \code{\link{plot_adherence}}, \code{\link{plot_IPW}}
 #' @examples
-#' x <- list(
-#'   estimate = list(Main_analysis = data.table::data.table(
-#'     Time_horizon = c(1, 2, 1, 2),
-#'     Time = c(1, 2, 1, 2),
-#'     Protocol = rep(c("Always_A", "Never_A"), each = 2),
-#'     Estimate = c(.12, .20, .18, .30),
-#'     Lower = c(.08, .15, .12, .24),
-#'     Upper = c(.18, .27, .25, .38))),
-#'   followup = data.table::data.table(id = 1:5,
-#'                                     last_interval = c(0, 1, 2, 2, 2)),
-#'   time_grid_scale = 0:2)
-#' class(x) <- "rtmle"
-#' p <- ggplot2::autoplot(x, xlim = c(0, 2))
+#' data(rtmle_object)
+#' p <- ggplot2::autoplot(rtmle_object, xlim = c(0, 4))
 #' class(p)
 #' @importFrom ggplot2 ggplot aes geom_line geom_ribbon labs
 #'     theme_minimal facet_wrap
@@ -67,9 +56,6 @@ autoplot.rtmle <- function(object,
     if (!requireNamespace("ggplot2", quietly = TRUE)) {
         stop("Package 'ggplot2' must be installed to use autoplot.rtmle().")
     }
-    ## if (!requireNamespace("pammtools", quietly = TRUE)) {
-        ## stop("Package 'pammtools' must be installed to use autoplot.rtmle().")
-    ## }
 
     # Collect all analyses into one data.frame
     if (!is.null(analysis)) {
@@ -88,12 +74,12 @@ autoplot.rtmle <- function(object,
                                            group = Protocol))
     # getting data for numbers at-risk below the graph
     if (missing(position_atrisk)){
-        position_atrisk <- object$time_grid_scale
+        position_atrisk <- object$time_grid
     }
+    if (missing(x_breaks)) x_breaks <- object$time_grid
     atrisk_times <- data.table::data.table(time = position_atrisk)
     atrisk <- object$followup[,.N,keyby = last_interval]
     atrisk[,N := NROW(object$followup)-cumsum(c(0,N[-length(N)]))]
-    ## p <- p+ggplot2::geom_step()
     p <- p+ggplot2::geom_line()+ggplot2::geom_point()
     color_variable <- "Protocol"
     if (match("Lower",names(est),nomatch = 0) >0 &&
@@ -110,10 +96,11 @@ autoplot.rtmle <- function(object,
     p <- p+ggplot2::theme_minimal(base_size = 12)
     # axes
     if (missing(ylim)) ylim <- c(0,1)
-    if (missing(xlim)) xlim <- c(0,max(est$Time))
+    if (missing(xlim)) xlim <- range(x_breaks, na.rm = TRUE)
     ## p <- p+ggplot2::ylim(0,1)
     if (missing(y_breaks)) y_breaks <- seq(ylim[1],ylim[2],abs(ylim[2]-ylim[1])/4)
     p <- p+ggplot2::scale_y_continuous(limits = ylim,breaks = y_breaks,labels = paste0(100*y_breaks,"%"))
+    p <- p+ggplot2::scale_x_continuous(breaks = x_breaks, labels = object$time_grid_labels[x_breaks+1])
     p <- p+ggplot2::coord_cartesian(ylim = ylim,xlim = xlim,clip = 'off')
     # FIXME: this should not be necessary but at some point we want to add the
     #        number of people who actually follow the regime and are at-risk

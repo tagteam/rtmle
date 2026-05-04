@@ -84,23 +84,21 @@ ensemble super learner combines the candidate learners.
 # Note that the function is designed to be called from run_rtmle.
 library(ranger)
 library(glmnet)
-set.seed(17)
-ld <- simulate_long_data(n = 113,
-                         number_visits = 20,
-                         beta = list(A_on_Y = -.2,
-                                     A0_on_Y = -0.3,A0_on_A = 6),
-                         register_format = FALSE)
+data(simulated_cohort)
+ld <- register_format(simulated_cohort)
+A0 <- ld$timevar_data$A[date == 0, list(id, A_0 = value)]
+d <- merge(ld$baseline_data, A0, by = "id")
 fit <- superlearn(folds = 2,seed = 8,
                   learners = list("learn_glm",
                                   "my_ranger" = list(fun = "learn_ranger",
                                                      num.trees = 5),
                                   "learn_glmnet" = list(alpha = 1,
                                                      fun="learn_glmnet")),
-                  character_formula = "A_0~L_0+sex+age",
+                  character_formula = "A_0~sex+age+SBP",
                   outcome_variable = "A_0",
                   id_variable = "id",
-                  data = ld[!duplicated(id)],
-                  intervened_data = ld[!duplicated(id)])
+                  data = d,
+                  intervened_data = d)
 
 }
 \seealso{

@@ -37,7 +37,7 @@ If numeric, values \code{0:K} are translated to names \code{time_0}, \dots.
 If character, interpreted as names of \code{time_*} elements.}
 
 \item{nodes}{Character vector. For \code{plot_style = "by_outcome"}, the name of the node
-within each \code{time_k} block from which to extract coefficients (e.g.
+within each \code{nth_time} block from which to extract coefficients (e.g.
 \code{"outcome"} or \code{"censoring"}).}
 
 \item{term}{Optional filter for coefficient names. If \code{NULL}, all coefficient terms
@@ -90,7 +90,7 @@ hidden.}
 A list with components:
 \describe{
   \item{\code{data}}{A data frame in long format with one row per extracted
-  coefficient. Contains at least \code{time}, \code{time_k}, \code{node},
+  coefficient. Contains at least \code{time}, \code{nth_time}, \code{node},
   \code{outcome}, \code{term}, \code{beta}, and, for
   \code{plot_style = "manhattan"}, the ordering variables \code{x_cat} and
   \code{x_index}.}
@@ -119,23 +119,8 @@ name. All coefficient terms for a given model are plotted at the same x
 position, producing a vertical "stack" of points per model.
 }
 \examples{
-beta <- matrix(c(-1, 0.4), ncol = 1,
-               dimnames = list(c("(Intercept)", "A_0"), "Estimate"))
-x <- list(
-  learner = list(name = "glm", fun = list("learn_glm")),
-  times = 0:2,
-  run_time_horizons = 2,
-  time_grid = 0:2,
-  intervention_nodes = 0:1,
-  protocols = list(Always_A = list()),
-  names = list(outcome = "Y"),
-  models = list(
-    time_0 = list(outcome = list(
-      Y_1 = list(fit = list(Always_A = list(sequence_time_2 = beta))))),
-    time_1 = list(outcome = list(
-      Y_2 = list(fit = list(Always_A = list(sequence_time_2 = beta)))))))
-class(x) <- "rtmle"
-out <- plot_model_coefficients(x, time_horizon = 2, protocol = "Always_A",
+data(rtmle_object)
+out <- plot_model_coefficients(rtmle_object, time_horizon = 4, protocol = "Always_A",
                                nodes = "outcome", plot_style = "by_outcome")
 names(out)
 

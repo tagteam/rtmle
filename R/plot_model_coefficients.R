@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: feb 23 2026 (06:38) 
 ## Version: 
-## Last-Updated: mar 26 2026 (15:49) 
+## Last-Updated: maj  4 2026 (06:50) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 133
+##     Update #: 136
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -29,7 +29,7 @@
 #'
 #' @param nodes
 #' Character vector. For \code{plot_style = "by_outcome"}, the name of the node
-#' within each \code{time_k} block from which to extract coefficients (e.g.
+#' within each \code{nth_time} block from which to extract coefficients (e.g.
 #' \code{"outcome"} or \code{"censoring"}).
 #'
 #' @param term
@@ -105,7 +105,7 @@
 #' A list with components:
 #' \describe{
 #'   \item{\code{data}}{A data frame in long format with one row per extracted
-#'   coefficient. Contains at least \code{time}, \code{time_k}, \code{node},
+#'   coefficient. Contains at least \code{time}, \code{nth_time}, \code{node},
 #'   \code{outcome}, \code{term}, \code{beta}, and, for
 #'   \code{plot_style = "manhattan"}, the ordering variables \code{x_cat} and
 #'   \code{x_index}.}
@@ -130,23 +130,8 @@
 #' \code{\link{run_rtmle}}, \code{\link{coef.rtmle}},
 #' \code{\link[ggplot2]{ggplot}}, \code{\link[ggplot2]{geom_point}}
 #' @examples
-#' beta <- matrix(c(-1, 0.4), ncol = 1,
-#'                dimnames = list(c("(Intercept)", "A_0"), "Estimate"))
-#' x <- list(
-#'   learner = list(name = "glm", fun = list("learn_glm")),
-#'   times = 0:2,
-#'   run_time_horizons = 2,
-#'   time_grid = 0:2,
-#'   intervention_nodes = 0:1,
-#'   protocols = list(Always_A = list()),
-#'   names = list(outcome = "Y"),
-#'   models = list(
-#'     time_0 = list(outcome = list(
-#'       Y_1 = list(fit = list(Always_A = list(sequence_time_2 = beta))))),
-#'     time_1 = list(outcome = list(
-#'       Y_2 = list(fit = list(Always_A = list(sequence_time_2 = beta)))))))
-#' class(x) <- "rtmle"
-#' out <- plot_model_coefficients(x, time_horizon = 2, protocol = "Always_A",
+#' data(rtmle_object)
+#' out <- plot_model_coefficients(rtmle_object, time_horizon = 4, protocol = "Always_A",
 #'                                nodes = "outcome", plot_style = "by_outcome")
 #' names(out)
 #' 
@@ -169,10 +154,11 @@ plot_model_coefficients <- function(x,
                                     plot_style = c("manhattan", "by_outcome"),
                                     manhattan_color_by = c("node", "time", "term", "none"),
                                     show_x_labels = FALSE) {
+    time_label <- NULL
     if (!(x$learner$fun[[1]] %chin% c("learn_glmnet","learn_glm"))){
         stop("Can only plot regression coefficients when fitter is either learn_glm or learn_glmnet")
     }
-    outcome <- time_k <- x_index <- terms <- node <- x_cat <- NULL
+    outcome <- nth_time <- x_index <- terms <- node <- x_cat <- NULL
     color_by <- match.arg(color_by)
     facet_by <- match.arg(facet_by)
     plot_style <- match.arg(plot_style)
@@ -209,7 +195,12 @@ plot_model_coefficients <- function(x,
     
     # ---- extract long table ----
     df <- coef(x)
-    df[,time_k := suppressWarnings(as.integer(sub("^time_", "", time)))]
+    df[,nth_time := suppressWarnings(as.integer(sub("^time_", "", time)))]
+    # labels for the discrete time scale 
+    df[,time_label := factor(
+            nth_time,
+            levels = as.character(x$time_grid_labels[1:length(unique(nth_time))])
+        )]
     if (!include_intercept){
         df <- df[terms != "(Intercept)"]
     }
@@ -237,7 +228,7 @@ plot_model_coefficients <- function(x,
 
         if (color_by == "time") {
             gg <- gg + ggplot2::geom_point(
-                                    ggplot2::aes(color = factor(time_k)),
+                                    ggplot2::aes(color = time_label),
                                     alpha = point_alpha, size = point_size,
                                     position = ggplot2::position_jitter(width = 0.15, height = 0)
                                 ) + ggplot2::labs(color = "time")
@@ -262,7 +253,7 @@ plot_model_coefficients <- function(x,
                      )
 
         if (facet_by == "term") gg <- gg + ggplot2::facet_wrap(~ term, scales = "free_y")
-        if (facet_by == "time") gg <- gg + ggplot2::facet_wrap(~ time_k)
+        if (facet_by == "time") gg <- gg + ggplot2::facet_wrap(~ time_label)
 
         return(invisible(list(data = df, plot = gg)))
     }
@@ -276,7 +267,7 @@ plot_model_coefficients <- function(x,
 
     # Build the x "outcome variable" label
     # (includes node so Placebo vs Lira stays distinct)
-    df[,x_cat := paste0("time_",time_k," | ",node," | ",outcome)]
+    df[,x_cat := paste0("time_",time_label," | ",node," | ",outcome)]
 
     # Determine ordering for x_cat
     setkey(df,time,node,outcome)
@@ -288,7 +279,7 @@ plot_model_coefficients <- function(x,
     # Aesthetics mapping
     aes_base <- ggplot2::aes(x = x_index, y = beta)
     if (manhattan_color_by == "time") {
-        aes_base <- ggplot2::aes(x = x_index, y = beta, color = factor(time_k))
+        aes_base <- ggplot2::aes(x = x_index, y = beta, color = factor(nth_time))
     } else if (manhattan_color_by == "node") {
         aes_base <- ggplot2::aes(x = x_index, y = beta, color = node)
     } else if (manhattan_color_by == "terms") {
@@ -299,7 +290,7 @@ plot_model_coefficients <- function(x,
     suppressWarnings(gg <- gg+ ggplot2::geom_point(alpha = point_alpha, size = point_size,
                                                    ggplot2::aes(
                                                                 text = paste0(
-                                                                    "Time: ", time_k,
+                                                                    "Time: ", time_label,
                                                                     "<br>Node: ", node,
                                                                     "<br>Outcome: ", outcome,
                                                                     "<br>Term: ", terms,
