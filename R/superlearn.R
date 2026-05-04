@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Oct 31 2024 (07:29) 
 ## Version: 
-## Last-Updated: apr 29 2026 (07:25) 
+## Last-Updated: maj  4 2026 (11:42) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 297
+##     Update #: 298
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -207,7 +207,7 @@ superlearn <- function(folds,
                                       ## learner specific arguments such as tuning parameters
                                       this_learner$args)
                     if (inherits(try( 
-                        predicted_k <- as_learner_output(do.call(this_learner$fun, learner_args))
+                        predicted_k <- parse_learner_output(x = do.call(this_learner$fun, learner_args))
                     ),"try-error")){
                         stop(paste0("Learning failed in fold ",k," with learner ",this_learner))
                     }
@@ -277,7 +277,7 @@ superlearn <- function(folds,
             ## add winner's arguments but do not include duplicate arguments
             predicted_values_args <- c(learners[[this_learner]]$args,
                                        learner_args[!names(learner_args)%in%names(learners[[this_learner]]$args)])
-            as_learner_output(do.call(what = learners[[this_learner]]$fun,predicted_values_args))
+            parse_learner_output(x = do.call(what = learners[[this_learner]]$fun,predicted_values_args))
         })
         if (length(predicted_value_ensemble) == 1){
             predicted_values <- predicted_value_ensemble[[1]]$predicted_values
@@ -287,11 +287,11 @@ superlearn <- function(folds,
         fitted_objects <- lapply(predicted_value_ensemble,`[[`,"object")
         names(fitted_objects) <- names(ensemble_weights)[ensemble_weights>0]
     }
-    learner_output(predicted_values = predicted_values,
-                   diagnostics = if (!missing(diagnostics)) diagnostics else NULL,
-                   fit = ensemble_weights,
-                   object = list(ensemble_weights = ensemble_weights,
-                                 fitted_objects = fitted_objects))
+    parse_learner_output(predicted_values = predicted_values,
+                         diagnostics = if (!missing(diagnostics)) diagnostics else NULL,
+                         fit = ensemble_weights,
+                         object = list(ensemble_weights = ensemble_weights,
+                                       fitted_objects = fitted_objects))
 }
 
 

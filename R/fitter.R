@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: jan 25 2026 (09:26) 
 ## Version: 
-## Last-Updated: apr 28 2026 (08:58) 
+## Last-Updated: maj  4 2026 (11:42) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 92
+##     Update #: 93
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -50,9 +50,9 @@ fitter <- function(intervention_node,
         mean_Y <- mean(outcome_variable)
         predicted_values <- rep(mean_Y,NROW(intervened_data))
         intercept <- log(mean_Y/(1-mean_Y))
-        predicted_values <- learner_output(predicted_values = predicted_values,
-                                           diagnostics = diagnostics,
-                                           fit = matrix(intercept,ncol = 1,nrow = 1,dimnames = list("(Intercept)","Estimate")))
+        predicted_values <- parse_learner_output(predicted_values = predicted_values,
+                                                 diagnostics = diagnostics,
+                                                 fit = matrix(intercept,ncol = 1,nrow = 1,dimnames = list("(Intercept)","Estimate")))
     }else{
         # remove all currently constant predictor variables
         # from the formula
@@ -95,9 +95,9 @@ fitter <- function(intervention_node,
                 }
             }
             intercept <- log(mean_Y/(1-mean_Y))
-            predicted_values <- learner_output(predicted_values = predicted_values,
-                                               diagnostics = diagnostics,
-                                               fit = matrix(intercept,ncol = 1,nrow = 1,dimnames = list("(Intercept)","Estimate")))
+            predicted_values <- parse_learner_output(predicted_values = predicted_values,
+                                                     diagnostics = diagnostics,
+                                                     fit = matrix(intercept,ncol = 1,nrow = 1,dimnames = list("(Intercept)","Estimate")))
         } else {
             args <- list(character_formula = ff,
                          data = current_data,
@@ -114,11 +114,12 @@ fitter <- function(intervention_node,
                                outcome_variable_name = current_outcome_name,
                                id_variable = id_variable))
                 if (inherits(try(
-                    predicted_values <- as_learner_output(do.call("superlearn",
-                                                                  c(args,
-                                                                    list(diagnostics = diagnostics,
-                                                                         current_constants,
-                                                                         seed = seed)))),silent = FALSE),
+                    predicted_values <- parse_learner_output(x = do.call("superlearn",
+                                                                         c(args,
+                                                                           list(diagnostics = diagnostics,
+                                                                                current_constants,
+                                                                                seed = seed)))),
+                    silent = FALSE),
                     "try-error")) {
                     stop(paste0("Failed to superlearn/crossfit with formula ",ff,"\nwhere the outcome is: ",
                                 ifelse(current_outcome_name == "rtmle_predicted_outcome",
@@ -133,7 +134,7 @@ fitter <- function(intervention_node,
                 result <- withCallingHandlers({
                     if (inherits(
                         try(
-                            predicted_values <- as_learner_output(do.call(learner$fun,c(args,learner$args))),
+                            predicted_values <- parse_learner_output(x = do.call(learner$fun,c(args,learner$args))),
                             silent = FALSE
                         ),
                         "try-error"
@@ -158,9 +159,24 @@ fitter <- function(intervention_node,
                     if (length(learner_warnings)>1){
                         learner_warnings <- paste0("warning 1: ",learner_warnings[1]," warning 2: ",learner_warnings[2]," ...")
                     }
-                    predicted_values <- merge_learner_diagnostics(predicted_values,
-                                                                  list(learner_warnings = data.table(learner = learner$name,
-                                                                                                      warning = learner_warnings)))
+                    merge_learner_diagnostics <- function(x,diagnostics){
+                        if (length(diagnostics) == 0){
+                            return(x)
+                        }
+                        if (length(x$diagnostics) == 0){
+                            x$diagnostics <- diagnostics
+                        }else{
+                            for (dd in names(diagnostics)){
+                                x$diagnostics[[dd]] <- diagnostics[[dd]]
+                            }
+                        }
+                        x
+                    }
+                    predicted_values <- merge_learner_diagnostics(
+                        predicted_values,
+                        list(learner_warnings = data.table(learner = learner$name,
+                                                           warning = learner_warnings))
+                    )
                 }
             }
         }

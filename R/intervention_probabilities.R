@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Oct 17 2024 (09:26) 
 ## Version: 
-## Last-Updated: apr 25 2026 (08:13) 
+## Last-Updated: maj  4 2026 (09:59) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 559
+##     Update #: 560
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -101,8 +101,7 @@ intervention_probabilities <- function(x,
                                    seed = seed,
                                    diagnostics = x$diagnostics)
             # store the fit
-            x$models[[paste0("time_",k)]][[task_list[task,type]]][[task_list[task,variable]]]$fit <-
-                learner_output_fit(nuisance_fit,save_fitted_objects = save_fitted_objects)
+            x$models[[paste0("time_",k)]][[task_list[task,type]]][[task_list[task,variable]]]$fit <- if (isTRUE(save_fitted_objects)) nuisance_fit$object else nuisance_fit$fit
             # update diagnostics
             if (length(dia <- nuisance_fit$diagnostics)>0){
                 if (is.null(x$diagnostics)){

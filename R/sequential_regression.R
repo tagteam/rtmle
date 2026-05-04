@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 30 2024 (14:30)
 ## Version:
-## Last-Updated: apr 29 2026 (07:10) 
+## Last-Updated: maj  4 2026 (09:59) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 606
+##     Update #: 608
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -96,8 +96,7 @@ sequential_regression <- function(x,
                                     seed = seed,
                                     diagnostics = x$diagnostics)
         # save fitted object, respect protocol and time_horizon sequence
-        x$models[[paste0("time_",(k-1))]][["outcome"]][[paste0(x$names$outcome,"_",k)]]$fit[[protocol_name]][[paste0("sequence_time_",time_horizon)]] <-
-            learner_output_fit(fit_last_interval,save_fitted_objects = save_fitted_objects)
+        x$models[[paste0("time_",(k-1))]][["outcome"]][[paste0(x$names$outcome,"_",k)]]$fit[[protocol_name]][[paste0("sequence_time_",time_horizon)]] <- if (isTRUE(save_fitted_objects)) fit_last_interval$object else fit_last_interval$fit
         if (length(dia <- fit_last_interval$diagnostics)>0){
             if (is.null(x$diagnostics)){
                 x$diagnostics <- dia
