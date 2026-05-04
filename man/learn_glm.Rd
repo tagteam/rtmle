@@ -41,8 +41,8 @@ Learn nuisance-parameter models with glm
 \details{
 Learns nuisance-parameter models for TMLE and predicts probabilities in
 intervention-updated data using \code{\link[stats]{glm}}. The function first
-attempts to use \code{\link[speedglm]{speedglm.wfit}} and falls back to
-\code{\link[stats]{glm.fit}} if needed.
+attempts to use \code{\link[speedglm]{speedglm.wfit}} when available and
+falls back to \code{\link[stats]{glm.fit}} if needed.
 }
 \examples{
 d <- data.table::data.table(Y = rep(c(0, 1), 10),

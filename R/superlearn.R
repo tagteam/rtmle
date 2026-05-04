@@ -62,8 +62,7 @@
 ##'   \code{\link{learn_ranger}}, \code{\link{learn_xgboost}}
 ##' @examples
 ##' # Note that the function is designed to be called from run_rtmle.
-##' library(ranger)
-##' library(glmnet)
+##' if (requireNamespace("ranger", quietly = TRUE)) {
 ##' data(simulated_cohort)
 ##' ld <- register_format(simulated_cohort)
 ##' A0 <- ld$timevar_data$A[date == 0, list(id, A_0 = value)]
@@ -79,6 +78,7 @@
 ##'                   id_variable = "id",
 ##'                   data = d,
 ##'                   intervened_data = d)
+##' }
 ##' 
 ##' @export 
 ##' @author Thomas A. Gerds <tag@@biostat.ku.dk>

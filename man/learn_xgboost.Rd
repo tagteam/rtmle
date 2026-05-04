@@ -30,6 +30,7 @@ Learns nuisance-parameter models for TMLE and predicts probabilities in
 intervention-updated data using \code{\link[xgboost]{xgboost}}.
 }
 \examples{
+if (requireNamespace("xgboost", quietly = TRUE)) {
 tau <- 3
 data(simulated_cohort)
 ld <- register_format(simulated_cohort)
@@ -55,6 +56,7 @@ x <- target(x,name = "Outcome_risk",
                   protocols = c("Always_A","Never_A"))
 x <- model_formula(x)
 x <- run_rtmle(x,learner = "learn_xgboost",time_horizon = 3)
+}
 }
 \seealso{
 \code{\link{superlearn}}, \code{\link{learn_glm}},

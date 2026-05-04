@@ -32,6 +32,7 @@
 ##' @seealso \code{\link{superlearn}}, \code{\link{learn_glm}},
 ##'   \code{\link{learn_glmnet}}, \code{\link{learn_ranger}}
 ##' @examples
+#' if (requireNamespace("xgboost", quietly = TRUE)) {
 #' tau <- 3
 #' data(simulated_cohort)
 #' ld <- register_format(simulated_cohort)
@@ -57,6 +58,7 @@
 #'                   protocols = c("Always_A","Never_A"))
 #' x <- model_formula(x)
 #' x <- run_rtmle(x,learner = "learn_xgboost",time_horizon = 3)
+#' }
 ##' @export 
 ##' @author Thomas A. Gerds <tag@@biostat.ku.dk>
 learn_xgboost <- function(character_formula,
@@ -64,7 +66,7 @@ learn_xgboost <- function(character_formula,
                           intervened_data,
                           ...){
     if (!requireNamespace("xgboost", quietly = TRUE)) {
-        stop("xgboost library required")
+        stop("Package 'xgboost' is required for learn_xgboost().", call. = FALSE)
     }
     control <- prodlim::SmartControl(call= list(...),
                                      keys=c("xgboost"),

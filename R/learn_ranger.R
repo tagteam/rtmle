@@ -35,12 +35,17 @@
 ##' d <- data.table::data.table(Y = factor(rep(c(0, 1), 10)),
 ##'                             A = rep(c(0, 1, 1, 0), 5),
 ##'                             L = seq(-1, 1, length.out = 20))
+##' if (requireNamespace("ranger", quietly = TRUE)) {
 ##' predicted <- learn_ranger("Y ~ A + L", data = d, intervened_data = d,
 ##'                           num.trees = 10, min.node.size = 1)
 ##' head(predicted)
+##' }
 ##' @export 
 ##' @author Thomas A. Gerds <tag@@biostat.ku.dk>
 learn_ranger <- function(character_formula,data,intervened_data,...){
+    if (!requireNamespace("ranger", quietly = TRUE)) {
+        stop("Package 'ranger' is required for learn_ranger().", call. = FALSE)
+    }
     # extract the data
     model_frame <- stats::model.frame(stats::formula(character_formula),
                                       data = data,

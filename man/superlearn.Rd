@@ -82,8 +82,7 @@ ensemble super learner combines the candidate learners.
 }
 \examples{
 # Note that the function is designed to be called from run_rtmle.
-library(ranger)
-library(glmnet)
+if (requireNamespace("ranger", quietly = TRUE)) {
 data(simulated_cohort)
 ld <- register_format(simulated_cohort)
 A0 <- ld$timevar_data$A[date == 0, list(id, A_0 = value)]
@@ -99,6 +98,7 @@ fit <- superlearn(folds = 2,seed = 8,
                   id_variable = "id",
                   data = d,
                   intervened_data = d)
+}
 
 }
 \seealso{

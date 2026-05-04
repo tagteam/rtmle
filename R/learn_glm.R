@@ -18,8 +18,8 @@
 ##'
 ##' Learns nuisance-parameter models for TMLE and predicts probabilities in
 ##' intervention-updated data using \code{\link[stats]{glm}}. The function first
-##' attempts to use \code{\link[speedglm]{speedglm.wfit}} and falls back to
-##' \code{\link[stats]{glm.fit}} if needed.
+##' attempts to use \code{\link[speedglm]{speedglm.wfit}} when available and
+##' falls back to \code{\link[stats]{glm.fit}} if needed.
 ##'
 ##' @title Nuisance-parameter learner based on glm
 ##' @param character_formula Formula for the nuisance parameter, supplied as a
@@ -84,7 +84,7 @@ learn_glm <- function(character_formula,
     Y_label <- names(model_frame)[[1]]
     tf <- stats::terms(model_frame)
     X <- stats::model.matrix(object = tf, data = model_frame)
-    if (speed && !inherits(try(
+    if (speed && requireNamespace("speedglm", quietly = TRUE) && !inherits(try(
                       fit <- speedglm::speedglm.wfit(y = Y[!is.na(Y)],
                                                      X = X[!is.na(Y),],
                                                      intercept = attributes(tf)$intercept,
