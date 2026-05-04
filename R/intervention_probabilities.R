@@ -24,7 +24,8 @@ intervention_probabilities <- function(x,
                                        refit = FALSE,
                                        learner,
                                        seed,
-                                       progressbar){
+                                       progressbar,
+                                       save_fitted_objects = FALSE){
     variable = type = NULL
     # set the treatment variables to their protocolled values
     if (length(x$protocols[[protocol_name]]$intervene_function) == 0){
@@ -100,18 +101,19 @@ intervention_probabilities <- function(x,
                                    seed = seed,
                                    diagnostics = x$diagnostics)
             # store the fit
-            x$models[[paste0("time_",k)]][[task_list[task,type]]][[task_list[task,variable]]]$fit <- attr(nuisance_fit,"fit")
+            x$models[[paste0("time_",k)]][[task_list[task,type]]][[task_list[task,variable]]]$fit <-
+                learner_output_fit(nuisance_fit,save_fitted_objects = save_fitted_objects)
             # update diagnostics
-            if (length(dia <- attr(nuisance_fit,"diagnostics"))>0){
+            if (length(dia <- nuisance_fit$diagnostics)>0){
                 if (is.null(x$diagnostics)){
                     x$diagnostics <- dia
                 }else{
-                    for (dd in names(dia))
+                    for (dd in names(dia)){
                         x$diagnostics[[dd]] <- dia[[dd]]
+                    }
                 }
             }
-            # remove attributes predicted values
-            nuisance_fit <- as.numeric(nuisance_fit)
+            nuisance_fit <- nuisance_fit$predicted_values
             # check predicted values
             if (any(is.na(nuisance_fit))){
                 stop(paste0("Fitting nuisance parameter model returned missing values:\n",

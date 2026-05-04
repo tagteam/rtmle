@@ -33,8 +33,9 @@
 ##' @param maxit Number of iterations passed to \code{\link[stats]{glm.fit}}
 ##'   and \code{\link[speedglm]{speedglm.wfit}}.
 ##' @param ... Additional arguments for the learning phase. Not currently used.
-##' @return A vector of predicted probabilities with the fitted model stored in
-##'   the \code{"fit"} attribute.
+##' @return A list whose first element, \code{predicted_values}, is a vector of
+##'   predicted probabilities. Element \code{fit} contains a coefficient summary,
+##'   and element \code{object}, when available, contains the fitted model.
 ##' @seealso \code{\link{superlearn}}, \code{\link{learn_ranger}},
 ##'   \code{\link{learn_glmnet}}, \code{\link{learn_xgboost}}
 ##' @examples
@@ -42,8 +43,8 @@
 ##'                             A = rep(c(0, 1, 1, 0), 5),
 ##'                             L = seq(-1, 1, length.out = 20))
 ##' predicted <- learn_glm("Y ~ A + L", data = d, intervened_data = d)
-##' head(predicted)
-##' attr(predicted, "fit")
+##' head(predicted$predicted_values)
+##' predicted$fit
 ##' @export 
 ##' @author Thomas A. Gerds <tag@@biostat.ku.dk>
 learn_glm <- function(character_formula,
@@ -72,8 +73,8 @@ learn_glm <- function(character_formula,
             mean_Y <- mean(Y,na.rm = TRUE)
             predicted_values <- rep(mean_Y,NROW(intervened_data))
             intercept <- log(mean_Y/(1-mean_Y))
-            data.table::setattr(predicted_values,"fit",matrix(intercept,ncol = 1,nrow = 1,dimnames = list("(Intercept)","Estimate")))
-            return(predicted_values)
+            return(learner_output(predicted_values = predicted_values,
+                                  fit = matrix(intercept,ncol = 1,nrow = 1,dimnames = list("(Intercept)","Estimate"))))
         }
     }
     model_frame <- stats::model.frame(stats::formula(character_formula),
@@ -115,8 +116,9 @@ learn_glm <- function(character_formula,
     }
     fit$terms <- tf
     predicted_values <- predict(fit,type = "response",newdata = intervened_data,se = FALSE)
-    data.table::setattr(predicted_values,"fit",coef(summary(fit)))
-    return(predicted_values)
+    learner_output(predicted_values = predicted_values,
+                   fit = coef(summary(fit)),
+                   object = fit)
 }
 
 

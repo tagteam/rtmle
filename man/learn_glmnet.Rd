@@ -49,8 +49,9 @@ deviance.}
 \item{...}{Additional arguments passed to \code{\link[glmnet]{glmnet}}.}
 }
 \value{
-A vector of predicted probabilities with the fitted model stored in
-  the \code{"fit"} attribute.
+A list whose first element, \code{predicted_values}, is a vector of
+  predicted probabilities. Element \code{fit} contains the selected
+  coefficients, and element \code{object} contains the fitted model.
 }
 \description{
 Learn nuisance-parameter models with glmnet
@@ -65,8 +66,8 @@ d <- data.table::data.table(Y = rep(c(0, 1), 10),
                             L = seq(-1, 1, length.out = 20))
 predicted <- learn_glmnet("Y ~ A + L", data = d, intervened_data = d,
                           lambda = 0.01)
-head(predicted)
-attr(predicted, "selected.lambda")
+head(predicted$predicted_values)
+predicted$selected.lambda
 }
 \seealso{
 \code{\link{superlearn}}, \code{\link{learn_ranger}},

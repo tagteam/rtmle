@@ -27,8 +27,8 @@
 ##'   have been set according to a protocol.
 ##' @param ... Additional arguments passed to \code{\link[ranger]{ranger}},
 ##'   including hyperparameters.
-##' @return A vector of predicted probabilities with the fitted model stored in
-##'   the \code{"fit"} attribute.
+##' @return A list whose first element, \code{predicted_values}, is a vector of
+##'   predicted probabilities. Element \code{object} contains the fitted model.
 ##' @seealso \code{\link{superlearn}}, \code{\link{learn_glm}},
 ##'   \code{\link{learn_glmnet}}, \code{\link{learn_xgboost}}
 ##' @examples
@@ -38,7 +38,7 @@
 ##' if (requireNamespace("ranger", quietly = TRUE)) {
 ##' predicted <- learn_ranger("Y ~ A + L", data = d, intervened_data = d,
 ##'                           num.trees = 10, min.node.size = 1)
-##' head(predicted)
+##' head(predicted$predicted_values)
 ##' }
 ##' @export 
 ##' @author Thomas A. Gerds <tag@@biostat.ku.dk>
@@ -86,8 +86,8 @@ learn_ranger <- function(character_formula,data,intervened_data,...){
             stop("Ranger prediction failed")
         }
     }
-    data.table::setattr(predicted_values,"fit",NULL)
-    return(predicted_values)
+    learner_output(predicted_values = predicted_values,
+                   object = fit)
 }
 
 

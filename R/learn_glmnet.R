@@ -40,8 +40,9 @@
 ##' @param type.measure Loss function used for cross-validation. Default is
 ##'   deviance.
 ##' @param ... Additional arguments passed to \code{\link[glmnet]{glmnet}}.
-##' @return A vector of predicted probabilities with the fitted model stored in
-##'   the \code{"fit"} attribute.
+##' @return A list whose first element, \code{predicted_values}, is a vector of
+##'   predicted probabilities. Element \code{fit} contains the selected
+##'   coefficients, and element \code{object} contains the fitted model.
 ##' @seealso \code{\link{superlearn}}, \code{\link{learn_ranger}},
 ##'   \code{\link{learn_glm}}, \code{\link{learn_xgboost}}
 ##' @examples
@@ -50,8 +51,8 @@
 ##'                             L = seq(-1, 1, length.out = 20))
 ##' predicted <- learn_glmnet("Y ~ A + L", data = d, intervened_data = d,
 ##'                           lambda = 0.01)
-##' head(predicted)
-##' attr(predicted, "selected.lambda")
+##' head(predicted$predicted_values)
+##' predicted$selected.lambda
 #' @export
 learn_glmnet <- function(character_formula,
                          data,
@@ -93,9 +94,10 @@ learn_glmnet <- function(character_formula,
     }
     iX <- stats::model.matrix(RHS,data = intervened_data)
     predicted_values <- as.numeric(stats::predict(fit,newx=iX,type = "response", s=selected.lambda))
-    data.table::setattr(predicted_values,"selected.lambda",selected.lambda)
-    data.table::setattr(predicted_values,"fit",selected.beta)
-    predicted_values
+    learner_output(predicted_values = predicted_values,
+                   fit = selected.beta,
+                   object = fit,
+                   selected.lambda = selected.lambda)
 }
 
 

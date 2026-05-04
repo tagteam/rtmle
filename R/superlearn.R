@@ -56,7 +56,10 @@
 ##'   via \code{fitter()}, which is called from
 ##'   \code{intervention_probabilities()} and \code{sequential_regression()}.
 ##' @param ... Not used.
-##' @return The level-one data column of the discrete super learner.
+##' @return A list whose first element, \code{predicted_values}, is the
+##'   prediction vector from the super learner. Element \code{fit} contains the
+##'   ensemble weights, and element \code{object} contains the fitted final
+##'   learners when available.
 ##' @seealso \code{\link{run_rtmle}}, \code{\link{parse_learners}},
 ##'   \code{\link{learn_glm}}, \code{\link{learn_glmnet}},
 ##'   \code{\link{learn_ranger}}, \code{\link{learn_xgboost}}
@@ -204,14 +207,14 @@ superlearn <- function(folds,
                                       ## learner specific arguments such as tuning parameters
                                       this_learner$args)
                     if (inherits(try( 
-                        predicted_k <- do.call(this_learner$fun, learner_args)
+                        predicted_k <- as_learner_output(do.call(this_learner$fun, learner_args))
                     ),"try-error")){
                         stop(paste0("Learning failed in fold ",k," with learner ",this_learner))
                     }
                     set(level_one_data,
                         j = this_learner$name,
                         i = which(random_split == k),
-                        value = as.vector(predicted_k))
+                        value = as.vector(predicted_k$predicted_values))
                 }
             }
         }
@@ -268,24 +271,27 @@ superlearn <- function(folds,
                                                                     Event = "All learners performed worse than the null model"))
         }
         predicted_values <- rep(mean(data[[outcome_variable]]),NROW(intervened_data))
+        fitted_objects <- NULL
     }else{
         predicted_value_ensemble <- lapply(names(ensemble_weights)[ensemble_weights>0],function(this_learner){
             ## add winner's arguments but do not include duplicate arguments
             predicted_values_args <- c(learners[[this_learner]]$args,
                                        learner_args[!names(learner_args)%in%names(learners[[this_learner]]$args)])
-            do.call(what = learners[[this_learner]]$fun,predicted_values_args)
+            as_learner_output(do.call(what = learners[[this_learner]]$fun,predicted_values_args))
         })
         if (length(predicted_value_ensemble) == 1){
-            predicted_values <- predicted_value_ensemble[[1]]
+            predicted_values <- predicted_value_ensemble[[1]]$predicted_values
         }else{
-            predicted_values <- do.call(cbind,predicted_value_ensemble)%*%ensemble_weights[ensemble_weights>0]
+            predicted_values <- do.call(cbind,lapply(predicted_value_ensemble,`[[`,"predicted_values"))%*%ensemble_weights[ensemble_weights>0]
         }
+        fitted_objects <- lapply(predicted_value_ensemble,`[[`,"object")
+        names(fitted_objects) <- names(ensemble_weights)[ensemble_weights>0]
     }
-    data.table::setattr(predicted_values,"ensemble_weights",ensemble_weights)
-    if (!missing(diagnostics)){
-        data.table::setattr(predicted_values,"diagnostics",diagnostics)
-    }
-    return(predicted_values)
+    learner_output(predicted_values = predicted_values,
+                   diagnostics = if (!missing(diagnostics)) diagnostics else NULL,
+                   fit = ensemble_weights,
+                   object = list(ensemble_weights = ensemble_weights,
+                                 fitted_objects = fitted_objects))
 }
 
 

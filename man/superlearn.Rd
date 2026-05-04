@@ -68,7 +68,10 @@ via \code{fitter()}, which is called from
 \item{...}{Not used.}
 }
 \value{
-The level-one data column of the discrete super learner.
+A list whose first element, \code{predicted_values}, is the
+  prediction vector from the super learner. Element \code{fit} contains the
+  ensemble weights, and element \code{object} contains the fitted final
+  learners when available.
 }
 \description{
 Super learn nuisance-parameter models

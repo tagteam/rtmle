@@ -27,8 +27,8 @@
 ##'   have been set according to a protocol.
 ##' @param ... Additional arguments passed to \code{\link[xgboost]{xgboost}},
 ##'   including hyperparameters.
-##' @return A vector of predicted probabilities with the fitted model stored in
-##'   the \code{"fit"} attribute.
+##' @return A list whose first element, \code{predicted_values}, is a vector of
+##'   predicted probabilities. Element \code{object} contains the fitted model.
 ##' @seealso \code{\link{superlearn}}, \code{\link{learn_glm}},
 ##'   \code{\link{learn_glmnet}}, \code{\link{learn_ranger}}
 ##' @examples
@@ -119,8 +119,8 @@ learn_xgboost <- function(character_formula,
     ),"try-error")) {
         stop("Xgboost prediction failed")
     }
-    data.table::setattr(predicted_values,"fit",NULL)
-    return(predicted_values)
+    learner_output(predicted_values = predicted_values,
+                   object = fit)
 }
 
 

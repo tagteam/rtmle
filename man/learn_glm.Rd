@@ -32,8 +32,9 @@ and \code{\link[speedglm]{speedglm.wfit}}.}
 \item{...}{Additional arguments for the learning phase. Not currently used.}
 }
 \value{
-A vector of predicted probabilities with the fitted model stored in
-  the \code{"fit"} attribute.
+A list whose first element, \code{predicted_values}, is a vector of
+  predicted probabilities. Element \code{fit} contains a coefficient summary,
+  and element \code{object}, when available, contains the fitted model.
 }
 \description{
 Learn nuisance-parameter models with glm
@@ -49,8 +50,8 @@ d <- data.table::data.table(Y = rep(c(0, 1), 10),
                             A = rep(c(0, 1, 1, 0), 5),
                             L = seq(-1, 1, length.out = 20))
 predicted <- learn_glm("Y ~ A + L", data = d, intervened_data = d)
-head(predicted)
-attr(predicted, "fit")
+head(predicted$predicted_values)
+predicted$fit
 }
 \seealso{
 \code{\link{superlearn}}, \code{\link{learn_ranger}},

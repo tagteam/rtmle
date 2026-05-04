@@ -21,7 +21,8 @@ sequential_regression <- function(x,
                                   learner,
                                   estimator,
                                   seed = seed,
-                                  progressbar){
+                                  progressbar,
+                                  save_fitted_objects = FALSE){
     time = Target = Protocol = Time_horizon = Estimator = Estimate = Target_parameter = Standard_error = Lower = Upper = rtmle_predicted_outcome = NULL
     N <- NROW(x$prepared_data)
     intervention_table <- na.omit(x$protocols[[protocol_name]]$intervention_table)
@@ -95,17 +96,18 @@ sequential_regression <- function(x,
                                     seed = seed,
                                     diagnostics = x$diagnostics)
         # save fitted object, respect protocol and time_horizon sequence
-        x$models[[paste0("time_",(k-1))]][["outcome"]][[paste0(x$names$outcome,"_",k)]]$fit[[protocol_name]][[paste0("sequence_time_",time_horizon)]] <- attr(fit_last_interval,"fit")
-        if (length(dia <- attr(fit_last_interval,"diagnostics"))>0){
+        x$models[[paste0("time_",(k-1))]][["outcome"]][[paste0(x$names$outcome,"_",k)]]$fit[[protocol_name]][[paste0("sequence_time_",time_horizon)]] <-
+            learner_output_fit(fit_last_interval,save_fitted_objects = save_fitted_objects)
+        if (length(dia <- fit_last_interval$diagnostics)>0){
             if (is.null(x$diagnostics)){
                 x$diagnostics <- dia
             }else{
-                for (dd in names(dia))
+                for (dd in names(dia)){
                     x$diagnostics[[dd]] <- dia[[dd]]
+                }
             }
         }
-        # remove attributes
-        fit_last_interval <- as.numeric(fit_last_interval)
+        fit_last_interval <- fit_last_interval$predicted_values
         # set predicted value as outcome for next regression
         if (estimator == "tmle"){
             old_action <- options()$na.action

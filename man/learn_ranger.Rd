@@ -19,8 +19,8 @@ have been set according to a protocol.}
 including hyperparameters.}
 }
 \value{
-A vector of predicted probabilities with the fitted model stored in
-  the \code{"fit"} attribute.
+A list whose first element, \code{predicted_values}, is a vector of
+  predicted probabilities. Element \code{object} contains the fitted model.
 }
 \description{
 Learn nuisance-parameter models with ranger
@@ -36,7 +36,7 @@ d <- data.table::data.table(Y = factor(rep(c(0, 1), 10)),
 if (requireNamespace("ranger", quietly = TRUE)) {
 predicted <- learn_ranger("Y ~ A + L", data = d, intervened_data = d,
                           num.trees = 10, min.node.size = 1)
-head(predicted)
+head(predicted$predicted_values)
 }
 }
 \seealso{

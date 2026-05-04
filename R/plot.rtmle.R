@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 23 2024 (16:42) 
 ## Version: 
-## Last-Updated: maj  4 2026 (07:21) 
+## Last-Updated: maj  4 2026 (08:58) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 38
+##     Update #: 41
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -66,6 +66,11 @@ autoplot.rtmle <- function(object,
     }else{
         est <- object$estimate[["Main_analysis"]] 
     }
+    # assume that estimates are zero at time zero
+    est <- rbind(
+        est[,list(Time_horizon = 0,Estimate = 0,Protocol = Protocol,Lower = 0,Upper = 0)],
+        est[,list(Time_horizon,Estimate,Protocol,Lower,Upper)]
+    )
     # Build ggplot
     p <- ggplot2::ggplot(est, ggplot2::aes(x = Time_horizon,
                                            y = Estimate,

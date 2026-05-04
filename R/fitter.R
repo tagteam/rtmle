@@ -50,8 +50,9 @@ fitter <- function(intervention_node,
         mean_Y <- mean(outcome_variable)
         predicted_values <- rep(mean_Y,NROW(intervened_data))
         intercept <- log(mean_Y/(1-mean_Y))
-        data.table::setattr(predicted_values,"fit",matrix(intercept,ncol = 1,nrow = 1,dimnames = list("(Intercept)","Estimate")))
-        data.table::setattr(predicted_values,"diagnostics",diagnostics)
+        predicted_values <- learner_output(predicted_values = predicted_values,
+                                           diagnostics = diagnostics,
+                                           fit = matrix(intercept,ncol = 1,nrow = 1,dimnames = list("(Intercept)","Estimate")))
     }else{
         # remove all currently constant predictor variables
         # from the formula
@@ -92,10 +93,11 @@ fitter <- function(intervention_node,
                 }else{
                     diagnostics$empty_rhs <- rbind(diagnostics$empty_rhs,diag_row)
                 }
-                data.table::setattr(predicted_values,"diagnostics",diagnostics)
             }
             intercept <- log(mean_Y/(1-mean_Y))
-            data.table::setattr(predicted_values,"fit",matrix(intercept,ncol = 1,nrow = 1,dimnames = list("(Intercept)","Estimate")))
+            predicted_values <- learner_output(predicted_values = predicted_values,
+                                               diagnostics = diagnostics,
+                                               fit = matrix(intercept,ncol = 1,nrow = 1,dimnames = list("(Intercept)","Estimate")))
         } else {
             args <- list(character_formula = ff,
                          data = current_data,
@@ -112,11 +114,11 @@ fitter <- function(intervention_node,
                                outcome_variable_name = current_outcome_name,
                                id_variable = id_variable))
                 if (inherits(try(
-                    predicted_values <- do.call("superlearn",
-                                                c(args,
-                                                  list(diagnostics = diagnostics,
-                                                       current_constants,
-                                                       seed = seed))),silent = FALSE),
+                    predicted_values <- as_learner_output(do.call("superlearn",
+                                                                  c(args,
+                                                                    list(diagnostics = diagnostics,
+                                                                         current_constants,
+                                                                         seed = seed)))),silent = FALSE),
                     "try-error")) {
                     stop(paste0("Failed to superlearn/crossfit with formula ",ff,"\nwhere the outcome is: ",
                                 ifelse(current_outcome_name == "rtmle_predicted_outcome",
@@ -131,7 +133,7 @@ fitter <- function(intervention_node,
                 result <- withCallingHandlers({
                     if (inherits(
                         try(
-                            predicted_values <- do.call(learner$fun,c(args,learner$args)),
+                            predicted_values <- as_learner_output(do.call(learner$fun,c(args,learner$args))),
                             silent = FALSE
                         ),
                         "try-error"
@@ -156,7 +158,9 @@ fitter <- function(intervention_node,
                     if (length(learner_warnings)>1){
                         learner_warnings <- paste0("warning 1: ",learner_warnings[1]," warning 2: ",learner_warnings[2]," ...")
                     }
-                    data.table::setattr(predicted_values,"diagnostics",list(learner_warnings = data.table(learner = learner$name,warning = learner_warnings)))
+                    predicted_values <- merge_learner_diagnostics(predicted_values,
+                                                                  list(learner_warnings = data.table(learner = learner$name,
+                                                                                                      warning = learner_warnings)))
                 }
             }
         }

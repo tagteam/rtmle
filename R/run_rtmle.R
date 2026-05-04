@@ -66,6 +66,10 @@
 #'     influence function of the estimator in the object.  Currently
 #'     this argument is used only when argument \code{subsets} is also
 #'     specified.
+#' @param save_fitted_objects Logical. If \code{FALSE}, store the learner
+#'   summary returned as element \code{fit}. If \code{TRUE}, store the full
+#'   fitted object returned as element \code{object}. Changing this setting
+#'   forces nuisance-parameter models to be refitted.
 #' @param progressbar Logical. If \code{TRUE}, show progress of the loops that
 #'   fit the nuisance-parameter models.
 #' @param verbose Logical. If \code{FALSE} suppress all
@@ -145,6 +149,7 @@ run_rtmle <- function(x,
                       seed = NULL,
                       subsets = NULL,
                       keep_influence = TRUE,
+                      save_fitted_objects = FALSE,
                       progressbar = 0,
                       verbose = FALSE,
                       ...){
@@ -182,6 +187,7 @@ run_rtmle <- function(x,
                             learner = learner,
                             refit = TRUE,
                             subsets = NULL,
+                            save_fitted_objects = save_fitted_objects,
                             verbose = verbose)
             subset_result <- xs$estimate[["Main_analysis"]]
             # add the subset identifying information, such as age="40-60"
@@ -227,6 +233,7 @@ run_rtmle <- function(x,
                 ## c(sub_level, attr(subset_result,"level")))
             }
         }
+        x$save_fitted_objects <- save_fitted_objects
         return(x)
     }else{
         # check data
@@ -234,6 +241,9 @@ run_rtmle <- function(x,
         # Skipping the nuisance parameter models is only possible when the same
         # learner was used previously
         if ((length(x$learner) == 0)|| learners$name != x$learner$name){
+            refit <- TRUE
+        }
+        if (!identical(isTRUE(x$save_fitted_objects),isTRUE(save_fitted_objects))){
             refit <- TRUE
         }
         Target_parameter <- "Risk"
@@ -331,7 +341,8 @@ run_rtmle <- function(x,
                                                     refit = refit,
                                                     learner = learners,
                                                     seed = seed,
-                                                    progressbar = progressbar)
+                                                    progressbar = progressbar,
+                                                    save_fitted_objects = save_fitted_objects)
                 }
                 #
                 # Q-part: loop backwards in time through iterative condtional expectations
@@ -348,7 +359,8 @@ run_rtmle <- function(x,
                                                learner = learners,
                                                estimator = estimator,
                                                seed = seed,
-                                               progressbar = progressbar)
+                                               progressbar = progressbar,
+                                               save_fitted_objects = save_fitted_objects)
                 }
             }
         }
@@ -357,6 +369,7 @@ run_rtmle <- function(x,
         ## Keep the learner function used for cheap bootstrap
         x$unparsed_learner <- learner
         x$learner <- learners
+        x$save_fitted_objects <- save_fitted_objects
         return(x)
     }
 }

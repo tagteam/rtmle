@@ -14,6 +14,7 @@ run_rtmle(
   seed = NULL,
   subsets = NULL,
   keep_influence = TRUE,
+  save_fitted_objects = FALSE,
   progressbar = 0,
   verbose = FALSE,
   ...
@@ -74,6 +75,11 @@ examples.}
 influence function of the estimator in the object.  Currently
 this argument is used only when argument \code{subsets} is also
 specified.}
+
+\item{save_fitted_objects}{Logical. If \code{FALSE}, store the learner
+summary returned as element \code{fit}. If \code{TRUE}, store the full
+fitted object returned as element \code{object}. Changing this setting
+forces nuisance-parameter models to be refitted.}
 
 \item{progressbar}{Logical. If \code{TRUE}, show progress of the loops that
 fit the nuisance-parameter models.}
