@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 30 2024 (14:30)
 ## Version:
-## Last-Updated: maj  4 2026 (09:59) 
+## Last-Updated: maj  4 2026 (12:43) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 608
+##     Update #: 610
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -94,9 +94,10 @@ sequential_regression <- function(x,
                                     id_variable = x$names$id,
                                     minority_threshold = x$tuning_parameters$minority_threshold,
                                     seed = seed,
-                                    diagnostics = x$diagnostics)
+                                    diagnostics = x$diagnostics,
+                                    save_fitted_objects = save_fitted_objects)
         # save fitted object, respect protocol and time_horizon sequence
-        x$models[[paste0("time_",(k-1))]][["outcome"]][[paste0(x$names$outcome,"_",k)]]$fit[[protocol_name]][[paste0("sequence_time_",time_horizon)]] <- if (isTRUE(save_fitted_objects)) fit_last_interval$object else fit_last_interval$fit
+        x$models[[paste0("time_",(k-1))]][["outcome"]][[paste0(x$names$outcome,"_",k)]]$fit[[protocol_name]][[paste0("sequence_time_",time_horizon)]] <- fit_last_interval$fit
         if (length(dia <- fit_last_interval$diagnostics)>0){
             if (is.null(x$diagnostics)){
                 x$diagnostics <- dia
@@ -153,7 +154,7 @@ sequential_regression <- function(x,
                 stop(paste0("Fluctuation model used in the TMLE update step failed",
                             " in the attempt to run function tmle_update at time point: ",k))
             }
-            if (length(dia <- attr(predicted_outcome,"diagnostics"))>0){
+            if (length(dia <- attr(predicted_outcome,"diagnostics",exact = TRUE))>0){
                 if (is.null(x$diagnostics)){
                     x$diagnostics$no_positive_weights <- dia
                 }else{

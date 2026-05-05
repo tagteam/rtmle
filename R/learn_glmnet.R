@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 23 2024 (16:42) 
 ## Version: 
-## Last-Updated: feb 22 2026 (08:11) 
+## Last-Updated: maj  4 2026 (12:58) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 110
+##     Update #: 118
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -39,6 +39,8 @@
 ##' @param nfolds Number of folds for cross-validation. Default is 10.
 ##' @param type.measure Loss function used for cross-validation. Default is
 ##'   deviance.
+#' @param save_fitted_objects Logical. If \code{TRUE}, store the 
+#'   fitted object as element \code{fit}
 ##' @param ... Additional arguments passed to \code{\link[glmnet]{glmnet}}.
 ##' @return A list whose first element, \code{predicted_values}, is a vector of
 ##'   predicted probabilities. Element \code{fit} contains the selected
@@ -63,6 +65,7 @@ learn_glmnet <- function(character_formula,
                          family,
                          nfolds = 10,
                          type.measure = "deviance",
+                         save_fitted_objects = FALSE,
                          ...){
     requireNamespace("glmnet")
     ## requireNamespace("riskRegression")
@@ -94,10 +97,16 @@ learn_glmnet <- function(character_formula,
     }
     iX <- stats::model.matrix(RHS,data = intervened_data)
     predicted_values <- as.numeric(stats::predict(fit,newx=iX,type = "response", s=selected.lambda))
-    learner_output(predicted_values = predicted_values,
-                   fit = selected.beta,
-                   object = fit,
-                   selected.lambda = selected.lambda)
+    #parse_learner_output
+    if (isTRUE(save_fitted_objects)){
+        list(predicted_values = predicted_values,
+             fit = selected.beta,
+             selected.lambda = selected.lambda)
+    }else{
+        list(predicted_values = predicted_values,
+             fit = fit,
+             selected.lambda = selected.lambda)
+    }
 }
 
 

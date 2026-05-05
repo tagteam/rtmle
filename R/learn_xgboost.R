@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Oct 28 2024 (09:26) 
 ## Version: 
-## Last-Updated: apr 29 2026 (07:35) 
+## Last-Updated: maj  4 2026 (12:58) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 137
+##     Update #: 144
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -25,6 +25,8 @@
 ##' @param data Data used for learning.
 ##' @param intervened_data Data used for prediction after intervention variables
 ##'   have been set according to a protocol.
+#' @param save_fitted_objects Logical. If \code{TRUE}, store the 
+#'   fitted object as element \code{fit}
 ##' @param ... Additional arguments passed to \code{\link[xgboost]{xgboost}},
 ##'   including hyperparameters.
 ##' @return A list whose first element, \code{predicted_values}, is a vector of
@@ -64,6 +66,7 @@
 learn_xgboost <- function(character_formula,
                           data,
                           intervened_data,
+                          save_fitted_objects = FALSE,
                           ...){
     if (!requireNamespace("xgboost", quietly = TRUE)) {
         stop("Package 'xgboost' is required for learn_xgboost().", call. = FALSE)
@@ -103,7 +106,7 @@ learn_xgboost <- function(character_formula,
     no_missing <- !rowSums(is.na(intervened_data))
     intervened_data = intervened_data[no_missing]
     predicted_values[!no_missing] <- as.numeric(NA)
-    rhs <- stats::reformulate(attr(stats::terms(stats::formula(character_formula)), "term.labels"))
+    rhs <- stats::reformulate(attr(stats::terms(stats::formula(character_formula)), "term.labels",exact = TRUE))
     if (inherits(try(
         new_model_matrix <- Publish::specialFrame(rhs,
                                                   data = intervened_data,
@@ -119,8 +122,13 @@ learn_xgboost <- function(character_formula,
     ),"try-error")) {
         stop("Xgboost prediction failed")
     }
-    learner_output(predicted_values = predicted_values,
-                   object = fit)
+    # parse_learner_output
+    if (save_fitted_objects){
+        list(predicted_values = predicted_values,
+             object = fit)
+    }else{
+        list(predicted_values = predicted_values)
+    }
 }
 
 

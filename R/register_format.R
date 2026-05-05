@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: maj  2 2026 (07:14) 
 ## Version: 
-## Last-Updated: maj  3 2026 (08:23) 
+## Last-Updated: maj  4 2026 (12:02) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 12
+##     Update #: 13
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -40,7 +40,7 @@
 register_format <- function(cohort){
     id <- event <- NULL
     stopifnot(inherits(cohort,"simulated_cohort"))
-    info <- attr(cohort,"call")
+    info <- attr(cohort,"call",exact = TRUE)
     bvars <- names(eval(info$baseline_variables))
     data.table::setorder(cohort, id, time)
     first <- cohort[, as.integer(.I == .I[1]), by = id][[2]]

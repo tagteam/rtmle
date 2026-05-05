@@ -10,6 +10,7 @@ learn_glm(
   intervened_data,
   learn_variables = NULL,
   maxit = 100,
+  save_fitted_objects = FALSE,
   ...
 )
 }
@@ -28,6 +29,9 @@ the mean outcome.}
 
 \item{maxit}{Number of iterations passed to \code{\link[stats]{glm.fit}}
 and \code{\link[speedglm]{speedglm.wfit}}.}
+
+\item{save_fitted_objects}{Logical. If \code{TRUE}, store the 
+fitted object as element \code{fit}}
 
 \item{...}{Additional arguments for the learning phase. Not currently used.}
 }

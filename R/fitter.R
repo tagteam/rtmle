@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: jan 25 2026 (09:26) 
 ## Version: 
-## Last-Updated: maj  4 2026 (11:42) 
+## Last-Updated: maj  4 2026 (12:57) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 93
+##     Update #: 101
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -22,7 +22,8 @@ fitter <- function(intervention_node,
                    id_variable,
                    minority_threshold,
                    seed,
-                   diagnostics = NULL){
+                   diagnostics = NULL,
+                   save_fitted_objects = FALSE){
     current_data <- data.table::as.data.table(model.frame(formula = stats::formula(formula),data = data))
     ## I(1*(A==1)) has class 'AsIs' but the values are numeric, that's why as.numeric is applied
     current_outcome_name <- names(current_data)[[1]]
@@ -50,9 +51,9 @@ fitter <- function(intervention_node,
         mean_Y <- mean(outcome_variable)
         predicted_values <- rep(mean_Y,NROW(intervened_data))
         intercept <- log(mean_Y/(1-mean_Y))
-        predicted_values <- parse_learner_output(predicted_values = predicted_values,
-                                                 diagnostics = diagnostics,
-                                                 fit = matrix(intercept,ncol = 1,nrow = 1,dimnames = list("(Intercept)","Estimate")))
+        predicted_values <- list(predicted_values = predicted_values,
+                                 diagnostics = diagnostics,
+                                 fit = matrix(intercept,ncol = 1,nrow = 1,dimnames = list("(Intercept)","Estimate")))
     }else{
         # remove all currently constant predictor variables
         # from the formula
@@ -74,10 +75,10 @@ fitter <- function(intervention_node,
                 }
             }
             ff <- delete_variables_from_formula(character_formula = ff,delete_vars = current_constants)
-            number_rhs_variables <- attr(ff,"number_rhs_variables")
+            number_rhs_variables <- attr(ff,"number_rhs_variables",exact = TRUE)
         }else{
             current_constants <- NULL
-            number_rhs_variables <- length(attr(stats::terms(stats::formula(ff)),"term.labels"))
+            number_rhs_variables <- length(attr(stats::terms(stats::formula(ff)),"term.labels",exact = TRUE))
         }
         if (number_rhs_variables == 0){
             mean_Y <- mean(outcome_variable)
@@ -95,9 +96,9 @@ fitter <- function(intervention_node,
                 }
             }
             intercept <- log(mean_Y/(1-mean_Y))
-            predicted_values <- parse_learner_output(predicted_values = predicted_values,
-                                                     diagnostics = diagnostics,
-                                                     fit = matrix(intercept,ncol = 1,nrow = 1,dimnames = list("(Intercept)","Estimate")))
+            predicted_values <- list(predicted_values = predicted_values,
+                                     diagnostics = diagnostics,
+                                     fit = matrix(intercept,ncol = 1,nrow = 1,dimnames = list("(Intercept)","Estimate")))
         } else {
             args <- list(character_formula = ff,
                          data = current_data,
@@ -114,11 +115,12 @@ fitter <- function(intervention_node,
                                outcome_variable_name = current_outcome_name,
                                id_variable = id_variable))
                 if (inherits(try(
-                    predicted_values <- parse_learner_output(x = do.call("superlearn",
-                                                                         c(args,
-                                                                           list(diagnostics = diagnostics,
-                                                                                current_constants,
-                                                                                seed = seed)))),
+                    predicted_values <- do.call("superlearn",
+                                                c(args,
+                                                  list(diagnostics = diagnostics,
+                                                       current_constants,
+                                                       seed = seed,
+                                                       save_fitted_objects = save_fitted_objects))),
                     silent = FALSE),
                     "try-error")) {
                     stop(paste0("Failed to superlearn/crossfit with formula ",ff,"\nwhere the outcome is: ",
@@ -134,7 +136,10 @@ fitter <- function(intervention_node,
                 result <- withCallingHandlers({
                     if (inherits(
                         try(
-                            predicted_values <- parse_learner_output(x = do.call(learner$fun,c(args,learner$args))),
+                            predicted_values <- do.call(
+                                learner$fun,
+                                c(args,c(learner$args,list(save_fitted_objects = save_fitted_objects)))
+                            ),
                             silent = FALSE
                         ),
                         "try-error"
@@ -159,24 +164,9 @@ fitter <- function(intervention_node,
                     if (length(learner_warnings)>1){
                         learner_warnings <- paste0("warning 1: ",learner_warnings[1]," warning 2: ",learner_warnings[2]," ...")
                     }
-                    merge_learner_diagnostics <- function(x,diagnostics){
-                        if (length(diagnostics) == 0){
-                            return(x)
-                        }
-                        if (length(x$diagnostics) == 0){
-                            x$diagnostics <- diagnostics
-                        }else{
-                            for (dd in names(diagnostics)){
-                                x$diagnostics[[dd]] <- diagnostics[[dd]]
-                            }
-                        }
-                        x
-                    }
-                    predicted_values <- merge_learner_diagnostics(
-                        predicted_values,
-                        list(learner_warnings = data.table(learner = learner$name,
-                                                           warning = learner_warnings))
-                    )
+                    predicted_values$diagnostics <- c(predicted_values$diagnostics,
+                                                      list(learner_warnings = data.table(learner = learner$name,
+                                                                                         warning = learner_warnings)))
                 }
             }
         }

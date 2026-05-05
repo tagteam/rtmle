@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 28 2024 (08:34) 
 ## Version: 
-## Last-Updated: Nov  4 2024 (06:58) 
+## Last-Updated: maj  4 2026 (12:03) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 5
+##     Update #: 6
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -23,7 +23,7 @@ predictRisk.glm_net <- function(object,newdata,times=NA,...) {
     slambda <- args$lambda
     # check if object has saved a selected lambda value
     if (length(slambda) == 0)
-        slambda <- attr(object,"selected.lambda")
+        slambda <- attr(object,"selected.lambda",exact = TRUE)
     if (length(slambda) == 0 || length(slambda)>1 || !(is.numeric(slambda))){
         stop("You must choose a single numeric lambda value for predictRisk ... ")
     }

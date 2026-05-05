@@ -14,6 +14,7 @@ learn_glmnet(
   family,
   nfolds = 10,
   type.measure = "deviance",
+  save_fitted_objects = FALSE,
   ...
 )
 }
@@ -45,6 +46,9 @@ penalized value that still fits the model. The other options,
 
 \item{type.measure}{Loss function used for cross-validation. Default is
 deviance.}
+
+\item{save_fitted_objects}{Logical. If \code{TRUE}, store the 
+fitted object as element \code{fit}}
 
 \item{...}{Additional arguments passed to \code{\link[glmnet]{glmnet}}.}
 }

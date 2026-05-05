@@ -3,14 +3,14 @@
 The R-package =rtmle= implements a class of targeted minimum loss
 estimators for the analysis of longitudinal register data. The
 functionality is similar to the established R-package =ltmle= with the
-following features and focus points:
+following additional features and focus points:
 
 - explicit handling of competing risks
 - polypharmacy
 - descriptive statistics
 - diagnostic tools (not to be confused with model goodness of fit)
-- subgroup analysis
-- support for glmnet
+- subgroup analyses
+- support for glmnet and ranger
 - cheap bootstrap inference
 - cross-fitting 
 - parallel computing
@@ -25,9 +25,42 @@ library(rtmle)
 library(prodlim)
 library(riskRegression)
 library(data.table)
-set.seed(118)
-ld <- simulate_long_data(n = 10000,number_visits = 20,beta = list(sum_A_on_Y = -.1,A0_on_Y = 0),register_format = TRUE)
-ld
+cohort <- simulate_cohort(
+    n = 7307,
+    seed = 347,
+    max_follow = 20,
+    baseline_variables = list(age = "normal",sex = "binomial","SBP" = "normal"),
+    intermediate_events = list(stroke = "Weibull",bleeding = "Weibull"),
+    visit_events = list("A" = "binomial","B" = "binomial"),
+    visit_measurements = list("changeSBP" = "normal"),
+    visit_schedule = list(mean = 1,sd = 0.1,skip = 0,minimum_time_between_visits = 1),
+    baseline_visit = list(A = "binomial",B = "binomial"),
+    absorbing_events = list(death = "Weibull",dropout = "Weibull"),
+    parameter_values = list(
+        intercept_sex=qlogis(0.4),
+        intercept_SBP=150,
+        intercept_age=50,
+        intercept_A=qlogis(0.3),
+        intercept_B=qlogis(0.15),
+        var_age=15,
+        var_SBP=20,
+        scale_death=0.01,
+        scale_stroke=0.01,
+        scale_bleeding=0.01,
+        scale_dropout=0.01,
+        effect_auto_A_A = 5,
+        effect_auto_B_B = 4,
+        effect_A_death = 0,
+        effect_B_death = -0.8,
+        effect_A_bleeding = 1.5,
+        effect_B_bleeding = 0.5,
+        effect_A_stroke = -0.5,
+        effect_B_stroke = 0,
+        effect_stroke_A = -2,
+        effect_stroke_B = -1,
+        effect_stroke_death = 2
+    )
+)
 #+END_SRC
 
 #+RESULTS[(2025-04-10 11:48:17) fbea64b41ce76f4479ef4368ff8f2f1cda31c3b2]:

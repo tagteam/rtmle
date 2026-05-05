@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 29 2024 (10:44) 
 ## Version: 
-## Last-Updated: apr 29 2026 (07:23) 
+## Last-Updated: maj  4 2026 (12:02) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 206
+##     Update #: 207
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -98,7 +98,7 @@ summary.rtmle <- function(object,analysis = "Main_analysis",targets,reference = 
         if (analysis == "Main_analysis"){
             subset_variable <- NULL
         } else{
-            subset_variable <- attr(object$estimate[[analysis]],which = "variable")
+            subset_variable <- attr(object$estimate[[analysis]],which = "variable",exact = TRUE)
         }
         # contrasting protocols
         if (length(protocols)>1){
@@ -116,8 +116,8 @@ summary.rtmle <- function(object,analysis = "Main_analysis",targets,reference = 
                         analysis_levels <- 1
                         reference_IC <- list(object$IC[[target_name]][[ref]][[paste0("time_horizon_",tp)]])
                     }else{
-                        ## subset_levels <- attr(object$estimate[[analysis]],which = "levels")
-                        subset_IC <- attr(object$estimate[[analysis]],which = "IC")
+                        ## subset_levels <- attr(object$estimate[[analysis]],which = "levels",exact = TRUE)
+                        subset_IC <- attr(object$estimate[[analysis]],which = "IC",exact = TRUE)
                         analysis_levels <- names(subset_IC)
                         if (all(analysis_levels == "")) analysis_levels <- 1:length(analysis_levels)
                         reference_IC <- lapply(analysis_levels,function(level){
@@ -164,8 +164,8 @@ summary.rtmle <- function(object,analysis = "Main_analysis",targets,reference = 
                             this_boot <- object$estimate[["Cheap_bootstrap"]][Target == target_name & Protocol == protocol_name & Time_horizon == tp]$Bootstrap_estimate
                             boot_difference <- this_boot-reference_boot
                             boot_ratio <- this_boot/reference_boot
-                            cheap_scale <- attr(object$estimate[["Cheap_bootstrap"]],"cheap_scale")
-                            tq <- attr(object$estimate[["Cheap_bootstrap"]],"tq")
+                            cheap_scale <- attr(object$estimate[["Cheap_bootstrap"]],"cheap_scale",exact = TRUE)
+                            tq <- attr(object$estimate[["Cheap_bootstrap"]],"tq",exact = TRUE)
                             cheap_variance <- mean((risk_difference_estimate-boot_difference)^2)
                             risk_difference_boot_lower <- risk_difference_estimate - tq * cheap_scale * cheap_variance
                             risk_difference_boot_upper <- risk_difference_estimate + tq * cheap_scale * cheap_variance

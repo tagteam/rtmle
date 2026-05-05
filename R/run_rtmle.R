@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul  1 2024 (09:11)
 ## Version:
-## Last-Updated: apr 29 2026 (07:30) 
+## Last-Updated: maj  4 2026 (12:00) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 631
+##     Update #: 635
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -217,20 +217,20 @@ run_rtmle <- function(x,
             }else{
                 # append results
                 # cases stratified, Monte-Carlo error, bootstrap
-                sub_IC <- attr(x$estimate[[sub$label[[1]]]],"IC")
-                sub_variable <- attr(x$estimate[[sub$label[[1]]]],"variable")
-                ## sub_level <- attr(x$estimate[[sub$label[[1]]]],"level")
+                sub_IC <- attr(x$estimate[[sub$label[[1]]]],"IC",exact = TRUE)
+                sub_variable <- attr(x$estimate[[sub$label[[1]]]],"variable",exact = TRUE)
+                ## sub_level <- attr(x$estimate[[sub$label[[1]]]],"level",exact = TRUE)
                 x$estimate[[sub$label[[1]]]] <- rbind(x$estimate[[sub$label[[1]]]],
                                                       subset_result,
                                                       fill = TRUE)
                 data.table::setattr(x$estimate[[sub$label[[1]]]],
                                     "IC",
-                                    c(sub_IC, attr(subset_result,"IC")))
+                                    c(sub_IC, attr(subset_result,"IC",exact = TRUE)))
                 data.table::setattr(x$estimate[[sub$label[[1]]]],
-                                    "variable",sub_variable)# assumed equal to attr(subset,"variable")
+                                    "variable",sub_variable)# assumed equal to attr(subset,"variable",exact = TRUE)
                 ## data.table::setattr(x$estimate[[sub$label[[1]]]],
                 ## "level",
-                ## c(sub_level, attr(subset_result,"level")))
+                ## c(sub_level, attr(subset_result,"level",exact = TRUE)))
             }
         }
         x$save_fitted_objects <- save_fitted_objects

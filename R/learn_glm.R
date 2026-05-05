@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 23 2024 (12:49) 
 ## Version: 
-## Last-Updated: apr 29 2026 (07:08) 
+## Last-Updated: maj  4 2026 (13:01) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 145
+##     Update #: 153
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -32,6 +32,8 @@
 ##'   the mean outcome.
 ##' @param maxit Number of iterations passed to \code{\link[stats]{glm.fit}}
 ##'   and \code{\link[speedglm]{speedglm.wfit}}.
+#' @param save_fitted_objects Logical. If \code{TRUE}, store the 
+#'   fitted object as element \code{fit}
 ##' @param ... Additional arguments for the learning phase. Not currently used.
 ##' @return A list whose first element, \code{predicted_values}, is a vector of
 ##'   predicted probabilities. Element \code{fit} contains a coefficient summary,
@@ -52,6 +54,7 @@ learn_glm <- function(character_formula,
                       intervened_data,
                       learn_variables = NULL,
                       maxit = 100,
+                      save_fitted_objects = FALSE,
                       ...){
     # NOTE: speedglm could be handled by own learner 
     ## args <- as.list(match.call())
@@ -73,8 +76,11 @@ learn_glm <- function(character_formula,
             mean_Y <- mean(Y,na.rm = TRUE)
             predicted_values <- rep(mean_Y,NROW(intervened_data))
             intercept <- log(mean_Y/(1-mean_Y))
-            return(learner_output(predicted_values = predicted_values,
-                                  fit = matrix(intercept,ncol = 1,nrow = 1,dimnames = list("(Intercept)","Estimate"))))
+            # learner_output
+            return(list(
+                predicted_values = predicted_values,
+                fit = matrix(intercept,ncol = 1,nrow = 1,dimnames = list("(Intercept)","Estimate"))
+            ))
         }
     }
     model_frame <- stats::model.frame(stats::formula(character_formula),
@@ -85,15 +91,17 @@ learn_glm <- function(character_formula,
     Y_label <- names(model_frame)[[1]]
     tf <- stats::terms(model_frame)
     X <- stats::model.matrix(object = tf, data = model_frame)
-    if (speed && requireNamespace("speedglm", quietly = TRUE) && !inherits(try(
-                      fit <- speedglm::speedglm.wfit(y = Y[!is.na(Y)],
-                                                     X = X[!is.na(Y),],
-                                                     intercept = attributes(tf)$intercept,
-                                                     offset = stats::model.offset(model_frame),
-                                                     family = quasibinomial(),
-                                                     maxit = maxit),
-                      silent = TRUE),
-                      "try-error")){
+    if (speed &&
+        requireNamespace("speedglm", quietly = TRUE) &&
+        !inherits(try(
+             fit <- speedglm::speedglm.wfit(y = Y[!is.na(Y)],
+                                            X = X[!is.na(Y),],
+                                            intercept = attributes(tf)$intercept,
+                                            offset = stats::model.offset(model_frame),
+                                            family = quasibinomial(),
+                                            maxit = maxit),
+             silent = TRUE),
+             "try-error")){
         class(fit) <- c("speedglm", "speedlm")
     }else{
         if (!inherits(try(
@@ -116,9 +124,14 @@ learn_glm <- function(character_formula,
     }
     fit$terms <- tf
     predicted_values <- predict(fit,type = "response",newdata = intervened_data,se = FALSE)
-    learner_output(predicted_values = predicted_values,
-                   fit = coef(summary(fit)),
-                   object = fit)
+    #parse_learner_output
+    if (isTRUE(save_fitted_objects)){
+        list(predicted_values = predicted_values,
+             fit = fit)
+    }else{
+        list(predicted_values = predicted_values,
+             fit = coef(summary(fit)))
+    }
 }
 
 

@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds & Alessandra
 ## Created: Oct 17 2024 (09:26)
 ## Version:
-## Last-Updated: mar 26 2026 (16:41) 
+## Last-Updated: maj  4 2026 (12:02) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 102
+##     Update #: 103
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -149,7 +149,7 @@ intervention_probabilities <- function(x,
                   }
                 }
               }
-              x$models[[protocol_name]][[G]]$fit <- attr(predicted_values,"fit")
+              x$models[[protocol_name]][[G]]$fit <- attr(predicted_values,"fit",exact = TRUE)
               data.table::setattr(predicted_values,"fit",NULL)
               intervention_probs[outcome_free_and_uncensored][[G]] <- predicted_values # this is where I have \hat{g_t} (propensity score saved)
 

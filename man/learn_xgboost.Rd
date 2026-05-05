@@ -4,7 +4,13 @@
 \alias{learn_xgboost}
 \title{Nuisance-parameter learner based on xgboost}
 \usage{
-learn_xgboost(character_formula, data, intervened_data, ...)
+learn_xgboost(
+  character_formula,
+  data,
+  intervened_data,
+  save_fitted_objects = FALSE,
+  ...
+)
 }
 \arguments{
 \item{character_formula}{Formula for the nuisance parameter, supplied as a
@@ -14,6 +20,9 @@ character string.}
 
 \item{intervened_data}{Data used for prediction after intervention variables
 have been set according to a protocol.}
+
+\item{save_fitted_objects}{Logical. If \code{TRUE}, store the 
+fitted object as element \code{fit}}
 
 \item{...}{Additional arguments passed to \code{\link[xgboost]{xgboost}},
 including hyperparameters.}

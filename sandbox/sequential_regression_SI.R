@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds & Alessandra
 ## Created: Sep 30 2024 (14:30)
 ## Version:
-## Last-Updated: mar 26 2026 (15:49) 
+## Last-Updated: maj  4 2026 (12:02) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 156
+##     Update #: 157
 #----------------------------------------------------------------------
 ##
 ### Commentary: We want to adapt this function to stochastic intervention
@@ -151,7 +151,7 @@ else{
       }
     }
     # save fitted object
-    x$models[[protocol_name]][[outcome_variables[[j]]]]$fit <- attr(fit_last,"fit")
+    x$models[[protocol_name]][[outcome_variables[[j]]]]$fit <- attr(fit_last,"fit",exact = TRUE)
     data.table::setattr(fit_last,"fit",NULL)
     fit_last <- as.numeric(fit_last) # prediction for the logistic regression, still need the update
     # set predicted value as outcome for next regression

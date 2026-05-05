@@ -17,6 +17,7 @@ superlearn(
   intervened_data,
   ensemble_method = "discrete",
   diagnostics,
+  save_fitted_objects = FALSE,
   ...
 )
 }
@@ -64,6 +65,9 @@ predicted value from the learning set is used.}
 \item{diagnostics}{For internal use when called from \code{\link{run_rtmle}}
 via \code{fitter()}, which is called from
 \code{intervention_probabilities()} and \code{sequential_regression()}.}
+
+\item{save_fitted_objects}{Logical. If \code{TRUE}, store the 
+fitted object as element \code{fit}}
 
 \item{...}{Not used.}
 }

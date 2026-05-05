@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Oct 28 2024 (09:26) 
 ## Version: 
-## Last-Updated: apr 29 2026 (07:32) 
+## Last-Updated: maj  4 2026 (12:57) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 81
+##     Update #: 88
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -25,6 +25,8 @@
 ##' @param data Data used for learning.
 ##' @param intervened_data Data used for prediction after intervention variables
 ##'   have been set according to a protocol.
+#' @param save_fitted_objects Logical. If \code{TRUE}, store the 
+#'   fitted object as element \code{fit}
 ##' @param ... Additional arguments passed to \code{\link[ranger]{ranger}},
 ##'   including hyperparameters.
 ##' @return A list whose first element, \code{predicted_values}, is a vector of
@@ -42,7 +44,13 @@
 ##' }
 ##' @export 
 ##' @author Thomas A. Gerds <tag@@biostat.ku.dk>
-learn_ranger <- function(character_formula,data,intervened_data,...){
+learn_ranger <- function(
+                         character_formula,
+                         data,
+                         intervened_data,
+                         save_fitted_objects = FALSE,
+                         ...
+                         ){
     if (!requireNamespace("ranger", quietly = TRUE)) {
         stop("Package 'ranger' is required for learn_ranger().", call. = FALSE)
     }
@@ -86,8 +94,13 @@ learn_ranger <- function(character_formula,data,intervened_data,...){
             stop("Ranger prediction failed")
         }
     }
-    learner_output(predicted_values = predicted_values,
-                   object = fit)
+    #parse_learner_output
+    if (isTRUE(save_fitted_objects)){
+        list(predicted_values = predicted_values,
+             fit = fit)
+    }else{
+        list(predicted_values = predicted_values)    
+    }
 }
 
 

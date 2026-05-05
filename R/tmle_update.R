@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul  3 2024 (13:54) 
 ## Version: 
-## Last-Updated: apr 29 2026 (07:09) 
+## Last-Updated: maj  4 2026 (12:02) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 63
+##     Update #: 64
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -42,9 +42,9 @@ tmle_update <- function(Y,
     } else {
         Qstar <- stats::plogis(offset)
         attr(Qstar,"diagnostics") <- data.table(Function = 'rtmle::tmle_update',
-                                                Protocol = protocol,
-                                                Step = k,
-                                                Event = "No positive weights")
+                                                             Protocol = protocol,
+                                                             Step = k,
+                                                             Event = "No positive weights")
     }
     return(Qstar)
 }

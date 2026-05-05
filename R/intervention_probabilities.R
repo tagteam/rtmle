@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Oct 17 2024 (09:26) 
 ## Version: 
-## Last-Updated: maj  4 2026 (09:59) 
+## Last-Updated: maj  4 2026 (12:43) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 560
+##     Update #: 561
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -99,7 +99,8 @@ intervention_probabilities <- function(x,
                                    id_variable = x$names$id,
                                    minority_threshold = x$tuning_parameters$minority_threshold,
                                    seed = seed,
-                                   diagnostics = x$diagnostics)
+                                   diagnostics = x$diagnostics,
+                                   save_fitted_objects = save_fitted_objects)
             # store the fit
             x$models[[paste0("time_",k)]][[task_list[task,type]]][[task_list[task,variable]]]$fit <- if (isTRUE(save_fitted_objects)) nuisance_fit$object else nuisance_fit$fit
             # update diagnostics

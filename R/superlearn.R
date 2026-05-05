@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Oct 31 2024 (07:29) 
 ## Version: 
-## Last-Updated: maj  4 2026 (11:42) 
+## Last-Updated: maj  4 2026 (12:57) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 298
+##     Update #: 303
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -55,6 +55,8 @@
 ##' @param diagnostics For internal use when called from \code{\link{run_rtmle}}
 ##'   via \code{fitter()}, which is called from
 ##'   \code{intervention_probabilities()} and \code{sequential_regression()}.
+##' @param save_fitted_objects Logical. If \code{TRUE}, store the 
+#'   fitted object as element \code{fit}
 ##' @param ... Not used.
 ##' @return A list whose first element, \code{predicted_values}, is the
 ##'   prediction vector from the super learner. Element \code{fit} contains the
@@ -97,6 +99,7 @@ superlearn <- function(folds,
                        intervened_data,
                        ensemble_method = "discrete",
                        diagnostics,
+                       save_fitted_objects = FALSE,
                        ...){
     expected_levels = NULL
     N <- NROW(data)
@@ -185,9 +188,9 @@ superlearn <- function(folds,
                 }
                 character_formula_k <- delete_variables_from_formula(character_formula = character_formula_k,
                                                                      delete_vars = current_constants)
-                number_rhs_variables_k <- attr(character_formula_k,"number_rhs_variables")
+                number_rhs_variables_k <- attr(character_formula_k,"number_rhs_variables",exact = TRUE)
             }else{
-                number_rhs_variables_k <- length(attr(stats::terms(stats::formula(character_formula_k)),"term.labels"))
+                number_rhs_variables_k <- length(attr(stats::terms(stats::formula(character_formula_k)),"term.labels",exact = TRUE))
             }
             # if there are no covariates then we simply predict the mean 
             if (number_rhs_variables_k == 0){
@@ -207,7 +210,7 @@ superlearn <- function(folds,
                                       ## learner specific arguments such as tuning parameters
                                       this_learner$args)
                     if (inherits(try( 
-                        predicted_k <- parse_learner_output(x = do.call(this_learner$fun, learner_args))
+                        predicted_k <- do.call(this_learner$fun, learner_args)
                     ),"try-error")){
                         stop(paste0("Learning failed in fold ",k," with learner ",this_learner))
                     }
@@ -277,21 +280,28 @@ superlearn <- function(folds,
             ## add winner's arguments but do not include duplicate arguments
             predicted_values_args <- c(learners[[this_learner]]$args,
                                        learner_args[!names(learner_args)%in%names(learners[[this_learner]]$args)])
-            parse_learner_output(x = do.call(what = learners[[this_learner]]$fun,predicted_values_args))
+            do.call(what = learners[[this_learner]]$fun,predicted_values_args)
         })
         if (length(predicted_value_ensemble) == 1){
             predicted_values <- predicted_value_ensemble[[1]]$predicted_values
         }else{
             predicted_values <- do.call(cbind,lapply(predicted_value_ensemble,`[[`,"predicted_values"))%*%ensemble_weights[ensemble_weights>0]
         }
-        fitted_objects <- lapply(predicted_value_ensemble,`[[`,"object")
+        fitted_objects <- lapply(predicted_value_ensemble,`[[`,"fit")
         names(fitted_objects) <- names(ensemble_weights)[ensemble_weights>0]
     }
-    parse_learner_output(predicted_values = predicted_values,
-                         diagnostics = if (!missing(diagnostics)) diagnostics else NULL,
-                         fit = ensemble_weights,
-                         object = list(ensemble_weights = ensemble_weights,
-                                       fitted_objects = fitted_objects))
+    # parse_learner_output
+    if (save_fitted_objects){
+        list(predicted_values = predicted_values,
+             diagnostics = if (!missing(diagnostics)) diagnostics else NULL,
+             fit = ensemble_weights,
+             object = list(ensemble_weights = ensemble_weights,
+                           fitted_objects = fitted_objects))
+    }else{
+        list(predicted_values = predicted_values,
+             diagnostics = if (!missing(diagnostics)) diagnostics else NULL,
+             fit = ensemble_weights)
+    }
 }
 
 
