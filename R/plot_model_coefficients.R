@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: feb 23 2026 (06:38) 
 ## Version: 
-## Last-Updated: maj  4 2026 (06:50) 
+## Last-Updated: maj  5 2026 (14:27) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 136
+##     Update #: 137
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -131,8 +131,7 @@
 #' \code{\link[ggplot2]{ggplot}}, \code{\link[ggplot2]{geom_point}}
 #' @examples
 #' data(rtmle_object)
-#' out <- plot_model_coefficients(rtmle_object, time_horizon = 4, protocol = "Always_A",
-#'                                nodes = "outcome", plot_style = "by_outcome")
+#' out <- plot_model_coefficients(rtmle_object)
 #' names(out)
 #' 
 #' @importFrom ggplot2 ggplot aes geom_point geom_hline theme_bw labs theme element_text element_blank position_jitter facet_wrap
