@@ -120,8 +120,7 @@ position, producing a vertical "stack" of points per model.
 }
 \examples{
 data(rtmle_object)
-out <- plot_model_coefficients(rtmle_object, time_horizon = 4, protocol = "Always_A",
-                               nodes = "outcome", plot_style = "by_outcome")
+out <- plot_model_coefficients(rtmle_object)
 names(out)
 
 }

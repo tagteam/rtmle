@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: jan 25 2026 (09:26) 
 ## Version: 
-## Last-Updated: maj  4 2026 (12:57) 
+## Last-Updated: maj  7 2026 (13:11) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 101
+##     Update #: 119
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -23,7 +23,8 @@ fitter <- function(intervention_node,
                    minority_threshold,
                    seed,
                    diagnostics = NULL,
-                   save_fitted_objects = FALSE){
+                   save_fitted_objects = FALSE,
+                   reuse_fit = NULL){
     current_data <- data.table::as.data.table(model.frame(formula = stats::formula(formula),data = data))
     ## I(1*(A==1)) has class 'AsIs' but the values are numeric, that's why as.numeric is applied
     current_outcome_name <- names(current_data)[[1]]
@@ -32,7 +33,9 @@ fitter <- function(intervention_node,
     ff <- change_outcome_in_formula(formula,"rtmle_outcome")
     current_constants <- sapply(current_data, function(x){length(na.omit(unique(x)))<=1})
     n_outcome_values <- length(unique(current_data[[1]]))
-    if (current_constants[[1]] == TRUE) {minority_count <- 0}
+    if (current_constants[[1]] == TRUE) {
+        minority_count <- 0
+    }
     if (current_constants[[1]] == TRUE ||
         # when the outcome is binary but has less than threshold many occurences of the minority group
         # simply predict the mean
@@ -41,7 +44,7 @@ fitter <- function(intervention_node,
             diag_row <- data.table(Function ='rtmle::fitter',
                                    Intervention_node = intervention_node,
                                    Outcome = gsub("\"","'",current_outcome_name),
-                                   Event = "Constant outcome or below minority_threshold")
+                                   Minority_count = minority_count)
             if (is.null(diagnostics)){
                 diagnostics <- list(constant_outcome_variables = diag_row)
             }else{
@@ -51,9 +54,12 @@ fitter <- function(intervention_node,
         mean_Y <- mean(outcome_variable)
         predicted_values <- rep(mean_Y,NROW(intervened_data))
         intercept <- log(mean_Y/(1-mean_Y))
+        fit <- matrix(intercept,ncol = 1,nrow = 1,dimnames = list("(Intercept)","Estimate"))
+        class(fit) <- c("constant_probability","list")
         predicted_values <- list(predicted_values = predicted_values,
                                  diagnostics = diagnostics,
-                                 fit = matrix(intercept,ncol = 1,nrow = 1,dimnames = list("(Intercept)","Estimate")))
+                                 fit = fit,
+                                 fit_summary = mean_Y)
     }else{
         # remove all currently constant predictor variables
         # from the formula
@@ -96,10 +102,19 @@ fitter <- function(intervention_node,
                 }
             }
             intercept <- log(mean_Y/(1-mean_Y))
+            fit <- matrix(intercept,ncol = 1,nrow = 1,dimnames = list("(Intercept)","Estimate"))
+            class(fit) <- c("constant_probability","list")
             predicted_values <- list(predicted_values = predicted_values,
                                      diagnostics = diagnostics,
-                                     fit = matrix(intercept,ncol = 1,nrow = 1,dimnames = list("(Intercept)","Estimate")))
+                                     fit = fit,
+                                     fit_summary = mean_Y)
         } else {
+            ## avoid fitting the same censoring model multiple times (for multiple protocols)
+            ## but still need to predict intervened data
+            ## do not save the same censoring model multiple times!
+            if (length(reuse_fit) > 0){
+                save_fitted_objects <- FALSE
+            }
             args <- list(character_formula = ff,
                          data = current_data,
                          intervened_data = intervened_data[,names(current_data)[-1],with = FALSE])
@@ -120,7 +135,8 @@ fitter <- function(intervention_node,
                                                   list(diagnostics = diagnostics,
                                                        current_constants,
                                                        seed = seed,
-                                                       save_fitted_objects = save_fitted_objects))),
+                                                       save_fitted_objects = save_fitted_objects,
+                                                       reuse_fit = reuse_fit))),
                     silent = FALSE),
                     "try-error")) {
                     stop(paste0("Failed to superlearn/crossfit with formula ",ff,"\nwhere the outcome is: ",
@@ -138,14 +154,15 @@ fitter <- function(intervention_node,
                         try(
                             predicted_values <- do.call(
                                 learner$fun,
-                                c(args,c(learner$args,list(save_fitted_objects = save_fitted_objects)))
+                                c(args,c(learner$args,list(save_fitted_objects = save_fitted_objects,
+                                                           reuse_fit = reuse_fit)))
                             ),
                             silent = FALSE
                         ),
                         "try-error"
                     )) {
                         stop(paste0(
-                            "Failed to superlearn/crossfit with formula ", ff,
+                            "Failed to apply ",learner$name," with formula ", ff,
                             "\nwhere the outcome is: ",
                             ifelse(
                                 current_outcome_name == "rtmle_predicted_outcome",
@@ -164,9 +181,11 @@ fitter <- function(intervention_node,
                     if (length(learner_warnings)>1){
                         learner_warnings <- paste0("warning 1: ",learner_warnings[1]," warning 2: ",learner_warnings[2]," ...")
                     }
-                    predicted_values$diagnostics <- c(predicted_values$diagnostics,
-                                                      list(learner_warnings = data.table(learner = learner$name,
-                                                                                         warning = learner_warnings)))
+                    predicted_values$diagnostics <- c(
+                        predicted_values$diagnostics,
+                        list(learner_warnings = data.table(learner = learner$name,
+                                                           warning = learner_warnings))
+                    )
                 }
             }
         }

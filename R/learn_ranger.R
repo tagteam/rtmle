@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Oct 28 2024 (09:26) 
 ## Version: 
-## Last-Updated: maj  4 2026 (12:57) 
+## Last-Updated: maj  7 2026 (14:56) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 88
+##     Update #: 91
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -27,6 +27,8 @@
 ##'   have been set according to a protocol.
 #' @param save_fitted_objects Logical. If \code{TRUE}, store the 
 #'   fitted object as element \code{fit}
+##' @param reuse_fit Optional fitted object returned by a previous call. If
+##'   supplied, skip fitting and only predict in \code{intervened_data}.
 ##' @param ... Additional arguments passed to \code{\link[ranger]{ranger}},
 ##'   including hyperparameters.
 ##' @return A list whose first element, \code{predicted_values}, is a vector of
@@ -49,30 +51,36 @@ learn_ranger <- function(
                          data,
                          intervened_data,
                          save_fitted_objects = FALSE,
+                         reuse_fit = NULL,
                          ...
                          ){
     if (!requireNamespace("ranger", quietly = TRUE)) {
         stop("Package 'ranger' is required for learn_ranger().", call. = FALSE)
     }
-    # extract the data
-    model_frame <- stats::model.frame(stats::formula(character_formula),
-                                      data = data,
-                                      drop.unused.levels = TRUE,
-                                      na.action = na.omit)
-    Y <- as.numeric(model_frame[[1]])
-    if (length(unique(Y)) == 2) probability <- TRUE else probability <- FALSE
-    if (!inherits(
-             try(
-                 fit <- ranger::ranger(formula = stats::formula(character_formula),
-                                       data = model_frame,
-                                       probability = probability,
-                                       write.forest = TRUE, importance = 'none', 
-                                       ...)
-                ,silent = TRUE),
-             "try-error")){
+    if (length(reuse_fit) == 0){
+        # extract the data
+        model_frame <- stats::model.frame(stats::formula(character_formula),
+                                          data = data,
+                                          drop.unused.levels = TRUE,
+                                          na.action = na.omit)
+        Y <- as.numeric(model_frame[[1]])
+        if (length(unique(Y)) == 2) probability <- TRUE else probability <- FALSE
+        if (!inherits(
+                 try(
+                     fit <- ranger::ranger(formula = stats::formula(character_formula),
+                                           data = model_frame,
+                                           probability = probability,
+                                           write.forest = TRUE, importance = 'none', 
+                                           ...)
+                    ,silent = TRUE),
+                 "try-error")){
+        }else{
+            stop(paste0("\nCould not fit model with ranger:\n",
+                        "Formula: ",character_formula))
+        }
     }else{
-        stop(paste0("\nCould not fit model with ranger:\n",
-                    "Formula: ",character_formula))
+        fit <- reuse_fit$fit
+        summary = reuse_fit$fit_summary
     }
     predicted_values <- vector(mode = "numeric",length = NROW(intervened_data))
     ivars <- all.vars(formula(character_formula))[-1]
@@ -95,12 +103,12 @@ learn_ranger <- function(
         }
     }
     #parse_learner_output
+    output <- list(predicted_values = predicted_values,
+                   fit_summary = NULL)
     if (isTRUE(save_fitted_objects)){
-        list(predicted_values = predicted_values,
-             fit = fit)
-    }else{
-        list(predicted_values = predicted_values)    
+        output$fit <- fit
     }
+    output
 }
 
 

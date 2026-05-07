@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul  3 2024 (13:48) 
 ## Version: 
-## Last-Updated: maj  3 2026 (07:25) 
+## Last-Updated: maj  7 2026 (16:09) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 61
+##     Update #: 77
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -51,37 +51,37 @@ coef.rtmle <- function(object,time_horizon,...){
             }
             df <- do.call(rbind,lapply(model_names,function(this_outcome){
                 if (node_name == "outcome"){
-                    outfit <- do.call(rbind,lapply(names(time_block[[node_name]][[current_outcome]]$fit),function(protocol){
-                        fit <- time_block[[node_name]][[current_outcome]]$fit[[protocol]][[this_outcome]]
-                        if (!is.null(fit)
-                            ## && 
-                            ## (inherits(fit,"dgCMatrix") || inherits(fit,"data.frame") || inherits(fit,"matrix"))
-                            && (is.numeric(coefs <- fit[,1]))){
-                            names(coefs) <- rownames(fit)
-                            data.table(time = time_name,
-                                       protocol = protocol,
-                                       node = node_name,
-                                       outcome = current_outcome,
-                                       terms = names(coefs),
-                                       beta = as.numeric(coefs),
-                                       stringsAsFactors = FALSE)
+                    do.call(rbind,lapply(names(time_block[[node_name]][[current_outcome]]$fit),function(protocol){
+                        fit_summary <- time_block[[node_name]][[current_outcome]]$fit[[protocol]][[this_outcome]]$fit_summary
+                        if (inherits(fit_summary,"constant_probability")){
+                            data.table(time = time_name,protocol = node_name,node = node_name,outcome = this_outcome,terms = "",beta = 0,stringsAsFactors = FALSE)
+                        }else{
+                            if (length(dim(fit_summary))>1 && (is.numeric(coefs <- fit_summary[,1]))){
+                                names(coefs) <- rownames(fit_summary)
+                                data.table(time = time_name,protocol = protocol,node = node_name,outcome = current_outcome,terms = names(coefs),beta = as.numeric(coefs),stringsAsFactors = FALSE)
+                            }else{
+                                NULL
+                            }
                         }
                     }))
                 }else{
-                    fit <- time_block[[node_name]][[this_outcome]]$fit
-                    if (!is.null(fit)
-                        ## && (inherits(fit,"dgCMatrix") || inherits(fit,"data.frame"))
-                        && (is.numeric(coefs <- fit[,1]))){
-                        names(coefs) <- rownames(fit)
-                        outfit <- data.table(time = time_name,
-                                             protocol = node_name,
-                                             node = node_name,
-                                             outcome = this_outcome,
-                                             terms = names(coefs),
-                                             beta = as.numeric(coefs),
-                                             stringsAsFactors = FALSE)
-                    } else{
-                        outfit <- NULL
+                    fit_summary <- time_block[[node_name]][[this_outcome]]$fit_summary
+                    if (inherits(fit_summary,"constant_probability")){
+                        data.table(time = time_name,protocol = node_name,node = node_name,outcome = this_outcome,terms = "",beta = 0,stringsAsFactors = FALSE)
+                    }else{
+                        if (length(dim(fit_summary))>1
+                            && (is.numeric(coefs <- fit_summary[,1]))){
+                            names(coefs) <- rownames(fit_summary)
+                            data.table(time = time_name,
+                                       protocol = node_name,
+                                       node = node_name,
+                                       outcome = this_outcome,
+                                       terms = names(coefs),
+                                       beta = as.numeric(coefs),
+                                       stringsAsFactors = FALSE)
+                        } else{
+                            NULL
+                        }
                     }
                 }
             }))

@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Oct 17 2024 (09:26) 
 ## Version: 
-## Last-Updated: maj  4 2026 (12:43) 
+## Last-Updated: maj  7 2026 (16:28) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 561
+##     Update #: 587
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -91,6 +91,18 @@ intervention_probabilities <- function(x,
                 action <- action + 1
                 setTxtProgressBar(progress,action)
             }
+            # save censoring model
+            reuse_fit <- NULL
+            if (task_list[task,type] == "censoring"){
+                if (protocol_name == x$censoring_use_protocol){
+                    # store the fit
+                    save_fitted_objects <- TRUE
+                }else{
+                    # reuse the fit
+                    save_fitted_objects <- FALSE
+                    reuse_fit <- x$models[[paste0("time_",k)]][[task_list[task,type]]][[task_list[task,variable]]][c("fit","fit_summary")]
+                }
+            }
             nuisance_fit <- fitter(intervention_node = k,
                                    learner = learner,
                                    formula = current_formula,
@@ -100,9 +112,13 @@ intervention_probabilities <- function(x,
                                    minority_threshold = x$tuning_parameters$minority_threshold,
                                    seed = seed,
                                    diagnostics = x$diagnostics,
-                                   save_fitted_objects = save_fitted_objects)
+                                   save_fitted_objects = save_fitted_objects,
+                                   reuse_fit = reuse_fit)
             # store the fit
-            x$models[[paste0("time_",k)]][[task_list[task,type]]][[task_list[task,variable]]]$fit <- if (isTRUE(save_fitted_objects)) nuisance_fit$object else nuisance_fit$fit
+            if (save_fitted_objects){
+                x$models[[paste0("time_",k)]][[task_list[task,type]]][[task_list[task,variable]]]$fit <- nuisance_fit$fit
+            }
+            x$models[[paste0("time_",k)]][[task_list[task,type]]][[task_list[task,variable]]]$fit_summary <- nuisance_fit$fit_summary
             # update diagnostics
             if (length(dia <- nuisance_fit$diagnostics)>0){
                 if (is.null(x$diagnostics)){
@@ -113,23 +129,22 @@ intervention_probabilities <- function(x,
                     }
                 }
             }
-            nuisance_fit <- nuisance_fit$predicted_values
             # check predicted values
-            if (any(is.na(nuisance_fit))){
+            if (any(is.na(nuisance_fit$predicted_values))){
                 stop(paste0("Fitting nuisance parameter model returned missing values:\n",
                             current_formula))
             }
-            if (all(nuisance_fit == 0)){
-                stop(paste0("Nuisance parameter model is exactly zero:\n",
+            if (all(nuisance_fit$predicted_values == 0)){
+                stop(paste0("Nuisance parameter model predictions are exactly zero:\n",
                             current_formula))
             }
-            if (any(nuisance_fit<0) || any(nuisance_fit>1)){
-                nuisance_fit <- pmax(0,pmin(1,nuisance_fit))
+            if (any(nuisance_fit$predicted_values<0) || any(nuisance_fit$predicted_values>1)){
+                nuisance_fit$predicted_values <- pmax(0,pmin(1,nuisance_fit$predicted_values))
                 x$diagnostics$probabilities_off_range <- rbind(x$diagnostics$probabilities_off_range,
                                                                task_list[k])
             }
             # add columns to the intervention_probs matrix
-            intervention_probs[outcome_free_and_uncensored,task] <- nuisance_fit
+            intervention_probs[outcome_free_and_uncensored,task] <- nuisance_fit$predicted_values
         }
         # Store the intervention probabilities
         x$protocols[[protocol_name]]$intervention_probs <- intervention_probs

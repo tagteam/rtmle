@@ -11,6 +11,7 @@ learn_glm(
   learn_variables = NULL,
   maxit = 100,
   save_fitted_objects = FALSE,
+  reuse_fit = NULL,
   ...
 )
 }
@@ -32,6 +33,9 @@ and \code{\link[speedglm]{speedglm.wfit}}.}
 
 \item{save_fitted_objects}{Logical. If \code{TRUE}, store the 
 fitted object as element \code{fit}}
+
+\item{reuse_fit}{Optional fitted object returned by a previous call. If
+supplied, skip fitting and only predict in \code{intervened_data}.}
 
 \item{...}{Additional arguments for the learning phase. Not currently used.}
 }

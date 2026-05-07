@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: maj  1 2026 (09:51) 
 ## Version: 
-## Last-Updated: maj  3 2026 (07:47) 
+## Last-Updated: maj  7 2026 (16:26) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 35
+##     Update #: 40
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -85,7 +85,8 @@ x <- run_rtmle(x,time_horizon = 1:4)
 simulated_cohort <- cohort
 rtmle_object <- x
 rtmle_object$time_grid_labels <- as.character(rtmle_object$time_grid_scale)
-dir.create("data",showWarnings = FALSE)
+# dir.create("data",showWarnings = FALSE)
+# 
 save(simulated_cohort,file = "data/simulated_cohort.rda",compress = "xz")
 save(rtmle_object,file = "data/rtmle_object.rda",compress = "xz")
 

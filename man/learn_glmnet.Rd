@@ -15,6 +15,7 @@ learn_glmnet(
   nfolds = 10,
   type.measure = "deviance",
   save_fitted_objects = FALSE,
+  reuse_fit = NULL,
   ...
 )
 }
@@ -49,6 +50,9 @@ deviance.}
 
 \item{save_fitted_objects}{Logical. If \code{TRUE}, store the 
 fitted object as element \code{fit}}
+
+\item{reuse_fit}{Optional fitted object returned by a previous call. If
+supplied, skip fitting and only predict in \code{intervened_data}.}
 
 \item{...}{Additional arguments passed to \code{\link[glmnet]{glmnet}}.}
 }

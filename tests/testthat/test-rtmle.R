@@ -22,6 +22,65 @@ test_that("run rtmle on simulated data",{
     expect_equal(x$estimate$Main_analysis$Standard_error,0.06217111,tolerance = 0.001)
 })
 
+test_that("censoring models are reused across protocols",{
+    set.seed(42)
+    n <- 120
+    W <- rnorm(n)
+    A_0 <- factor(rbinom(n,1,plogis(W)),levels = c(0,1))
+    C_1 <- factor(ifelse(rbinom(n,1,plogis(-0.5 + 0.8 * W + 0.7 * (A_0 == "1"))) == 1,
+                         "censored",
+                         "uncensored"),
+                  levels = c("uncensored","censored"))
+    Y_1 <- rbinom(n,1,plogis(-1 + W + 0.5 * (A_0 == "1")))
+    Y_1[C_1 == "censored"] <- NA
+    x <- rtmle_init(time_grid = 0:1,
+                    name_id = "id",
+                    name_outcome = "Y",
+                    name_competing = NULL,
+                    name_censoring = "C",
+                    censored_label = "censored")
+    x$prepared_data <- data.table(id = 1:n,W = W,A_0 = A_0,C_1 = C_1,Y_1 = Y_1)
+    x$names$name_baseline_covariates <- "W"
+    x$names$name_time_covariates <- "A"
+    x <- protocol(x,name = "Always_A",
+                  intervention = data.frame(time = x$intervention_nodes,
+                                            A = factor("1",levels = c("0","1"))),
+                  verbose = FALSE)
+    x <- protocol(x,name = "Never_A",
+                  intervention = data.frame(time = x$intervention_nodes,
+                                            A = factor("0",levels = c("0","1"))),
+                  verbose = FALSE)
+    x <- target(x,name = "Outcome_risk",estimator = "tmle",protocols = c("Always_A","Never_A"))
+    x <- model_formula(x,verbose = FALSE)
+    fit_calls <- 0
+    reuse_calls <- 0
+    counting_glm <- function(character_formula,
+                             data,
+                             intervened_data,
+                             save_fitted_objects = FALSE,
+                             reuse_fit = NULL,
+                             ...){
+        if (is.null(reuse_fit)){
+            fit_calls <<- fit_calls + 1
+        }else{
+            reuse_calls <<- reuse_calls + 1
+        }
+        learn_glm(character_formula = character_formula,
+                  data = data,
+                  intervened_data = intervened_data,
+                  save_fitted_objects = save_fitted_objects,
+                  reuse_fit = reuse_fit,
+                  ...)
+    }
+    x <- run_rtmle(x,
+                   learner = list(name = "counting_glm",fun = counting_glm),
+                   time_horizon = 1,
+                   verbose = FALSE)
+    expect_equal(fit_calls,5)
+    expect_equal(reuse_calls,1)
+    expect_true(is.list(x$models$time_0$censoring$C_1$fit))
+})
+
 
 test_that("run rtmle without covariates",{
     set.seed(112)
@@ -77,5 +136,3 @@ test_that("rtmle can use g-formula",{
     y <- run_rtmle(x,estimator = "g-formula",verbose = FALSE)
     expect_output(print(summary(x)))    
 })
-
-

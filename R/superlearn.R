@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Oct 31 2024 (07:29) 
 ## Version: 
-## Last-Updated: maj  4 2026 (12:57) 
+## Last-Updated: maj  7 2026 (12:48) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 303
+##     Update #: 305
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -57,6 +57,8 @@
 ##'   \code{intervention_probabilities()} and \code{sequential_regression()}.
 ##' @param save_fitted_objects Logical. If \code{TRUE}, store the 
 #'   fitted object as element \code{fit}
+##' @param reuse_fit Optional fitted object returned by a previous call. If
+##'   supplied, skip fitting and only predict in \code{intervened_data}.
 ##' @param ... Not used.
 ##' @return A list whose first element, \code{predicted_values}, is the
 ##'   prediction vector from the super learner. Element \code{fit} contains the
@@ -100,6 +102,7 @@ superlearn <- function(folds,
                        ensemble_method = "discrete",
                        diagnostics,
                        save_fitted_objects = FALSE,
+                       reuse_fit = NULL,
                        ...){
     expected_levels = NULL
     N <- NROW(data)
@@ -268,10 +271,12 @@ superlearn <- function(folds,
     if (all(ensemble_weights == 0)){
         # NULL model prediction
         if (!missing(diagnostics)){
-            diagnostics$superlearner_null_model <- rbind(diagnostics$superlearner_null_model,
-                                                         data.table(Function ='rtmle::superlearn',
-                                                                    Outcome = outcome_variable_name,
-                                                                    Event = "All learners performed worse than the null model"))
+            diagnostics$superlearner_null_model <- rbind(
+                diagnostics$superlearner_null_model,
+                data.table(Function ='rtmle::superlearn',
+                           Outcome = outcome_variable_name,
+                           Event = "All learners performed worse than the null model")
+            )
         }
         predicted_values <- rep(mean(data[[outcome_variable]]),NROW(intervened_data))
         fitted_objects <- NULL
@@ -287,21 +292,16 @@ superlearn <- function(folds,
         }else{
             predicted_values <- do.call(cbind,lapply(predicted_value_ensemble,`[[`,"predicted_values"))%*%ensemble_weights[ensemble_weights>0]
         }
-        fitted_objects <- lapply(predicted_value_ensemble,`[[`,"fit")
+        fitted_objects <- lapply(predicted_value_ensemble,`[[`,"reuse_fit")
         names(fitted_objects) <- names(ensemble_weights)[ensemble_weights>0]
     }
     # parse_learner_output
-    if (save_fitted_objects){
-        list(predicted_values = predicted_values,
-             diagnostics = if (!missing(diagnostics)) diagnostics else NULL,
-             fit = ensemble_weights,
-             object = list(ensemble_weights = ensemble_weights,
-                           fitted_objects = fitted_objects))
-    }else{
-        list(predicted_values = predicted_values,
-             diagnostics = if (!missing(diagnostics)) diagnostics else NULL,
-             fit = ensemble_weights)
-    }
+    output <- list(predicted_values = predicted_values,
+                   fit_summary = ensemble_weights)
+    if (!missing(diagnostics)) output$diagnostics <- diagnostics 
+    if (isTRUE(save_fitted_objects)){
+        output$fit <- fitted_objects
+    }    
 }
 
 

@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Oct 28 2024 (09:26) 
 ## Version: 
-## Last-Updated: maj  4 2026 (12:58) 
+## Last-Updated: maj  7 2026 (09:46) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 144
+##     Update #: 146
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -27,6 +27,8 @@
 ##'   have been set according to a protocol.
 #' @param save_fitted_objects Logical. If \code{TRUE}, store the 
 #'   fitted object as element \code{fit}
+##' @param reuse_fit Optional fitted object returned by a previous call. If
+##'   supplied, skip fitting and only predict in \code{intervened_data}.
 ##' @param ... Additional arguments passed to \code{\link[xgboost]{xgboost}},
 ##'   including hyperparameters.
 ##' @return A list whose first element, \code{predicted_values}, is a vector of
@@ -67,36 +69,42 @@ learn_xgboost <- function(character_formula,
                           data,
                           intervened_data,
                           save_fitted_objects = FALSE,
+                          reuse_fit = NULL,
                           ...){
     if (!requireNamespace("xgboost", quietly = TRUE)) {
         stop("Package 'xgboost' is required for learn_xgboost().", call. = FALSE)
     }
-    control <- prodlim::SmartControl(call= list(...),
-                                     keys=c("xgboost"),
-                                     ignore=NULL,
-                                     ignore.case=TRUE,
-                                     defaults=list("xgboost"=list(max_depth = 2L,
-                                                                  learning_rate = 1.0,
-                                                                  nrounds = 2L,
-                                                                  subsample = 1.0,
-                                                                  reg_lambda = 1,
-                                                                  objective = "reg:squarederror")),
-                                     forced=NULL,
-                                     verbose=TRUE)
-    # extract the data
-    sf <- Publish::specialFrame(stats::formula(character_formula),
-                                data = data,
-                                specials = NULL,
-                                na.action = na.omit)
-    Y <- as.numeric(sf$response[[1]])
-    ## d <- xgboost::xgb.DMatrix(sf$design, label = Y)
-    if (!inherits(try(
-             fit <- do.call(xgboost::xgboost,c(list(x = sf$design,y = Y),control$xgboost))
-            ,silent = TRUE),
-             "try-error")){
+    if (length(reuse_fit) == 0){
+        control <- prodlim::SmartControl(call= list(...),
+                                         keys=c("xgboost"),
+                                         ignore=NULL,
+                                         ignore.case=TRUE,
+                                         defaults=list("xgboost"=list(max_depth = 2L,
+                                                                      learning_rate = 1.0,
+                                                                      nrounds = 2L,
+                                                                      subsample = 1.0,
+                                                                      reg_lambda = 1,
+                                                                      objective = "reg:squarederror")),
+                                         forced=NULL,
+                                         verbose=TRUE)
+        # extract the data
+        sf <- Publish::specialFrame(stats::formula(character_formula),
+                                    data = data,
+                                    specials = NULL,
+                                    na.action = na.omit)
+        Y <- as.numeric(sf$response[[1]])
+        ## d <- xgboost::xgb.DMatrix(sf$design, label = Y)
+        if (!inherits(try(
+                 fit <- do.call(xgboost::xgboost,c(list(x = sf$design,y = Y),control$xgboost))
+                ,silent = TRUE),
+                 "try-error")){
+        }else{
+            stop(paste0("\nCould not fit model with xgboost:\n",
+                        "Formula: ",character_formula))
+        }
     }else{
-        stop(paste0("\nCould not fit model with xgboost:\n",
-                    "Formula: ",character_formula))
+        fit <- reuse_fit$fit
+        fit_summary = reuse_fit$fit_summary
     }
     predicted_values <- vector(mode = "numeric",length = NROW(intervened_data))
     ivars <- all.vars(formula(character_formula))[-1]
@@ -122,13 +130,13 @@ learn_xgboost <- function(character_formula,
     ),"try-error")) {
         stop("Xgboost prediction failed")
     }
-    # parse_learner_output
-    if (save_fitted_objects){
-        list(predicted_values = predicted_values,
-             object = fit)
-    }else{
-        list(predicted_values = predicted_values)
+    #parse_learner_output
+    output <- list(predicted_values = predicted_values,
+                   fit_summary = NULL)
+    if (isTRUE(save_fitted_objects)){
+        output$fit <- fit
     }
+    output
 }
 
 

@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Nov 16 2024 (17:04) 
 ## Version: 
-## Last-Updated: apr 23 2026 (08:21) 
+## Last-Updated: maj  7 2026 (16:47) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 89
+##     Update #: 91
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -41,8 +41,8 @@ if (requireNamespace("ltmle")){
         x <- target(x,name = "Outcome_risk",estimator = "tmle",protocols = "A")
         x <- model_formula(x)
         x <- run_rtmle(x,refit = FALSE,verbose = FALSE,learner = "learn_glm")
-        expect_equal(result1$fit$g[["A"]], as.matrix(x$models[["time_0"]][["A"]][["A_0"]]$fit))
-        yfit_rtmle <- as.matrix(x$models$time_0$outcome[["Y_1"]]$fit[["A"]]$sequence_time_1)
+        expect_equal(result1$fit$g[["A"]], as.matrix(x$models[["time_0"]][["A"]][["A_0"]]$fit_summary))
+        yfit_rtmle <- as.matrix(x$models$time_0$outcome[["Y_1"]]$fit[["A"]]$sequence_time_1$fit_summary)
         yfit_ltmle <- result1$fit$Q[["Y"]]
         rownames(yfit_ltmle) = rownames(yfit_rtmle)
         expect_equal(yfit_rtmle,yfit_ltmle)
@@ -96,9 +96,9 @@ if (requireNamespace("ltmle")){
             time <- strsplit(g,"_")[[1]][2]
             if (is_cens){
                 time <- as.numeric(time)-1
-                b <- as.matrix(x$models[[paste0("time_",time)]][["censoring"]][[g]]$fit)
+                b <- as.matrix(x$models[[paste0("time_",time)]][["censoring"]][[g]]$fit_summary)
             }else{
-                b <- as.matrix(x$models[[paste0("time_",time)]][["Always_A"]][[g]]$fit)
+                b <- as.matrix(x$models[[paste0("time_",time)]][["Always_A"]][[g]]$fit_summary)
             }
             rownames(b) <- sub("01","0",rownames(b))
             rownames(b) <- sub("11","1",rownames(b))

@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul  1 2024 (09:11)
 ## Version:
-## Last-Updated: maj  4 2026 (12:00) 
+## Last-Updated: maj  7 2026 (16:29) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 635
+##     Update #: 641
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -236,7 +236,9 @@ run_rtmle <- function(x,
         x$save_fitted_objects <- save_fitted_objects
         return(x)
     }else{
+        #
         # check data
+        #
         learners <- parse_learners(learner)
         # Skipping the nuisance parameter models is only possible when the same
         # learner was used previously
@@ -315,6 +317,35 @@ run_rtmle <- function(x,
             e <- e[e[,.I[1],by = c("Target","Protocol","Time_horizon","Estimator")]$V1]
             x$estimate[["Main_analysis"]] <- e
         }
+        # for loop across protocols
+        run_these_protocols <- unique(unlist(sapply(run_these_targets,function(target_name){
+            x$targets[[target_name]]$protocols})))
+        # use the first protocol to store the censoring models
+        if (length(x$censoring_use_protocol) == 0
+            || !(x$censoring_use_protocol %chin% names(x$protocols))){
+            x$censoring_use_protocol <- run_these_protocols[[1]]
+        }
+        if (estimator == "tmle"){
+            for (protocol_name in run_these_protocols){
+                #
+                # G-part: fit nuisance parameter models for propensity and censoring
+                #
+                # when protocols are defined before data are prepared then
+                # intervention_match needs to run here
+                x <- intervention_match(x,protocol_name = protocol_name)
+                x <- intervention_probabilities(x,
+                                                protocol_name = protocol_name,
+                                                max_intervention_node = max(time_horizon)-1,
+                                                refit = refit,
+                                                learner = learners,
+                                                seed = seed,
+                                                progressbar = progressbar,
+                                                save_fitted_objects = save_fitted_objects)
+            }
+        }
+        if (save_fitted_objects){
+            # FIXME: go over saved censoring models and replace the objects with their summary
+        }
         # for loop across targets
         for (target_name in run_these_targets){
             if (verbose[[1]]){
@@ -327,22 +358,6 @@ run_rtmle <- function(x,
             for (protocol_name in x$targets[[target_name]]$protocols){
                 if (verbose[[1]]){
                     message("Current protocol: ",protocol_name," ... Set argument verbose = FALSE to suppress this message.")
-                }
-                #
-                # G-part: fit nuisance parameter models for propensity and censoring
-                #
-                if (estimator == "tmle"){
-                    # when protocols are defined before data are prepared then
-                    # intervention_match needs to run here
-                    x <- intervention_match(x,protocol_name = protocol_name)
-                    x <- intervention_probabilities(x,
-                                                    protocol_name = protocol_name,
-                                                    max_intervention_node = max(time_horizon)-1,
-                                                    refit = refit,
-                                                    learner = learners,
-                                                    seed = seed,
-                                                    progressbar = progressbar,
-                                                    save_fitted_objects = save_fitted_objects)
                 }
                 #
                 # Q-part: loop backwards in time through iterative condtional expectations

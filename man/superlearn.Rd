@@ -18,6 +18,7 @@ superlearn(
   ensemble_method = "discrete",
   diagnostics,
   save_fitted_objects = FALSE,
+  reuse_fit = NULL,
   ...
 )
 }
@@ -68,6 +69,9 @@ via \code{fitter()}, which is called from
 
 \item{save_fitted_objects}{Logical. If \code{TRUE}, store the 
 fitted object as element \code{fit}}
+
+\item{reuse_fit}{Optional fitted object returned by a previous call. If
+supplied, skip fitting and only predict in \code{intervened_data}.}
 
 \item{...}{Not used.}
 }

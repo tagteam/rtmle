@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 23 2024 (16:42) 
 ## Version: 
-## Last-Updated: maj  4 2026 (12:58) 
+## Last-Updated: maj  7 2026 (14:53) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 118
+##     Update #: 136
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -41,6 +41,8 @@
 ##'   deviance.
 #' @param save_fitted_objects Logical. If \code{TRUE}, store the 
 #'   fitted object as element \code{fit}
+##' @param reuse_fit Optional fitted object returned by a previous call. If
+##'   supplied, skip fitting and only predict in \code{intervened_data}.
 ##' @param ... Additional arguments passed to \code{\link[glmnet]{glmnet}}.
 ##' @return A list whose first element, \code{predicted_values}, is a vector of
 ##'   predicted probabilities. Element \code{fit} contains the selected
@@ -66,47 +68,52 @@ learn_glmnet <- function(character_formula,
                          nfolds = 10,
                          type.measure = "deviance",
                          save_fitted_objects = FALSE,
+                         reuse_fit = NULL,
                          ...){
     requireNamespace("glmnet")
-    ## requireNamespace("riskRegression")
     RHS <- stats::formula(stats::delete.response(stats::terms(stats::formula(character_formula))))
-    model_frame <- stats::model.frame(stats::formula(character_formula),
-                                      data = data,
-                                      drop.unused.levels = FALSE,
-                                      na.action = na.omit)
-    Y <- as.numeric(model_frame[[1]])
-    if (missing(family)){
-        family <- ifelse(length(unique(Y))>2,"gaussian","binomial")
-    }
-    X <- model.matrix(RHS,data = data)
-    args <- list(x = X,y = Y,lambda = lambda,alpha = alpha,family = family,...)
-    args <- args[unique(names(args))]
-    if (length(lambda) == 1 || selector == "undersmooth"){
-        fit <- do.call(glmnet::glmnet,args)
-        selected.lambda <- fit$lambda[length(fit$lambda)]
-        selected.beta <- fit$beta[,match(selected.lambda,fit$lambda,nomatch = NCOL(fit$beta)),drop = FALSE]
-    }else{
-        # forcing cv
-        stopifnot(selector%in%c("min","1se"))
-        args <- c(list(type.measure = type.measure,nfolds = nfolds),args)
+    if (length(reuse_fit) == 0){
+        ## requireNamespace("riskRegression")
+        model_frame <- stats::model.frame(stats::formula(character_formula),
+                                          data = data,
+                                          drop.unused.levels = FALSE,
+                                          na.action = na.omit)
+        Y <- as.numeric(model_frame[[1]])
+        if (missing(family)){
+            family <- ifelse(length(unique(Y))>2,"gaussian","binomial")
+        }
+        X <- model.matrix(RHS,data = data)
+        args <- list(x = X,y = Y,lambda = lambda,alpha = alpha,family = family,...)
         args <- args[unique(names(args))]
-        fit <- do.call(glmnet::cv.glmnet,args)
-        ## lambda <- fit$lambda
-        selected.lambda <- fit[[paste0("lambda.",selector)]]
-        selected.beta <- fit$glmnet.fit$beta[,fit$index[,"Lambda"][[selector]],drop = FALSE]
+        if (length(lambda) == 1 || selector == "undersmooth"){
+            fit <- do.call(glmnet::glmnet,args)
+            selected.lambda <- fit$lambda[length(fit$lambda)]
+            selected.beta <- fit$beta[,match(selected.lambda,fit$lambda,nomatch = NCOL(fit$beta)),drop = FALSE]
+            fit_summary <- list(selected_lambda = selected.lambda,selected_beta = selected.beta)
+        }else{
+            # forcing cv
+            stopifnot(selector%in%c("min","1se"))
+            args <- c(list(type.measure = type.measure,nfolds = nfolds),args)
+            args <- args[unique(names(args))]
+            fit <- do.call(glmnet::cv.glmnet,args)
+            ## lambda <- fit$lambda
+            selected.lambda <- fit[[paste0("lambda.",selector)]]
+            selected.beta <- fit$glmnet.fit$beta[,fit$index[,"Lambda"][[selector]],drop = FALSE]
+            fit_summary <- list(selected_lambda = selected.lambda,selected_beta = selected.beta)
+        }
+    }else{
+        fit <- reuse_fit$fit
+        fit_summary = reuse_fit$fit_summary
     }
     iX <- stats::model.matrix(RHS,data = intervened_data)
-    predicted_values <- as.numeric(stats::predict(fit,newx=iX,type = "response", s=selected.lambda))
+    predicted_values <- as.numeric(stats::predict(fit,newx=iX,type = "response", s=fit_summary$selected_lambda))
     #parse_learner_output
+    output <- list(predicted_values = predicted_values,
+                   fit_summary = fit_summary)
     if (isTRUE(save_fitted_objects)){
-        list(predicted_values = predicted_values,
-             fit = selected.beta,
-             selected.lambda = selected.lambda)
-    }else{
-        list(predicted_values = predicted_values,
-             fit = fit,
-             selected.lambda = selected.lambda)
+        output$fit <- fit
     }
+    output
 }
 
 
