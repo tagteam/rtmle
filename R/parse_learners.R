@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Nov  9 2024 (09:55) 
 ## Version: 
-## Last-Updated: apr 10 2026 (11:34) 
+## Last-Updated: maj 21 2026 (08:55) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 125
+##     Update #: 128
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -31,9 +31,8 @@
 ##' @examples
 ##' parse_learners(c("learn_glm","learn_glmnet"))
 ##' parse_learners(list(folds=5,
-##'                learners=
-##'                         list("learn_glm",
-##'                         "glm100"=list(maxit=200,fun="learn_glm"))))
+##'                learners=list(name="learn_glm",
+##'                          "glm100"=list(maxit=200,fun="learn_glm"))))
 ##' parse_learners(list(folds=10,
 ##'                learners=list(
 ##'                         "learn_glmnet",
@@ -57,7 +56,33 @@ parse_learners <- function(learners){
         # Case 3: single learner specification
         if (!("learners" %in% names(learners))) {
             if (!all(c("name", "fun") %in% names(learners))) {
-                stop("rtmle::parse_learners: Argument 'learners' can either be a list of learners or a single learner which must be a list that contains 'name' and 'fun'.")
+                stop("rtmle::parse_learners: Argument 'learners' can either be a list of learners or a single learner which must be a list that contains 'name' and 'fun'.
+Example single learner with specified learner arguments:
+
+list(
+     name='alearner',
+     fun='learn_glmnet',
+     args=list(alpha=0.7)
+)
+
+Example super learner:
+
+list(
+        name='slearner',
+        ensemble_method='discrete',
+        folds=5,
+        learners=list(
+            'learn_ranger',
+            list(
+                name='alearner',
+                fun='learn_glmnet',
+                args=list(
+                    alpha=0.7
+                )
+            )
+        )
+    )
+")
             }
         } else {
             # Case 4: super learner specification
