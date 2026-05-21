@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul  3 2024 (13:46) 
 ## Version: 
-## Last-Updated: Mar  7 2025 (18:41) 
+## Last-Updated: maj 21 2026 (08:35) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 26
+##     Update #: 27
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -16,7 +16,7 @@
 ### Code:
 intervene <- function(data,
                       intervention_table,
-                      time){
+                      time_node){
     interdata <- copy(data)
     N <- NROW(interdata)
     for (k in 1:nrow(intervention_table)){

@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Oct 17 2024 (09:26) 
 ## Version: 
-## Last-Updated: maj  7 2026 (16:28) 
+## Last-Updated: maj 21 2026 (08:35) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 587
+##     Update #: 591
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -26,7 +26,7 @@ intervention_probabilities <- function(x,
                                        seed,
                                        progressbar,
                                        save_fitted_objects = FALSE){
-    variable = type = NULL
+    variable = type = time_node = NULL
     # set the treatment variables to their protocolled values
     if (length(x$protocols[[protocol_name]]$intervene_function) == 0){
         stop(paste0("No intervene function defined for protocol ",protocol_name,"."))
@@ -36,7 +36,7 @@ intervention_probabilities <- function(x,
     action_nodes <- x$intervention_nodes[x$intervention_nodes <= max_intervention_node]
     current_protocol <- x$protocols[[protocol_name]]
     # extract intervention_table for the intervention nodes before max_intervention_node
-    intervention_table <- na.omit(current_protocol$intervention_table[time <= max_intervention_node])
+    intervention_table <- na.omit(current_protocol$intervention_table[time_node <= max_intervention_node])
     #
     # construct a matrices with the intervention/censoring probabilities
     #

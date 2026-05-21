@@ -100,10 +100,6 @@ Runs the analysis defined by \code{\link{rtmle_init}},
 \code{\link{model_formula}}.
 }
 \examples{
-# ------------------------------------------------------------------------------------------
-# Intervening on a single treatment variable
-# ------------------------------------------------------------------------------------------
-
 tau <- 3
 data(simulated_cohort)
 ld <- register_format(simulated_cohort)

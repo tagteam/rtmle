@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 30 2024 (14:30)
 ## Version:
-## Last-Updated: maj  7 2026 (11:03) 
+## Last-Updated: maj 21 2026 (08:34) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 612
+##     Update #: 629
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -23,8 +23,12 @@ sequential_regression <- function(x,
                                   seed = seed,
                                   progressbar,
                                   save_fitted_objects = FALSE){
-    time = Target = Protocol = Time_horizon = Estimator = Estimate = Target_parameter = Standard_error = Lower = Upper = rtmle_predicted_outcome = NULL
+    time_node = Target = Protocol = Time_horizon = Estimator = Estimate = Target_parameter = Standard_error = Lower = Upper = rtmle_predicted_outcome = NULL
     N <- NROW(x$prepared_data)
+    # for multi-factor interventions, the intervention_table is in long format 
+    # hence removing NA values for those variables that
+    # are not intervened on at time note k does not remove other variables
+    # which are intervened on. hence, the next line is okay.
     intervention_table <- na.omit(x$protocols[[protocol_name]]$intervention_table)
     intervention_match <- x$protocols[[protocol_name]]$intervention_match
     if (length(x$names$censoring)>0){
@@ -84,7 +88,7 @@ sequential_regression <- function(x,
         intervened_data <- do.call(x$protocol[[protocol_name]]$intervene_function,
                                    list(data = x$prepared_data[outcome_free_and_uncensored],
                                         intervention_table = intervention_table,
-                                        time = k))
+                                        time_node = k))
         # fit outcome regression
         fit_last_interval <- fitter(intervention_node = k,
                                     learner = learner,
@@ -132,7 +136,11 @@ sequential_regression <- function(x,
             }
             # the column names A_1,B_1,E_1 of the intervention_match table are made with paste
             # in function intervention_probabilities
-            intervention_node_name <- paste(intervention_table[time == k-1]$variable,collapse = ",")
+            intervention_node_name <- paste(intervention_table[time_node == k-1]$variable,collapse = ",")
+            # FIXME: this needs more work and testing also with multi-factor interventions
+            if (!intervention_node_name %chin% colnames(intervention_match)){
+                intervention_node_name <- colnames(intervention_match)[NCOL(intervention_match)]
+            }
             # use only data from subjects who are uncensored in current interval
             # construction of clever covariates
             predicted_outcome_previous <- rep(NA,length(Y))
@@ -155,7 +163,7 @@ sequential_regression <- function(x,
                                                  k = k,protocol = protocol_name)
             ),"try-error")){
                 stop(paste0("Fluctuation model used in the TMLE update step failed",
-                            " in the attempt to run function tmle_update at time point: ",k))
+                            " in the attempt to run function tmle_update at time node: ",k))
             }
             if (length(dia <- attr(predicted_outcome,"diagnostics",exact = TRUE))>0){
                 if (is.null(x$diagnostics)){

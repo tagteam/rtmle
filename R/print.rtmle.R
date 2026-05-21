@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 19 2024 (08:31) 
 ## Version: 
-## Last-Updated: apr 10 2026 (15:51) 
+## Last-Updated: maj 20 2026 (14:35) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 189
+##     Update #: 190
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -168,7 +168,15 @@ print.rtmle <- function(x, ...) {
     }
     if (length(x$estimate)>0){
         cat("\n\nResults:\n")
-        sx = summary(x)[,c("Target","Protocol","Target_parameter","Time_horizon","Estimator","Estimate (CI_95)"),with = FALSE]
+        sx = summary(x)[,c(
+                        "Target",
+                        "Protocol",
+                        "Reference",
+                        "Target_parameter",
+                        "Time_horizon",
+                        "Estimator",
+                        "Estimate (CI_95)"
+                    ),with = FALSE]
         print(sx)
     }
     cat("\n")

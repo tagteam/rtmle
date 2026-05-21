@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 29 2024 (10:44) 
 ## Version: 
-## Last-Updated: maj  4 2026 (12:02) 
+## Last-Updated: maj 20 2026 (14:45) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 207
+##     Update #: 209
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -150,10 +150,10 @@ summary.rtmle <- function(object,analysis = "Main_analysis",targets,reference = 
                         risk_ratio_upper <- risk_ratio_estimate*exp(qnorm(.975)*risk_ratio_log_se)
                         e1 <- data.table(Target = rep(target_name,2),
                                          Protocol = rep(protocol_name, 2),
+                                         Reference = rep(ref, 2),
                                          Target_parameter=Target_parameter_label,
                                          Time_horizon = rep(tp,2),
                                          Estimator = rep(object$estimate[[analysis]][Target == target_name & Protocol == ref]$Estimator[[1]],2),
-                                         Reference = rep(ref, 2),
                                          Estimate = c(risk_difference_estimate, risk_ratio_estimate),
                                          Standard_error = c(risk_difference_se, risk_ratio_log_se),
                                          Lower = c(risk_difference_lower, risk_ratio_lower),
@@ -196,10 +196,16 @@ summary.rtmle <- function(object,analysis = "Main_analysis",targets,reference = 
                                                                                                              digits = digits)]
                     e[]
                 }))}))
-           out <- data.table::rbindlist(list(risk,contrast),
+            out <- data.table::rbindlist(list(risk,contrast),
                                          use.names = TRUE,
                                          fill = TRUE)
-            out[is.na(Reference),Reference := ""][]
+            if ("Reference" %chin% names(out)){
+                out[is.na(Reference),Reference := ""][]
+                data.table::setcolorder(out, append(setdiff(names(out),"Reference"),
+                                                    values = "Reference",
+                                        after = match("Protocol",setdiff(names(out),"Reference"))))
+            }
+            
             if (length(subset_variable)>0){
                 data.table::setkeyv(out,c(subset_variable,"Target_parameter","Protocol"))
             }else{

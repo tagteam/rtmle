@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: feb 26 2026 (09:52) 
 ## Version: 
-## Last-Updated: maj  4 2026 (07:01) 
+## Last-Updated: maj 21 2026 (08:33) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 43
+##     Update #: 45
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -48,7 +48,7 @@ plot_IPW <- function(
                      x,
                      protocols = NULL
                      ) {
-    intervention_node <- intervention_nodes <- used_cumprobs <- NULL
+    time_node <- intervention_nodes <- used_cumprobs <- NULL
     stopifnot(!is.null(x$protocols),!is.null(x$followup),!is.null(x$intervention_nodes))
     protocol_names <- names(x$protocols)
     if (length(protocol_names) == 0) stop("rtmle::plot_IPW: Object contains no protocols yet. You need to apply 'rtmle::protocol'.") 
@@ -78,7 +78,7 @@ plot_IPW <- function(
                                            x$tuning_parameters$weight_truncation[2]),
                                       x$tuning_parameters$weight_truncation[1])
             }
-            intervention_node_name <- paste(x$protocols[[this_protocol]]$intervention_table[time == k-1]$variable,collapse = ",")
+            intervention_node_name <- paste(x$protocols[[this_protocol]]$intervention_table[time_node == k-1]$variable,collapse = ",")
             if (nchar(intervention_node_name)>0){
                 imatch <- (x$protocols[[this_protocol]]$intervention_match[,intervention_node_name]%in% 1)
             }else{
@@ -86,12 +86,16 @@ plot_IPW <- function(
                 imatch[!outcome_free_and_uncensored] <- NA
             }
             subjects_with_weights <- outcome_free_and_uncensored_outcome & as.vector(imatch)
-            data.table::data.table(protocol = this_protocol,intervention_node = k - 1,used_cumprobs = used_cumprobs[subjects_with_weights])
+            data.table::data.table(
+                            protocol = this_protocol,
+                            time_node = k - 1,
+                            used_cumprobs = used_cumprobs[subjects_with_weights]
+                        )
         }))
     }))
-    plot_dt[, intervention_node := factor(intervention_node, levels = x$intervention_nodes,labels = x$time_grid_labels[x$intervention_nodes+1])]
-    missing_values <- plot_dt[,list("missing value" = sum(is.na(used_cumprobs))),by = c("intervention_node","protocol")]
-    p <- ggplot2::ggplot(plot_dt, ggplot2::aes(x = intervention_node, y = used_cumprobs)) +
+    plot_dt[, time_node := factor(time_node, levels = x$intervention_nodes,labels = x$time_grid_labels[x$intervention_nodes+1])]
+    missing_values <- plot_dt[,list("missing value" = sum(is.na(used_cumprobs))),by = c("time_node","protocol")]
+    p <- ggplot2::ggplot(plot_dt, ggplot2::aes(x = time_node, y = used_cumprobs)) +
         ggplot2::geom_boxplot(outlier.alpha = 0.4) +
         ggplot2::labs(
                      x = "Time",

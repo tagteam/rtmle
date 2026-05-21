@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: maj  1 2026 (09:51) 
 ## Version: 
-## Last-Updated: maj  7 2026 (16:26) 
+## Last-Updated: maj 21 2026 (08:35) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 40
+##     Update #: 41
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -81,7 +81,6 @@ x <- target(x,name = "Treatment contrast",
             protocols = c("Always_A","Always_B"))
 x <- model_formula(x)
 x <- run_rtmle(x,time_horizon = 1:4)
-
 simulated_cohort <- cohort
 rtmle_object <- x
 rtmle_object$time_grid_labels <- as.character(rtmle_object$time_grid_scale)

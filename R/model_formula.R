@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jun 16 2025 (08:58) 
 ## Version: 
-## Last-Updated: apr 25 2026 (08:19) 
+## Last-Updated: maj 21 2026 (08:32) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 157
+##     Update #: 162
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -94,6 +94,7 @@ model_formula <- function(x,
                           exclusion_rules = NULL,
                           inclusion_rules = NULL,
                           ...){
+    time_node <- NULL
     exclude_variables = c("start_followup_date",exclude_variables)
     if (length(x$protocols) == 0) {stop("No protocols registered in object, hence it is unclear which variables are intervened upon.")}
     name_time_covariates <- setdiff(x$names$name_time_covariates,exclude_variables)
@@ -111,11 +112,11 @@ model_formula <- function(x,
         all_vars <- c(lapply(x$protocols,function(pro){
             # no intervention corresponds to setting NA or to not
             # have a line for the variable(s) in the intervention_table
-            vals <- pro$intervention_table[time == tk][["value"]]
+            vals <- pro$intervention_table[time_node == tk][["value"]]
             if (length(vals) == 0 || all(is.na(vals))){
                 NULL
             }else{
-                names_vals <- pro$intervention_table[time == tk][["variable"]][!is.na(vals)]
+                names_vals <- pro$intervention_table[time_node == tk][["variable"]][!is.na(vals)]
                 vals <- vals[!is.na(vals)]
                 names(vals) <- names_vals
                 vals

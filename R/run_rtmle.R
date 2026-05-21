@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul  1 2024 (09:11)
 ## Version:
-## Last-Updated: maj  7 2026 (16:29) 
+## Last-Updated: maj 20 2026 (14:46) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 641
+##     Update #: 642
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -84,10 +84,6 @@
 #'   \code{\link{superlearn}}, \code{\link{summary.rtmle}}
 #' @author Thomas A Gerds \email{tag@@biostat.ku.dk}
 #' @examples
-#' # ------------------------------------------------------------------------------------------
-#' # Intervening on a single treatment variable
-#' # ------------------------------------------------------------------------------------------
-#'
 #' tau <- 3
 #' data(simulated_cohort)
 #' ld <- register_format(simulated_cohort)

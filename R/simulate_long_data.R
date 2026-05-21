@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 11 2024 (13:24) 
 ## Version: 
-## Last-Updated: apr 30 2026 (09:06) 
+## Last-Updated: maj 20 2026 (14:10) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 299
+##     Update #: 300
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -152,7 +152,14 @@ simulate_long_data <- function(n,
                                   reventtime(n = nrow(people_atrisk),breaks = time,cumhazard = Baseline_Rate[["L"]],hazardratio = people_atrisk$hazard_ratio_L,entrytime = people_atrisk$entrytime,decimals = 2),
                                   reventtime(n = nrow(people_atrisk),breaks = time,cumhazard = Baseline_Rate[["C"]],hazardratio = people_atrisk$hazard_ratio_C,entrytime = people_atrisk$entrytime,decimals = 2),
                                   reventtime(n = nrow(people_atrisk),breaks = time,cumhazard = Baseline_Rate[["Y"]],hazardratio = people_atrisk$hazard_ratio_Y,entrytime = people_atrisk$entrytime,decimals = 2),
-                                  reventtime(n = nrow(people_atrisk),breaks = time,cumhazard = Baseline_Rate[["D"]],hazardratio = people_atrisk$hazard_ratio_D,entrytime = people_atrisk$entrytime,decimals = 2))
+                                  reventtime(
+                                      n = nrow(people_atrisk),
+                                      breaks = time,
+                                      cumhazard = Baseline_Rate[["D"]],
+                                      hazardratio = people_atrisk$hazard_ratio_D,
+                                      entrytime = people_atrisk$entrytime,
+                                      decimals = 2
+                                  ))
                       )
         
         ## old:         mins=Rfast::rowMins(ttt,value=FALSE)

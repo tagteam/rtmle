@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 23 2024 (16:42) 
 ## Version: 
-## Last-Updated: maj  4 2026 (08:58) 
+## Last-Updated: maj 21 2026 (07:11) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 41
+##     Update #: 51
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -77,14 +77,14 @@ autoplot.rtmle <- function(object,
                                            color = Protocol,
                                            fill = Protocol,
                                            group = Protocol))
+    if (missing(x_breaks)) x_breaks <- object$time_grid
     # getting data for numbers at-risk below the graph
     if (missing(position_atrisk)){
-        position_atrisk <- object$time_grid
+        position_atrisk <- x_breaks
     }
-    if (missing(x_breaks)) x_breaks <- object$time_grid
-    atrisk_times <- data.table::data.table(time = position_atrisk)
     atrisk <- object$followup[,.N,keyby = last_interval]
     atrisk[,N := NROW(object$followup)-cumsum(c(0,N[-length(N)]))]
+    atrisk <- atrisk[last_interval%in%position_atrisk]
     p <- p+ggplot2::geom_line()+ggplot2::geom_point()
     color_variable <- "Protocol"
     if (match("Lower",names(est),nomatch = 0) >0 &&

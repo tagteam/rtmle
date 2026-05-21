@@ -30,7 +30,7 @@ x$prepared_data <- data.table::data.table(
     A_0 = factor(c("1", "1", "0", "1"), levels = c("0", "1")),
     A_1 = factor(c("1", "0", "0", "1"), levels = c("0", "1")))
 x <- protocol(x, name = "Always_A",
-              intervention = data.frame(time = x$intervention_nodes,
+              intervention = data.frame(time_node = x$intervention_nodes,
                                         A = factor("1", levels = c("0", "1"))))
 x$protocols$Always_A$intervention_match <- NULL
 x <- intervention_match(x, "Always_A")

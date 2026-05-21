@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds & Alessandra
 ## Created: Jul 3 2024 (13:46)
 ## Version:
-## Last-Updated: apr 29 2026 (07:33) 
+## Last-Updated: maj 21 2026 (08:33) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 139
+##     Update #: 147
 #----------------------------------------------------------------------
 ##
 ### Commentary: 
@@ -65,13 +65,13 @@
 #' x <- rtmle_init(time_grid=0:3,name_id = "id",name_outcome = "Y",name_competing = "Dead",
 #'                 name_censoring = "Censored",censored_label = "censored")
 #' x <- protocol(x,name = "Always_A",
-#'                 intervention = data.frame(time=x$intervention_nodes,
+#'                 intervention = data.frame(time_node=x$intervention_nodes,
 #'                                           "A" = factor("1",levels = c("0","1"))))
 #' x <- protocol(x,name = "Never_A",
-#'               intervention = data.frame(time=x$intervention_nodes,
+#'               intervention = data.frame(time_node=x$intervention_nodes,
 #'                                         "A" = factor("0",levels = c("0","1"))))
 #' x <- protocol(x,name = "Initiate_A_then_stop",
-#'               intervention = data.frame(time=x$intervention_nodes,
+#'               intervention = data.frame(time_node=x$intervention_nodes,
 #'                                         "A" = factor(c("1","0","0"),levels = c("0","1"))))
 #' x$protocols
 #' # ------------------------------------------------------------------------------------------
@@ -80,11 +80,11 @@
 #' x <- rtmle_init(time_grid=0:3,name_id = "id",name_outcome = "Y",name_competing = "Dead",
 #'                 name_censoring = "Censored",censored_label = "censored")
 #' x <- protocol(x,name = "Always_A_never_B",
-#'                 intervention = data.frame(time=x$intervention_nodes,
+#'                 intervention = data.frame(time_node=x$intervention_nodes,
 #'                                      "A" = factor("1",levels = c("0","1")),
 #'                                      "B" = factor("0",levels = c("0","1"))))
 #' x <- protocol(x,name = "Always_A_and_B_never_C",
-#'                     intervention = data.frame(time=x$intervention_nodes,
+#'                     intervention = data.frame(time_node=x$intervention_nodes,
 #'                                               "A" = factor("1",levels = c("0","1")),
 #'                                               "B" = factor("1",levels = c("0","1")),
 #'                                               "C" = factor("0",levels = c("0","1"))))
@@ -98,27 +98,30 @@ protocol <- function(x,
                      intervene_function = NULL,
                      verbose = TRUE,
                      ...) {
-    variable <- NULL
+    variable <- time_node <- NULL
     #
     # User provided a data.frame
     #
+    allowed_intervention_node_names <- c("time_node","intervention_node","node","time_grid","time")
     if (inherits(intervention,"data.frame")){
         intervention_table <- data.table::copy(intervention)
         data.table::setDT(intervention_table)
         treatment_variables <- names(intervention_table)
-        if ((time_position <- match("time",treatment_variables,nomatch = 0))>0){
-            treatment_variables <- treatment_variables[-time_position]
+        if(length(intervention_node_name <- intersect(treatment_variables,allowed_intervention_node_names))>0){
+            if (length(intervention_node_name)>1) intervention_node_name <- intervention_node_name[[1]]
+            treatment_variables <- setdiff(treatment_variables,intervention_node_name)
         }else{
             if (length(x$intervention_nodes)>1){
-                stop("Argument intervention needs a time variable with values that are equal to or a subset of x$intervention_nodes.")
+                stop("Argument intervention needs to have a variable called 'intervention_node' with values that are equal to or a subset of x$intervention_nodes.")
             }
         }
         if (any(grepl(pattern = "_[0-9]+$",x = treatment_variables))){
             stop("Treatment variables should be given without time suffix.")
         }
-        if (any(is.na(too_many <- which(is.na(match(intervention_table[["time"]],x$intervention_nodes,nomatch = NA))))))
+        if (any(is.na(too_many <- which(is.na(match(intervention_table[["time_node"]],x$intervention_nodes,nomatch = NA))))))
             stop(paste0("The following time points are not registered as intervention nodes in the object:",
-                        paste0(intervention_table[["time"]][too_many],collapse = ", ")))
+                        paste0(intervention_table[["time_node"]][too_many],collapse = ", ")))
+        setnames(intervention_table,old = intervention_node_name,new = "time_node")
         treatment_options <- sapply(treatment_variables,
                                     function(v){
                                         if (is.factor(intervention[[v]])){
@@ -142,9 +145,9 @@ protocol <- function(x,
             intervention_table <- data.table::as.data.table(lapply(1:length(treatment_variables),function(v){
                 factor(intervention[[v]],levels = c(0,1))
             }))
-            intervention_table <- cbind(time = x$intervention_nodes,
+            intervention_table <- cbind(time_node = x$intervention_nodes,
                                         intervention_table)
-            data.table::setnames(intervention_table,c("time",treatment_variables))
+            data.table::setnames(intervention_table,c("time_node",treatment_variables))
             treatment_options <- sapply(treatment_variables,function(x)c(0,1),simplify = FALSE)
         }else{
             stop("Argument `intervention' is not a data.frame. Hence it must be a vector of 0s and 1s
@@ -154,11 +157,11 @@ protocol <- function(x,
     # turn from wide into long format
     intervention_table <- data.table::melt(
                                           intervention_table, 
-                                          id.vars = "time", 
+                                          id.vars = "time_node", 
                                           variable.name = "variable", 
                                           value.name = "value",
                                           value.factor = TRUE
-                                      )[, variable := paste0(variable, "_", time)]
+                                      )[, variable := paste0(variable, "_", time_node)]
     if (length(intervene_function)>0){
         x$protocols[[name]]$intervene_function <- intervene_function
     }else{
