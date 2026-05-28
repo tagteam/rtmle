@@ -1,0 +1,594 @@
+#+TITLE: Longitudinal causal inference with rtmle and simulated_cohort
+#+Author: Thomas Alexander Gerds and Anders Munch
+#+Date:
+#+EMAIL: tag@biostat.ku.dk
+#+LaTeX_CLASS: org-article
+#+OPTIONS: H:3 num:t toc:nil \n:nil @:t ::t |:t ^:t -:t f:t *:t <:t
+#+OPTIONS: TeX:t LaTeX:t skip:nil d:t todo:t pri:nil tags:not-in-toc author:nil
+#+PROPERTY: header-args:R :results output verbatim :exports both :session *R* :cache no
+#+superman-org-export-target: html
+
+
+* Aim
+
+This vignette illustrates the main workflow for a longitudinal causal
+inference analysis with =rtmle= using the simulated data set
+=simulated_cohort=.  The data contain simulated event-history register data with
+baseline covariates, repeated visits, treatment assignments, intermediate
+events, and absorbing events.
+
+The examples below estimate the absolute risks of =stroke= in the
+presense of the competing risk =death without stroke= under different
+static treatment protocols.
+
+* Preparation
+** Install and load package 
+
+#+BEGIN_SRC R
+if (packageVersion("rtmle") < package_version("2026.5.28")) {
+  stop("Please update the 'rtmle' package via devtools::install_github('tagteam/rtmle').")
+}
+library(rtmle)
+library(data.table)
+#+END_SRC
+
+#+RESULTS:
+
+** Load simulated data
+
+#+ATTR_LATEX: :options otherkeywords={}, deletekeywords={}
+#+BEGIN_SRC R  :results output :exports both  :session *R* :cache yes  
+data(simulated_cohort)
+simulated_cohort
+#+END_SRC
+
+#+RESULTS[(2026-05-28 14:54:18) 5ce6b590f4faf4ec903cd591793c8b5ee45351e5]:
+#+begin_example
+Key: <id, time, event>
+         id     time    event      age   sex      SBP stroke bleeding  changeSBP     A     B
+      <int>    <num>   <fctr>    <num> <num>    <num>  <num>    <num>      <num> <int> <int>
+   1:     1  0.00000 baseline 71.53675     0 153.1776      0        0  0.0000000     0     0
+   2:     1  1.12419    visit 71.53675     0 153.1776      0        0  0.1784864     1     0
+   3:     1  2.12419    visit 71.53675     0 153.1776      0        0 -1.0567860     1     0
+   4:     1  3.12419    visit 71.53675     0 153.1776      0        0 -1.3952744     1     0
+   5:     1  3.87384 bleeding 71.53675     0 153.1776      0        1 -0.1882920     1     1
+  ---                                                                                       
+5438:   307 16.60569    visit 31.08239     0 151.7671      0        0 -0.3116682     1     1
+5439:   307 17.72077    visit 31.08239     0 151.7671      0        0 -0.9528209     1     1
+5440:   307 18.72077    visit 31.08239     0 151.7671      0        0 -1.5583904     1     1
+5441:   307 19.80335    visit 31.08239     0 151.7671      0        0 -1.9218492     1     1
+5442:   307 20.00000  dropout 31.08239     0 151.7671      0        0 -0.4039913     1     1
+#+end_example
+
+** Convert the event history to register format
+
+The =rtmle= long-data workflow expects data in a similar format as
+they occur naturally in electronic health records where baseline data
+and data from the person-specific follow-up are memory efficiently
+saved as separate objects. We use the function
+=rtmle::register_format()= to transform the above data into a
+corresponding list of objects.
+
+#+BEGIN_SRC R
+# Input: simulated_cohort, an object of class "simulated_cohort".
+# Output: ld, a list with baseline_data and timevar_data components.
+ld <- register_format(simulated_cohort)
+
+names(ld)
+names(ld$timevar_data)
+NROW(ld$baseline_data)
+#+END_SRC
+
+#+RESULTS:
+: [1] "baseline_data" "timevar_data" 
+: [1] "A"         "B"         "changeSBP" "stroke"    "bleeding"  "death"     "dropout"  
+: [1] 307
+
+
+The resulting list contains one baseline table and one named =timevar_data=
+entry for each visit variable and event variable.  In this example:
+
+- =ld$baseline_data= contains one row per subject with baseline covariates.
+- =ld$timevar_data$stroke= contains outcome event times.
+- =ld$timevar_data$death= contains competing event times.
+- =ld$timevar_data$dropout= contains censoring times.
+- =ld$timevar_data[c("bleeding", "changeSBP", "A", "B")]= contains
+  time-varying covariates and treatments.
+
+* Initialize the =rtmle= analysis object
+
+The call to =rtmle_init()= records the analysis time grid and the
+variable names that identify subjects, time, outcome, competing event,
+and censoring along with the following 3 tuning parameters:
+
+- =minority_threshold=: (default=8) When fitting propensity score,
+  censoring and (the first) outcome regression model of the sequence,
+  regression modelling is skipped and the mean outcome is predicted
+  when the total number of subjects with a one (or with a zero) is
+  below this threshold.
+- =weight_truncation=: (default =c(0,1)=) Inverse probability weights are truncated at these bounderies.
+- =prediction_range=: (default =c(0.0001,0.9999)=) Before the tmle update step of the sequential regression algorithm, the predicted outcome values are truncated in this way to allow logit transformation.
+
+The supplied time grid =seq(0, 20, 4)= defines a discrete time scale
+with 5 intervals for the LTMLE analysis.
+
+#+BEGIN_SRC R
+# Input: variable names and a discrete analysis time grid.
+# Output: x, an empty "rtmle" object with names, time grid, and tuning settings.
+x <- rtmle_init(
+    time_grid = seq(0, 20, 4),
+    name_id = "id",
+    name_outcome = "stroke",
+    name_competing = "death",
+    name_censoring = "dropout",
+    censored_label = "censored"
+)
+
+x
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+
+Targeted minimum loss-based analysis of longitudinal data on a discretized time scale.
+
+Package version:     2026.5.28
+Subject id variable: id
+Outcome variable:    stroke
+Censoring variable:  dropout
+Competing risk:      death
+Intervention nodes:  0, 1, 2, 3, 4
+Minority threshold:  8
+Weight truncation:   (0,1)
+Prediction range:    (0.0001,0.9999)
+TODO: The object contains no baseline_data yet. Add them with the function rtmle::add_baseline_data
+TODO: The object contains no time varying data yet. Add them with rtmle::add_wide_data in discretized form or with rtmle::add_long_data followed by rtmle::long_to_wide.
+TODO: The object contains no outcome data yet. Add them with rtmle::add_wide_data in discretized form or with rtmle::add_long_data followed by rtmle::long_to_wide.
+TODO: The object contains no protocols. Add them with the function 'protocol'.
+Prepared data:       n=0, p=-1
+TODO: Use the function 'model_formula' to initialize the formula for the nuisance parameter models.
+TODO: Use the function 'run_rtmle' to estimate the nuisance parameter models and the target parameter.
+Diagnostics:         No warnings (yet)
+#+end_example
+
+The print function tells us what to do next.
+
+* Adding data to the object 
+
+** Add baseline data
+
+=add_baseline_data()= stores the baseline covariates.  These variables are
+available as baseline adjustment variables in the nuisance-parameter models.
+
+#+BEGIN_SRC R
+# Input: x with long_data and ld$baseline_data, one row per subject.
+# Output: x with baseline covariates stored in x$data$baseline_data.
+x <- add_baseline_data(x, data = ld$baseline_data)
+
+names(x$data$baseline_data)
+NROW(x$data$baseline_data)
+#+END_SRC
+
+#+RESULTS:
+: [1] "id"  "age" "sex" "SBP"
+: [1] 307
+
+** Add timevarying covariate information and outcome data (including date of competing risks and censoring)
+
+=add_long_data()= attaches outcome, competing-risk, censoring,
+treatment, and time-varying covariate histories as measured on the
+original continuous time scale to the initialized object. The outcome
+data must have at most one row per subject, so the example keeps the
+first =stroke= event for each subject.
+
+#+BEGIN_SRC R
+# Input: x from rtmle_init() and the long-format event/covariate tables in ld.
+# Output: x with long_data entries for stroke, death, dropout, bleeding,
+# changeSBP, A, and B.
+x <- add_long_data(
+    x,
+    outcome_data = ld$timevar_data$stroke[!duplicated(id)],
+    censored_data = ld$timevar_data$dropout,
+    competing_data = ld$timevar_data$death,
+    timevar_data = ld$timevar_data[c("bleeding", "changeSBP", "A", "B")]
+)
+
+names(x$long_data)
+names(x$long_data$timevar_data)
+#+END_SRC
+
+#+RESULTS:
+: [1] "timevar_data"   "outcome_data"   "censored_data"  "competing_data"
+: [1] "bleeding"  "changeSBP" "A"         "B"
+
+* Discretize the longitudinal data onto the discrete time scale
+
+=long_to_wide()= maps the long event-history data onto the discrete time grid.
+Because the simulated times are already measured from zero, the start of
+follow-up is set to 0.  Default mappings are used for all supplied
+time-varying variables.
+
+#+BEGIN_SRC R
+# Input: x with baseline_data and long_data plus the time grid from rtmle_init().
+# Output: x$data contains wide outcome and time-varying data on the time grid.
+x <- long_to_wide(x, start_followup_date = 0)
+
+names(x$data)
+names(x$data$timevar_data)
+#+END_SRC
+
+#+RESULTS:
+: [1] "baseline_data" "outcome_data"  "timevar_data" 
+: [1] "bleeding"  "changeSBP" "A"         "B"
+
+
+* Define treatment protocols
+
+The function =protocol()= adds an intervention to the object.  A
+simple example is a static regime which sets treatment =A= to 1 at
+every intervention node.  The intervention values are factors so that
+=rtmle= knows the two treatment options. It is recommended that one
+checks the intervention table after adding the intervention:
+
+#+BEGIN_SRC R
+# Input: x with prepared_data and intervention nodes.
+# Output: x$protocols$Always_A with an intervention table and adherence matrix.
+x <- protocol(
+    x,
+    name = "Always_A",
+    intervention = data.frame(
+        node = x$intervention_nodes,
+        A = factor("1", levels = c("0", "1"))
+    ),
+    verbose = FALSE
+)
+
+x$protocols$Always_A$intervention_table
+#+END_SRC
+
+#+RESULTS:
+:    time_node variable  value
+:        <int>   <char> <fctr>
+: 1:         0      A_0      1
+: 2:         1      A_1      1
+: 3:         2      A_2      1
+: 4:         3      A_3      1
+: 5:         4      A_4      1
+
+The protocol function can add more complex interventions that depend
+on multiple variables and apply user-written intervention
+functions. Here is an example of a two-factor regime which states that
+people should start treatment 'A', continue treatment 'A' for 20
+months, that is until node 4 on the discrete time grid, but are not
+allowed to take treatment 'B' in the first 10 months:
+
+#+BEGIN_SRC R
+# Input: x with prepared_data and intervention nodes.
+# Output: x$protocols$Always_A_not_B_in_the_beginning with an intervention table and adherence matrix.
+x <- protocol(
+    x,
+    name = "Always_A_not_B_in_the_beginning",
+    intervention = data.frame(
+        time = x$intervention_nodes,
+      A = factor(rep("1",5), levels = c("0", "1")),
+      B = factor(c("0","0",NA,NA,NA), levels = c("0", "1"))
+    ),
+    verbose = FALSE
+)
+
+x$protocols$Always_A_not_B_in_the_beginning$intervention_table
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+    time_node variable  value
+        <int>   <char> <fctr>
+ 1:         0      A_0      1
+ 2:         1      A_1      1
+ 3:         2      A_2      1
+ 4:         3      A_3      1
+ 5:         4      A_4      1
+ 6:         0      B_0      0
+ 7:         1      B_1      0
+ 8:         2      B_2   <NA>
+ 9:         3      B_3   <NA>
+10:         4      B_4   <NA>
+#+end_example
+
+The consequence of having 'NA' values at time_nodes 2:4 is that there
+is no intervention on B at these intervention nodes.
+
+* Prepare the estimation data
+
+=prepare_rtmle_data()= checks and combines the baseline, outcome, censoring,
+competing-risk, treatment, and covariate data.  It creates the one-row-per-
+subject analysis table used by =protocol()=, =model_formula()=, and
+=run_rtmle()=.
+
+#+BEGIN_SRC R
+# Input: x with discretized data in x$data.
+# Output: x$prepared_data, x$followup, and registered variable groups.
+x <- prepare_rtmle_data(x)
+
+dim(x$prepared_data)
+head(names(x$prepared_data), 20)
+#+END_SRC
+
+#+RESULTS:
+: [1] 307  38
+:  [1] "id"          "age"         "sex"         "SBP"         "bleeding_0"  "changeSBP_0" "A_0"         "B_0"         "dropout_1"   "stroke_1"   
+: [11] "death_1"     "bleeding_1"  "changeSBP_1" "A_1"         "B_1"         "dropout_2"   "stroke_2"    "death_2"     "bleeding_2"  "changeSBP_2"
+
+
+* Define the target parameter
+
+=target()= tells =rtmle= which protocols belong to the estimand and which
+estimator should be used.  Here the target is the stroke risk under each
+protocol and the contrast of =Always_A_not_B_in_the_beginning= against =Always_A=.
+
+#+BEGIN_SRC R
+# Input: x with both protocols registered.
+# Output: x$targets contains Stroke_risk and x$estimator includes "tmle".
+x <- target(
+    x,
+    name = "Stroke_risk",
+    protocols = c("Always_A", "Always_A_not_B_in_the_beginning"),
+    estimator = "tmle"
+)
+
+x$targets
+x$estimator
+#+END_SRC
+
+#+RESULTS:
+: $Stroke_risk
+: $Stroke_risk$protocols
+: [1] "Always_A"                        "Always_A_not_B_in_the_beginning"
+: 
+: 
+: [1] "tmle"
+
+* Specify nuisance-parameter model formulas
+
+=model_formula()= creates formulas for the outcome, censoring, and
+treatment models required by the sequential regression and TMLE update
+step. The formulas are derived from the prepared data, the time grid,
+and the treatment variables intervened on by the protocols. In
+addition to selecting variables that should be adjusted for, it is
+often useful to consider which variables should not be adjusted
+for. E.g., if =A_0= is equal to =(1-B_0)= then it makes little sense
+to have both variables in the adjustment set. To show how this works we here remove 'B_0' from all models
+and all bleeding variables from all censoring models:
+
+#+BEGIN_SRC R
+# Input: x with prepared_data, protocols, and target definition.
+# Output: x$models, a nested list of formulas indexed by time and model node.
+x <- model_formula(x, verbose = FALSE,exclusion_rules = list("*" = "B_0","dropout" = "bleeding"))
+
+names(x$models)
+x$models$time_2
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+[1] "time_0" "time_1" "time_2" "time_3" "time_4"
+$Always_A
+$Always_A$A_2
+$Always_A$A_2$formula
+[1] "I(1*(A_2==1)) ~ age + sex + SBP + bleeding_1 + changeSBP_1 + A_0 + A_1 + B_1"
+
+
+
+$Always_A_not_B_in_the_beginning
+$Always_A_not_B_in_the_beginning$A_2
+$Always_A_not_B_in_the_beginning$A_2$formula
+[1] "I(1*(A_2==1)) ~ age + sex + SBP + bleeding_1 + changeSBP_1 + A_0 + A_1 + B_1"
+
+
+
+$censoring
+$censoring$dropout_3
+$censoring$dropout_3$formula
+[1] "I(1*(dropout_3=='uncensored')) ~ age + sex + SBP + changeSBP_1 + changeSBP_2 + A_0 + A_1 + A_2 + B_1 + B_2"
+
+
+
+$outcome
+$outcome$stroke_3
+$outcome$stroke_3$formula
+[1] "I(1*(stroke_3==1)) ~ age + sex + SBP + bleeding_1 + bleeding_2 + changeSBP_1 + changeSBP_2 + A_0 + A_1 + A_2 + B_1 + B_2"
+#+end_example
+
+* Run the longitudinal TMLE
+
+=run_rtmle()= fits the nuisance-parameter models, performs the sequential
+regression and the TMLE update step, and stores estimates in =x$estimate=.  The example
+uses =learn_glm= to fit all models. Other implemented learners are =learn_glmnet=, =learn_ranger= and =learn_xgboost=
+as well as super-learner
+strategies (discrete and ensemble super learners) that can be specified through the =learner= argument.
+
+#+BEGIN_SRC R
+# Input: x with prepared_data, protocols, targets, and model formulas.
+# Output: x with fitted nuisance models, influence-curve components, and
+# main-analysis estimates for the requested time horizons.
+analysis_horizons <- 1:2
+
+x <- run_rtmle(
+    x,
+    learner = "learn_glm",
+    time_horizon = analysis_horizons,
+    verbose = FALSE
+)
+
+x
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+
+Targeted minimum loss-based analysis of longitudinal data on a discretized time scale.
+
+Package version:     2026.5.28
+Subject id variable: id
+Outcome variable:    stroke
+Censoring variable:  dropout
+Competing risk:      death
+Intervention nodes:  0, 1, 2, 3, 4
+Minority threshold:  8
+Weight truncation:   (0,1)
+Prediction range:    (0.0001,0.9999)
+Baseline data:       n=307, p=3
+Timevar data:        bleeding, changeSBP, A, B
+Outcome data:        n=307, p=stroke_0, stroke_1, ..., death_5
+Protocols:           Always_A, Always_A_not_B_in_the_beginning
+Target:              Stroke_risk [Always_A, Always_A_not_B_in_the_beginning]
+Number of models:    32
+Learner:             learn_glm
+Fitted time horizons:   1, 2
+Diagnostics:         No warnings (yet)
+
+Results:
+        Target                        Protocol Reference Target_parameter Time_horizon Estimator Estimate (CI_95)
+        <fctr>                          <fctr>    <char>           <fctr>        <int>    <fctr>           <char>
+1: Stroke_risk                        Always_A                       Risk            1      tmle    0.7 [0.0;2.1]
+2: Stroke_risk                        Always_A                       Risk            2      tmle   7.3 [2.5;12.2]
+3: Stroke_risk Always_A_not_B_in_the_beginning                       Risk            1      tmle    0.0 [0.0;0.0]
+4: Stroke_risk Always_A_not_B_in_the_beginning                       Risk            2      tmle   9.3 [0.7;17.9]
+5: Stroke_risk Always_A_not_B_in_the_beginning  Always_A  Risk_difference            1      tmle  -0.7 [-2.1;0.7]
+6: Stroke_risk Always_A_not_B_in_the_beginning  Always_A  Risk_difference            2      tmle   2.0 [-4.2;8.3]
+7: Stroke_risk Always_A_not_B_in_the_beginning  Always_A       Risk_ratio            1      tmle    0.0 [0.0;0.0]
+8: Stroke_risk Always_A_not_B_in_the_beginning  Always_A       Risk_ratio            2      tmle    1.3 [0.7;2.5]
+#+end_example
+
+The rows with =Target_parameter = "Risk"= are protocol-specific cumulative
+risks.  The rows with =Risk_difference= and =Risk_ratio= compare =Always_A_not_B_in_the_beginning= to
+the reference protocol =Always_A= at each requested time horizon.
+
+** Plotting the estimated values across time horizons
+
+#+BEGIN_SRC R :results file graphics :file ./vignettes/plot_rtmle_output.png :exports code :session *R* :cache yes :width 10 :height 5
+x <- run_rtmle(
+    x,
+    learner = "learn_glm",
+    time_horizon = 1:5,
+    verbose = FALSE
+)
+plot(x)
+#+END_SRC
+
+* Inspect the fit, check adherence and inverse-probability weights
+
+The fitted object also contains protocol diagnostics.  The adherence matrices
+record whether each subject followed the protocol through each intervention
+node.  The cumulative intervention probabilities are used to construct the
+inverse-probability weights in the TMLE update.
+There are useful plot functions:
+
+- =rtmle::plot.rtmle()=
+- =rtmle::plot_model_coefficients()=
+- =rtmle::plot_adherence()=
+- =rtmle::plot_ipw()=
+
+* Complete script
+
+For reference, the complete workflow is the sequence of the state-changing
+commands above:
+
+#+BEGIN_SRC R
+library(rtmle)
+library(data.table)
+
+data(simulated_cohort)
+ld <- register_format(simulated_cohort)
+
+x <- rtmle_init(
+    time_grid = seq(0, 20, 4),
+    name_id = "id",
+    name_outcome = "stroke",
+    name_competing = "death",
+    name_censoring = "dropout",
+    censored_label = "censored"
+)
+
+x <- add_long_data(
+    x,
+    outcome_data = ld$timevar_data$stroke[!duplicated(id)],
+    censored_data = ld$timevar_data$dropout,
+    competing_data = ld$timevar_data$death,
+    timevar_data = ld$timevar_data[c("bleeding", "changeSBP", "A", "B")]
+)
+
+x <- add_baseline_data(x, data = ld$baseline_data)
+x <- long_to_wide(x, start_followup_date = 0)
+x <- prepare_rtmle_data(x)
+
+x <- protocol(
+    x,
+    name = "Always_A",
+    intervention = data.frame(
+        time = x$intervention_nodes,
+        A = factor("1", levels = c("0", "1"))
+    ),
+    verbose = FALSE
+)
+
+x <- protocol(
+    x,
+    name = "Always_A_not_B_in_the_beginning",
+    intervention = data.frame(
+        time = x$intervention_nodes,
+      A = factor(rep("1",5), levels = c("0", "1")),
+      B = factor(c("0","0",NA,NA,NA), levels = c("0", "1"))
+    ),
+    verbose = FALSE
+)
+
+x <- target(
+    x,
+    name = "Stroke_risk",
+    protocols = c("Always_A", "Always_A_not_B_in_the_beginning"),
+    estimator = "tmle"
+)
+
+x <- model_formula(x, verbose = FALSE)
+x <- run_rtmle(x, learner = "learn_glm", time_horizon = 1:2, verbose = FALSE)
+
+x
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+
+Targeted minimum loss-based analysis of longitudinal data on a discretized time scale.
+
+Package version:     2026.5.28
+Subject id variable: id
+Outcome variable:    stroke
+Censoring variable:  dropout
+Competing risk:      death
+Intervention nodes:  0, 1, 2, 3, 4
+Minority threshold:  8
+Weight truncation:   (0,1)
+Prediction range:    (0.0001,0.9999)
+Baseline data:       n=307, p=3
+Timevar data:        bleeding, changeSBP, A, B
+Outcome data:        n=307, p=stroke_0, stroke_1, ..., death_5
+Protocols:           Always_A, Always_A_not_B_in_the_beginning
+Target:              Stroke_risk [Always_A, Always_A_not_B_in_the_beginning]
+Number of models:    32
+Learner:             learn_glm
+Fitted time horizons:   1, 2
+Diagnostics:         No warnings (yet)
+
+Results:
+        Target                        Protocol Reference Target_parameter Time_horizon Estimator Estimate (CI_95)
+        <fctr>                          <fctr>    <char>           <fctr>        <int>    <fctr>           <char>
+1: Stroke_risk                        Always_A                       Risk            1      tmle    0.7 [0.0;2.1]
+2: Stroke_risk                        Always_A                       Risk            2      tmle   7.3 [2.5;12.2]
+3: Stroke_risk Always_A_not_B_in_the_beginning                       Risk            1      tmle    0.0 [0.0;0.0]
+4: Stroke_risk Always_A_not_B_in_the_beginning                       Risk            2      tmle   9.3 [0.7;17.9]
+5: Stroke_risk Always_A_not_B_in_the_beginning  Always_A  Risk_difference            1      tmle  -0.7 [-2.1;0.7]
+6: Stroke_risk Always_A_not_B_in_the_beginning  Always_A  Risk_difference            2      tmle   2.0 [-4.2;8.3]
+7: Stroke_risk Always_A_not_B_in_the_beginning  Always_A       Risk_ratio            1      tmle    0.0 [0.0;0.0]
+8: Stroke_risk Always_A_not_B_in_the_beginning  Always_A       Risk_ratio            2      tmle    1.3 [0.7;2.5]
+#+end_example
