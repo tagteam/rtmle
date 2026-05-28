@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: feb 26 2026 (09:52) 
 ## Version: 
-## Last-Updated: maj 21 2026 (08:33) 
+## Last-Updated: maj 28 2026 (14:58) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 45
+##     Update #: 48
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -26,7 +26,7 @@
 #' }
 #'
 #' The cumulative probability column is selected from the protocol-specific
-#' \code{intervention_last_nodes} index created by \code{\link{run_rtmle}}.
+#' \code{ipw_last_nodes} index created by \code{\link{run_rtmle}}.
 #'
 #' @param x An \code{rtmle} object containing:
 #'   \itemize{
@@ -52,7 +52,7 @@ plot_IPW <- function(
     stopifnot(!is.null(x$protocols),!is.null(x$followup),!is.null(x$intervention_nodes))
     protocol_names <- names(x$protocols)
     if (length(protocol_names) == 0) stop("rtmle::plot_IPW: Object contains no protocols yet. You need to apply 'rtmle::protocol'.") 
-    run_protocols <- sapply(protocol_names,function(pn){length(x$protocols[[pn]]$intervention_last_nodes)})
+    run_protocols <- sapply(protocol_names,function(pn){length(x$protocols[[pn]]$ipw_last_nodes)})
     if (all(run_protocols == 0)) stop("rtmle::plot_IPW: None of the protocols has been fitted to data yet. You need to apply 'rtmle::run_rtmle'.") 
     if (!is.null(protocols)) {
         unavailable_protocols <- setdiff(protocols, protocol_names)
@@ -71,15 +71,15 @@ plot_IPW <- function(
             }else{
                 outcome_free_and_uncensored_outcome <- outcome_free_and_uncensored
             }
-            ipos <- x$protocols[[this_protocol]]$intervention_last_nodes[k]
+            ipos <- x$protocols[[this_protocol]]$ipw_last_nodes[k]
             used_cumprobs <- x$protocols[[this_protocol]]$cumulative_intervention_probs[,ipos]
             if (is.numeric(x$tuning_parameters$weight_truncation)){
                 used_cumprobs <- pmax(pmin(used_cumprobs,
                                            x$tuning_parameters$weight_truncation[2]),
                                       x$tuning_parameters$weight_truncation[1])
             }
-            intervention_node_name <- paste(x$protocols[[this_protocol]]$intervention_table[time_node == k-1]$variable,collapse = ",")
-            if (nchar(intervention_node_name)>0){
+            intervention_node_name <- x$protocols[[this_protocol]]$intervention_last_nodes[[paste0("node_",k-1)]]
+            if (!is.na(intervention_node_name)){
                 imatch <- (x$protocols[[this_protocol]]$intervention_match[,intervention_node_name]%in% 1)
             }else{
                 imatch <- rep(1,NROW(x$prepared_data))

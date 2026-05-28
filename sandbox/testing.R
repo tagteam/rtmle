@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 25 2024 (09:49) 
 ## Version: 
-## Last-Updated: apr 24 2026 (07:11) 
+## Last-Updated: maj 28 2026 (13:06) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 14
+##     Update #: 16
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -20,6 +20,24 @@ library(data.table)
 library(prodlim)
 library(targets)
 setwd("~/research/SoftWare/rtmle/")
+
+library(rtmle)
+library(data.table)
+
+data(simulated_cohort)
+ld <- register_format(simulated_cohort)
+x <- rtmle_init(time_grid = seq(0, 20, 4),name_id = "id",name_outcome = "stroke",name_competing = "death",name_censoring = "dropout",censored_label = "censored")
+x <- add_long_data(x,outcome_data = ld$timevar_data$stroke[!duplicated(id)],censored_data = ld$timevar_data$dropout,competing_data = ld$timevar_data$death,timevar_data = ld$timevar_data[c("bleeding", "changeSBP", "A", "B")])
+x <- add_baseline_data(x, data = ld$baseline_data)
+x <- long_to_wide(x, start_followup_date = 0)
+x <- prepare_rtmle_data(x)
+x <- protocol(x,name = "Use_A_not_B_in_the_end",intervention = data.frame(time = x$intervention_nodes,A = factor(c(NA,NA,NA,rep("1",2)),levels = c("0", "1")),B = factor(c(NA,NA,NA,"0","0"),levels = c("0", "1"))),verbose = FALSE)
+x <- protocol(x,name = "Always_A_not_B_in_the_beginning",intervention = data.frame(time = x$intervention_nodes,A = factor(rep("1",5),levels = c("0", "1")),B = factor(c("0","0",NA,NA,NA),levels = c("0", "1"))),verbose = FALSE)
+x <- target(x,name = "Stroke_risk",protocols = c("Use_A_not_B_in_the_end", "Always_A_not_B_in_the_beginning"),estimator = "tmle")
+x <- model_formula(x, verbose = FALSE)
+x <- run_rtmle(x, learner = "learn_glm", time_horizon = 1:2, verbose = FALSE)
+summary(x)
+
 
 parse_learners(c(list("learn_glmnet",
                       "glm"=list(learn_variables="A")),
@@ -71,6 +89,9 @@ plot(prodlim(Hist(terminal_time,terminal_event,cens.code = "C")~A_0,data = ld[!d
 plot(prodlim(Hist(terminal_time,terminal_event,cens.code = "C")~A_0,data = ld[!duplicated(id)]),cause = "D",xlim = c(0,365.25*3),plot.main = "Risk of death without outcome, protective effect of A on outcome",confint = 0L)
 plot(prodlim(Hist(terminal_time,terminal_event,cens.code = "C")~A_0,data = ld0[!duplicated(id)]),cause = "Y",xlim = c(0,365.25*3),plot.main = "Outcome risk, no effect of A",confint = 0L)
 plot(prodlim(Hist(terminal_time,terminal_event,cens.code = "C")~A_0,data = ld0[!duplicated(id)]),cause = "D",xlim = c(0,365.25*3),plot.main = "Risk of death without outcome, no effect of A",confint = 0L)
+
+
+
 
 
 

@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: apr 23 2026 (16:09) 
 ## Version: 
-## Last-Updated: maj 21 2026 (08:30) 
+## Last-Updated: maj 28 2026 (13:39) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 16
+##     Update #: 24
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -55,9 +55,13 @@ intervention_match <- function(x,protocol_name){
         length(intervention_match <- x$protocols[[protocol_name]]$intervention_match) == 0
     ){
         intervention_match <- matrix(0,ncol = length(unique(intervention_table$time_node)),nrow = N)
+        # temporary colnames 
+        colnames(intervention_match) <- paste0("time_node_",unique(intervention_table$time_node))
+        # prepare vector of colnames that are passed on
         intervention_match_names <- vector("character",NCOL(intervention_match))
+        names(intervention_match_names) <- colnames(intervention_match)
         previous <- rep(1,N)
-        for(k in unique(intervention_table$time_node)){
+        for(k in x$intervention_nodes){
             intervention_variables <- intervention_table[time_node == k][["variable"]]
             if (length(intervention_variables)>0){
                 observed_values <- x$prepared_data[,intervention_variables,with = FALSE]
@@ -65,17 +69,17 @@ intervention_match <- function(x,protocol_name){
                     # when there are multiple intervention variables
                     # all observed values must match
                     intervention_values <- intervention_table[time_node == k & variable == intervention_variables[[v]]][["value"]]
-                    intervention_match[,k+1] <- previous <- previous*(observed_values[[intervention_variables[[v]]]] %in% intervention_values)
+                    intervention_match[,paste0("time_node_",k)] <- previous <- previous*(observed_values[[intervention_variables[[v]]]] %in% intervention_values)
                     # when there are multiple treatment variables we paste-collapse the names
                 }
-                intervention_match_names[k+1] <- paste0(intervention_variables,collapse = ",")
+                intervention_match_names[paste0("time_node_",k)] <- paste0(intervention_variables,collapse = ",")
             }
             # else{
                 # NO INTERVENTION AT THAT NODE
             #}
         }
         ## the intervention_match matrix has one column per time point
-        colnames(intervention_match) <- intervention_match_names
+        colnames(intervention_match) <- as.character(intervention_match_names)
         x$protocols[[protocol_name]]$intervention_match <- intervention_match
     }
     x

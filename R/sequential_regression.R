@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 30 2024 (14:30)
 ## Version:
-## Last-Updated: maj 22 2026 (12:16) 
+## Last-Updated: maj 28 2026 (14:45) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 632
+##     Update #: 646
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -126,7 +126,7 @@ sequential_regression <- function(x,
             if (any(fit_last_interval[!is.na(fit_last_interval)] <= 0)) fit_last_interval <- pmax(fit_last_interval,x$tuning_parameters$prediction_range[1])
             if (any(fit_last_interval[!is.na(fit_last_interval)] >= 1)) fit_last_interval <- pmin(fit_last_interval,x$tuning_parameters$prediction_range[2])
             # TMLE update step
-            ipos <- x$protocols[[protocol_name]]$intervention_last_nodes[k]
+            ipos <- x$protocols[[protocol_name]]$ipw_last_nodes[k]
             inverse_probability_weights <- x$protocols[[protocol_name]]$cumulative_intervention_probs[,ipos]
             # weight truncation
             if (is.numeric(x$tuning_parameters$weight_truncation)){
@@ -136,16 +136,25 @@ sequential_regression <- function(x,
             }
             # the column names A_1,B_1,E_1 of the intervention_match table are made with paste
             # in function intervention_probabilities
-            intervention_node_name <- paste(intervention_table[time_node == k-1]$variable,collapse = ",")
+            ## intervention_node_name <- paste(intervention_table[time_node == k-1]$variable,collapse = ",")
+            intervention_node_name <- x$protocols[[protocol_name]]$intervention_last_nodes[[paste0("node_",k-1)]]
             # FIXME: this needs more work and testing also with multi-factor interventions
-            if (!intervention_node_name %chin% colnames(intervention_match)){
-                intervention_node_name <- colnames(intervention_match)[min(NCOL(intervention_match),k-1)]
+            if (is.na(intervention_node_name)){
+                # no intervention at this node
+                # search for earlier nodes with interventions
+                inodes <- x$protocols[[protocol_name]]$intervention_last_nodes
+                inode_names <- names(inodes)
+                intervention_node_name <- data.table::last(na.omit(inodes[1:match(paste0("node_",k-1),inode_names,nomatch = NA)]))
+                # case where there is no intervention in the beginning
+                if (length(intervention_node_name) == 0){
+                    intervention_node_name <- NA
+                }
             }
             # use only data from subjects who are uncensored in current interval
             # construction of clever covariates
             predicted_outcome_previous <- rep(NA,length(Y))
             predicted_outcome_previous[outcome_free_and_uncensored] <- stats::qlogis(fit_last_interval)
-            if (nchar(intervention_node_name)>0){
+            if (!is.na(intervention_node_name)){
                 imatch <- (intervention_match[,intervention_node_name]%in% 1)
             }else{
                 imatch <- rep(1,N)
@@ -177,13 +186,13 @@ sequential_regression <- function(x,
             #
             IPW <- 1/inverse_probability_weights
             if (length(x$names$censoring)>0){
-                if (nchar(intervention_node_name)>0){
+                if (!is.na(intervention_node_name)){
                     index <- (current_cnode%in%x$names$uncensored_label) & (intervention_match[,intervention_node_name] %in% 1)
                 }else{
                     index <- (current_cnode%in%x$names$uncensored_label)
                 }
             }else{
-                if (nchar(intervention_node_name)>0){
+                if (!is.na(intervention_node_name)){
                     index <- (intervention_match[,intervention_node_name] %in% 1)
                 }else{
                     index <- rep(1,N)
@@ -218,8 +227,8 @@ sequential_regression <- function(x,
                                   `:=`(Estimate = mean(x$prepared_data$rtmle_predicted_outcome),
                                        Standard_error = SE)]
     x$estimate[["Main_analysis"]][Target == target_name & Protocol ==  protocol_name & Time_horizon == time_horizon & Target_parameter == target_parameter & Estimator == estimator,
-                                  `:=`(Lower = Estimate-stats::qnorm(.975)*SE,
-                                       Upper = Estimate+stats::qnorm(.975)*SE)][]
+                                  `:=`(Lower = pmax(0,Estimate-stats::qnorm(.975)*SE),
+                                       Upper = pmin(1,Estimate+stats::qnorm(.975)*SE))][]
     x$IC[[target_name]][[protocol_name]][[label_time_horizon]] <- ic
     # clean up for the next run
     data.table::setkey(x$estimate$Main_analysis,Target,Protocol,Target_parameter,Time_horizon,Estimator)

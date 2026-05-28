@@ -25,6 +25,9 @@ Extracts regression coefficients from fitted nuisance-parameter models in an
 \code{rtmle} object. This method is used by
 \code{\link{plot_model_coefficients}}.
 }
+\examples{
+data(rtmle_object)
+}
 \seealso{
 \code{\link{run_rtmle}}, \code{\link{plot_model_coefficients}}
 }

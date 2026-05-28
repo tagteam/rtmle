@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 23 2024 (16:42) 
 ## Version: 
-## Last-Updated: maj 21 2026 (07:11) 
+## Last-Updated: maj 28 2026 (12:26) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 51
+##     Update #: 68
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -68,16 +68,19 @@ autoplot.rtmle <- function(object,
     }
     # assume that estimates are zero at time zero
     est <- rbind(
-        est[,list(Time_horizon = 0,Estimate = 0,Protocol = Protocol,Lower = 0,Upper = 0)],
+        est[,list(Time_horizon = 0,Estimate = 0,Protocol = unique(Protocol),Lower = 0,Upper = 0)],
         est[,list(Time_horizon,Estimate,Protocol,Lower,Upper)]
     )
+    setkey(est,Protocol,Time_horizon)
     # Build ggplot
     p <- ggplot2::ggplot(est, ggplot2::aes(x = Time_horizon,
                                            y = Estimate,
                                            color = Protocol,
                                            fill = Protocol,
                                            group = Protocol))
-    if (missing(x_breaks)) x_breaks <- object$time_grid
+    if (missing(x_breaks)) {
+        x_breaks <- object$time_grid
+    }
     # getting data for numbers at-risk below the graph
     if (missing(position_atrisk)){
         position_atrisk <- x_breaks
@@ -91,7 +94,12 @@ autoplot.rtmle <- function(object,
         ((missing(conf_int) ||
           (length(conf_int)>0 && conf_int != FALSE)))){
         ## p <- p+ pammtools::geom_stepribbon(ggplot2::aes(ymin = Lower,ymax = Upper,fill = !! if (length(color_variable)>0) {rlang::sym(color_variable)}else{NULL},colour = !! if (length(color_variable)>0) {rlang::sym(color_variable)}else{NULL}),linetype = 0,alpha = 0.2)
-        p <- p+ geom_ribbon(ggplot2::aes(ymin = Lower,ymax = Upper,fill = !! if (length(color_variable)>0) {rlang::sym(color_variable)}else{NULL},colour = !! if (length(color_variable)>0) {rlang::sym(color_variable)}else{NULL}),linetype = 0,alpha = 0.2)
+        p <- p + geom_ribbon(ggplot2::aes(
+                                          ymin = Lower,
+                                          ymax = Upper,
+                                          fill = !! if (length(color_variable)>0) {rlang::sym(color_variable)}else{NULL},
+                                          colour = !! if (length(color_variable)>0) {rlang::sym(color_variable)}else{NULL}
+                                      ),linetype = 0,alpha = 0.2)
     }
     p <- p+ ggplot2::labs(x = "Time horizon",
                           y = "Estimated risk",
@@ -132,7 +140,7 @@ autoplot.rtmle <- function(object,
 #' @rdname plot.rtmle
 #' @export
 plot.rtmle <- function(x, ...) {
-  print(autoplot.rtmle(x, ...))
+    print(autoplot.rtmle(x, ...))
 }
 
 

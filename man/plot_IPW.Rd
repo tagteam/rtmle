@@ -32,7 +32,7 @@ boxplots across intervention nodes, restricted to subjects who are:
 }
 \details{
 The cumulative probability column is selected from the protocol-specific
-\code{intervention_last_nodes} index created by \code{\link{run_rtmle}}.
+\code{ipw_last_nodes} index created by \code{\link{run_rtmle}}.
 }
 \examples{
 data(rtmle_object)

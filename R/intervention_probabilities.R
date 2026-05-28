@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Oct 17 2024 (09:26) 
 ## Version: 
-## Last-Updated: maj 21 2026 (08:35) 
+## Last-Updated: maj 28 2026 (14:45) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 591
+##     Update #: 610
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -67,7 +67,26 @@ intervention_probabilities <- function(x,
         #        (unless refit is TRUE) we would like to preserve the probs
         intervention_probs <- matrix(NA_real_,nrow = N,ncol = NC)
         colnames(intervention_probs) <- task_list$variable
-        intervention_last_nodes <- task_list[,variable[.N],by = time]$V1
+        # this following code is slightly cryptic and should be improved.
+        # the aim is to make the functionality robust in situations where there is no weighting
+        # or no intervention at some time nodes
+        ipw_last_nodes <- rep(NA,length(action_nodes))
+        names(ipw_last_nodes) <- paste0("node_",action_nodes)
+        ipw_last_nodes_data <- task_list[,variable[.N],by = time]
+        if (NROW(ipw_last_nodes_data)>0){
+            actual_ipw_last_nodes <- ipw_last_nodes_data$V1
+            names(actual_ipw_last_nodes) <- paste0("node_",ipw_last_nodes_data$time)
+            ipw_last_nodes[names(actual_ipw_last_nodes)] <- actual_ipw_last_nodes
+        }
+        # now the same for non-censoring intervention nodes
+        intervention_last_nodes <- rep(NA,length(action_nodes))
+        names(intervention_last_nodes) <- paste0("node_",action_nodes)
+        intervention_last_nodes_data <- task_list[type != "censoring",variable[.N],by = time]
+        if (NROW(intervention_last_nodes_data)>0){
+            actual_intervention_last_nodes <- intervention_last_nodes_data$V1
+            names(actual_intervention_last_nodes) <- paste0("node_",intervention_last_nodes_data$time)
+            intervention_last_nodes[names(actual_intervention_last_nodes)] <- actual_intervention_last_nodes
+        }
         task_column <- NC
         for (task in 1:nrow(task_list)){
             k <- task_list[task,time]
@@ -148,9 +167,10 @@ intervention_probabilities <- function(x,
         }
         # Store the intervention probabilities
         x$protocols[[protocol_name]]$intervention_probs <- intervention_probs
+        x$protocols[[protocol_name]]$ipw_last_nodes <- ipw_last_nodes
         x$protocols[[protocol_name]]$intervention_last_nodes <- intervention_last_nodes
         # FIXME: write this rowCumprods in armadillo
-        #        and only keep the columns of the intervention_last_nodes
+        #        and only keep the columns of the ipw_last_nodes
         x$protocols[[protocol_name]]$cumulative_intervention_probs <- matrixStats::rowCumprods(as.matrix(intervention_probs))
     }
     if (progressbar){cat("\n")}
