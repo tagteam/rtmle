@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul  3 2024 (13:48) 
 ## Version: 
-## Last-Updated: maj  7 2026 (16:09) 
+## Last-Updated: maj 28 2026 (08:24) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 77
+##     Update #: 80
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -28,6 +28,8 @@
 #' @return A \code{\link[data.table]{data.table}} with columns identifying the
 #'   time point, protocol, node, outcome, coefficient term, and coefficient
 #'   value.
+#' @examples
+#' data(rtmle_object)
 #' @seealso \code{\link{run_rtmle}}, \code{\link{plot_model_coefficients}}
 #' @export
 #' @method coef rtmle
@@ -56,6 +58,9 @@ coef.rtmle <- function(object,time_horizon,...){
                         if (inherits(fit_summary,"constant_probability")){
                             data.table(time = time_name,protocol = node_name,node = node_name,outcome = this_outcome,terms = "",beta = 0,stringsAsFactors = FALSE)
                         }else{
+                            if ("selected_beta" %chin% names(fit_summary)){
+                                fit_summary = fit_summary[["selected_beta"]]
+                            }
                             if (length(dim(fit_summary))>1 && (is.numeric(coefs <- fit_summary[,1]))){
                                 names(coefs) <- rownames(fit_summary)
                                 data.table(time = time_name,protocol = protocol,node = node_name,outcome = current_outcome,terms = names(coefs),beta = as.numeric(coefs),stringsAsFactors = FALSE)
@@ -69,6 +74,9 @@ coef.rtmle <- function(object,time_horizon,...){
                     if (inherits(fit_summary,"constant_probability")){
                         data.table(time = time_name,protocol = node_name,node = node_name,outcome = this_outcome,terms = "",beta = 0,stringsAsFactors = FALSE)
                     }else{
+                        if ("selected_beta" %chin% names(fit_summary)){
+                            fit_summary = fit_summary[["selected_beta"]]
+                        }
                         if (length(dim(fit_summary))>1
                             && (is.numeric(coefs <- fit_summary[,1]))){
                             names(coefs) <- rownames(fit_summary)

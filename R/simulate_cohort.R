@@ -370,7 +370,7 @@ simulate_cohort <- function(n,
                                 intersect(c(names(absorbing_events),"dropout"),elevels))
                    )]
     data.table::setkey(event_history,id,time,event)
-    class(event_history) <- c("simulated_cohort",class(event_history))
+    class(event_history) <- c(class(event_history),"simulated_cohort")
     attr(event_history,"call") <- match.call()
     return(event_history)
 }

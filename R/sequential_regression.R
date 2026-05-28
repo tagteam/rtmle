@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 30 2024 (14:30)
 ## Version:
-## Last-Updated: maj 21 2026 (13:56) 
+## Last-Updated: maj 22 2026 (12:16) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 631
+##     Update #: 632
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -139,7 +139,7 @@ sequential_regression <- function(x,
             intervention_node_name <- paste(intervention_table[time_node == k-1]$variable,collapse = ",")
             # FIXME: this needs more work and testing also with multi-factor interventions
             if (!intervention_node_name %chin% colnames(intervention_match)){
-                intervention_node_name <- colnames(intervention_match)[NCOL(intervention_match)]
+                intervention_node_name <- colnames(intervention_match)[min(NCOL(intervention_match),k-1)]
             }
             # use only data from subjects who are uncensored in current interval
             # construction of clever covariates

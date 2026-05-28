@@ -27,9 +27,8 @@ leaves it unchanged.
 \examples{
 parse_learners(c("learn_glm","learn_glmnet"))
 parse_learners(list(folds=5,
-               learners=
-                        list("learn_glm",
-                        "glm100"=list(maxit=200,fun="learn_glm"))))
+               learners=list(name="learn_glm",
+                         "glm100"=list(maxit=200,fun="learn_glm"))))
 parse_learners(list(folds=10,
                learners=list(
                         "learn_glmnet",
