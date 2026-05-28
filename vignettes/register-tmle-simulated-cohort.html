@@ -1,0 +1,894 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<!-- 2026-05-28 tor 14:56 -->
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Longitudinal causal inference with rtmle and simulated_cohort</title>
+<meta name="generator" content="Org Mode" />
+<style type="text/css">
+  #content { max-width: 60em; margin: auto; }
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #e6e6e6;
+    border-radius: 3px;
+    background-color: #f2f2f2;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: auto;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    top: -8px;
+    right: 12px;
+    padding: 3px;
+    color: #555;
+    background-color: #f2f2f299;
+  }
+  pre.src:hover:before { display: inline; margin-top: 14px;}
+  /* Languages per Org manual */
+  pre.src-asymptote:before { content: 'Asymptote'; }
+  pre.src-awk:before { content: 'Awk'; }
+  pre.src-authinfo::before { content: 'Authinfo'; }
+  pre.src-C:before { content: 'C'; }
+  /* pre.src-C++ doesn't work in CSS */
+  pre.src-clojure:before { content: 'Clojure'; }
+  pre.src-css:before { content: 'CSS'; }
+  pre.src-D:before { content: 'D'; }
+  pre.src-ditaa:before { content: 'ditaa'; }
+  pre.src-dot:before { content: 'Graphviz'; }
+  pre.src-calc:before { content: 'Emacs Calc'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-fortran:before { content: 'Fortran'; }
+  pre.src-gnuplot:before { content: 'gnuplot'; }
+  pre.src-haskell:before { content: 'Haskell'; }
+  pre.src-hledger:before { content: 'hledger'; }
+  pre.src-java:before { content: 'Java'; }
+  pre.src-js:before { content: 'JavaScript'; }
+  pre.src-latex:before { content: 'LaTeX'; }
+  pre.src-ledger:before { content: 'Ledger'; }
+  pre.src-lisp:before { content: 'Lisp'; }
+  pre.src-lilypond:before { content: 'Lilypond'; }
+  pre.src-lua:before { content: 'Lua'; }
+  pre.src-matlab:before { content: 'MATLAB'; }
+  pre.src-mscgen:before { content: 'Mscgen'; }
+  pre.src-ocaml:before { content: 'Objective Caml'; }
+  pre.src-octave:before { content: 'Octave'; }
+  pre.src-org:before { content: 'Org mode'; }
+  pre.src-oz:before { content: 'OZ'; }
+  pre.src-plantuml:before { content: 'Plantuml'; }
+  pre.src-processing:before { content: 'Processing.js'; }
+  pre.src-python:before { content: 'Python'; }
+  pre.src-R:before { content: 'R'; }
+  pre.src-ruby:before { content: 'Ruby'; }
+  pre.src-sass:before { content: 'Sass'; }
+  pre.src-scheme:before { content: 'Scheme'; }
+  pre.src-screen:before { content: 'Gnu Screen'; }
+  pre.src-sed:before { content: 'Sed'; }
+  pre.src-sh:before { content: 'shell'; }
+  pre.src-sql:before { content: 'SQL'; }
+  pre.src-sqlite:before { content: 'SQLite'; }
+  /* additional languages in org.el's org-babel-load-languages alist */
+  pre.src-forth:before { content: 'Forth'; }
+  pre.src-io:before { content: 'IO'; }
+  pre.src-J:before { content: 'J'; }
+  pre.src-makefile:before { content: 'Makefile'; }
+  pre.src-maxima:before { content: 'Maxima'; }
+  pre.src-perl:before { content: 'Perl'; }
+  pre.src-picolisp:before { content: 'Pico Lisp'; }
+  pre.src-scala:before { content: 'Scala'; }
+  pre.src-shell:before { content: 'Shell Script'; }
+  pre.src-ebnf2ps:before { content: 'ebfn2ps'; }
+  /* additional language identifiers per "defun org-babel-execute"
+       in ob-*.el */
+  pre.src-cpp:before  { content: 'C++'; }
+  pre.src-abc:before  { content: 'ABC'; }
+  pre.src-coq:before  { content: 'Coq'; }
+  pre.src-groovy:before  { content: 'Groovy'; }
+  /* additional language identifiers from org-babel-shell-names in
+     ob-shell.el: ob-shell is the only babel language using a lambda to put
+     the execution function name together. */
+  pre.src-bash:before  { content: 'bash'; }
+  pre.src-csh:before  { content: 'csh'; }
+  pre.src-ash:before  { content: 'ash'; }
+  pre.src-dash:before  { content: 'dash'; }
+  pre.src-ksh:before  { content: 'ksh'; }
+  pre.src-mksh:before  { content: 'mksh'; }
+  pre.src-posh:before  { content: 'posh'; }
+  /* Additional Emacs modes also supported by the LaTeX listings package */
+  pre.src-ada:before { content: 'Ada'; }
+  pre.src-asm:before { content: 'Assembler'; }
+  pre.src-caml:before { content: 'Caml'; }
+  pre.src-delphi:before { content: 'Delphi'; }
+  pre.src-html:before { content: 'HTML'; }
+  pre.src-idl:before { content: 'IDL'; }
+  pre.src-mercury:before { content: 'Mercury'; }
+  pre.src-metapost:before { content: 'MetaPost'; }
+  pre.src-modula-2:before { content: 'Modula-2'; }
+  pre.src-pascal:before { content: 'Pascal'; }
+  pre.src-ps:before { content: 'PostScript'; }
+  pre.src-prolog:before { content: 'Prolog'; }
+  pre.src-simula:before { content: 'Simula'; }
+  pre.src-tcl:before { content: 'tcl'; }
+  pre.src-tex:before { content: 'TeX'; }
+  pre.src-plain-tex:before { content: 'Plain TeX'; }
+  pre.src-verilog:before { content: 'Verilog'; }
+  pre.src-vhdl:before { content: 'VHDL'; }
+  pre.src-xml:before { content: 'XML'; }
+  pre.src-nxml:before { content: 'XML'; }
+  /* add a generic configuration mode; LaTeX export needs an additional
+     (add-to-list 'org-latex-listings-langs '(conf " ")) in .emacs */
+  pre.src-conf:before { content: 'Configuration File'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .equation-container {
+    display: table;
+    text-align: center;
+    width: 100%;
+  }
+  .equation {
+    vertical-align: middle;
+  }
+  .equation-label {
+    display: table-cell;
+    text-align: right;
+    vertical-align: middle;
+  }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  .org-svg { }
+</style>
+<link rel="stylesheet" type="text/css" href="https://publicifsv.sund.ku.dk/~tag/styles/practicals.css" />
+</head>
+<body>
+<div id="preamble" class="status">
+<br>Thomas Alexander Gerds and Anders Munch
+</div>
+<div id="content" class="content">
+<h1 class="title">Longitudinal causal inference with rtmle and simulated<sub>cohort</sub></h1>
+<div id="outline-container-org62d1a7c" class="outline-2">
+<h2 id="org62d1a7c"><span class="section-number-2">1.</span> Aim</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+This vignette illustrates the main workflow for a longitudinal causal
+inference analysis with <code>rtmle</code> using the simulated data set
+<code>simulated_cohort</code>.  The data contain simulated event-history register data with
+baseline covariates, repeated visits, treatment assignments, intermediate
+events, and absorbing events.
+</p>
+
+<p>
+The examples below estimate the absolute risks of <code>stroke</code> in the
+presense of the competing risk <code>death without stroke</code> under different
+static treatment protocols.
+</p>
+</div>
+</div>
+<div id="outline-container-org710d775" class="outline-2">
+<h2 id="org710d775"><span class="section-number-2">2.</span> Preparation</h2>
+<div class="outline-text-2" id="text-2">
+</div>
+<div id="outline-container-orgdbaa90d" class="outline-3">
+<h3 id="orgdbaa90d"><span class="section-number-3">2.1.</span> Install and load package</h3>
+<div class="outline-text-3" id="text-2-1">
+<div class="org-src-container">
+<pre class="src src-R"><span style="color: #a020f0;">if</span> (packageVersion(<span style="color: #5c3566;">"rtmle"</span>) &lt; package_version(<span style="color: #5c3566;">"2026.5.28"</span>)) {
+  <span style="color: #a020f0;">stop</span>(<span style="color: #5c3566;">"Please update the 'rtmle' package via devtools::install_github('tagteam/rtmle')."</span>)
+}
+<span style="color: #204a87; font-weight: bold;">library</span>(rtmle)
+<span style="color: #204a87; font-weight: bold;">library</span>(data.table)
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-org7d14e36" class="outline-3">
+<h3 id="org7d14e36"><span class="section-number-3">2.2.</span> Load simulated data</h3>
+<div class="outline-text-3" id="text-2-2">
+<div class="org-src-container">
+<pre class="src src-R">data(simulated_cohort)
+simulated_cohort
+</pre>
+</div>
+
+<pre class="example" id="org211e4df">
+Key: &lt;id, time, event&gt;
+         id     time    event      age   sex      SBP stroke bleeding  changeSBP     A     B
+      &lt;int&gt;    &lt;num&gt;   &lt;fctr&gt;    &lt;num&gt; &lt;num&gt;    &lt;num&gt;  &lt;num&gt;    &lt;num&gt;      &lt;num&gt; &lt;int&gt; &lt;int&gt;
+   1:     1  0.00000 baseline 71.53675     0 153.1776      0        0  0.0000000     0     0
+   2:     1  1.12419    visit 71.53675     0 153.1776      0        0  0.1784864     1     0
+   3:     1  2.12419    visit 71.53675     0 153.1776      0        0 -1.0567860     1     0
+   4:     1  3.12419    visit 71.53675     0 153.1776      0        0 -1.3952744     1     0
+   5:     1  3.87384 bleeding 71.53675     0 153.1776      0        1 -0.1882920     1     1
+  ---                                                                                       
+5438:   307 16.60569    visit 31.08239     0 151.7671      0        0 -0.3116682     1     1
+5439:   307 17.72077    visit 31.08239     0 151.7671      0        0 -0.9528209     1     1
+5440:   307 18.72077    visit 31.08239     0 151.7671      0        0 -1.5583904     1     1
+5441:   307 19.80335    visit 31.08239     0 151.7671      0        0 -1.9218492     1     1
+5442:   307 20.00000  dropout 31.08239     0 151.7671      0        0 -0.4039913     1     1
+</pre>
+</div>
+</div>
+<div id="outline-container-org76f877d" class="outline-3">
+<h3 id="org76f877d"><span class="section-number-3">2.3.</span> Convert the event history to register format</h3>
+<div class="outline-text-3" id="text-2-3">
+<p>
+The <code>rtmle</code> long-data workflow expects data in a similar format as
+they occur naturally in electronic health records where baseline data
+and data from the person-specific follow-up are memory efficiently
+saved as separate objects. We use the function
+<code>rtmle::register_format()</code> to transform the above data into a
+corresponding list of objects.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-R"><span style="color: #5f615c; font-style: italic;"># </span><span style="color: #5f615c; font-style: italic;">Input: simulated_cohort, an object of class "simulated_cohort".</span>
+<span style="color: #5f615c; font-style: italic;"># </span><span style="color: #5f615c; font-style: italic;">Output: ld, a list with baseline_data and timevar_data components.</span>
+ld <span style="color: #204a87; font-weight: bold;">&lt;-</span> register_format(simulated_cohort)
+
+names(ld)
+names(ld$timevar_data)
+NROW(ld$baseline_data)
+</pre>
+</div>
+
+<pre class="example">
+[1] "baseline_data" "timevar_data" 
+[1] "A"         "B"         "changeSBP" "stroke"    "bleeding"  "death"     "dropout"  
+[1] 307
+</pre>
+
+
+<p>
+The resulting list contains one baseline table and one named <code>timevar_data</code>
+entry for each visit variable and event variable.  In this example:
+</p>
+
+<ul class="org-ul">
+<li><code>ld$baseline_data</code> contains one row per subject with baseline covariates.</li>
+<li><code>ld$timevar_data$stroke</code> contains outcome event times.</li>
+<li><code>ld$timevar_data$death</code> contains competing event times.</li>
+<li><code>ld$timevar_data$dropout</code> contains censoring times.</li>
+<li><code>ld$timevar_data[c("bleeding", "changeSBP", "A", "B")]</code> contains
+time-varying covariates and treatments.</li>
+</ul>
+</div>
+</div>
+</div>
+<div id="outline-container-org9341c78" class="outline-2">
+<h2 id="org9341c78"><span class="section-number-2">3.</span> Initialize the <code>rtmle</code> analysis object</h2>
+<div class="outline-text-2" id="text-3">
+<p>
+The call to <code>rtmle_init()</code> records the analysis time grid and the
+variable names that identify subjects, time, outcome, competing event,
+and censoring along with the following 3 tuning parameters:
+</p>
+
+<ul class="org-ul">
+<li><code>minority_threshold</code>: (default=8) When fitting propensity score,
+censoring and (the first) outcome regression model of the sequence,
+regression modelling is skipped and the mean outcome is predicted
+when the total number of subjects with a one (or with a zero) is
+below this threshold.</li>
+<li><code>weight_truncation</code>: (default <code>c(0,1)</code>) Inverse probability weights are truncated at these bounderies.</li>
+<li><code>prediction_range</code>: (default <code>c(0.0001,0.9999)</code>) Before the tmle update step of the sequential regression algorithm, the predicted outcome values are truncated in this way to allow logit transformation.</li>
+</ul>
+
+<p>
+The supplied time grid <code>seq(0, 20, 4)</code> defines a discrete time scale
+with 5 intervals for the LTMLE analysis.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-R"><span style="color: #5f615c; font-style: italic;"># </span><span style="color: #5f615c; font-style: italic;">Input: variable names and a discrete analysis time grid.</span>
+<span style="color: #5f615c; font-style: italic;"># </span><span style="color: #5f615c; font-style: italic;">Output: x, an empty "rtmle" object with names, time grid, and tuning settings.</span>
+x <span style="color: #204a87; font-weight: bold;">&lt;-</span> rtmle_init(
+    time_grid = seq(0, 20, 4),
+    name_id = <span style="color: #5c3566;">"id"</span>,
+    name_outcome = <span style="color: #5c3566;">"stroke"</span>,
+    name_competing = <span style="color: #5c3566;">"death"</span>,
+    name_censoring = <span style="color: #5c3566;">"dropout"</span>,
+    censored_label = <span style="color: #5c3566;">"censored"</span>
+)
+
+x
+</pre>
+</div>
+
+<pre class="example" id="org7d926d8">
+
+Targeted minimum loss-based analysis of longitudinal data on a discretized time scale.
+
+Package version:     2026.5.28
+Subject id variable: id
+Outcome variable:    stroke
+Censoring variable:  dropout
+Competing risk:      death
+Intervention nodes:  0, 1, 2, 3, 4
+Minority threshold:  8
+Weight truncation:   (0,1)
+Prediction range:    (0.0001,0.9999)
+TODO: The object contains no baseline_data yet. Add them with the function rtmle::add_baseline_data
+TODO: The object contains no time varying data yet. Add them with rtmle::add_wide_data in discretized form or with rtmle::add_long_data followed by rtmle::long_to_wide.
+TODO: The object contains no outcome data yet. Add them with rtmle::add_wide_data in discretized form or with rtmle::add_long_data followed by rtmle::long_to_wide.
+TODO: The object contains no protocols. Add them with the function 'protocol'.
+Prepared data:       n=0, p=-1
+TODO: Use the function 'model_formula' to initialize the formula for the nuisance parameter models.
+TODO: Use the function 'run_rtmle' to estimate the nuisance parameter models and the target parameter.
+Diagnostics:         No warnings (yet)
+</pre>
+
+<p>
+The print function tells us what to do next.
+</p>
+</div>
+</div>
+<div id="outline-container-orgb0f41fa" class="outline-2">
+<h2 id="orgb0f41fa"><span class="section-number-2">4.</span> Adding data to the object</h2>
+<div class="outline-text-2" id="text-4">
+</div>
+<div id="outline-container-org3aa8a2b" class="outline-3">
+<h3 id="org3aa8a2b"><span class="section-number-3">4.1.</span> Add baseline data</h3>
+<div class="outline-text-3" id="text-4-1">
+<p>
+<code>add_baseline_data()</code> stores the baseline covariates.  These variables are
+available as baseline adjustment variables in the nuisance-parameter models.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-R"><span style="color: #5f615c; font-style: italic;"># </span><span style="color: #5f615c; font-style: italic;">Input: x with long_data and ld$baseline_data, one row per subject.</span>
+<span style="color: #5f615c; font-style: italic;"># </span><span style="color: #5f615c; font-style: italic;">Output: x with baseline covariates stored in x$data$baseline_data.</span>
+x <span style="color: #204a87; font-weight: bold;">&lt;-</span> add_baseline_data(x, data = ld$baseline_data)
+
+names(x$data$baseline_data)
+NROW(x$data$baseline_data)
+</pre>
+</div>
+
+<pre class="example">
+[1] "id"  "age" "sex" "SBP"
+[1] 307
+</pre>
+</div>
+</div>
+<div id="outline-container-org54be826" class="outline-3">
+<h3 id="org54be826"><span class="section-number-3">4.2.</span> Add timevarying covariate information and outcome data (including date of competing risks and censoring)</h3>
+<div class="outline-text-3" id="text-4-2">
+<p>
+<code>add_long_data()</code> attaches outcome, competing-risk, censoring,
+treatment, and time-varying covariate histories as measured on the
+original continuous time scale to the initialized object. The outcome
+data must have at most one row per subject, so the example keeps the
+first <code>stroke</code> event for each subject.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-R"><span style="color: #5f615c; font-style: italic;"># </span><span style="color: #5f615c; font-style: italic;">Input: x from rtmle_init() and the long-format event/covariate tables in ld.</span>
+<span style="color: #5f615c; font-style: italic;"># </span><span style="color: #5f615c; font-style: italic;">Output: x with long_data entries for stroke, death, dropout, bleeding,</span>
+<span style="color: #5f615c; font-style: italic;"># </span><span style="color: #5f615c; font-style: italic;">changeSBP, A, and B.</span>
+x <span style="color: #204a87; font-weight: bold;">&lt;-</span> add_long_data(
+    x,
+    outcome_data = ld$timevar_data$stroke[!duplicated(id)],
+    censored_data = ld$timevar_data$dropout,
+    competing_data = ld$timevar_data$death,
+    timevar_data = ld$timevar_data[c(<span style="color: #5c3566;">"bleeding"</span>, <span style="color: #5c3566;">"changeSBP"</span>, <span style="color: #5c3566;">"A"</span>, <span style="color: #5c3566;">"B"</span>)]
+)
+
+names(x$long_data)
+names(x$long_data$timevar_data)
+</pre>
+</div>
+
+<pre class="example">
+[1] "timevar_data"   "outcome_data"   "censored_data"  "competing_data"
+[1] "bleeding"  "changeSBP" "A"         "B"
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-orgbef54b9" class="outline-2">
+<h2 id="orgbef54b9"><span class="section-number-2">5.</span> Discretize the longitudinal data onto the discrete time scale</h2>
+<div class="outline-text-2" id="text-5">
+<p>
+<code>long_to_wide()</code> maps the long event-history data onto the discrete time grid.
+Because the simulated times are already measured from zero, the start of
+follow-up is set to 0.  Default mappings are used for all supplied
+time-varying variables.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-R"><span style="color: #5f615c; font-style: italic;"># </span><span style="color: #5f615c; font-style: italic;">Input: x with baseline_data and long_data plus the time grid from rtmle_init().</span>
+<span style="color: #5f615c; font-style: italic;"># </span><span style="color: #5f615c; font-style: italic;">Output: x$data contains wide outcome and time-varying data on the time grid.</span>
+x <span style="color: #204a87; font-weight: bold;">&lt;-</span> long_to_wide(x, start_followup_date = 0)
+
+names(x$data)
+names(x$data$timevar_data)
+</pre>
+</div>
+
+<pre class="example">
+[1] "baseline_data" "outcome_data"  "timevar_data" 
+[1] "bleeding"  "changeSBP" "A"         "B"
+</pre>
+</div>
+</div>
+<div id="outline-container-org7b10be6" class="outline-2">
+<h2 id="org7b10be6"><span class="section-number-2">6.</span> Define treatment protocols</h2>
+<div class="outline-text-2" id="text-6">
+<p>
+The function <code>protocol()</code> adds an intervention to the object.  A
+simple example is a static regime which sets treatment <code>A</code> to 1 at
+every intervention node.  The intervention values are factors so that
+<code>rtmle</code> knows the two treatment options. It is recommended that one
+checks the intervention table after adding the intervention:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-R"><span style="color: #5f615c; font-style: italic;"># </span><span style="color: #5f615c; font-style: italic;">Input: x with prepared_data and intervention nodes.</span>
+<span style="color: #5f615c; font-style: italic;"># </span><span style="color: #5f615c; font-style: italic;">Output: x$protocols$Always_A with an intervention table and adherence matrix.</span>
+x <span style="color: #204a87; font-weight: bold;">&lt;-</span> protocol(
+    x,
+    name = <span style="color: #5c3566;">"Always_A"</span>,
+    intervention = data.frame(
+        node = x$intervention_nodes,
+        A = factor(<span style="color: #5c3566;">"1"</span>, levels = c(<span style="color: #5c3566;">"0"</span>, <span style="color: #5c3566;">"1"</span>))
+    ),
+    verbose = <span style="color: #204a87;">FALSE</span>
+)
+
+x$protocols$Always_A$intervention_table
+</pre>
+</div>
+
+<pre class="example">
+   time_node variable  value
+       &lt;int&gt;   &lt;char&gt; &lt;fctr&gt;
+1:         0      A_0      1
+2:         1      A_1      1
+3:         2      A_2      1
+4:         3      A_3      1
+5:         4      A_4      1
+</pre>
+
+<p>
+The protocol function can add more complex interventions that depend
+on multiple variables and apply user-written intervention
+functions. Here is an example of a two-factor regime which states that
+people should start treatment 'A', continue treatment 'A' for 20
+months, that is until node 4 on the discrete time grid, but are not
+allowed to take treatment 'B' in the first 10 months:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-R"><span style="color: #5f615c; font-style: italic;"># </span><span style="color: #5f615c; font-style: italic;">Input: x with prepared_data and intervention nodes.</span>
+<span style="color: #5f615c; font-style: italic;"># </span><span style="color: #5f615c; font-style: italic;">Output: x$protocols$Always_A_not_B_in_the_beginning with an intervention table and adherence matrix.</span>
+x <span style="color: #204a87; font-weight: bold;">&lt;-</span> protocol(
+    x,
+    name = <span style="color: #5c3566;">"Always_A_not_B_in_the_beginning"</span>,
+    intervention = data.frame(
+        time = x$intervention_nodes,
+      A = factor(rep(<span style="color: #5c3566;">"1"</span>,5), levels = c(<span style="color: #5c3566;">"0"</span>, <span style="color: #5c3566;">"1"</span>)),
+      B = factor(c(<span style="color: #5c3566;">"0"</span>,<span style="color: #5c3566;">"0"</span>,<span style="color: #204a87;">NA</span>,<span style="color: #204a87;">NA</span>,<span style="color: #204a87;">NA</span>), levels = c(<span style="color: #5c3566;">"0"</span>, <span style="color: #5c3566;">"1"</span>))
+    ),
+    verbose = <span style="color: #204a87;">FALSE</span>
+)
+
+x$protocols$Always_A_not_B_in_the_beginning$intervention_table
+</pre>
+</div>
+
+<pre class="example" id="orge038548">
+    time_node variable  value
+        &lt;int&gt;   &lt;char&gt; &lt;fctr&gt;
+ 1:         0      A_0      1
+ 2:         1      A_1      1
+ 3:         2      A_2      1
+ 4:         3      A_3      1
+ 5:         4      A_4      1
+ 6:         0      B_0      0
+ 7:         1      B_1      0
+ 8:         2      B_2   &lt;NA&gt;
+ 9:         3      B_3   &lt;NA&gt;
+10:         4      B_4   &lt;NA&gt;
+</pre>
+
+<p>
+The consequence of having 'NA' values at time<sub>nodes</sub> 2:4 is that there
+is no intervention on B at these intervention nodes.
+</p>
+</div>
+</div>
+<div id="outline-container-orgccb13da" class="outline-2">
+<h2 id="orgccb13da"><span class="section-number-2">7.</span> Prepare the estimation data</h2>
+<div class="outline-text-2" id="text-7">
+<p>
+<code>prepare_rtmle_data()</code> checks and combines the baseline, outcome, censoring,
+competing-risk, treatment, and covariate data.  It creates the one-row-per-
+subject analysis table used by <code>protocol()</code>, <code>model_formula()</code>, and
+<code>run_rtmle()</code>.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-R"><span style="color: #5f615c; font-style: italic;"># </span><span style="color: #5f615c; font-style: italic;">Input: x with discretized data in x$data.</span>
+<span style="color: #5f615c; font-style: italic;"># </span><span style="color: #5f615c; font-style: italic;">Output: x$prepared_data, x$followup, and registered variable groups.</span>
+x <span style="color: #204a87; font-weight: bold;">&lt;-</span> prepare_rtmle_data(x)
+
+dim(x$prepared_data)
+head(names(x$prepared_data), 20)
+</pre>
+</div>
+
+<pre class="example">
+[1] 307  38
+ [1] "id"          "age"         "sex"         "SBP"         "bleeding_0"  "changeSBP_0" "A_0"         "B_0"         "dropout_1"   "stroke_1"   
+[11] "death_1"     "bleeding_1"  "changeSBP_1" "A_1"         "B_1"         "dropout_2"   "stroke_2"    "death_2"     "bleeding_2"  "changeSBP_2"
+</pre>
+</div>
+</div>
+<div id="outline-container-org5b5f6a2" class="outline-2">
+<h2 id="org5b5f6a2"><span class="section-number-2">8.</span> Define the target parameter</h2>
+<div class="outline-text-2" id="text-8">
+<p>
+<code>target()</code> tells <code>rtmle</code> which protocols belong to the estimand and which
+estimator should be used.  Here the target is the stroke risk under each
+protocol and the contrast of <code>Always_A_not_B_in_the_beginning</code> against <code>Always_A</code>.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-R"><span style="color: #5f615c; font-style: italic;"># </span><span style="color: #5f615c; font-style: italic;">Input: x with both protocols registered.</span>
+<span style="color: #5f615c; font-style: italic;"># </span><span style="color: #5f615c; font-style: italic;">Output: x$targets contains Stroke_risk and x$estimator includes "tmle".</span>
+x <span style="color: #204a87; font-weight: bold;">&lt;-</span> target(
+    x,
+    name = <span style="color: #5c3566;">"Stroke_risk"</span>,
+    protocols = c(<span style="color: #5c3566;">"Always_A"</span>, <span style="color: #5c3566;">"Always_A_not_B_in_the_beginning"</span>),
+    estimator = <span style="color: #5c3566;">"tmle"</span>
+)
+
+x$targets
+x$estimator
+</pre>
+</div>
+
+<pre class="example">
+$Stroke_risk
+$Stroke_risk$protocols
+[1] "Always_A"                        "Always_A_not_B_in_the_beginning"
+
+
+[1] "tmle"
+</pre>
+</div>
+</div>
+<div id="outline-container-org971f4f3" class="outline-2">
+<h2 id="org971f4f3"><span class="section-number-2">9.</span> Specify nuisance-parameter model formulas</h2>
+<div class="outline-text-2" id="text-9">
+<p>
+<code>model_formula()</code> creates formulas for the outcome, censoring, and
+treatment models required by the sequential regression and TMLE update
+step. The formulas are derived from the prepared data, the time grid,
+and the treatment variables intervened on by the protocols. In
+addition to selecting variables that should be adjusted for, it is
+often useful to consider which variables should not be adjusted
+for. E.g., if <code>A_0</code> is equal to <code>(1-B_0)</code> then it makes little sense
+to have both variables in the adjustment set. To show how this works we here remove 'B<sub>0</sub>' from all models
+and all bleeding variables from all censoring models:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-R"><span style="color: #5f615c; font-style: italic;"># </span><span style="color: #5f615c; font-style: italic;">Input: x with prepared_data, protocols, and target definition.</span>
+<span style="color: #5f615c; font-style: italic;"># </span><span style="color: #5f615c; font-style: italic;">Output: x$models, a nested list of formulas indexed by time and model node.</span>
+x <span style="color: #204a87; font-weight: bold;">&lt;-</span> model_formula(x, verbose = <span style="color: #204a87;">FALSE</span>,exclusion_rules = list(<span style="color: #5c3566;">"*"</span> = <span style="color: #5c3566;">"B_0"</span>,<span style="color: #5c3566;">"dropout"</span> = <span style="color: #5c3566;">"bleeding"</span>))
+
+names(x$models)
+x$models$time_2
+</pre>
+</div>
+
+<pre class="example" id="org8d9a23d">
+[1] "time_0" "time_1" "time_2" "time_3" "time_4"
+$Always_A
+$Always_A$A_2
+$Always_A$A_2$formula
+[1] "I(1*(A_2==1)) ~ age + sex + SBP + bleeding_1 + changeSBP_1 + A_0 + A_1 + B_1"
+
+
+
+$Always_A_not_B_in_the_beginning
+$Always_A_not_B_in_the_beginning$A_2
+$Always_A_not_B_in_the_beginning$A_2$formula
+[1] "I(1*(A_2==1)) ~ age + sex + SBP + bleeding_1 + changeSBP_1 + A_0 + A_1 + B_1"
+
+
+
+$censoring
+$censoring$dropout_3
+$censoring$dropout_3$formula
+[1] "I(1*(dropout_3=='uncensored')) ~ age + sex + SBP + changeSBP_1 + changeSBP_2 + A_0 + A_1 + A_2 + B_1 + B_2"
+
+
+
+$outcome
+$outcome$stroke_3
+$outcome$stroke_3$formula
+[1] "I(1*(stroke_3==1)) ~ age + sex + SBP + bleeding_1 + bleeding_2 + changeSBP_1 + changeSBP_2 + A_0 + A_1 + A_2 + B_1 + B_2"
+</pre>
+</div>
+</div>
+<div id="outline-container-org817758b" class="outline-2">
+<h2 id="org817758b"><span class="section-number-2">10.</span> Run the longitudinal TMLE</h2>
+<div class="outline-text-2" id="text-10">
+<p>
+<code>run_rtmle()</code> fits the nuisance-parameter models, performs the sequential
+regression and the TMLE update step, and stores estimates in <code>x$estimate</code>.  The example
+uses <code>learn_glm</code> to fit all models. Other implemented learners are <code>learn_glmnet</code>, <code>learn_ranger</code> and <code>learn_xgboost</code>
+as well as super-learner
+strategies (discrete and ensemble super learners) that can be specified through the <code>learner</code> argument.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-R"><span style="color: #5f615c; font-style: italic;"># </span><span style="color: #5f615c; font-style: italic;">Input: x with prepared_data, protocols, targets, and model formulas.</span>
+<span style="color: #5f615c; font-style: italic;"># </span><span style="color: #5f615c; font-style: italic;">Output: x with fitted nuisance models, influence-curve components, and</span>
+<span style="color: #5f615c; font-style: italic;"># </span><span style="color: #5f615c; font-style: italic;">main-analysis estimates for the requested time horizons.</span>
+analysis_horizons <span style="color: #204a87; font-weight: bold;">&lt;-</span> 1:2
+
+x <span style="color: #204a87; font-weight: bold;">&lt;-</span> run_rtmle(
+    x,
+    learner = <span style="color: #5c3566;">"learn_glm"</span>,
+    time_horizon = analysis_horizons,
+    verbose = <span style="color: #204a87;">FALSE</span>
+)
+
+x
+</pre>
+</div>
+
+<pre class="example" id="orgbce7599">
+
+Targeted minimum loss-based analysis of longitudinal data on a discretized time scale.
+
+Package version:     2026.5.28
+Subject id variable: id
+Outcome variable:    stroke
+Censoring variable:  dropout
+Competing risk:      death
+Intervention nodes:  0, 1, 2, 3, 4
+Minority threshold:  8
+Weight truncation:   (0,1)
+Prediction range:    (0.0001,0.9999)
+Baseline data:       n=307, p=3
+Timevar data:        bleeding, changeSBP, A, B
+Outcome data:        n=307, p=stroke_0, stroke_1, ..., death_5
+Protocols:           Always_A, Always_A_not_B_in_the_beginning
+Target:              Stroke_risk [Always_A, Always_A_not_B_in_the_beginning]
+Number of models:    32
+Learner:             learn_glm
+Fitted time horizons:   1, 2
+Diagnostics:         No warnings (yet)
+
+Results:
+        Target                        Protocol Reference Target_parameter Time_horizon Estimator Estimate (CI_95)
+        &lt;fctr&gt;                          &lt;fctr&gt;    &lt;char&gt;           &lt;fctr&gt;        &lt;int&gt;    &lt;fctr&gt;           &lt;char&gt;
+1: Stroke_risk                        Always_A                       Risk            1      tmle    0.7 [0.0;2.1]
+2: Stroke_risk                        Always_A                       Risk            2      tmle   7.3 [2.5;12.2]
+3: Stroke_risk Always_A_not_B_in_the_beginning                       Risk            1      tmle    0.0 [0.0;0.0]
+4: Stroke_risk Always_A_not_B_in_the_beginning                       Risk            2      tmle   9.3 [0.7;17.9]
+5: Stroke_risk Always_A_not_B_in_the_beginning  Always_A  Risk_difference            1      tmle  -0.7 [-2.1;0.7]
+6: Stroke_risk Always_A_not_B_in_the_beginning  Always_A  Risk_difference            2      tmle   2.0 [-4.2;8.3]
+7: Stroke_risk Always_A_not_B_in_the_beginning  Always_A       Risk_ratio            1      tmle    0.0 [0.0;0.0]
+8: Stroke_risk Always_A_not_B_in_the_beginning  Always_A       Risk_ratio            2      tmle    1.3 [0.7;2.5]
+</pre>
+
+<p>
+The rows with <code>Target_parameter = "Risk"</code> are protocol-specific cumulative
+risks.  The rows with <code>Risk_difference</code> and <code>Risk_ratio</code> compare <code>Always_A_not_B_in_the_beginning</code> to
+the reference protocol <code>Always_A</code> at each requested time horizon.
+</p>
+</div>
+<div id="outline-container-orgbf7ff5f" class="outline-3">
+<h3 id="orgbf7ff5f"><span class="section-number-3">10.1.</span> Plotting the estimated values across time horizons</h3>
+<div class="outline-text-3" id="text-10-1">
+<div class="org-src-container">
+<pre class="src src-R">x <span style="color: #204a87; font-weight: bold;">&lt;-</span> run_rtmle(
+    x,
+    learner = <span style="color: #5c3566;">"learn_glm"</span>,
+    time_horizon = 1:5,
+    verbose = <span style="color: #204a87;">FALSE</span>
+)
+plot(x)
+</pre>
+</div>
+
+
+<div id="org89c1a42" class="figure">
+<p><img src="../vignettes/plot_rtmle_output.png" alt="plot_rtmle_output.png" />
+</p>
+</div>
+</div>
+</div>
+</div>
+<div id="outline-container-orgc9761f3" class="outline-2">
+<h2 id="orgc9761f3"><span class="section-number-2">11.</span> Inspect the fit, check adherence and inverse-probability weights</h2>
+<div class="outline-text-2" id="text-11">
+<p>
+The fitted object also contains protocol diagnostics.  The adherence matrices
+record whether each subject followed the protocol through each intervention
+node.  The cumulative intervention probabilities are used to construct the
+inverse-probability weights in the TMLE update.
+There are useful plot functions:
+</p>
+
+<ul class="org-ul">
+<li><code>rtmle::plot.rtmle()</code></li>
+<li><code>rtmle::plot_model_coefficients()</code></li>
+<li><code>rtmle::plot_adherence()</code></li>
+<li><code>rtmle::plot_ipw()</code></li>
+</ul>
+</div>
+</div>
+<div id="outline-container-org9c42152" class="outline-2">
+<h2 id="org9c42152"><span class="section-number-2">12.</span> Complete script</h2>
+<div class="outline-text-2" id="text-12">
+<p>
+For reference, the complete workflow is the sequence of the state-changing
+commands above:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-R"><span style="color: #204a87; font-weight: bold;">library</span>(rtmle)
+<span style="color: #204a87; font-weight: bold;">library</span>(data.table)
+
+data(simulated_cohort)
+ld <span style="color: #204a87; font-weight: bold;">&lt;-</span> register_format(simulated_cohort)
+
+x <span style="color: #204a87; font-weight: bold;">&lt;-</span> rtmle_init(
+    time_grid = seq(0, 20, 4),
+    name_id = <span style="color: #5c3566;">"id"</span>,
+    name_outcome = <span style="color: #5c3566;">"stroke"</span>,
+    name_competing = <span style="color: #5c3566;">"death"</span>,
+    name_censoring = <span style="color: #5c3566;">"dropout"</span>,
+    censored_label = <span style="color: #5c3566;">"censored"</span>
+)
+
+x <span style="color: #204a87; font-weight: bold;">&lt;-</span> add_long_data(
+    x,
+    outcome_data = ld$timevar_data$stroke[!duplicated(id)],
+    censored_data = ld$timevar_data$dropout,
+    competing_data = ld$timevar_data$death,
+    timevar_data = ld$timevar_data[c(<span style="color: #5c3566;">"bleeding"</span>, <span style="color: #5c3566;">"changeSBP"</span>, <span style="color: #5c3566;">"A"</span>, <span style="color: #5c3566;">"B"</span>)]
+)
+
+x <span style="color: #204a87; font-weight: bold;">&lt;-</span> add_baseline_data(x, data = ld$baseline_data)
+x <span style="color: #204a87; font-weight: bold;">&lt;-</span> long_to_wide(x, start_followup_date = 0)
+x <span style="color: #204a87; font-weight: bold;">&lt;-</span> prepare_rtmle_data(x)
+
+x <span style="color: #204a87; font-weight: bold;">&lt;-</span> protocol(
+    x,
+    name = <span style="color: #5c3566;">"Always_A"</span>,
+    intervention = data.frame(
+        time = x$intervention_nodes,
+        A = factor(<span style="color: #5c3566;">"1"</span>, levels = c(<span style="color: #5c3566;">"0"</span>, <span style="color: #5c3566;">"1"</span>))
+    ),
+    verbose = <span style="color: #204a87;">FALSE</span>
+)
+
+x <span style="color: #204a87; font-weight: bold;">&lt;-</span> protocol(
+    x,
+    name = <span style="color: #5c3566;">"Always_A_not_B_in_the_beginning"</span>,
+    intervention = data.frame(
+        time = x$intervention_nodes,
+      A = factor(rep(<span style="color: #5c3566;">"1"</span>,5), levels = c(<span style="color: #5c3566;">"0"</span>, <span style="color: #5c3566;">"1"</span>)),
+      B = factor(c(<span style="color: #5c3566;">"0"</span>,<span style="color: #5c3566;">"0"</span>,<span style="color: #204a87;">NA</span>,<span style="color: #204a87;">NA</span>,<span style="color: #204a87;">NA</span>), levels = c(<span style="color: #5c3566;">"0"</span>, <span style="color: #5c3566;">"1"</span>))
+    ),
+    verbose = <span style="color: #204a87;">FALSE</span>
+)
+
+x <span style="color: #204a87; font-weight: bold;">&lt;-</span> target(
+    x,
+    name = <span style="color: #5c3566;">"Stroke_risk"</span>,
+    protocols = c(<span style="color: #5c3566;">"Always_A"</span>, <span style="color: #5c3566;">"Always_A_not_B_in_the_beginning"</span>),
+    estimator = <span style="color: #5c3566;">"tmle"</span>
+)
+
+x <span style="color: #204a87; font-weight: bold;">&lt;-</span> model_formula(x, verbose = <span style="color: #204a87;">FALSE</span>)
+x <span style="color: #204a87; font-weight: bold;">&lt;-</span> run_rtmle(x, learner = <span style="color: #5c3566;">"learn_glm"</span>, time_horizon = 1:2, verbose = <span style="color: #204a87;">FALSE</span>)
+
+x
+</pre>
+</div>
+
+<pre class="example" id="org730f21d">
+
+Targeted minimum loss-based analysis of longitudinal data on a discretized time scale.
+
+Package version:     2026.5.28
+Subject id variable: id
+Outcome variable:    stroke
+Censoring variable:  dropout
+Competing risk:      death
+Intervention nodes:  0, 1, 2, 3, 4
+Minority threshold:  8
+Weight truncation:   (0,1)
+Prediction range:    (0.0001,0.9999)
+Baseline data:       n=307, p=3
+Timevar data:        bleeding, changeSBP, A, B
+Outcome data:        n=307, p=stroke_0, stroke_1, ..., death_5
+Protocols:           Always_A, Always_A_not_B_in_the_beginning
+Target:              Stroke_risk [Always_A, Always_A_not_B_in_the_beginning]
+Number of models:    32
+Learner:             learn_glm
+Fitted time horizons:   1, 2
+Diagnostics:         No warnings (yet)
+
+Results:
+        Target                        Protocol Reference Target_parameter Time_horizon Estimator Estimate (CI_95)
+        &lt;fctr&gt;                          &lt;fctr&gt;    &lt;char&gt;           &lt;fctr&gt;        &lt;int&gt;    &lt;fctr&gt;           &lt;char&gt;
+1: Stroke_risk                        Always_A                       Risk            1      tmle    0.7 [0.0;2.1]
+2: Stroke_risk                        Always_A                       Risk            2      tmle   7.3 [2.5;12.2]
+3: Stroke_risk Always_A_not_B_in_the_beginning                       Risk            1      tmle    0.0 [0.0;0.0]
+4: Stroke_risk Always_A_not_B_in_the_beginning                       Risk            2      tmle   9.3 [0.7;17.9]
+5: Stroke_risk Always_A_not_B_in_the_beginning  Always_A  Risk_difference            1      tmle  -0.7 [-2.1;0.7]
+6: Stroke_risk Always_A_not_B_in_the_beginning  Always_A  Risk_difference            2      tmle   2.0 [-4.2;8.3]
+7: Stroke_risk Always_A_not_B_in_the_beginning  Always_A       Risk_ratio            1      tmle    0.0 [0.0;0.0]
+8: Stroke_risk Always_A_not_B_in_the_beginning  Always_A       Risk_ratio            2      tmle    1.3 [0.7;2.5]
+</pre>
+</div>
+</div>
+</div>
+<div id="postamble" class="status">
+Last update: 28 maj 2026 by Thomas Alexander Gerds.
+</div>
+</body>
+</html>
