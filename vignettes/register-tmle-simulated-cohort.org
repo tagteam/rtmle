@@ -70,13 +70,14 @@ saved as separate objects. We use the function
 corresponding list of objects.
 
 #+BEGIN_SRC R
-# Input: simulated_cohort, an object of class "simulated_cohort".
-# Output: ld, a list with baseline_data and timevar_data components.
-ld <- register_format(simulated_cohort)
+  # Input: simulated_cohort, an object of class "simulated_cohort".
+  # Output: ld, a list with baseline_data and timevar_data components.
 
-names(ld)
-names(ld$timevar_data)
-NROW(ld$baseline_data)
+  ld <- register_format(simulated_cohort)
+  names(ld)
+  names(ld$timevar_data)
+  NROW(ld$baseline_data)
+  head(ld$timevar_data$changeSBP)
 #+END_SRC
 
 #+RESULTS:
@@ -86,7 +87,7 @@ NROW(ld$baseline_data)
 
 
 The resulting list contains one baseline table and one named =timevar_data=
-entry for each visit variable and event variable.  In this example:
+entry for each visit variable and event variable. In this example:
 
 - =ld$baseline_data= contains one row per subject with baseline covariates.
 - =ld$timevar_data$stroke= contains outcome event times.
@@ -95,6 +96,9 @@ entry for each visit variable and event variable.  In this example:
 - =ld$timevar_data[c("bleeding", "changeSBP", "A", "B")]= contains
   time-varying covariates and treatments.
 
+Note that though the time variable is named =date= above, it refers to time
+after a common index date.
+  
 * Initialize the =rtmle= analysis object
 
 The call to =rtmle_init()= records the analysis time grid and the
