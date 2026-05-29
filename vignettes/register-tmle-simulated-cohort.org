@@ -357,21 +357,47 @@ and the treatment variables intervened on by the protocols. In
 addition to selecting variables that should be adjusted for, it is
 often useful to consider which variables should not be adjusted
 for. E.g., if =A_0= is equal to =(1-B_0)= then it makes little sense
-to have both variables in the adjustment set. To show how this works we here remove 'B_0' from all models
+to have both variables in the adjustment set. To show how this works we here remove '=B_0=' from all models
 and all bleeding variables from all censoring models:
 
 #+BEGIN_SRC R
-# Input: x with prepared_data, protocols, and target definition.
-# Output: x$models, a nested list of formulas indexed by time and model node.
-x <- model_formula(x, verbose = FALSE,exclusion_rules = list("*" = "B_0","dropout" = "bleeding"))
+  # Input: x with prepared_data, protocols, and target definition.
+  # Output: x$models, a nested list of formulas indexed by time and model node.
+  x <- model_formula(x, verbose = FALSE,exclusion_rules = list("*" = "B_0","dropout" = "bleeding"))
 
-names(x$models)
-x$models$time_2
+  names(x$models)
+  x$models$time_1
+  x$models$time_2
 #+END_SRC
 
 #+RESULTS:
 #+begin_example
 [1] "time_0" "time_1" "time_2" "time_3" "time_4"
+$Always_A
+$Always_A$A_1
+$Always_A$A_1$formula
+[1] "I(1*(A_1==1)) ~ age + sex + SBP + A_0"
+
+
+
+$Always_A_not_B_in_the_beginning
+$Always_A_not_B_in_the_beginning$`A_1,B_1`
+$Always_A_not_B_in_the_beginning$`A_1,B_1`$formula
+[1] "I(1*(A_1==1&B_1==0)) ~ age + sex + SBP + A_0"
+
+
+
+$censoring
+$censoring$dropout_2
+$censoring$dropout_2$formula
+[1] "I(1*(dropout_2=='uncensored')) ~ age + sex + SBP + changeSBP_1 + A_0 + A_1 + B_1"
+
+
+
+$outcome
+$outcome$stroke_2
+$outcome$stroke_2$formula
+[1] "I(1*(stroke_2==1)) ~ age + sex + SBP + bleeding_1 + changeSBP_1 + A_0 + A_1 + B_1"
 $Always_A
 $Always_A$A_2
 $Always_A$A_2$formula
