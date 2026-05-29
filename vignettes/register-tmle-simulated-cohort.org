@@ -295,7 +295,7 @@ x$protocols$Always_A_not_B_in_the_beginning$intervention_table
 10:         4      B_4   <NA>
 #+end_example
 
-The consequence of having 'NA' values at time_nodes 2:4 is that there
+The consequence of having 'NA' values at =time_node= 2:4 is that there
 is no intervention on B at these intervention nodes.
 
 * Prepare the estimation data
