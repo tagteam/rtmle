@@ -513,7 +513,7 @@ There are useful plot functions:
 - =rtmle::plot.rtmle()=
 - =rtmle::plot_model_coefficients()=
 - =rtmle::plot_adherence()=
-- =rtmle::plot_ipw()=
+- =rtmle::plot_IPW()=
 
 * Complete script
 
