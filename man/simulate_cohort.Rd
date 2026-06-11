@@ -17,7 +17,8 @@ simulate_cohort(
   visit_measurements = NULL,
   post_visit_hook = NULL,
   intermediate_events = NULL,
-  intermediate_events_hook = NULL,
+  pre_intermediate_events_hook = NULL,
+  post_intermediate_events_hook = NULL,
   absorbing_events,
   absorbing_events_hook = NULL,
   parameter_values,
@@ -49,12 +50,15 @@ variables are simulated.}
 
 \item{visit_measurements}{Named list describing time-updated measurements.}
 
-\item{post_visit_hook}{Optional hook applied after each visit update.}
+\item{post_visit_hook}{Optional function applied to alter the data.table \code{update_information} after each visit update.}
 
 \item{intermediate_events}{Named list describing non-absorbing events.}
 
-\item{intermediate_events_hook}{Optional hook to alter the intermediate-event
-model over time.}
+\item{pre_intermediate_events_hook}{Optional hook to alter the intermediate-event
+model before simulating the next intermediate events}
+
+\item{post_intermediate_events_hook}{Optional function to alter the data.table \code{update_information}
+just after the intermediate events have been simulated.}
 
 \item{absorbing_events}{Named list describing absorbing events.}
 
@@ -71,8 +75,7 @@ over time.}
 A longitudinal event-history \code{\link[data.table]{data.table}}.
 }
 \description{
-Simulates a configurable longitudinal event-history cohort. The simulator is
-adapted from \code{tagteam/followme/functions/simulate_cohort.R}.
+Simulates a configurable longitudinal event-history cohort.
 }
 \examples{
 library(lava)

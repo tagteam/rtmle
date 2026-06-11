@@ -4,14 +4,15 @@
 make_regression_model <- function(outcome_variables,parameter_values) {
     m <- lava::lvm()
     for (v in names(outcome_variables)){
+        name_v <- tolower(outcome_variables[[v]])
         if (outcome_variables[[v]] == "constant"){
             lava::distribution(m, v) <- lava::constant.lvm(value = parameter_values[[paste0("intercept_",v)]])
         }
-        if (outcome_variables[[v]] == "binomial"){
+        if (name_v %in% c("binary","binomial")){
             lava::distribution(m, v) <- lava::binomial.lvm("logit")
             lava::intercept(m,v) <- parameter_values[[paste0("intercept_",v)]]
         }
-        if (outcome_variables[[v]] == "normal"){
+        if (name_v == "normal"){
             lava::distribution(m, v) <- lava::normal.lvm()
             if (length(intercept_v <- parameter_values[[paste0("intercept_",v)]]) == 0){
                 # if not specified the intercept is zero
@@ -22,18 +23,21 @@ make_regression_model <- function(outcome_variables,parameter_values) {
                 lava::variance(m,v) <- (var_v)^2
             }
         }
-        if (outcome_variables[[v]] == "lognormal"){
+        if (name_v == "lognormal"){
             lava::distribution(m, v) <- lava::lognormal.lvm()
             lava::intercept(m,v) <- parameter_values[[paste0("intercept_",v)]]
             if (length((var_v <- parameter_values[[paste0("var_",v)]]) == 1)){
                 lava::variance(m,v) <- (var_v)^2
             }
         }
-        if (outcome_variables[[v]] %chin% c("Exponential","Weibull")){
+        if (name_v == "uniform"){
+            lava::distribution(m, v) <- lava::uniform.lvm(a = 0,b = 1)
+        }
+        if (name_v %chin% c("exponential","weibull")){
             if (length(parameter_values[[paste0("scale_",v)]]) == 0){
                 stop("rtmle::make_regression_model: missing parameter ",paste0("scale_",v))
             }
-            if (outcome_variables[[v]] == "Exponential"){shape <- 1} else {shape <- 2}
+            if (name_v == "exponential"){shape <- 1} else {shape <- 2}
             lava::distribution(m, v) <- lava::coxWeibull.lvm(
                 shape = shape,
                 scale = parameter_values[[paste0("scale_",v)]]

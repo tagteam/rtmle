@@ -1,7 +1,6 @@
 #' Simulate a longitudinal event-history cohort.
 #'
-#' Simulates a configurable longitudinal event-history cohort. The simulator is
-#' adapted from \code{tagteam/followme/functions/simulate_cohort.R}.
+#' Simulates a configurable longitudinal event-history cohort. 
 #'
 #' @param n Number of subjects.
 #' @param seed Optional random seed.
@@ -16,10 +15,12 @@
 #' @param visit_schedule Named list controlling the visit gap distribution.
 #' @param visit_events Named list describing time-updated treatment variables.
 #' @param visit_measurements Named list describing time-updated measurements.
-#' @param post_visit_hook Optional hook applied after each visit update.
+#' @param post_visit_hook Optional function applied to alter the data.table \code{update_information} after each visit update.
 #' @param intermediate_events Named list describing non-absorbing events.
-#' @param intermediate_events_hook Optional hook to alter the intermediate-event
-#'   model over time.
+#' @param pre_intermediate_events_hook Optional hook to alter the intermediate-event
+#'   model before simulating the next intermediate events
+#' @param post_intermediate_events_hook Optional function to alter the data.table \code{update_information}
+#'   just after the intermediate events have been simulated. The function expects two arguments: \code{update_information} and \code{event_history}.
 #' @param absorbing_events Named list describing absorbing events.
 #' @param absorbing_events_hook Optional hook to alter the absorbing-event model
 #'   over time.
@@ -76,7 +77,8 @@ simulate_cohort <- function(n,
                             visit_measurements = NULL, 
                             post_visit_hook = NULL, 
                             intermediate_events = NULL, 
-                            intermediate_events_hook = NULL, 
+                            pre_intermediate_events_hook = NULL,
+                            post_intermediate_events_hook = NULL,
                             absorbing_events, 
                             absorbing_events_hook = NULL, 
                             parameter_values, 
@@ -153,7 +155,11 @@ simulate_cohort <- function(n,
         n = n,
         format = "data.table"
     )
-    X_baseline[, id := 1:.N]
+    if (length(X_baseline) == 0){
+        X_baseline <- data.table(id = 1:n)
+    }else{
+        X_baseline[, id := 1:.N]
+    }
     # post-baseline hook
     if (is.function(post_baseline_variables_hook)){
         X_baseline <- do.call(post_baseline_variables_hook,list(X = X_baseline))
@@ -214,8 +220,7 @@ simulate_cohort <- function(n,
     # initialize event_history at time 0 only for variables that do not occur in X_baseline_visit
     still_uninitialized <- setdiff(names(visit_events), names(X_baseline_visit))
     if (length(still_uninitialized)>0){
-        init_visit_events <- data.table::as.data.table(stats::setNames(rep(list(0), length(still_uninitialized)), 
-                                                                still_uninitialized))
+        init_visit_events <- data.table::as.data.table(stats::setNames(rep(list(0), length(still_uninitialized)),still_uninitialized))
     }else{
         init_visit_events <- NULL
     }
@@ -261,8 +266,8 @@ simulate_cohort <- function(n,
                                p = parameter_values,
                                format = "matrix")
         ## apply hook for intermediate events
-        if (is.function(intermediate_events_hook)){
-            intermediate_events_model <- do.call(intermediate_events_hook,
+        if (is.function(pre_intermediate_events_hook)){
+            intermediate_events_model <- do.call(pre_intermediate_events_hook,
                                                  list(intermediate_events_model = intermediate_events_model,
                                                       event_history = last_entry))
         }
@@ -297,48 +302,51 @@ simulate_cohort <- function(n,
         ## Cases of intermediate events
         if(NROW(subjects_with_intermediate_events)>0){
             ## Start from last_entry and overwrite time/event
-            update_visit <- last_entry[,-c("time","event"),with = FALSE][subjects_with_intermediate_events, on = "id", nomatch = 0L]
-            if (nrow(update_visit)) {
-                data.table::setkey(update_visit, id)
+            update_information <- last_entry[,-c("time","event"),with = FALSE][subjects_with_intermediate_events, on = "id", nomatch = 0L]
+            if (nrow(update_information)) {
+                data.table::setkey(update_information, id)
             }
-
             ## Increase count of intermediate events
             for(vv in names(intermediate_events)){
-                vv_update <- which(update_visit$event == vv)
-                data.table::set(update_visit, j = vv, i = vv_update, value = update_visit[vv_update][[vv]] + 1L)
+                vv_update <- which(update_information$event == vv)
+                data.table::set(update_information, j = vv, i = vv_update, value = update_information[vv_update][[vv]] + 1L)
+            }
+            
+            ## post_intermediate_events hook
+            if (is.function(post_intermediate_events_hook)){
+                update_information <- post_intermediate_events_hook(update_information = update_information,
+                                                                    event_history = event_history)
             }
 
             ## draw visit measurements conditional on updated history
             update_measurements <- simX(visit_measurements_model,
-                                        n = nrow(update_visit),
+                                        n = nrow(update_information),
                                         p = parameter_values,
                                         variables = names(visit_measurements),
-                                        X = update_visit,
+                                        X = update_information,
                                         format = "data.table")
             for (new in names(update_measurements)){
-                data.table::set(update_visit, j = new, value = update_measurements[[new]])
+                data.table::set(update_information, j = new, value = update_measurements[[new]])
             }
             ## draw visit treatment actions conditional on history
             update_treatment <- simX(visit_events_model,
-                                     n = nrow(update_visit),
+                                     n = nrow(update_information),
                                      p = parameter_values,
                                      variables = names(visit_events),
-                                     X = update_visit,
+                                     X = update_information,
                                      format = "data.table")
 
             ## post-visit hook
             if (is.function(post_visit_hook)){
-                update_visit <- post_visit_hook(update_event_history = update_visit,
-                                                update_treatment = update_treatment,
-                                                update_measurements = update_measurements,
-                                                event_history = event_history)
+                update_information <- post_visit_hook(update_information = update_information,
+                                                      event_history = event_history)
             }
             ## adding the updated treatment status
             for (xx in names(update_treatment)){
-                data.table::set(update_visit, j = xx, value = update_treatment[[xx]])
+                data.table::set(update_information, j = xx, value = update_treatment[[xx]])
             }
         } else {
-            update_visit <- data.table(time = numeric(), id = numeric())
+            update_information <- data.table(time = numeric(), id = numeric())
         }
 
         ## Prepare absorbed updates (overwrite time/event to absorbing ones)
@@ -346,12 +354,12 @@ simulate_cohort <- function(n,
         
         ## Update full event_history (as before)
         event_history <- data.table::rbindlist(
-                                         list(event_history, update_visit, update_absorbed), use.names = TRUE, fill = TRUE
+                                         list(event_history, update_information, update_absorbed), use.names = TRUE, fill = TRUE
                                      )
 
         ## Update the rolling risk set (last_entry) 
-        if (nrow(update_visit)) {
-            last_entry <- update_visit
+        if (nrow(update_information)) {
+            last_entry <- update_information
             ## Enforce max follow-up for next iteration's risk set
             last_entry <- last_entry[time <= max_follow]
         } else{
