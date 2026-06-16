@@ -244,6 +244,7 @@ simulate_cohort <- function(n,
     ## keep a rolling state of at-risk subjects (latest row per id)
     last_entry <- data.table::copy(event_history)  # at baseline, 1 row per id, time=0
     data.table::setkey(last_entry, id)
+    current_event <- NULL
     while (nrow(last_entry)>0) {
         ## draw time of next scheduled visit, allowing for skipped visits
         nrisk <- nrow(last_entry)
