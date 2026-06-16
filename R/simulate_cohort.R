@@ -145,16 +145,21 @@ simulate_cohort <- function(n,
     ##
     ## Baseline variables
     ##
-    baseline_model <- make_regression_model(
-        baseline_variables,
-        parameter_values
-    )
-    X_baseline <- simX(
-        x = baseline_model,
-        X = NULL,
-        n = n,
-        format = "data.table"
-    )
+    if(is.data.frame(baseline_variables)){
+        X_baseline <- baseline_variables
+    }
+    else{
+        baseline_model <- make_regression_model(
+            baseline_variables,
+            parameter_values
+        )
+        X_baseline <- simX(
+            x = baseline_model,
+            X = NULL,
+            n = n,
+            format = "data.table"
+        )
+    }
     if (length(X_baseline) == 0){
         X_baseline <- data.table(id = 1:n)
     }else{
@@ -248,10 +253,18 @@ simulate_cohort <- function(n,
             next_visit <- skipped_visits*visit_schedule[["mean"]] +
                 pmax(
                     stats::rnorm(n = nrisk,
-                          mean = visit_schedule[["mean"]],
-                          sd = visit_schedule[["sd"]]),
+                                 mean = visit_schedule[["mean"]],
+                                 sd = visit_schedule[["sd"]]),
                     visit_schedule[["minimum_time_between_visits"]]
                 )
+            # respect planned visit times
+            if (NROW(current_event)>0){
+                if (length(visit_schedule[["schedule"]])){
+                    current_time <- current_event[["time"]]
+                    next_scheduled_visit <- unique(c(0,visit_schedule[["schedule"]]))[1+prodlim::sindex(eval.time = current_time, jump.times = visit_schedule[["schedule"]])]-current_time
+                }
+            }
+            next_visit <- pmin(next_visit,next_scheduled_visit)
         }
         ## apply hook for absorbing events
         if (is.function(absorbing_events_hook)){
@@ -272,7 +285,7 @@ simulate_cohort <- function(n,
                                                       event_history = last_entry))
         }
         if (length(intermediate_events_model)>0){
-            ## draw next event time as min of visit/intermediate/absorbing
+            ## draw next intermediate event time
             intermediate_time <- simX(intermediate_events_model,
                                       variables = names(intermediate_events),
                                       n = nrisk,
@@ -289,6 +302,7 @@ simulate_cohort <- function(n,
         if (length(intermediate_time)>0){
             latent_times <- cbind(latent_times,intermediate_time)
         }
+        # calculate minimum of intermediate event time, absorbing event time and visit time
         idx <- max.col(-latent_times, ties.method = "first")
         current_event <- data.table(
             id = last_entry[, id],
@@ -335,7 +349,7 @@ simulate_cohort <- function(n,
                                      variables = names(visit_events),
                                      X = update_information,
                                      format = "data.table")
-
+            
             ## post-visit hook
             if (is.function(post_visit_hook)){
                 update_information <- post_visit_hook(update_information = update_information,

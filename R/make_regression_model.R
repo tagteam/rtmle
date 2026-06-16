@@ -8,13 +8,16 @@ make_regression_model <- function(outcome_variables,parameter_values) {
         if (outcome_variables[[v]] == "constant"){
             lava::distribution(m, v) <- lava::constant.lvm(value = parameter_values[[paste0("intercept_",v)]])
         }
+        intercept_v <- parameter_values[[paste0("intercept_",v)]]
         if (name_v %in% c("binary","binomial")){
             lava::distribution(m, v) <- lava::binomial.lvm("logit")
-            lava::intercept(m,v) <- parameter_values[[paste0("intercept_",v)]]
+            if (intercept_v == 1){
+                lava::intercept(m,v) <- intercept_v
+            }
         }
         if (name_v == "normal"){
             lava::distribution(m, v) <- lava::normal.lvm()
-            if (length(intercept_v <- parameter_values[[paste0("intercept_",v)]]) == 0){
+            if (length(intercept_v) == 0){
                 # if not specified the intercept is zero
                 intercept_v <- 0
             }
@@ -25,7 +28,7 @@ make_regression_model <- function(outcome_variables,parameter_values) {
         }
         if (name_v == "lognormal"){
             lava::distribution(m, v) <- lava::lognormal.lvm()
-            lava::intercept(m,v) <- parameter_values[[paste0("intercept_",v)]]
+            lava::intercept(m,v) <- intercept_v
             if (length((var_v <- parameter_values[[paste0("var_",v)]]) == 1)){
                 lava::variance(m,v) <- (var_v)^2
             }
@@ -39,9 +42,9 @@ make_regression_model <- function(outcome_variables,parameter_values) {
             }
             if (name_v == "exponential"){shape <- 1} else {shape <- 2}
             lava::distribution(m, v) <- lava::coxWeibull.lvm(
-                shape = shape,
-                scale = parameter_values[[paste0("scale_",v)]]
-            )
+                                                  shape = shape,
+                                                  scale = parameter_values[[paste0("scale_",v)]]
+                                              )
         }
         # Regression parameters (if any)
         v_effects <- parameter_values[grep(paste0("^effect_.*_",v,"$"),names(parameter_values),value = TRUE)]
