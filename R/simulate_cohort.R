@@ -262,10 +262,12 @@ simulate_cohort <- function(n,
             if (NROW(current_event)>0){
                 if (length(visit_schedule[["schedule"]])){
                     current_time <- current_event[["time"]]
-                    next_scheduled_visit <- unique(c(0,visit_schedule[["schedule"]]))[1+prodlim::sindex(eval.time = current_time, jump.times = visit_schedule[["schedule"]])]-current_time
+                    next_scheduled_visit <- unique(
+                        c(0,visit_schedule[["schedule"]],Inf)
+                    )[2+prodlim::sindex(eval.time = current_time, jump.times = visit_schedule[["schedule"]])]-current_time
+                    next_visit <- pmin(next_visit,next_scheduled_visit)
                 }
             }
-            next_visit <- pmin(next_visit,next_scheduled_visit)
         }
         ## apply hook for absorbing events
         if (is.function(absorbing_events_hook)){

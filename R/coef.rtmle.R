@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul  3 2024 (13:48) 
 ## Version: 
-## Last-Updated: maj 28 2026 (08:24) 
+## Last-Updated: jun 18 2026 (09:08) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 80
+##     Update #: 83
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -34,8 +34,8 @@
 #' @export
 #' @method coef rtmle
 coef.rtmle <- function(object,time_horizon,...){
-    if (!(object$learner$fun[[1]] %chin% c("learn_glmnet","learn_glm"))){
-        stop("Can only plot regression coefficients when fitter is either learn_glm or learn_glmnet")
+    if (object$learner$name[[1]] == "superlearn" || !(object$learner$fun[[1]] %chin% c("learn_glmnet","learn_glm"))){
+        stop("Can only assess regression coefficients when fitter is either learn_glm or learn_glmnet")
     }
     if (missing(time_horizon)) {
 

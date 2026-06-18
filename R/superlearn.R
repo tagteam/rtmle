@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Oct 31 2024 (07:29) 
 ## Version: 
-## Last-Updated: maj  7 2026 (12:48) 
+## Last-Updated: jun 18 2026 (09:01) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 305
+##     Update #: 309
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -156,8 +156,8 @@ superlearn <- function(folds,
                 set(level_one_data,j = this_learner_name,i = which(random_split == k),value = predicted_k)
             }
         } else {
-            # CASE: no variation in one of the predictor variables
-            #       remove these
+            # CASE: no variation in one or some of the predictor variables
+            #       -> remove these
             learn_data_k <- learn_data_k[,!(names(learn_data_k)%in%current_constants),with = FALSE]
             # now check if all multi_factor levels have all levels in learning set
             # fine if they do not have all levels in intervened_data
@@ -292,8 +292,10 @@ superlearn <- function(folds,
         }else{
             predicted_values <- do.call(cbind,lapply(predicted_value_ensemble,`[[`,"predicted_values"))%*%ensemble_weights[ensemble_weights>0]
         }
-        fitted_objects <- lapply(predicted_value_ensemble,`[[`,"reuse_fit")
-        names(fitted_objects) <- names(ensemble_weights)[ensemble_weights>0]
+        if (isTRUE(save_fitted_objects)){
+            fitted_objects <- lapply(predicted_value_ensemble,`[[`,"reuse_fit")
+            names(fitted_objects) <- names(ensemble_weights)[ensemble_weights>0]
+        }
     }
     # parse_learner_output
     output <- list(predicted_values = predicted_values,
@@ -302,6 +304,7 @@ superlearn <- function(folds,
     if (isTRUE(save_fitted_objects)){
         output$fit <- fitted_objects
     }    
+    output
 }
 
 

@@ -58,7 +58,7 @@ variables are simulated.}
 model before simulating the next intermediate events}
 
 \item{post_intermediate_events_hook}{Optional function to alter the data.table \code{update_information}
-just after the intermediate events have been simulated.}
+just after the intermediate events have been simulated. The function expects two arguments: \code{update_information} and \code{event_history}.}
 
 \item{absorbing_events}{Named list describing absorbing events.}
 
