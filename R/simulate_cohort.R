@@ -24,7 +24,8 @@
 #' @param absorbing_events Named list describing absorbing events.
 #' @param absorbing_events_hook Optional hook to alter the absorbing-event model
 #'   over time.
-#' @param parameter_values Named list of model parameters.
+#' @param parameter_values A named list of regression coefficients and scale/shape parameters. 
+#'   For binomial events, parameters are specified on the log-odds scale. Use \code{qlogis(p)} to set baseline probabilities. 
 #' @param intervention Optional named list of constant intervention values.
 #' @param regime Reserved for future use.
 #'
@@ -258,15 +259,14 @@ simulate_cohort <- function(n,
                                  sd = visit_schedule[["sd"]]),
                     visit_schedule[["minimum_time_between_visits"]]
                 )
+            
             # respect planned visit times
-            if (NROW(current_event)>0){
-                if (length(visit_schedule[["schedule"]])){
-                    current_time <- current_event[["time"]]
-                    next_scheduled_visit <- unique(
-                        c(0,visit_schedule[["schedule"]],Inf)
-                    )[2+prodlim::sindex(eval.time = current_time, jump.times = visit_schedule[["schedule"]])]-current_time
-                    next_visit <- pmin(next_visit,next_scheduled_visit)
-                }
+            if (length(visit_schedule[["schedule"]])){
+              current_time <- last_entry[["time"]]
+              next_scheduled_visit <- unique(
+                c(0,visit_schedule[["schedule"]],Inf)
+              )[2+prodlim::sindex(eval.time = current_time, jump.times = visit_schedule[["schedule"]])]-current_time
+              next_visit <- pmin(next_visit,next_scheduled_visit)
             }
         }
         ## apply hook for absorbing events
@@ -399,4 +399,5 @@ simulate_cohort <- function(n,
     attr(event_history,"call") <- match.call()
     return(event_history)
 }
+
 
