@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: feb 24 2026 (11:04) 
 ## Version: 
-## Last-Updated: apr 29 2026 (07:26) 
+## Last-Updated: aug 13 2026 (08:30) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 139
+##     Update #: 140
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -261,7 +261,6 @@ discretize <- function(method,
                       value_col = "value",
                       fill = fill,
                       fun_aggregate = fun_aggregate)        
-    setkey(wide, id)
     setnames(wide, c(id, paste0(name, "_", names(wide)[-1])))
     setkeyv(wide, id)
     wide[]
