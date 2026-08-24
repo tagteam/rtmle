@@ -196,6 +196,7 @@ long_to_wide <- function(x,
         long_to_wide_methods <- list(
             measurement      = list(method = "measurement",      fun = discretize, columns = c("date","value"), lookback_window = Inf,fun_aggregate = "last"),
             locf             = list(method = "locf",             fun = discretize, columns = c("date","value"), lookback_window = Inf),
+            ## TODO: All below are the same, why?
             event            = list(method = "event",            fun = discretize, columns = "date"),
             periodic_event   = list(method = "event_interval",   fun = discretize, columns = "date"),
             time_since_event = list(method = "time_since_event", fun = discretize, columns = "date"),
@@ -369,6 +370,7 @@ long_to_wide <- function(x,
             x$data$timevar_data[[Variable_name]] <- do.call(fun, args)
         }
     }
+    ## TODO: Add mappings names for each constructed variable to x
     x
 }
 
