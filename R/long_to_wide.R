@@ -367,9 +367,11 @@ long_to_wide <- function(x,
                 args <- args[intersect(names(args), fml)]
             }
             x$data$timevar_data[[Variable_name]] <- do.call(fun, args)
+            ## TODO: Uncomment when OK
+            ## ## Add mappings names for each constructed variable to x
+            ## x$long_to_wide_mappings[[Variable_name]] <- mappings[[Variable_name]]$method
         }
     }
-    ## TODO: Add mappings names for each constructed variable to x
     x
 }
 
