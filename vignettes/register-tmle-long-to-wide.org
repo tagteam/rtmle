@@ -4,19 +4,12 @@
 #+LaTeX_CLASS: org-article
 #+OPTIONS: H:3 num:t toc:nil \n:nil @:t ::t |:t ^:t -:t f:t *:t <:t
 #+OPTIONS: TeX:t LaTeX:t skip:nil d:t todo:t pri:nil tags:not-in-toc author:nil
-#+PROPERTY: header-args:R :async :results output verbatim :exports both :session *R* :cache yes
+#+PROPERTY: header-args:R :async :results output verbatim :exports both :session *R* :cache no
 
 * Aim
 This vignette...
 
 TEST:
-
-#+BEGIN_SRC R
-9+9
-#+END_SRC
-
-#+RESULTS[5fc6a6edd8c91b2d036dfc43860c9e4e539e21fb]:
-: [1] 18
 
 #+BEGIN_SRC R
 9+9
@@ -29,7 +22,7 @@ TEST:
 9+9
 #+END_SRC
 
-#+RESULTS[7ef3187b687ab5d43051185d9af2294b5c39d1fb]:
+#+RESULTS:
 :results:
 [1] 18
 :end:
