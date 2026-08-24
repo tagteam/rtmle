@@ -196,11 +196,10 @@ long_to_wide <- function(x,
         long_to_wide_methods <- list(
             measurement      = list(method = "measurement",      fun = discretize, columns = c("date","value"), lookback_window = Inf,fun_aggregate = "last"),
             locf             = list(method = "locf",             fun = discretize, columns = c("date","value"), lookback_window = Inf),
-            ## TODO: All below are the same, why?
             event            = list(method = "event",            fun = discretize, columns = "date"),
             periodic_event   = list(method = "event_interval",   fun = discretize, columns = "date"),
             time_since_event = list(method = "time_since_event", fun = discretize, columns = "date"),
-            chronic_disease  = list(method = "chronic_disease", fun = discretize, columns = "date", fun_aggregate = function(x){cut(x,breaks = c(-Inf,0,6*30.45,Inf),labels = c("never","acute","chronic"))}),
+            chronic_disease  = list(method = "time_since_event", fun = discretize, columns = "date", fun_aggregate = function(x){cut(x,breaks = c(-Inf,0,6*30.45,Inf),labels = c("never","acute","chronic"))}),
             event_interval   = list(method = "event_interval",   fun = discretize, columns = "date"),
             any_exposure     = list(method = "any_exposure",     fun = discretize, columns = c("start_date","end_date"), threshold = 0),
             has_exposure     = list(method = "has_exposure",     fun = discretize, columns = c("start_date","end_date"), threshold = 0.5),
