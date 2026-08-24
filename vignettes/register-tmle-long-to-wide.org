@@ -9,6 +9,31 @@
 * Aim
 This vignette...
 
+TEST:
+
+#+BEGIN_SRC R
+9+9
+#+END_SRC
+
+#+RESULTS[5fc6a6edd8c91b2d036dfc43860c9e4e539e21fb]:
+: [1] 18
+
+#+BEGIN_SRC R
+9+9
+#+END_SRC
+
+#+RESULTS:
+: [1] 18
+
+#+BEGIN_SRC R :results output drawer
+9+9
+#+END_SRC
+
+#+RESULTS[7ef3187b687ab5d43051185d9af2294b5c39d1fb]:
+:results:
+[1] 18
+:end:
+
 * Preparation
 Here, we prepare a simulated dataset of synthetic EHR on long format,
 initiate the =rtmle= object, and add the long data to =rtmle=
