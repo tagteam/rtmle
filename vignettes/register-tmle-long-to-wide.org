@@ -55,7 +55,7 @@ data format and initialization of the =rtmle= object.
   x
 #+END_SRC
 
-#+RESULTS[541f20db893f16bad5743ed8d47eff09239e2b77]:
+#+RESULTS:
 #+begin_example
 
 Targeted minimum loss-based analysis of longitudinal data on a discretized time scale.
