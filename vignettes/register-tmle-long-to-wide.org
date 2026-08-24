@@ -7,12 +7,12 @@
 #+PROPERTY: header-args:R :async :results output verbatim :exports both :session *R* :cache no
 
 * Aim
-This vignette demonstrates how the build-in =rtmle= function
-=long_to_wide= can be used to construct time-discretized wide format
-data from long format register data.
+This vignette demonstrates how the function =long_to_wide= from
+=rtmle= can be used to construct time-discretized wide format data
+from long format register data.
 
 * Preparation
-Here, we prepare a simulated dataset of synthetic EHR on long format,
+We prepare a simulated dataset of synthetic EHR on long format,
 initiate the =rtmle= object, and add the long data to =rtmle=
 object. See [[./register-tmle-simulated-cohort.org]] for details about the
 data format and initialization of the =rtmle= object.
@@ -26,9 +26,8 @@ data format and initialization of the =rtmle= object.
   data(simulated_cohort)
   ld <- register_format(simulated_cohort)
 
-  ## Construct exposure like format
+  ## Construct exposure-like format
   setorder(ld$timevar_data$A, id, date)
-
   ld$timevar_data$exposure <- ld$timevar_data$A[value == 1,
     .(start_date = first(date), end_date = last(date)),
     by = .(id, run = rleid(value))
@@ -87,9 +86,8 @@ The function =long_to_wide= converts long data from registers into
 wide format data based on the =time_grid= specified in
 =rtmle_init=. This transformation can be done in many different ways,
 and the function supplies some commonly used methods. Which methods
-can be used, depend on the data format. In the current =rtmle= object
-=x=, we have three different formats stored. The variables names
-should be as below for the methods to work.
+can be used depend on the data format. In the current =rtmle= object
+=x=, we have three different formats stored. 
 
 - Time of event :: The data contains times at which an event happened:
 
@@ -157,7 +155,7 @@ x <- long_to_wide(x,
 #+RESULTS:
 
 We describe each of these methods and all the others below. The
-example above construct data sets that look as this:
+example above construct data sets that look like this:
 
 #+BEGIN_SRC R
 lapply(x$data$timevar_data, head)
@@ -251,7 +249,10 @@ Key: <id>
 6:                 NA                 NA
 #+end_example
 
-The methods than can be used for each of the data formats are:
+The methods that can be used for each of the data formats are as
+follows. For a method to work, the long format data supplied to the
+=rtmle= object with =add_long_data=, should have variables with the
+same names as the examples given at the beginning of this section.
 
 - Time of event ::
   - =event= :: Indicates whether the event has ever occurred
@@ -389,14 +390,7 @@ The methods than can be used for each of the data formats are:
 
 * To do's
 
-- [X] Document all different methods
-- [X] Use how to construct different variable wide variables from same
-  long variable
-- [ ] Check with TAG that he agrees
-- [ ] Add sketch for how to add the used long_to_wide methods to the
-  rtmle object
-
-Later
+- [ ] Check with TAG that he agrees about documentation
 - [ ] Add description in the documentation of =long_to_wide= function
   itself or refer to this vignette from there.
 - [ ] Documenting writing own function
