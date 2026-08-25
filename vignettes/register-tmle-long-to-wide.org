@@ -258,7 +258,10 @@ same names as the examples given at the beginning of this section.
   - =event= :: Indicates whether the event has ever occurred
   - =time_since_event= :: Gives the time since last event
   - =event_interval= :: Indicates whether the event occurred within
-    the preceding interval.
+    the preceding interval: E.g., the variable =bleeding_2= denotes
+    whether a bleeding event occurred within the interval determined
+    by the time grid points 1 and 2 (see =x$time_grid_scale= and
+    =x$time_grid=).
 
 - Measurement ::
   - =locf= :: Last observation carried forward -- records the last
@@ -277,19 +280,22 @@ same names as the examples given at the beginning of this section.
 
 - Duration ::
   - =any_exposure= :: Indicates whether the subject has been exposed
-    in the previous interval.
+    at all in the preceding interval: E.g., the variable =exposure_2=
+    denotes whether some exposure time (defined by the intervals
+    between =start_date= and =end_date=) overlapped with the interval
+    determined by the time grid points 1 and 2.
   - =has_exposure= :: Indicates whether the subject has been exposed
-    for longer than =threshold= time in the previous interval
+    for longer than =threshold= time in the preceding interval
     (equivalent to =any_exposure= when ~threshold=0~).
   - =exposure_time= :: The time that the subject has been exposed in
-    the previous interval.
+    the preceding interval.
   - =exposure_percent= :: The percentage of the time that the subject
-    has been exposed in the previous interval.
+    has been exposed in the preceding interval.
     
   We illustrate the methods here, using ~threshold=2~. As the grid is
   equidistant with intervals equal to 4, this mean that wide variables
   =exposure_threshold_0=, =exposure_threshold_1=, ..., indicate
-  whether the subject have been exposed at least half of the previous
+  whether the subject have been exposed at least half of the preceding
   interval.
 
   #+BEGIN_SRC R
