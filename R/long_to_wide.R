@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 22 2024 (14:07) 
 ## Version: 
-## Last-Updated: apr 29 2026 (07:35) 
+## Last-Updated: sep  8 2026 (18:07) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 395
+##     Update #: 396
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -166,7 +166,8 @@ long_to_wide <- function(x,
     grid <- grid[start_interval <= end_followup]
     grid[, end_followup := NULL]
     grid[, interval := 0:(.N - 1), by = id_column]
-    grid <- pop[, .SD, .SDcols = c(id_column)][grid, on = id_column]
+    # this next line does nothing! 
+    ## grid <- pop[, .SD, .SDcols = c(id_column)][grid, on = id_column]
     data.table::setcolorder(grid, c(id_column, "interval", "start_interval", "end_interval"))
     #
     # prepare mappings for all time-varying variables
