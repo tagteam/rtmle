@@ -19,7 +19,10 @@
 ##' Builds the \code{intervention_match} matrix for a protocol. The function is
 ##' called by \code{\link{protocol}} when \code{\link{prepare_rtmle_data}} has
 ##' already been run, and by \code{\link{run_rtmle}} if the matrix is still
-##' missing at estimation time.
+##' missing at estimation time. For a user-defined intervention, observed
+##' treatment is compared row by row with the history-dependent values returned
+##' by the intervention function. Thus stopping treatment after a
+##' contraindication is adherent when that is what the rule prescribes.
 ##'
 ##' @title Check adherence to a protocol
 ##' @param x An \code{rtmle} object as returned by \code{\link{rtmle_init}}.
@@ -62,14 +65,26 @@ intervention_match <- function(x,protocol_name){
         names(intervention_match_names) <- colnames(intervention_match)
         previous <- rep(1,N)
         for(k in x$intervention_nodes){
-            intervention_variables <- intervention_table[time_node == k][["variable"]]
+            current_intervention <- intervention_table[
+                time_node == k & !is.na(value)
+            ]
+            intervention_variables <- current_intervention[["variable"]]
             if (length(intervention_variables)>0){
-                observed_values <- x$prepared_data[,intervention_variables,with = FALSE]
+                intervention <- evaluate_intervention(
+                    protocol = x$protocols[[protocol_name]],
+                    data = x$prepared_data,
+                    intervention_table = intervention_table,
+                    time_node = k
+                )
                 for (v in 1:length(intervention_variables)){
                     # when there are multiple intervention variables
                     # all observed values must match
-                    intervention_values <- intervention_table[time_node == k & variable == intervention_variables[[v]]][["value"]]
-                    intervention_match[,paste0("time_node_",k)] <- previous <- previous*(observed_values[[intervention_variables[[v]]]] %in% intervention_values)
+                    observed_values <- x$prepared_data[[intervention_variables[[v]]]]
+                    intervened_values <- intervention$data[[intervention_variables[[v]]]]
+                    current_match <- as.character(observed_values) == as.character(intervened_values)
+                    current_match[is.na(current_match)] <- FALSE
+                    intervention_match[,paste0("time_node_",k)] <- previous <-
+                        previous * current_match
                     # when there are multiple treatment variables we paste-collapse the names
                 }
                 intervention_match_names[paste0("time_node_",k)] <- paste0(intervention_variables,collapse = ",")

@@ -52,7 +52,10 @@ Because the data are discretized, time-dependent covariates at time \code{k}
 are not included in treatment models at time \code{k}, except at time 0.
 This avoids encoding an ordering assumption in which \code{L_k} precedes
 \code{A_k} when, in the original event history, \code{A_k} may occur before
-\code{L_k}.
+\code{L_k}. A history-dependent intervention can explicitly declare
+\code{L_k} in the \code{propensity_variables} supplied to
+\code{\link{protocol}}. Doing so asserts that \code{L_k} is known before
+the treatment decision at node \code{k}.
 }
 \examples{
 data(simulated_cohort)

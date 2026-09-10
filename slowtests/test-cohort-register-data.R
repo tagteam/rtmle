@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: maj  1 2026 (09:51) 
 ## Version: 
-## Last-Updated: maj  3 2026 (07:25) 
+## Last-Updated: sep  1 2026 (13:58) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 29
+##     Update #: 30
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -16,7 +16,7 @@
 ### Code:
 library(rtmle)
 cohort <- simulate_cohort(
-    n = 307,
+    n = 3070,
     seed = 347,
     max_follow = 20,
     baseline_variables = list(age = "normal",sex = "binomial","SBP" = "normal"),
@@ -80,6 +80,8 @@ x <- target(x,name = "Treatment effect",
 plot_adherence(x)
 x <- model_formula(x)
 x <- run_rtmle(x,time_horizon = 1:4)
+a <- run_rtmle(x,time_horizon = 4,learner = list(name = "jan",fun = "learn_glmnet",args = list(selector = "undersmooth")))
+b <- run_rtmle(x,time_horizon = 4,learner = list(name = "jan",fun = "learn_glmnet",args = list(selector = "min")))
 x
 ######################################################################
 ### test-cohort-register-data.R ends here

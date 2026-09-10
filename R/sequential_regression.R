@@ -85,10 +85,17 @@ sequential_regression <- function(x,
         }
         Y <- x$prepared_data[[outcome_name]]
         # intervene according to protocol for targets
-        intervened_data <- do.call(x$protocol[[protocol_name]]$intervene_function,
-                                   list(data = x$prepared_data[outcome_free_and_uncensored],
-                                        intervention_table = intervention_table,
-                                        time_node = k))
+        # Outcome in interval k is evaluated under treatment history through
+        # intervention node k - 1.
+        intervention <- evaluate_intervention(
+            protocol = x$protocols[[protocol_name]],
+            data = x$prepared_data[outcome_free_and_uncensored],
+            intervention_table = intervention_table,
+            time_node = k-1,
+            full_n = N,
+            row_indices = which(outcome_free_and_uncensored)
+        )
+        intervened_data <- intervention$data
         # fit outcome regression
         fit_last_interval <- fitter(intervention_node = k,
                                     learner = learner,

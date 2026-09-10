@@ -21,7 +21,10 @@ Check adherence to a protocol
 Builds the \code{intervention_match} matrix for a protocol. The function is
 called by \code{\link{protocol}} when \code{\link{prepare_rtmle_data}} has
 already been run, and by \code{\link{run_rtmle}} if the matrix is still
-missing at estimation time.
+missing at estimation time. For a user-defined intervention, observed
+treatment is compared row by row with the history-dependent values returned
+by the intervention function. Thus stopping treatment after a
+contraindication is adherent when that is what the rule prescribes.
 }
 \examples{
 x <- rtmle_init(time_grid = 0:2, name_id = "id", name_outcome = "Y")

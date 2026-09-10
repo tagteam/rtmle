@@ -54,7 +54,10 @@ Here we specify:
  - *treatment_variables*:  name(s) of the variable(s) that the protocols intervenes upon
  - *intervention*: the values of the treatment(s) the variables are set to under the intervention.
  If two treatments this would be either a list or a matrix. 
- In case of stochastic or dynamic intervention, a function needs to be specified.
+ In case of stochastic or dynamic intervention, a function needs to be specified
+ through *intervene_function*. For a history-dependent treatment rule, declare
+ any fixed/adherence *propensity_instructions* and additional
+ *propensity_variables* in the same *protocol* call.
  
 
 ### Examples: 

@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds & Alessandra
 ## Created: Jul 3 2024 (13:46)
 ## Version:
-## Last-Updated: maj 21 2026 (08:33) 
+## Last-Updated: sep 10 2026 (15:00) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 147
+##     Update #: 148
 #----------------------------------------------------------------------
 ##
 ### Commentary: 
@@ -42,21 +42,52 @@
 ##'     \code{A_0}, \code{A_1}, \dots, \code{A_k}. This argument can be left
 ##'     unspecified in which case the argument \code{intervention}
 ##'     must be given.
-##' @param intervene_function A character string naming the function used to
-##'     intervene under the protocol. Defaults to \code{"intervene"}, which
-##'     implements static interventions. The function is called from the internal
-##'     function \code{intervention_probabilities()} with two arguments: the
-##'     current time interval and the current history of all
-##'     variables. It determines the treatment value(s) under the intervention
-##'     and should return a matrix with as many columns as there are treatment
-##'     variables.
+##' @param intervene_function A function, or a character string naming one,
+##'     used to apply the protocol. It is called as
+##'     \code{fun(data, intervention_table, time_node)} and must preserve the
+##'     rows and columns of \code{data}. It must return the complete modified
+##'     data directly. Propensity metadata are supplied separately through
+##'     \code{propensity_instructions} and \code{propensity_variables}.
+##'     Defaults to \code{\link{intervene}}, which implements static
+##'     interventions.
 ##' @param verbose Logical. If \code{FALSE} suppress all messages. \code{TRUE} is the default.
+##' @param propensity_instructions Optional fixed-probability or adherence
+##'     instructions for the treatment propensity. This may be a static numeric
+##'     vector, a named list/table of numeric vectors, a descriptor with
+##'     \code{mode = "fixed"} or \code{mode = "adherence"}, or a function
+##'     returning one of these objects. A function is called with
+##'     \code{data}, \code{intervention_table}, and \code{time_node} at the
+##'     same analysis stage as \code{intervene_function}. Fixed non-missing
+##'     values are assigned directly and excluded from model fitting;
+##'     \code{mode = "adherence"} models whether observed treatment matches the
+##'     intervention-updated data. Use \code{stratify_by} in an adherence
+##'     descriptor to fit separate models by observed strata. Static fixed
+##'     probability vectors may be given for the full prepared cohort and are
+##'     subset automatically for at-risk nuisance fits.
+##' @param propensity_variables Optional prepared-data variable names to add to
+##'     the treatment propensity formulas. This may be a character vector, a
+##'     named list, or a function returning either form. A function is called
+##'     with \code{data}, \code{intervention_table}, and \code{time_node}.
 ##' @param ... Not used.
 #' @return The modified object contains the treatment variables and
 #'     \code{intervention_table} as list elements of \code{x$protocols[[name]]}.
+#'     When supplied, \code{propensity_instructions} and
+#'     \code{propensity_variables} are stored there as well.
+#' @details A history-dependent intervention only needs to return the
+#'   intervention-updated data. Propensity metadata are declared in the
+#'   protocol call. They may be static objects or functions evaluated with the
+#'   current observed history. The callback and metadata functions are called
+#'   on the full prepared cohort during formula construction and adherence
+#'   matching, and on the current at-risk subset during G and Q nuisance-model
+#'   fitting. In the G step this is the subset entering treatment node code{k}.
+#'   In the Q step it is the subset entering the outcome interval, with
+#'   code{time_node = k - 1}; the returned data are passed as prediction data
+#'   (code{newdata}) to the outcome learner before the TMLE fluctuation. They
+#'   are not the outcomes or data produced by the fluctuation step itself.
 #' @seealso \code{\link{rtmle_init}}, \code{\link{prepare_rtmle_data}},
 #'   \code{\link{intervention_match}}, \code{\link{target}},
-#'   \code{\link{model_formula}}, \code{\link{run_rtmle}}
+#'   \code{\link{model_formula}},
+#'   \code{\link{run_rtmle}}
 #' @author Thomas A Gerds \email{tag@@biostat.ku.dk}
 #' @examples
 #' # ------------------------------------------------------------------------------------------
@@ -89,7 +120,73 @@
 #'                                               "B" = factor("1",levels = c("0","1")),
 #'                                               "C" = factor("0",levels = c("0","1"))))
 #' x$protocols
-##' @export
+#' # ------------------------------------------------------------------------------------------
+#' # Dynamic regime/History-dependent intervention: stop A after bleeding
+#' # ------------------------------------------------------------------------------------------
+#' data(simulated_cohort, package = "rtmle")
+#' ld <- register_format(simulated_cohort)
+#' y <- rtmle_init(time_grid = seq(0, 20, 4), name_id = "id",
+#'                 name_outcome = "stroke", name_competing = "death",
+#'                 name_censoring = "dropout", censored_label = "censored")
+#' y <- add_long_data(
+#'     y,
+#'     outcome_data = ld$timevar_data$stroke[!duplicated(id)],
+#'     censored_data = ld$timevar_data$dropout,
+#'     competing_data = ld$timevar_data$death,
+#'     timevar_data = ld$timevar_data[c("bleeding", "changeSBP", "A", "B")]
+#' )
+#' y <- add_baseline_data(y, data = ld$baseline_data)
+#' y <- long_to_wide(y, start_followup_date = 0)
+#' y <- prepare_rtmle_data(y)
+#'
+#' has_bled_by <- function(data, node) {
+#'     history <- intersect(paste0("bleeding_", 0:node), names(data))
+#'     if (length(history) == 0L) return(rep(FALSE, NROW(data)))
+#'     bleeding_history <- do.call(
+#'         cbind,
+#'         lapply(history, function(v) data[[v]] %in% c(1, "1"))
+#'     )
+#'     rowSums(bleeding_history) > 0
+#' }
+#' stop_after_bleeding <- function(data, intervention_table, time_node) {
+#'     intervened_data <- intervene(data, intervention_table, time_node)
+#'     for (node in unique(intervention_table$time_node)) {
+#'         action <- paste0("A_", node)
+#'         intervened_data[[action]][has_bled_by(data, node)] <- factor(
+#'             "0", levels = levels(data[[action]])
+#'         )
+#'     }
+#'     intervened_data
+#' }
+#' bleeding_propensity_instructions <- function(data, intervention_table,
+#'                                              time_node) {
+#'     action <- paste0("A_", time_node)
+#'     stats::setNames(list(list(mode = "adherence")), action)
+#' }
+#' bleeding_propensity_variables <- function(data, intervention_table,
+#'                                           time_node) {
+#'     action <- paste0("A_", time_node)
+#'     stats::setNames(list(paste0("bleeding_", time_node)), action)
+#' }
+#' y <- protocol(
+#'     y,
+#'     name = "A_until_bleeding",
+#'     intervention = data.frame(
+#'         time_node = y$intervention_nodes,
+#'         A = factor("1", levels = c("0", "1"))
+#'     ),
+#'     intervene_function = stop_after_bleeding,
+#'     propensity_instructions = bleeding_propensity_instructions,
+#'     propensity_variables = bleeding_propensity_variables,
+#'     verbose = FALSE
+#' )
+#' y <- target(y, name = "Stroke_risk", estimator = "tmle",
+#'             protocols = "A_until_bleeding")
+#' y <- model_formula(y, verbose = FALSE)
+#' y <- run_rtmle(y, learner = "learn_glm", time_horizon = 2,
+#'                 refit = TRUE, verbose = FALSE)
+#' y$estimate$Main_analysis
+#' @export
 protocol <- function(x,
                      name,
                      intervention,
@@ -97,6 +194,8 @@ protocol <- function(x,
                      treatment_variables,
                      intervene_function = NULL,
                      verbose = TRUE,
+                     propensity_instructions = NULL,
+                     propensity_variables = NULL,
                      ...) {
     variable <- time_node <- NULL
     #
@@ -163,12 +262,39 @@ protocol <- function(x,
                                           value.factor = TRUE
                                       )[, variable := paste0(variable, "_", time_node)]
     if (length(intervene_function)>0){
+        if (!(is.function(intervene_function) ||
+              (is.character(intervene_function) &&
+               length(intervene_function) == 1L &&
+               !is.na(intervene_function) && nzchar(intervene_function)))) {
+            stop("intervene_function must be a function or the name of a function.")
+        }
+    }
+    if (!is.null(propensity_instructions) &&
+        !(is.function(propensity_instructions) ||
+          is.numeric(propensity_instructions) ||
+          inherits(propensity_instructions, "data.frame") ||
+          is.matrix(propensity_instructions) ||
+          is.list(propensity_instructions))) {
+        stop("`propensity_instructions` must be a function or a supported instruction object.")
+    }
+    if (!is.null(propensity_variables) &&
+        !(is.function(propensity_variables) ||
+          is.character(propensity_variables) ||
+          is.list(propensity_variables))) {
+        stop("`propensity_variables` must be a function, character vector, or named list.")
+    }
+    # Re-registering a protocol invalidates all derived adherence and
+    # probability objects from the previous definition.
+    x$protocols[[name]] <- NULL
+    if (length(intervene_function)>0){
         x$protocols[[name]]$intervene_function <- intervene_function
     }else{
         x$protocols[[name]]$intervene_function <- "intervene"
     }
     x$protocols[[name]]$treatment_variables <- treatment_variables
     x$protocols[[name]]$intervention_table <- intervention_table[]
+    x$protocols[[name]]$propensity_instructions <- propensity_instructions
+    x$protocols[[name]]$propensity_variables <- propensity_variables
     # adding the treatment options if necessary
     if (length(x$names$treatment_options) == 0){
         x$names$treatment_options <- treatment_options

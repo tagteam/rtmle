@@ -80,6 +80,7 @@ TODO: Use the function 'run_rtmle' to estimate the nuisance parameter models and
 Diagnostics:         No warnings (yet)
 #+end_example
 
+
 * =long_to_wide= mappings
 
 The function =long_to_wide= converts long data from registers into
@@ -299,6 +300,7 @@ same names as the examples given at the beginning of this section.
   interval.
 
   #+BEGIN_SRC R
+    x <- long_to_wide(x,exposure_threshold = list(variable = "exposure", method = "has_exposure", threshold = 2))
     x <- long_to_wide(x,
 		      exposure_any = list(variable = "exposure", method = "any_exposure"),
 		      exposure_percent = list(variable = "exposure", method = "exposure_percent"),

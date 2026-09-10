@@ -324,6 +324,81 @@ head(names(x$prepared_data), 20)
 : [11] "death_1"     "bleeding_1"  "changeSBP_1" "A_1"         "B_1"         "dropout_2"   "stroke_2"    "death_2"     "bleeding_2"  "changeSBP_2"
 
 
+* Stop treatment after a contraindication
+
+A user-defined intervention can make treatment depend on a patient's
+history. The following rule prescribes =A= at every node until
+=bleeding= occurs and sets =A= equal to zero from then on. The
+intervention function returns only the intervention-updated data. The
+propensity instructions are supplied separately in the =protocol= call:
+
+- =propensity_instructions= declares how the adherence propensity should be
+  constructed. Here the binary observed-versus-intervened treatment match is
+  modeled, so people who continue =A= after bleeding contribute as non-adherent
+  observations; and
+- =propensity_variables= adds current-node bleeding to the treatment
+  model. Declaring =bleeding_k= also asserts that bleeding is observed
+  before the decision about =A_k=.
+
+#+BEGIN_SRC R
+has_bled_by <- function(data, node) {
+    history <- intersect(paste0("bleeding_", 0:node), names(data))
+    if (length(history) == 0) {
+        return(rep(FALSE, NROW(data)))
+    }
+    bleeding_history <- do.call(
+        cbind,
+        lapply(history, function(v) data[[v]] %in% c(1, "1"))
+    )
+    rowSums(bleeding_history) > 0
+}
+
+stop_A_after_bleeding <- function(data, intervention_table, time_node) {
+    intervened_data <- intervene(data, intervention_table, time_node)
+    for (node in unique(intervention_table$time_node)) {
+        action <- paste0("A_", node)
+        intervened_data[[action]][has_bled_by(data, node)] <- "0"
+    }
+    intervened_data
+}
+
+bleeding_propensity_instructions <- function(data, intervention_table,
+                                             time_node) {
+    current_action <- paste0("A_", time_node)
+    setNames(list(list(mode = "adherence")), current_action)
+}
+
+bleeding_propensity_variables <- function(data, intervention_table,
+                                          time_node) {
+    current_action <- paste0("A_", time_node)
+    setNames(list(paste0("bleeding_", time_node)), current_action)
+}
+
+x_dynamic <- protocol(
+    x,
+    name = "A_until_bleeding",
+    intervention = data.frame(
+        time_node = x$intervention_nodes,
+        A = factor("1", levels = c("0", "1"))
+    ),
+    intervene_function = stop_A_after_bleeding,
+    propensity_instructions = bleeding_propensity_instructions,
+    propensity_variables = bleeding_propensity_variables,
+    verbose = FALSE
+)
+x_dynamic <- model_formula(x_dynamic, verbose = FALSE)
+x_dynamic$models$time_1$A_until_bleeding$A_1$formula
+#+END_SRC
+
+To impose the simpler deterministic stopping approximation instead, replace
+=bleeding_propensity_instructions= with a function returning =list(mode =
+"fixed", probability = ifelse(has_bled_by(data, time_node), 1, NA_real_))=.
+Non-missing fixed values are assigned directly and those rows are excluded
+from the corresponding propensity-model fit. Use the adherence instruction
+when continuation after bleeding should inform the estimated probability. To
+fit separate adherence models for the bleeding and non-bleeding strata, add
+=stratify_by = paste0("bleeding_", time_node)= to the adherence instruction.
+
 * Define the target parameter
 
 =target()= tells =rtmle= which protocols belong to the estimand and which

@@ -25,7 +25,8 @@ formalize <- function(timepoint,
                       exclusion_rules = NULL,
                       inclusion_rules = NULL,
                       handle_concomitant_variables,
-                      unwanted_variables = NULL){
+                      unwanted_variables = NULL,
+                      additional_variables = NULL){
     # remove constant variables
     included_baseline_covariates <- setdiff(name_baseline_covariates,constant_variables)
     # check Markov assumption for time-varying variables
@@ -44,6 +45,21 @@ formalize <- function(timepoint,
     included_vars <- c(included_baseline_covariates,
                        setdiff(non_markov_time_covariates,constant_variables),
                        setdiff(markov_time_covariates,constant_variables))
+    # A dynamic intervention can assert that a covariate observed at the
+    # current node precedes treatment at that node. For Markov variables the
+    # current value replaces, rather than augments, the previous value.
+    if (length(additional_variables)>0){
+        for (markov_variable in intersect(Markov,name_time_covariates)){
+            current_markov_variable <- paste0(markov_variable,"_",timepoint)
+            if (current_markov_variable %in% additional_variables){
+                included_vars <- setdiff(
+                    included_vars,
+                    paste0(markov_variable,"_",0:max(0,timepoint))
+                )
+            }
+        }
+        included_vars <- unique(c(included_vars,additional_variables))
+    }
     # remove outcome variable (could be removed earlier in the program)
     included_vars <- setdiff(included_vars,name_outcome_variable)
     # remove unwanted variables
