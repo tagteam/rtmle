@@ -15,6 +15,7 @@ map_data_to_grid(
   values = c(1, 0),
   fun_aggregate = NULL,
   fill = NA,
+  baseline_exposure_start = TRUE,
   ...
 )
 }
@@ -71,6 +72,13 @@ within the same interval (e.g., \code{mean}, \code{median}). For
 summarized.}
 
 \item{fill}{Value used to fill missing cells in the wide-format output.}
+
+\item{baseline_exposure_start}{Logical. For exposure methods, if
+\code{TRUE} (the default), an exposure whose \code{start_date} matches
+time zero is assigned exposure \code{1} in interval 0. Set to
+\code{FALSE} to use only the measured overlap with interval 0, including
+when that interval is extended by \code{\link{discretize}}'s
+\code{baseline_lookback}.}
 
 \item{...}{Additional arguments passed to internal computations.}
 }
