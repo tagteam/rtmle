@@ -54,7 +54,9 @@ variables.}
 \item{id}{Character string naming the subject identifier column.}
 
 \item{threshold}{Numeric threshold used for methods such as
-\code{"any_exposure"} and \code{"has_exposure"}.}
+\code{"any_exposure"} and \code{"has_exposure"}. For
+\code{"has_exposure"}, the threshold is a proportion and must lie in
+\code{[0, 1]}.}
 
 \item{lookback_window}{Numeric or \code{Inf}. For methods using rolling joins
 (e.g., \code{"locf"} and \code{"event"}), defines how far back in time

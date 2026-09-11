@@ -66,7 +66,9 @@
 #' @param id Character string naming the subject identifier column.
 #'
 #' @param threshold Numeric threshold used for methods such as
-#'   \code{"any_exposure"} and \code{"has_exposure"}.
+#'   \code{"any_exposure"} and \code{"has_exposure"}. For
+#'   \code{"has_exposure"}, the threshold is a proportion and must lie in
+#'   \code{[0, 1]}.
 #'
 #' @param lookback_window Numeric or \code{Inf}. For methods using rolling joins
 #'   (e.g., \code{"locf"} and \code{"event"}), defines how far back in time
@@ -239,17 +241,45 @@ discretize <- function(method,
             }
             setkeyv(overlap, c(id, "interval"))
             if (method %chin% c("exposure_time","exposure_percent","any_exposure","has_exposure")){
-                if (method == "exposure_percent"){
-                    # NOTE: at time zero the length of interval 0 is zero
+                if (method %chin% c("exposure_percent","has_exposure")){
+                    # At time zero the interval has zero length. Preserve the
+                    # baseline exposure value there and use the proportion of
+                    # the interval for subsequent intervals.
                     overlap <- rbind(
-                        overlap[interval == 0, list(interval = interval,value = sum(exposure)),by = id],
-                        overlap[interval>0, list(value = sum(exposure)/(end_interval[1]-start_interval[1])), by = c(id, "interval")]
+                        overlap[interval == 0,
+                                list(interval = interval, value = sum(exposure)),
+                                by = id],
+                        if (is.null(threshold)) {
+                            overlap[
+                                interval > 0,
+                                list(value = sum(exposure) /
+                                         (end_interval[1] - start_interval[1])),
+                                by = c(id, "interval")
+                            ]
+                        } else {
+                            if (!is.numeric(threshold) || length(threshold) != 1L ||
+                                is.na(threshold) || threshold < 0 || threshold > 1) {
+                                stop("For method 'has_exposure', threshold must be a single numeric value in [0, 1].")
+                            }
+                            overlap[
+                                interval > 0,
+                                list(value = (sum(exposure) /
+                                                  (end_interval[1] - start_interval[1])) >
+                                         threshold),
+                                by = c(id, "interval")
+                            ]
+                        }
                     )
-                }else{
+                } else {
                     overlap <- overlap[, list(value = sum(exposure)), by = c(id, "interval")]
                 }
             }
-            if (method %chin% c("has_exposure","any_exposure")){
+            if (method %chin% c("any_exposure")){
+                if (is.null(threshold)) threshold <- 0
+                if (!is.numeric(threshold) || length(threshold) != 1L ||
+                    is.na(threshold)) {
+                    stop("For method 'any_exposure', threshold must be a single numeric value.")
+                }
                 overlap[, value := 1 * (value > threshold)]
             }
         }

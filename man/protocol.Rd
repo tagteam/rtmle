@@ -134,7 +134,7 @@ x <- protocol(x,name = "Always_A_and_B_never_C",
                                               "C" = factor("0",levels = c("0","1"))))
 x$protocols
 # ------------------------------------------------------------------------------------------
-# History-dependent intervention: stop A after bleeding
+# Dynamic regime/History-dependent intervention: stop A after bleeding
 # ------------------------------------------------------------------------------------------
 data(simulated_cohort, package = "rtmle")
 ld <- register_format(simulated_cohort)

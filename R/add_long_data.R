@@ -82,6 +82,11 @@ add_long_data <- function(x,
                           competing_data,
                           timevar_data,
                           ...){
+    # A new long-format data set may contain calendar dates even when a
+    # previous call to long_to_wide() converted the old data to time-on-study
+    # values. Force long_to_wide() to re-evaluate the date representation.
+    if (is.null(x$progress)) x$progress <- list()
+    x$progress$substracted_start_followup_date <- FALSE
     if(missing(timevar_data)) timevar_data <- NULL
     if(missing(outcome_data)) outcome_data <- NULL
     if(missing(censored_data)) censored_data <- NULL

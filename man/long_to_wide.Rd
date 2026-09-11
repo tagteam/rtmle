@@ -4,18 +4,21 @@
 \alias{long_to_wide}
 \title{Transform data from long to wide format}
 \usage{
-long_to_wide(x, start_followup_date, mappings, ...)
+long_to_wide(x, start_followup_date, mappings, verbose = TRUE, ...)
 }
 \arguments{
 \item{x}{An object of class \code{"rtmle"} containing long-format data added
 with \code{\link{add_long_data}} and baseline data added with
 \code{\link{add_baseline_data}}.}
 
-\item{start_followup_date}{Date at which follow-up starts. This date is
+\item{start_followup_date}{Character scalar naming the Date-valued baseline
+column that contains each subject's follow-up start. That date is
 subtracted from outcome, competing-risk, censoring, and time-varying
-covariate dates. If missing, follow-up is assumed to start at zero for all
-subjects, in which case all dates must already be given on the
-time-on-study scale.}
+covariate dates. Use \code{0} (or omit the argument) when all long-format
+dates are already durations on the time-on-study scale. If long-format
+dates are \code{Date} objects, this argument must name a \code{Date} column;
+the long-format date columns are converted to numeric days since each
+subject's start.}
 
 \item{mappings}{Named list of instructions for how to map long-format variables
   onto the discrete time scale. Names of \code{mappings} are output variable
@@ -28,6 +31,9 @@ time-on-study scale.}
   \code{"event"}, \code{"event_interval"}, \code{"any_exposure"},
   \code{"has_exposure"}, \code{"exposure_time"}, and
   \code{"exposure_percent"}.}
+
+\item{verbose}{Logical. If \code{FALSE}, suppress informational messages
+generated while checking date formats.}
 
 \item{...}{alternative way to specify elements of \code{mappings}.}
 }
@@ -44,7 +50,11 @@ zero when the supplied dates are already on the time-on-study scale.
 
 The function discretizes dates of events and concomitant marker
 information. Multiple wide-format variables may result from a single
-long-format variable.
+long-format variable. Calendar dates are converted to numeric time since
+subject-specific follow-up start before the discrete grid is constructed.
+The conversion is recorded in the object so that repeated calls do not
+subtract the start date a second time; supplying new data with
+\code{\link{add_long_data}} resets this state.
 }
 \examples{
 set.seed(17)

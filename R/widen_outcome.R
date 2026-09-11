@@ -1,9 +1,22 @@
 widen_outcome <- function(x,
-                          grid,
+                          outcome_data = NULL,
+                          censored_data = NULL,
+                          competing_data = NULL,
+                          grid = NULL,
                           fun_aggregate = NULL){
-    if (length(x$long_data$outcome_data) == 0) {
-        stop("widen_outcome: Object does not contain outcome data at x$long_data$outcome_data")
+    # The explicit event tables are prepared by long_to_wide(). Allow the
+    # outcome table to be omitted for direct internal calls; the normal path
+    # passes all event tables after applying the follow-up precedence rules.
+    if (is.null(outcome_data)) {
+        if (length(x$long_data$outcome_data) == 0) {
+            stop("widen_outcome: Object does not contain outcome data at x$long_data$outcome_data")
+        }
+        outcome_data <- data.table::copy(x$long_data$outcome_data)
+        if ("date" %in% names(outcome_data)) {
+            data.table::setnames(outcome_data, "date", "outcome_date")
+        }
     }
+    if (is.null(grid)) stop("widen_outcome: a grid is required.")
     # -----------------------------------------------------------------------
     # death and right censored
     # -----------------------------------------------------------------------
@@ -17,65 +30,59 @@ widen_outcome <- function(x,
     #       c) once censored both outcome and death variables are NA
     # 
     censored_variables <- NULL
-    if (length(x$names$censoring)>0 && length(x$long_data$censored_data)>0){
-        if (any(duplicated(x$long_data$censored_data[[x$names$id]]))){
+    if (length(x$names$censoring)>0 && !is.null(censored_data) &&
+        NROW(censored_data)>0){
+        if (any(duplicated(censored_data[[x$names$id]]))){
             stop("Duplicated person id in dates for censoring risks.")
-        }else{
-            censored_before_outcome_and_death <- data.table(id = setdiff(x$long_data$censored_data[[x$names$id]],
-                                                                         c(x$long_data$outcome_data[[x$names$id]],
-                                                                           x$long_data$competing_data[[x$names$id]])))
-            data.table::setnames(censored_before_outcome_and_death,x$names$id)
-            data.table::setkeyv(censored_before_outcome_and_death,x$names$id)
         }
-        if (NROW(censored_before_outcome_and_death)>0){
-            censored_variables <- discretize(
-                method = "event",
-                data=x$long_data$censored_data[censored_before_outcome_and_death,on = x$names$id],
-                grid = grid,
-                name=x$names$censoring,
-                id = x$names$id,
-                threshold = NULL,
-                lookback_window = Inf,
-                # the order must be censored_label, uncensored_label 
-                values = rev(x$names$censored_levels),
-                fun_aggregate = fun_aggregate,
-                fill = NA
-            )
-            ## censored_variables <- map_grid(grid=grid,data=x$long_data$censored_data[censored_before_outcome_and_death,on = x$names$id],name=x$names$censoring,rollforward=Inf,values=rev(x$names$censored_levels),fun_aggregate = fun_aggregate,id = x$names$id)
-            # this makes sure that all censored variables are
-            # factors with levels order as c(uncensored,censored)
-            for (cc in names(censored_variables)[-1]){
-                set(censored_variables,j=cc,value=factor(censored_variables[[cc]],levels=x$names$censored_levels))
-            }
+        current_censored_data <- data.table::copy(censored_data)
+        if ("censored_date" %in% names(current_censored_data)) {
+            data.table::setnames(current_censored_data, "censored_date", "date")
+        }
+        censored_variables <- discretize(
+            method = "event",
+            data = current_censored_data,
+            grid = grid,
+            name = x$names$censoring,
+            id = x$names$id,
+            threshold = NULL,
+            lookback_window = Inf,
+            # the order must be censored_label, uncensored_label
+            values = rev(x$names$censored_levels),
+            fun_aggregate = fun_aggregate,
+            fill = NA
+        )
+        # This makes sure that all censored variables are factors with levels
+        # ordered as c(uncensored, censored).
+        for (cc in names(censored_variables)[-1]){
+            set(censored_variables,
+                j = cc,
+                value = factor(censored_variables[[cc]],
+                               levels = x$names$censored_levels))
         }
     }
     competing_variables <- NULL
-    if (length(x$names$competing)>0 && length(x$long_data$competing_data)>0){
-        if (any(duplicated(x$long_data$competing_data[[x$names$id]]))){
+    if (length(x$names$competing)>0 && !is.null(competing_data) &&
+        NROW(competing_data)>0){
+        if (any(duplicated(competing_data[[x$names$id]]))){
             stop("Duplicated person id in dates for competing risks.")
-        }else{
-            # when both outcome and competing risk occurs then the competing risk date is ignored 
-            competing_risk_before_outcome <- data.table(id = setdiff(x$long_data$competing_data[[x$names$id]],
-                                                                     x$long_data$outcome_data[[x$names$id]]))
-            data.table::setnames(competing_risk_before_outcome,x$names$id)
-            data.table::setkeyv(competing_risk_before_outcome,x$names$id)
         }
-        if (NROW(competing_risk_before_outcome)>0){
-            competing_variables <- discretize(
-                method = "event",
-                data=x$long_data$competing_data[competing_risk_before_outcome,on = x$names$id],
-                grid = grid,
-                name=x$names$competing,
-                id = x$names$id,
-                threshold = NULL,
-                lookback_window = Inf,
-                # the order must be censored_label, uncensored_label 
-                values = c(1,0),
-                fun_aggregate = fun_aggregate,
-                fill = NA
-            )
-            ## competing_variables <- map_grid(grid=grid,data=x$long_data$competing_data[competing_risk_before_outcome,on = x$names$id],name=x$name$competing,rollforward=Inf,id = x$names$id)
+        current_competing_data <- data.table::copy(competing_data)
+        if ("competing_date" %in% names(current_competing_data)) {
+            data.table::setnames(current_competing_data, "competing_date", "date")
         }
+        competing_variables <- discretize(
+            method = "event",
+            data = current_competing_data,
+            grid = grid,
+            name = x$names$competing,
+            id = x$names$id,
+            threshold = NULL,
+            lookback_window = Inf,
+            values = c(1, 0),
+            fun_aggregate = fun_aggregate,
+            fill = NA
+        )
     }
     # -----------------------------------------------------------------------
     # only interested in new outcomes with onset after index
@@ -86,9 +93,13 @@ widen_outcome <- function(x,
     ## outcome_data=outcome_data[date>start]
     ## only interested in first new outcome
     ## outcome_data=outcome_data[outcome_data[,.I[1],by=id]$V1]
+    current_outcome_data <- data.table::copy(outcome_data)
+    if ("outcome_date" %in% names(current_outcome_data)) {
+        data.table::setnames(current_outcome_data, "outcome_date", "date")
+    }
     outcome_variables <- discretize(
         method = "event",
-        data=x$long_data$outcome_data,
+        data=current_outcome_data,
         grid = grid,
         name=x$names$outcome,
         id = x$names$id,
@@ -98,7 +109,6 @@ widen_outcome <- function(x,
         fun_aggregate = fun_aggregate,
         fill = NA
     )
-    ## map_grid(grid=grid,data=x$long_data$outcome_data,name=x$names$outcome,rollforward=Inf,id = x$names$id)
     # Once censoring has occurred all following competing and outcome variables
     # should be NA. Note that by construction id's where both censored dates AND
     # outcome/competing dates are available the censored dates are removed before
