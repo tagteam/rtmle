@@ -25,7 +25,7 @@
 #' @param ... Not used.
 #' @return The modified \code{rtmle} object.
 #' @seealso \code{\link{add_long_data}}, \code{\link{add_wide_data}},
-#'   \code{\link{long_to_wide}}, \code{\link{prepare_rtmle_data}}
+#'   \code{\link{discretize}}, \code{\link{prepare_rtmle_data}}
 #' @examples
 #' x <- rtmle_init(time_grid = 0:2, name_id = "id", name_outcome = "Y")
 #' baseline <- data.frame(id = 1:3,

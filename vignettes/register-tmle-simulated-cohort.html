@@ -379,8 +379,8 @@ Minority threshold:  8
 Weight truncation:   (0,1)
 Prediction range:    (0.0001,0.9999)
 TODO: The object contains no baseline_data yet. Add them with the function rtmle::add_baseline_data
-TODO: The object contains no time varying data yet. Add them with rtmle::add_wide_data in discretized form or with rtmle::add_long_data followed by rtmle::long_to_wide.
-TODO: The object contains no outcome data yet. Add them with rtmle::add_wide_data in discretized form or with rtmle::add_long_data followed by rtmle::long_to_wide.
+TODO: The object contains no time varying data yet. Add them with rtmle::add_wide_data in discretized form or with rtmle::add_long_data followed by rtmle::discretize.
+TODO: The object contains no outcome data yet. Add them with rtmle::add_wide_data in discretized form or with rtmle::add_long_data followed by rtmle::discretize.
 TODO: The object contains no protocols. Add them with the function 'protocol'.
 Prepared data:       n=0, p=-1
 TODO: Use the function 'model_formula' to initialize the formula for the nuisance parameter models.
@@ -463,7 +463,7 @@ names(x$long_data$timevar_data)
 <h2 id="org9b54f87"><span class="section-number-2">5.</span> Discretize the longitudinal data onto the discrete time scale</h2>
 <div class="outline-text-2" id="text-5">
 <p>
-<code>long_to_wide()</code> maps the long event-history data onto the discrete time grid.
+<code>discretize()</code> maps the long event-history data onto the discrete time grid.
 Because the simulated times are already measured from zero, the start of
 follow-up is set to 0.  Default mappings are used for all supplied
 time-varying variables.
@@ -472,7 +472,7 @@ time-varying variables.
 <div class="org-src-container">
 <pre class="src src-R"># Input: x with baseline_data and long_data plus the time grid from rtmle_init().
 # Output: x$data contains wide outcome and time-varying data on the time grid.
-x &lt;- long_to_wide(x, start_followup_date = 0)
+x &lt;- discretize(x, start_followup_date = 0)
 
 names(x$data)
 names(x$data$timevar_data)
@@ -872,7 +872,7 @@ x &lt;- add_long_data(
 )
 
 x &lt;- add_baseline_data(x, data = ld$baseline_data)
-x &lt;- long_to_wide(x, start_followup_date = 0)
+x &lt;- discretize(x, start_followup_date = 0)
 x &lt;- prepare_rtmle_data(x)
 
 x &lt;- protocol(

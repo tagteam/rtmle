@@ -78,6 +78,6 @@ fast_cast(x_dup, id = "id", fun_aggregate = mean)
 
 }
 \seealso{
-\code{\link{discretize}}, \code{\link{long_to_wide}}
+\code{\link{map_data_to_grid}}, \code{\link{discretize}}
 }
 \keyword{internal}

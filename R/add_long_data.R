@@ -43,7 +43,7 @@
 #'   covariates. This is an alternative to passing those data frames through
 #'   \code{timevar_data}.
 #' @seealso \code{\link{rtmle_init}}, \code{\link{add_baseline_data}},
-#'   \code{\link{add_wide_data}}, \code{\link{long_to_wide}},
+#'   \code{\link{add_wide_data}}, \code{\link{discretize}},
 #'   \code{\link{prepare_rtmle_data}}
 #' @return The modified \code{rtmle} object.
 #' @author Thomas A. Gerds <tag@@biostat.ku.dk>
@@ -59,7 +59,7 @@
 #'                    competing_data=ld$timevar_data$death,
 #'                    timevar_data=ld$timevar_data[c("bleeding","changeSBP","A","B")])
 #' x <- add_baseline_data(x,data=ld$baseline_data)
-#' x <- long_to_wide(x,start_followup_date=0)
+#' x <- discretize(x,start_followup_date=0)
 #' x <- prepare_rtmle_data(x)
 #' x <- protocol(x,name = "Always_A",
 #'                     intervention = data.frame(
@@ -83,8 +83,8 @@ add_long_data <- function(x,
                           timevar_data,
                           ...){
     # A new long-format data set may contain calendar dates even when a
-    # previous call to long_to_wide() converted the old data to time-on-study
-    # values. Force long_to_wide() to re-evaluate the date representation.
+    # previous call to discretize() converted the old data to time-on-study
+    # values. Force discretize() to re-evaluate the date representation.
     if (is.null(x$progress)) x$progress <- list()
     x$progress$substracted_start_followup_date <- FALSE
     if(missing(timevar_data)) timevar_data <- NULL

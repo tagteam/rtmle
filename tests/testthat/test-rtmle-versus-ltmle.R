@@ -56,7 +56,7 @@ if (requireNamespace("ltmle")){
         x <- rtmle_init(time_grid = seq(0,1500,30.45*12),name_id = "id",name_outcome = "Y",name_competing = "Dead",name_censoring = "Censored",censored_label = "censored")
         x <- add_long_data(x,outcome_data=ld$outcome_data,censored_data=ld$censored_data,competing_data=ld$competing_data,timevar_data=ld$timevar_data)
         x <- add_baseline_data(x,data=ld$baseline_data)
-        x <- long_to_wide(x)
+        x <- discretize(x)
         x <- protocol(x,name = "Always_A",treatment_variables = "A",intervention = 1)
         x <- protocol(x,name = "Never_A",treatment_variables = "A",intervention = 0)
         x <- prepare_rtmle_data(x)

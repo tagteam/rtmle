@@ -136,7 +136,7 @@
 #'     timevar_data = ld$timevar_data[c("bleeding", "changeSBP", "A", "B")]
 #' )
 #' y <- add_baseline_data(y, data = ld$baseline_data)
-#' y <- long_to_wide(y, start_followup_date = 0)
+#' y <- discretize(y, start_followup_date = 0)
 #' y <- prepare_rtmle_data(y)
 #'
 #' has_bled_by <- function(data, node) {

@@ -31,7 +31,7 @@
 #'
 #' @returns A longitudinal event-history \code{\link[data.table]{data.table}}.
 #'
-#' @seealso \code{\link{simulate_long_data}}, \code{\link{long_to_wide}}
+#' @seealso \code{\link{simulate_long_data}}, \code{\link{discretize}}
 #'
 #' @examples
 #' library(lava)

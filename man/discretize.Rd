@@ -2,142 +2,98 @@
 % Please edit documentation in R/discretize.R
 \name{discretize}
 \alias{discretize}
-\title{Discretize long-format time-dependent data onto a discrete time grid}
+\title{Discretize longitudinal data onto a discrete time grid}
 \usage{
-discretize(
-  method,
-  data,
-  grid,
-  name,
-  id,
-  threshold = NULL,
-  lookback_window = Inf,
-  values = c(1, 0),
-  fun_aggregate = NULL,
-  fill = NA,
-  ...
-)
+discretize(x, start_followup_date, mappings, verbose = TRUE, ...)
 }
 \arguments{
-\item{method}{Character string specifying how the long-format data should
-be mapped to the discrete grid. Built-in methods include:
-\describe{
-  \item{"measurement"}{Aggregate measurements within intervals.}
-  \item{"locf"}{Last observation carried forward.}
-  \item{"event"}{Event indicator carried forward after occurrence.}
-  \item{"event_interval"}{Indicator for events occurring within an interval.}
-  \item{"exposure_time"}{Total exposure time within interval.}
-  \item{"exposure_percent"}{Fraction of interval exposed.}
-  \item{"any_exposure"}{Indicator for any exposure above threshold.}
-  \item{"has_exposure"}{Indicator for exposure exceeding threshold proportion.}
-}}
+\item{x}{An object of class \code{"rtmle"} containing long-format data added
+with \code{\link{add_long_data}} and baseline data added with
+\code{\link{add_baseline_data}}.}
 
-\item{data}{A \code{data.table} containing long-format observations.
-Required columns depend on \code{method}:
-\describe{
-  \item{\code{"event"} or \code{"locf"}}{\code{id}, \code{date}}
-  \item{measurement}{\code{id}, \code{date}, \code{value}}
-  \item{exposure_*}{\code{id}, \code{start_date}, \code{end_date}}
-}}
+\item{start_followup_date}{Character scalar naming the Date-valued baseline
+column that contains each subject's follow-up start. That date is
+subtracted from outcome, competing-risk, censoring, and time-varying
+covariate dates. Use \code{0} (or omit the argument) when all long-format
+dates are already durations on the time-on-study scale. If long-format
+dates are \code{Date} objects, this argument must name a \code{Date} column;
+the long-format date columns are converted to numeric days since each
+subject's start.}
 
-\item{grid}{A \code{data.table} defining the discrete time grid with
-one row per subject and interval. Must contain:
-\describe{
-  \item{\code{id}}{Subject identifier}
-  \item{\code{interval}}{Discrete time index}
-  \item{\code{start_interval}, \code{end_interval}}{Interval boundaries}
-}}
+\item{mappings}{Named list of instructions for how to map long-format variables
+  onto the discrete time scale. Names of \code{mappings} are output variable
+  names. Each mapping may optionally contain \code{variable}, naming the
+  source variable in \code{x$long_data$timevar_data}. If omitted, the source
+  variable is assumed to have
+  the same name as the output variable.
 
-\item{name}{Character string used as prefix for the resulting wide-format
-variables.}
+  Built-in methods include \code{"measurement"}, \code{"locf"},
+  \code{"event"}, \code{"event_interval"}, \code{"any_exposure"},
+  \code{"has_exposure"}, \code{"exposure_time"}, and
+  \code{"exposure_percent"}.}
 
-\item{id}{Character string naming the subject identifier column.}
+\item{verbose}{Logical. If \code{FALSE}, suppress informational messages
+generated while checking date formats.}
 
-\item{threshold}{Numeric threshold used for methods such as
-\code{"any_exposure"} and \code{"has_exposure"}. For
-\code{"has_exposure"}, the threshold is a proportion and must lie in
-\code{[0, 1]}.}
-
-\item{lookback_window}{Numeric or \code{Inf}. For methods using rolling joins
-(e.g., \code{"locf"} and \code{"event"}), defines how far back in time
-values are carried forward.}
-
-\item{values}{Length-2 vector specifying values used for binary indicators,
-typically \code{c(1, 0)} for event/no event.}
-
-\item{fun_aggregate}{Optional function used to aggregate multiple values
-within the same interval (e.g., \code{mean}, \code{median}). For
-\code{method = "measurement"}, this determines how measurements are
-summarized.}
-
-\item{fill}{Value used to fill missing cells in the wide-format output.}
-
-\item{...}{Additional arguments passed to internal computations.}
+\item{...}{alternative way to specify elements of \code{mappings}.}
 }
 \value{
-A \code{data.table} in wide format with one row per subject and
-  one column per interval. Column names are constructed as
-  \code{paste0(name, "_", interval)}.
+The modified \code{rtmle} object with wide-format outcome and
+  time-varying covariate data stored in \code{x$data}.
 }
 \description{
-Maps long-format event, measurement, or exposure histories
-onto a discrete time grid and returns a wide-format representation with
-one column per time interval.
+Prepares long-format longitudinal data for analysis on a discrete time grid.
+This is the high-level conversion function; \code{\link{map_data_to_grid}}
+performs the individual data-to-grid mappings.
 }
 \details{
-This is the core engine used by \code{\link{long_to_wide}} and can also be
-used directly.
+\code{start_followup_date} is the calendar date at which follow-up starts, or
+zero when the supplied dates are already on the time-on-study scale.
 
-
-The function works by aligning long-format observations with a discrete
-time grid using either rolling joins (for events and measurements) or
-interval overlap calculations (for exposures).
-
-It is designed to be composable and can be used as a building block for
-custom mapping functions supplied to \code{\link{long_to_wide}}.
+The function discretizes dates of events and concomitant marker
+information. Multiple wide-format variables may result from a single
+long-format variable. Calendar dates are converted to numeric time since
+subject-specific follow-up start before the discrete grid is constructed.
+The conversion is recorded in the object so that repeated calls do not
+subtract the start date a second time; supplying new data with
+\code{\link{add_long_data}} resets this state.
 }
 \examples{
-library(data.table)
-
-## Construct a simple discrete time grid
-grid <- data.table(
-  id = rep(1:2, each = 3),
-  interval = rep(0:2, times = 2),
-  start_interval = rep(c(0, 1, 2), times = 2),
-  end_interval   = rep(c(1, 2, 3), times = 2)
+set.seed(17)
+x <- rtmle_init(time_grid = 0:2,name_id = "id",
+                name_outcome = "Y",name_competing = "Dead",
+                name_censoring = "Censored",censored_label = "censored")
+x <- add_long_data(x,outcome_data=data.frame(id=c(1,3,5),date=c(0.1,1.3,1.9)),
+                     censored_data=data.frame(id=c(2,6),date=c(0.5,1.5)),
+                    competing_data=data.frame(id=c(4,7),date=c(1.1,1.8)),
+                    timevar_data=list(A=data.frame(id=c(1,1,1,2,2,3,4,4),
+                                           start_date=c(0,.3,1.3,0,1,0,1.1,1.5),
+                                             end_date=c(.3,.6,2,1,2,.5,1.4,1.9)),
+                                      V=data.frame(id=c(1,1,1,2,2,3,4,4),
+                                           start_date=c(0,.5,1,0,1.3,0,0,0.4),
+                                             end_date=c(.3,.8,1.8,.5,1.4,2,.4,1.6)),
+                                      L=data.frame(id=c(1,2,2,2,3,4,5,6,7,7),
+                                                 date=c(0,0,.25,.75,0,0,0,0,0,1.4),
+                                                value=c(4,35,27.7,28.2,8.8,2,3.1,7,7.7,8.4))))
+x <- add_baseline_data(x,data=data.frame(id=1:7,age=40:46))
+x <- discretize(x,L=list(method="locf"),A=list(method="exposure_percent"))
+x$data$timevar_data$L
+x$data$timevar_data$V
+x <- discretize(x,L=list(method="measurement",fun_aggregate="median"))
+x$data
+# multiple wide format variables from a single long format variable
+x <- discretize(
+                  x,
+                  L=list(method="locf"),
+                  A=list(method="exposure_percent"),
+                  B=list(variable = "A", method="any_exposure"),
+                  C=list(variable = "A", method="has_exposure",threshold=0.7),
+                  start_followup_date=0
 )
-
-## Example 1: event indicator carried forward
-event_data <- data.table(
-  id = c(1, 2),
-  date = c(1.5, 0.5)
-)
-
-discretize(
-  method = "event",
-  data = event_data,
-  grid = grid,
-  name = "Y",
-  id = "id"
-)
-
-## Example 2: exposure percent within intervals
-exposure_data <- data.table(
-  id = c(1, 1, 2),
-  start_date = c(0.2, 1.2, 0.0),
-  end_date   = c(0.8, 2.5, 1.5)
-)
-
-discretize(
-  method = "exposure_percent",
-  data = exposure_data,
-  grid = grid,
-  name = "A",
-  id = "id"
-)
-
-
 }
 \seealso{
-\code{\link{long_to_wide}}, \code{\link{fast_cast}}
+\code{\link{rtmle_init}}, \code{\link{add_baseline_data}},
+  \code{\link{add_long_data}}, \code{\link{map_data_to_grid}},
+  \code{\link{long_to_wide}},
+  \code{\link{prepare_rtmle_data}}
 }

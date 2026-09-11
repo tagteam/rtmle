@@ -35,7 +35,7 @@
 #'   list containing baseline, outcome, censoring, competing-risk, and
 #'   time-varying covariate data.
 #' @seealso \code{\link{simulate_cohort}}, \code{\link{add_long_data}},
-#'   \code{\link{long_to_wide}}
+#'   \code{\link{discretize}}
 #' @examples
 #' set.seed(7)
 #' wide_data <- simulate_long_data(n = 20, number_visits = 4)

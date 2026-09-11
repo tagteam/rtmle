@@ -9,7 +9,7 @@ prepare_rtmle_data(x, ...)
 \arguments{
 \item{x}{An object initialized with \code{\link{rtmle_init}} containing
 wide-format data, usually added with \code{\link{add_wide_data}} or
-created from long-format data with \code{\link{long_to_wide}}.}
+created from long-format data with \code{\link{discretize}}.}
 
 \item{...}{Not used.}
 }
@@ -40,14 +40,14 @@ x <- add_long_data(x,
                    competing_data=ld$timevar_data$death,
                    timevar_data=ld$timevar_data[c("bleeding","changeSBP","A","B")])
 x <- add_baseline_data(x,data=ld$baseline_data)
-x <- long_to_wide(x,start_followup_date=0)
+x <- discretize(x,start_followup_date=0)
 x <- prepare_rtmle_data(x)
 x$prepared_data
 
 }
 \seealso{
 \code{\link{rtmle_init}}, \code{\link{add_long_data}},
-  \code{\link{add_wide_data}}, \code{\link{long_to_wide}},
+  \code{\link{add_wide_data}}, \code{\link{discretize}},
   \code{\link{protocol}}, \code{\link{target}},
   \code{\link{model_formula}}, \code{\link{run_rtmle}}
 }

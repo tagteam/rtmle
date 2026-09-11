@@ -180,7 +180,7 @@ See name of the subject id variable is 'id'.
 See x$names for the names of the other variables.
 TODO: The object contains no data yet.
       - Add baseline data with the function 'add_baseline_data'
-      - Use the functions 'add_long_data' and 'long_to_wide' to add and discretize the dates of outcome, censored and competing events and to the longitudinal data (covariates and treatment).
+      - Use the functions 'add_long_data' and 'discretize' to add and discretize the dates of outcome, censored and competing events and to the longitudinal data (covariates and treatment).
       - Alternatively, use the function 'add_wide_data' to add the readily discretized data.TODO: The object contains no protocols. Add them with the function 'protocol'.
 TODO: The object contains no targets yet. Add them with the function 'target'.
 :end:
@@ -216,7 +216,7 @@ TODO: The object contains no targets yet. Add them with the function 'target'.
 
 #+ATTR_LATEX: :options otherkeywords={}, deletekeywords={}
 #+BEGIN_SRC R  :results output verbatim drawer  :exports both  :session *R* :cache yes  
-x <- long_to_wide(x)
+x <- discretize(x)
 x <- prepare_rtmle_data(x)
 x$prepared_data
 #+END_SRC

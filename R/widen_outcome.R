@@ -4,7 +4,7 @@ widen_outcome <- function(x,
                           competing_data = NULL,
                           grid = NULL,
                           fun_aggregate = NULL){
-    # The explicit event tables are prepared by long_to_wide(). Allow the
+    # The explicit event tables are prepared by discretize(). Allow the
     # outcome table to be omitted for direct internal calls; the normal path
     # passes all event tables after applying the follow-up precedence rules.
     if (is.null(outcome_data)) {
@@ -24,11 +24,11 @@ widen_outcome <- function(x,
     # Notes:
     #       a) when outcome or death has occurred the value 1 persists, i.e.,
     #          the last observation is carried forward.
-    #          this is done by discretize.
+    #          this is done by map_data_to_grid.
     #       b) when outcome occurs before death or censored then
-    #          the value of death or censored was removed before calling discretize.
+    #          the value of death or censored was removed before calling map_data_to_grid.
     #       c) once censored both outcome and death variables are NA
-    # 
+    #
     censored_variables <- NULL
     if (length(x$names$censoring)>0 && !is.null(censored_data) &&
         NROW(censored_data)>0){
@@ -39,7 +39,7 @@ widen_outcome <- function(x,
         if ("censored_date" %in% names(current_censored_data)) {
             data.table::setnames(current_censored_data, "censored_date", "date")
         }
-        censored_variables <- discretize(
+        censored_variables <- map_data_to_grid(
             method = "event",
             data = current_censored_data,
             grid = grid,
@@ -71,7 +71,7 @@ widen_outcome <- function(x,
         if ("competing_date" %in% names(current_competing_data)) {
             data.table::setnames(current_competing_data, "competing_date", "date")
         }
-        competing_variables <- discretize(
+        competing_variables <- map_data_to_grid(
             method = "event",
             data = current_competing_data,
             grid = grid,
@@ -97,7 +97,7 @@ widen_outcome <- function(x,
     if ("outcome_date" %in% names(current_outcome_data)) {
         data.table::setnames(current_outcome_data, "outcome_date", "date")
     }
-    outcome_variables <- discretize(
+    outcome_variables <- map_data_to_grid(
         method = "event",
         data=current_outcome_data,
         grid = grid,
@@ -111,8 +111,7 @@ widen_outcome <- function(x,
     )
     # Once censoring has occurred all following competing and outcome variables
     # should be NA. Note that by construction id's where both censored dates AND
-    # outcome/competing dates are available the censored dates are removed before
-    # at the call of map_grid
+    # outcome/competing dates are available the censored dates are removed
     if (length(censored_variables)>0){
         cens_varnames <- setdiff(names(censored_variables),x$names$id)
         # outcome

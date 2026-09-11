@@ -146,8 +146,8 @@ Minority threshold:  8
 Weight truncation:   (0,1)
 Prediction range:    (0.0001,0.9999)
 TODO: The object contains no baseline_data yet. Add them with the function rtmle::add_baseline_data
-TODO: The object contains no time varying data yet. Add them with rtmle::add_wide_data in discretized form or with rtmle::add_long_data followed by rtmle::long_to_wide.
-TODO: The object contains no outcome data yet. Add them with rtmle::add_wide_data in discretized form or with rtmle::add_long_data followed by rtmle::long_to_wide.
+TODO: The object contains no time varying data yet. Add them with rtmle::add_wide_data in discretized form or with rtmle::add_long_data followed by rtmle::discretize.
+TODO: The object contains no outcome data yet. Add them with rtmle::add_wide_data in discretized form or with rtmle::add_long_data followed by rtmle::discretize.
 TODO: The object contains no protocols. Add them with the function 'protocol'.
 Prepared data:       n=0, p=-1
 TODO: Use the function 'model_formula' to initialize the formula for the nuisance parameter models.
@@ -207,7 +207,7 @@ names(x$long_data$timevar_data)
 
 * Discretize the longitudinal data onto the discrete time scale
 
-=long_to_wide()= maps the long event-history data onto the discrete time grid.
+=discretize()= maps the long event-history data onto the discrete time grid.
 Because the simulated times are already measured from zero, the start of
 follow-up is set to 0.  Default mappings are used for all supplied
 time-varying variables.
@@ -215,7 +215,7 @@ time-varying variables.
 #+BEGIN_SRC R
 # Input: x with baseline_data and long_data plus the time grid from rtmle_init().
 # Output: x$data contains wide outcome and time-varying data on the time grid.
-x <- long_to_wide(x, start_followup_date = 0)
+x <- discretize(x, start_followup_date = 0)
 
 names(x$data)
 names(x$data$timevar_data)
@@ -624,7 +624,7 @@ x <- add_long_data(
 )
 
 x <- add_baseline_data(x, data = ld$baseline_data)
-x <- long_to_wide(x, start_followup_date = 0)
+x <- discretize(x, start_followup_date = 0)
 x <- prepare_rtmle_data(x)
 
 x <- protocol(

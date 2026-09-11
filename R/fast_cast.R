@@ -1,18 +1,18 @@
-### fast_cast.R --- 
+### fast_cast.R ---
 #----------------------------------------------------------------------
 ## Author: Thomas Alexander Gerds
-## Created: mar 19 2026 (15:29) 
-## Version: 
-## Last-Updated: apr 10 2026 (10:28) 
+## Created: mar 19 2026 (15:29)
+## Version:
+## Last-Updated: apr 10 2026 (10:28)
 ##           By: Thomas Alexander Gerds
 ##     Update #: 18
 #----------------------------------------------------------------------
-## 
-### Commentary: 
-## 
+##
+### Commentary:
+##
 ### Change Log:
 #----------------------------------------------------------------------
-## 
+##
 ### Code:
 #' Fast casting from long to wide format on a discrete time grid
 #'
@@ -26,7 +26,7 @@
 #'   \code{id}, \code{interval}, and a value column.
 #'
 #' @param name Name of the variable transformed from long to wide format.
-#' 
+#'
 #' @param id Character string naming the subject identifier column.
 #'
 #' @param value_col Character string naming the column in \code{x} that contains
@@ -58,7 +58,7 @@
 #' Rows are ordered by the first occurrence of each id,
 #' and columns are ordered by sorted interval values.
 #'
-#' @seealso \code{\link{discretize}}, \code{\link{long_to_wide}}
+#' @seealso \code{\link{map_data_to_grid}}, \code{\link{discretize}}
 #'
 #' @examples
 #' library(data.table)

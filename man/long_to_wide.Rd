@@ -2,95 +2,21 @@
 % Please edit documentation in R/long_to_wide.R
 \name{long_to_wide}
 \alias{long_to_wide}
-\title{Transform data from long to wide format}
+\title{Obsolete alias for \code{\link{discretize}}}
 \usage{
-long_to_wide(x, start_followup_date, mappings, verbose = TRUE, ...)
+long_to_wide(...)
 }
 \arguments{
-\item{x}{An object of class \code{"rtmle"} containing long-format data added
-with \code{\link{add_long_data}} and baseline data added with
-\code{\link{add_baseline_data}}.}
-
-\item{start_followup_date}{Character scalar naming the Date-valued baseline
-column that contains each subject's follow-up start. That date is
-subtracted from outcome, competing-risk, censoring, and time-varying
-covariate dates. Use \code{0} (or omit the argument) when all long-format
-dates are already durations on the time-on-study scale. If long-format
-dates are \code{Date} objects, this argument must name a \code{Date} column;
-the long-format date columns are converted to numeric days since each
-subject's start.}
-
-\item{mappings}{Named list of instructions for how to map long-format variables
-  onto the discrete time scale. Names of \code{mappings} are output variable
-  names. Each mapping may optionally contain \code{variable}, naming the
-  source variable in \code{x$long_data$timevar_data}. If omitted, the source
-  variable is assumed to have
-  the same name as the output variable.
-
-  Built-in methods include \code{"measurement"}, \code{"locf"},
-  \code{"event"}, \code{"event_interval"}, \code{"any_exposure"},
-  \code{"has_exposure"}, \code{"exposure_time"}, and
-  \code{"exposure_percent"}.}
-
-\item{verbose}{Logical. If \code{FALSE}, suppress informational messages
-generated while checking date formats.}
-
-\item{...}{alternative way to specify elements of \code{mappings}.}
+\item{...}{Arguments forwarded to \code{\link{discretize}}.}
 }
 \value{
-The modified \code{rtmle} object with wide-format outcome and
-  time-varying covariate data stored in \code{x$data}.
+The modified \code{rtmle} object returned by \code{discretize}.
 }
 \description{
-Prepares long-format longitudinal data for analysis on a discrete time grid.
-}
-\details{
-\code{start_followup_date} is the calendar date at which follow-up starts, or
-zero when the supplied dates are already on the time-on-study scale.
-
-The function discretizes dates of events and concomitant marker
-information. Multiple wide-format variables may result from a single
-long-format variable. Calendar dates are converted to numeric time since
-subject-specific follow-up start before the discrete grid is constructed.
-The conversion is recorded in the object so that repeated calls do not
-subtract the start date a second time; supplying new data with
-\code{\link{add_long_data}} resets this state.
-}
-\examples{
-set.seed(17)
-x <- rtmle_init(time_grid = 0:2,name_id = "id",
-                name_outcome = "Y",name_competing = "Dead",
-                name_censoring = "Censored",censored_label = "censored")
-x <- add_long_data(x,outcome_data=data.frame(id=c(1,3,5),date=c(0.1,1.3,1.9)),
-                     censored_data=data.frame(id=c(2,6),date=c(0.5,1.5)),
-                    competing_data=data.frame(id=c(4,7),date=c(1.1,1.8)),
-                    timevar_data=list(A=data.frame(id=c(1,1,1,2,2,3,4,4),
-                                           start_date=c(0,.3,1.3,0,1,0,1.1,1.5),
-                                             end_date=c(.3,.6,2,1,2,.5,1.4,1.9)),
-                                      V=data.frame(id=c(1,1,1,2,2,3,4,4),
-                                           start_date=c(0,.5,1,0,1.3,0,0,0.4),
-                                             end_date=c(.3,.8,1.8,.5,1.4,2,.4,1.6)),
-                                      L=data.frame(id=c(1,2,2,2,3,4,5,6,7,7),
-                                                 date=c(0,0,.25,.75,0,0,0,0,0,1.4),
-                                                value=c(4,35,27.7,28.2,8.8,2,3.1,7,7.7,8.4))))
-x <- add_baseline_data(x,data=data.frame(id=1:7,age=40:46))
-x <- long_to_wide(x,L=list(method="locf"),A=list(method="exposure_percent"))
-x$data$timevar_data$L
-x$data$timevar_data$V
-x <- long_to_wide(x,L=list(method="measurement",fun_aggregate="median"))
-x$data
-# multiple wide format variables from a single long format variable
-x <- long_to_wide(
-                  x,
-                  L=list(method="locf"),
-                  A=list(method="exposure_percent"),
-                  B=list(variable = "A", method="any_exposure"),
-                  C=list(variable = "A", method="has_exposure",threshold=0.7),
-                  start_followup_date=0
-)
+\code{long_to_wide()} has been renamed to \code{discretize()}.
+This alias is retained for existing scripts and forwards all arguments to
+the new function.
 }
 \seealso{
-\code{\link{rtmle_init}}, \code{\link{add_baseline_data}},
-  \code{\link{add_long_data}}, \code{\link{discretize}},
-  \code{\link{prepare_rtmle_data}}
+\code{\link{discretize}}, \code{\link{map_data_to_grid}}
 }

@@ -66,7 +66,7 @@ x <- add_long_data(x,
                    competing_data=ld$timevar_data$death,
                    timevar_data=ld$timevar_data[c("bleeding","changeSBP","A","B")])
 x <- add_baseline_data(x,data=ld$baseline_data)
-x <- long_to_wide(x,start_followup_date=0)
+x <- discretize(x,start_followup_date=0)
 x <- prepare_rtmle_data(x)
 x <- protocol(x,name = "Always_A",
                     intervention = data.frame(
@@ -85,7 +85,7 @@ summary(x)
 }
 \seealso{
 \code{\link{rtmle_init}}, \code{\link{add_baseline_data}},
-  \code{\link{add_wide_data}}, \code{\link{long_to_wide}},
+  \code{\link{add_wide_data}}, \code{\link{discretize}},
   \code{\link{prepare_rtmle_data}}
 }
 \author{

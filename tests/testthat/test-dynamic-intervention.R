@@ -699,7 +699,7 @@ test_that("simulated_cohort supports stopping A after bleeding", {
         timevar_data = ld$timevar_data[c("bleeding", "changeSBP", "A", "B")]
     )
     x <- add_baseline_data(x, data = ld$baseline_data)
-    x <- long_to_wide(x, start_followup_date = 0)
+    x <- discretize(x, start_followup_date = 0)
     x <- prepare_rtmle_data(x)
     original_data <- data.table::copy(x$prepared_data)
 

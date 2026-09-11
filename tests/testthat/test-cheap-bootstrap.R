@@ -28,7 +28,7 @@ test_that("Cheap bootstrap confidence intervals",{
                     competing_data=ld$competing_data,
                     timevar_data=ld$timevar_data)
     x <- add_baseline_data(x,data=ld$baseline_data)
-    x <- long_to_wide(x,start_followup_date = 0)
+    x <- discretize(x,start_followup_date = 0)
     x <- protocol(x,name = "Always_A",intervention = data.frame("time"=x$intervention_nodes,"A" = factor("1",levels = c("0","1"))),verbose = FALSE)
     x <- protocol(x,name = "Never_A",intervention = data.frame("time"=x$intervention_nodes,"A" = factor("0",levels = c("0","1"))),verbose = FALSE)
     x <- prepare_rtmle_data(x)

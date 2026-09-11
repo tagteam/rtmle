@@ -68,7 +68,7 @@
 ##' \item times
 ##' }
 ##' @seealso \code{\link{add_baseline_data}}, \code{\link{add_long_data}},
-##'   \code{\link{add_wide_data}}, \code{\link{long_to_wide}},
+##'   \code{\link{add_wide_data}}, \code{\link{discretize}},
 ##'   \code{\link{prepare_rtmle_data}}, \code{\link{protocol}},
 ##'   \code{\link{target}}, \code{\link{model_formula}},
 ##'   \code{\link{run_rtmle}}

@@ -56,5 +56,5 @@ names(register_data)
 }
 \seealso{
 \code{\link{simulate_cohort}}, \code{\link{add_long_data}},
-  \code{\link{long_to_wide}}
+  \code{\link{discretize}}
 }

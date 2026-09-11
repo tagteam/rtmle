@@ -68,13 +68,13 @@ print.rtmle <- function(x, ...) {
         if (length(x$data$timevar_data) > 0){
     cat(sep = "","\nTimevar data:        ",format_index(names(x$data$timevar_data)))
         }else{
-            cat(sep = "","\nTODO: The object contains no time varying data yet. Add them with rtmle::add_wide_data in discretized form or with rtmle::add_long_data followed by rtmle::long_to_wide.")
+            cat(sep = "","\nTODO: The object contains no time varying data yet. Add them with rtmle::add_wide_data in discretized form or with rtmle::add_long_data followed by rtmle::discretize.")
         }
     }
     if (length(x$data$outcome_data) > 0){
     cat(sep = "","\nOutcome data:        n=",NROW(x$data$outcome_data),", p=",format_index(names(x$data$outcome_data)[-1]))
     }else{
-        cat(sep = "","\nTODO: The object contains no outcome data yet. Add them with rtmle::add_wide_data in discretized form or with rtmle::add_long_data followed by rtmle::long_to_wide.")
+        cat(sep = "","\nTODO: The object contains no outcome data yet. Add them with rtmle::add_wide_data in discretized form or with rtmle::add_long_data followed by rtmle::discretize.")
     }
     # Target trial protocols
     if (length(x$protocols) > 0) {
