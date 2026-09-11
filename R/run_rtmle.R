@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul  1 2024 (09:11)
 ## Version:
-## Last-Updated: maj 20 2026 (14:46) 
+## Last-Updated: sep 11 2026 (09:27) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 642
+##     Update #: 643
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -173,7 +173,8 @@ run_rtmle <- function(x,
                 xs$protocols[[pp]]$intervention_probs <- NULL
                 xs$protocols[[pp]]$cumulative_intervention_probs <- NULL
             }
-            xs$prepared_data <- x$prepared_data[x$prepared_data[[x$names$id]] %in% sub$id]
+            # allow for bootstrap with replacement
+            xs$prepared_data <- x$prepared_data[sub$id,on = x$names$id]
             if (NROW(xs$prepared_data) == 0) stop(paste0("No data in subset: ",label))
             xs$followup <- x$followup[x$followup[[x$names$id]] %in% sub$id]
             xs <- run_rtmle(xs,

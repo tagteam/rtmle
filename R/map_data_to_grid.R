@@ -84,6 +84,13 @@
 #'
 #' @param fill Value used to fill missing cells in the wide-format output.
 #'
+#' @param baseline_exposure_start Logical. For exposure methods, if
+#'   \code{TRUE} (the default), an exposure whose \code{start_date} matches
+#'   time zero is assigned exposure \code{1} in interval 0. Set to
+#'   \code{FALSE} to use only the measured overlap with interval 0, including
+#'   when that interval is extended by \code{\link{discretize}}'s
+#'   \code{baseline_lookback}.
+#'
 #' @param ... Additional arguments passed to internal computations.
 #'
 #' @return A \code{data.table} in wide format with one row per subject and
@@ -153,9 +160,15 @@ map_data_to_grid <- function(method,
                        values = c(1, 0),
                        fun_aggregate = NULL,
                        fill = NA,
+                       baseline_exposure_start = TRUE,
                        ...) {
     value = exposure = start_date = end_date = start_followup_date = NULL
     x.interval = start_interval = end_interval = interval = date = NULL
+    if (!is.logical(baseline_exposure_start) ||
+        length(baseline_exposure_start) != 1L ||
+        is.na(baseline_exposure_start)) {
+        stop("Argument baseline_exposure_start must be a single TRUE/FALSE value.")
+    }
     data <- copy(data)
     grid <- copy(grid)
     if (length(data) == 0) return(NULL)
@@ -163,9 +176,12 @@ map_data_to_grid <- function(method,
         data[, interval := NA_integer_]
         # exact zero goes to interval 0
         data[date == 0, interval := 0L]
-        # positive dates matched to (start_interval, end_interval]
-        overlap <- data[date > 0,
-                        interval := grid[data[date > 0],
+        # Non-zero dates are matched to (start_interval, end_interval].
+        # This also allows measurements in a pre-baseline lookback interval
+        # when the caller supplies one.
+        nonzero_dates <- data[!is.na(date) & date != 0]
+        overlap <- data[!is.na(date) & date != 0,
+                        interval := grid[nonzero_dates,
                                          on = list(id,
                                                    start_interval < date,
                                                    end_interval >= date),
@@ -235,10 +251,26 @@ map_data_to_grid <- function(method,
             overlap[, exposure := (pmin(end_interval, end_date) -
                                    pmax(start_interval, start_date))]
             overlap[is.na(exposure), exposure := 0]
-            # NOTE: baseline exposure is often only the start of exposure
-            #       but in order to have adherence to the regimen we need to set it to 1
-            if ("start_followup_date" %chin%names(overlap)){
-                overlap[interval == 0 & start_date == start_followup_date, exposure := 1]
+            # An exposure that starts exactly at baseline has zero measured
+            # overlap with a baseline lookback interval. For treatment
+            # histories this start is nevertheless considered exposure at
+            # baseline; the mapping option allows callers to disable that
+            # treatment-specific convention for ordinary covariates.
+            if (isTRUE(baseline_exposure_start)) {
+                if ("start_followup_date" %chin% names(overlap)) {
+                    overlap[
+                        interval == 0 & start_date == start_followup_date,
+                        exposure := 1
+                    ]
+                } else {
+                    # Direct callers may provide a minimal grid without the
+                    # optional start_followup_date column. rtmle grids use
+                    # zero as the time origin.
+                    overlap[
+                        interval == 0 & start_date == 0,
+                        exposure := 1
+                    ]
+                }
             }
             setkeyv(overlap, c(id, "interval"))
             if (method %chin% c("exposure_time","exposure_percent","any_exposure","has_exposure")){

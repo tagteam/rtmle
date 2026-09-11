@@ -44,15 +44,32 @@
 #'   Built-in methods include \code{"measurement"}, \code{"locf"},
 #'   \code{"event"}, \code{"event_interval"}, \code{"any_exposure"},
 #'   \code{"has_exposure"}, \code{"exposure_time"}, and
-#'   \code{"exposure_percent"}.
+#'   \code{"exposure_percent"}. For exposure methods,
+#'   \code{baseline_exposure_start} controls whether an exposure that starts
+#'   exactly at time zero is assigned value 1 in interval 0. It defaults to
+#'   \code{TRUE} for compatibility with the existing treatment handling; set
+#'   it to \code{FALSE} when interval-0 exposure should reflect only measured
+#'   overlap (including a baseline lookback interval). For example, use
+#'   \code{A = list(method = "exposure_percent",
+#'   baseline_exposure_start = TRUE)} for a treatment variable.
 #'
 #' @param verbose Logical. If \code{FALSE}, suppress informational messages
 #'   generated while checking date formats.
+#' @param baseline_lookback Non-negative numeric length of the baseline
+#'   lookback interval, on the same time scale as \code{x$time_grid_scale}.
+#'   When positive, the first time-varying-covariate interval is changed from
+#'   \code{[0, 0]} to \code{[-baseline_lookback, 0]}. This interval is used only
+#'   for time-varying covariates; outcome, censoring, and competing-risk data
+#'   continue to use the original follow-up grid. The default is \code{0}, which
+#'   preserves the usual grid.
 #' @param ... alternative way to specify elements of \code{mappings}.
 #' @details The function discretizes dates of events and concomitant marker
 #' information. Multiple wide-format variables may result from a single
 #' long-format variable. Calendar dates are converted to numeric time since
 #' subject-specific follow-up start before the discrete grid is constructed.
+#' If \code{baseline_lookback} is positive, observations between
+#' \code{-baseline_lookback} and zero can contribute to the interval-zero
+#' time-varying covariate values.
 #' The conversion is recorded in the object so that repeated calls do not
 #' subtract the start date a second time; supplying new data with
 #' \code{\link{add_long_data}} resets this state.
@@ -80,7 +97,10 @@
 #'                                                  date=c(0,0,.25,.75,0,0,0,0,0,1.4),
 #'                                                 value=c(4,35,27.7,28.2,8.8,2,3.1,7,7.7,8.4))))
 #' x <- add_baseline_data(x,data=data.frame(id=1:7,age=40:46))
-#' x <- discretize(x,L=list(method="locf"),A=list(method="exposure_percent"))
+#' # When the time scale is days, include a 180-day pre-baseline interval
+#' # for interval-zero time-varying covariates.
+#' x <- discretize(x,L=list(method="locf"),A=list(method="exposure_percent"),
+#'                 baseline_lookback=180)
 #' x$data$timevar_data$L
 #' x$data$timevar_data$V
 #' x <- discretize(x,L=list(method="measurement",fun_aggregate="median"))
@@ -99,7 +119,19 @@ discretize <- function(x,
                          start_followup_date,
                          mappings,
                          verbose = TRUE,
+                         baseline_lookback = 0,
                          ...){
+    if (is.null(baseline_lookback)) {
+        baseline_lookback <- 0
+    }
+    if (!is.numeric(baseline_lookback) ||
+        length(baseline_lookback) != 1L ||
+        is.na(baseline_lookback) ||
+        !is.finite(baseline_lookback) ||
+        baseline_lookback < 0) {
+        stop("Argument baseline_lookback must be a single finite non-negative numeric value.")
+    }
+    baseline_lookback <- as.numeric(baseline_lookback)
     start_interval = end_interval = interval = end_followup = censored_date =  competing_date = outcome_date = NULL
     id_column <- x$names$id
     breaks <- x$time_grid_scale
@@ -144,10 +176,10 @@ discretize <- function(x,
             time_since_event = list(method = "time_since_event", fun = map_data_to_grid, columns = "date"),
             chronic_disease  = list(method = "time_since_event", fun = map_data_to_grid, columns = "date", fun_aggregate = function(x){cut(x,breaks = c(-Inf,0,6*30.45,Inf),labels = c("never","acute","chronic"))}),
             event_interval   = list(method = "event_interval",   fun = map_data_to_grid, columns = "date"),
-            any_exposure     = list(method = "any_exposure",     fun = map_data_to_grid, columns = c("start_date","end_date"), threshold = 0),
-            has_exposure     = list(method = "has_exposure",     fun = map_data_to_grid, columns = c("start_date","end_date"), threshold = 0.5),
-            exposure_time    = list(method = "exposure_time",    fun = map_data_to_grid, columns = c("start_date","end_date")),
-            exposure_percent = list(method = "exposure_percent", fun = map_data_to_grid, columns = c("start_date","end_date"))
+            any_exposure     = list(method = "any_exposure",     fun = map_data_to_grid, columns = c("start_date","end_date"), threshold = 0, baseline_exposure_start = TRUE),
+            has_exposure     = list(method = "has_exposure",     fun = map_data_to_grid, columns = c("start_date","end_date"), threshold = 0.5, baseline_exposure_start = TRUE),
+            exposure_time    = list(method = "exposure_time",    fun = map_data_to_grid, columns = c("start_date","end_date"), baseline_exposure_start = TRUE),
+            exposure_percent = list(method = "exposure_percent", fun = map_data_to_grid, columns = c("start_date","end_date"), baseline_exposure_start = TRUE)
         )
         known_methods <- names(discretize_methods)
 
@@ -172,6 +204,11 @@ discretize <- function(x,
             if (is.function(method_obj)) {
                 fun_obj <- method_obj
                 method_name <- Variable_name
+                # Store a character method label internally.  The mapping
+                # loop below compares this field with the built-in method
+                # names, so retaining the function here would make that
+                # comparison fail for custom mapping functions.
+                spec$method <- method_name
             } else {
                 method_name <- method_obj
             }
@@ -542,6 +579,19 @@ discretize <- function(x,
         c(id_column, "interval", "start_interval", "end_interval")
     )
 
+    # The outcome, censoring, and competing-risk histories use the follow-up
+    # grid exactly as defined by x$time_grid_scale. For time-varying
+    # covariates, optionally turn the zero-length baseline row into a
+    # pre-baseline lookback interval while retaining interval 0 as the
+    # baseline covariate column.
+    timevar_grid <- data.table::copy(grid)
+    if (baseline_lookback > 0 && NROW(timevar_grid) > 0L) {
+        timevar_grid[
+            interval == 0L,
+            start_interval := start_interval - baseline_lookback
+        ]
+    }
+
     outcome_for_widen <- pop[
         !is.na(outcome_date) & is.finite(outcome_date),
         c(id_column, "outcome_date"),
@@ -587,7 +637,7 @@ discretize <- function(x,
             args <- c(m,
                       list(
                           data = x$long_data$timevar_data[[long_format_varname]],
-                          grid = grid,
+                          grid = timevar_grid,
                           name = Variable_name,
                           id = id_column,
                           values = c(1, 0),

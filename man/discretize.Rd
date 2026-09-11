@@ -4,7 +4,14 @@
 \alias{discretize}
 \title{Discretize longitudinal data onto a discrete time grid}
 \usage{
-discretize(x, start_followup_date, mappings, verbose = TRUE, ...)
+discretize(
+  x,
+  start_followup_date,
+  mappings,
+  verbose = TRUE,
+  baseline_lookback = 0,
+  ...
+)
 }
 \arguments{
 \item{x}{An object of class \code{"rtmle"} containing long-format data added
@@ -30,10 +37,25 @@ subject's start.}
   Built-in methods include \code{"measurement"}, \code{"locf"},
   \code{"event"}, \code{"event_interval"}, \code{"any_exposure"},
   \code{"has_exposure"}, \code{"exposure_time"}, and
-  \code{"exposure_percent"}.}
+  \code{"exposure_percent"}. For exposure methods,
+  \code{baseline_exposure_start} controls whether an exposure that starts
+  exactly at time zero is assigned value 1 in interval 0. It defaults to
+  \code{TRUE} for compatibility with the existing treatment handling; set
+  it to \code{FALSE} when interval-0 exposure should reflect only measured
+  overlap (including a baseline lookback interval). For example, use
+  \code{A = list(method = "exposure_percent",
+  baseline_exposure_start = TRUE)} for a treatment variable.}
 
 \item{verbose}{Logical. If \code{FALSE}, suppress informational messages
 generated while checking date formats.}
+
+\item{baseline_lookback}{Non-negative numeric length of the baseline
+lookback interval, on the same time scale as \code{x$time_grid_scale}.
+When positive, the first time-varying-covariate interval is changed from
+\code{[0, 0]} to \code{[-baseline_lookback, 0]}. This interval is used only
+for time-varying covariates; outcome, censoring, and competing-risk data
+continue to use the original follow-up grid. The default is \code{0}, which
+preserves the usual grid.}
 
 \item{...}{alternative way to specify elements of \code{mappings}.}
 }
@@ -54,6 +76,9 @@ The function discretizes dates of events and concomitant marker
 information. Multiple wide-format variables may result from a single
 long-format variable. Calendar dates are converted to numeric time since
 subject-specific follow-up start before the discrete grid is constructed.
+If \code{baseline_lookback} is positive, observations between
+\code{-baseline_lookback} and zero can contribute to the interval-zero
+time-varying covariate values.
 The conversion is recorded in the object so that repeated calls do not
 subtract the start date a second time; supplying new data with
 \code{\link{add_long_data}} resets this state.
@@ -76,7 +101,10 @@ x <- add_long_data(x,outcome_data=data.frame(id=c(1,3,5),date=c(0.1,1.3,1.9)),
                                                  date=c(0,0,.25,.75,0,0,0,0,0,1.4),
                                                 value=c(4,35,27.7,28.2,8.8,2,3.1,7,7.7,8.4))))
 x <- add_baseline_data(x,data=data.frame(id=1:7,age=40:46))
-x <- discretize(x,L=list(method="locf"),A=list(method="exposure_percent"))
+# When the time scale is days, include a 180-day pre-baseline interval
+# for interval-zero time-varying covariates.
+x <- discretize(x,L=list(method="locf"),A=list(method="exposure_percent"),
+                baseline_lookback=180)
 x$data$timevar_data$L
 x$data$timevar_data$V
 x <- discretize(x,L=list(method="measurement",fun_aggregate="median"))

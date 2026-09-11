@@ -135,3 +135,198 @@ test_that("long_to_wide remains an obsolete alias", {
     )
     expect_true(is.numeric(y$data$outcome_data$Y_0))
 })
+
+
+make_baseline_lookback_object <- function() {
+    x <- rtmle_init(
+        time_grid = c(0, 10, 20),
+        name_id = "id",
+        name_outcome = "Y",
+        name_competing = "D",
+        name_censoring = "C",
+        censored_label = "censored"
+    )
+    x <- add_long_data(
+        x,
+        outcome_data = data.table(
+            id = 1:2,
+            date = c(15, 15)
+        ),
+        competing_data = data.table(
+            id = 1,
+            date = 18
+        ),
+        censored_data = data.table(
+            id = 2,
+            date = 12
+        ),
+        timevar_data = list(
+            bleeding = data.table(
+                id = c(1, 2),
+                date = c(-5, 5)
+            ),
+            exposure = data.table(
+                id = c(1, 2),
+                start_date = c(-5, 5),
+                end_date = c(0, 15)
+            ),
+            measurement = data.table(
+                id = c(1, 2),
+                date = c(-5, 5),
+                value = c(10, 20)
+            )
+        )
+    )
+    add_baseline_data(x, data.table(id = 1:2))
+}
+
+
+test_that("baseline_lookback extends only the time-varying grid", {
+    x_without_lookback <- discretize(
+        make_baseline_lookback_object(),
+        bleeding = "event_interval",
+        exposure = "any_exposure",
+        measurement = list(method = "measurement", fun_aggregate = "mean"),
+        verbose = FALSE
+    )
+    x_with_lookback <- discretize(
+        make_baseline_lookback_object(),
+        bleeding = "event_interval",
+        exposure = "any_exposure",
+        measurement = list(method = "measurement", fun_aggregate = "mean"),
+        baseline_lookback = 10,
+        verbose = FALSE
+    )
+
+    # The pre-baseline bleeding and exposure are included in interval 0 only
+    # when the time-varying grid is extended.
+    expect_equal(
+        x_without_lookback$data$timevar_data$bleeding$bleeding_0,
+        c(0, 0)
+    )
+    expect_equal(
+        x_with_lookback$data$timevar_data$bleeding$bleeding_0,
+        c(1, 0)
+    )
+    expect_equal(
+        x_without_lookback$data$timevar_data$exposure$exposure_0,
+        c(0, 0)
+    )
+    expect_equal(
+        x_with_lookback$data$timevar_data$exposure$exposure_0,
+        c(1, 0)
+    )
+    expect_false(
+        "measurement_0" %in%
+            names(x_without_lookback$data$timevar_data$measurement)
+    )
+    expect_equal(
+        x_with_lookback$data$timevar_data$measurement$measurement_0,
+        c(10, NA_real_)
+    )
+
+    # Outcome histories are mapped with the unchanged follow-up grid.
+    expect_identical(
+        x_with_lookback$data$outcome_data,
+        x_without_lookback$data$outcome_data
+    )
+})
+
+
+test_that("baseline_lookback validates its value", {
+    x <- make_baseline_lookback_object()
+    expect_error(
+        discretize(x, baseline_lookback = -1, verbose = FALSE),
+        "single finite non-negative numeric"
+    )
+    expect_error(
+        discretize(x, baseline_lookback = Inf, verbose = FALSE),
+        "single finite non-negative numeric"
+    )
+    expect_error(
+        discretize(x, baseline_lookback = "10", verbose = FALSE),
+        "single finite non-negative numeric"
+    )
+})
+
+
+make_baseline_exposure_start_object <- function() {
+    x <- rtmle_init(
+        time_grid = c(0, 10, 20),
+        name_id = "id",
+        name_outcome = "Y"
+    )
+    x <- add_long_data(
+        x,
+        outcome_data = data.table(
+            id = 1:2,
+            date = c(15, 15)
+        ),
+        timevar_data = list(
+            treatment = data.table(
+                id = 1:2,
+                start_date = c(0, 5),
+                end_date = c(10, 15)
+            )
+        )
+    )
+    add_baseline_data(x, data.table(id = 1:2))
+}
+
+
+test_that("baseline_exposure_start controls treatment exposure at time zero", {
+    exposure_methods <- c(
+        "exposure_time",
+        "exposure_percent",
+        "any_exposure",
+        "has_exposure"
+    )
+
+    for (method in exposure_methods) {
+        x_with_start_override <- discretize(
+            make_baseline_exposure_start_object(),
+            treatment = list(
+                method = method,
+                baseline_exposure_start = TRUE
+            ),
+            baseline_lookback = 10,
+            verbose = FALSE
+        )
+        x_without_start_override <- discretize(
+            make_baseline_exposure_start_object(),
+            treatment = list(
+                method = method,
+                baseline_exposure_start = FALSE
+            ),
+            baseline_lookback = 10,
+            verbose = FALSE
+        )
+
+        expect_equal(
+            x_with_start_override$data$timevar_data$treatment$treatment_0,
+            c(1, 0),
+            info = method
+        )
+        expect_equal(
+            x_without_start_override$data$timevar_data$treatment$treatment_0,
+            c(0, 0),
+            info = method
+        )
+    }
+})
+
+
+test_that("baseline_exposure_start must be logical", {
+    expect_error(
+        discretize(
+            make_baseline_exposure_start_object(),
+            treatment = list(
+                method = "exposure_percent",
+                baseline_exposure_start = 1
+            ),
+            baseline_lookback = 10,
+            verbose = FALSE
+        ),
+        "single TRUE/FALSE"
+    )
+})
