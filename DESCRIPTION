@@ -17,7 +17,6 @@ Description: Flexible implementation of targeted minimum loss estimators.
 	     Some functions in this package were inspired by the 'ltmle' package developed by Joshua Schwab, Samuel Lendle, Maya Petersen, and Mark J. van der Laan, but rtmle provides an independent implementation with a different architecture and extensions to competing risks.
 License: GPL (>= 3)
 Encoding: UTF-8
-RoxygenNote: 7.3.3
 VignetteBuilder: R.rsp
 Imports:
     stats,
@@ -48,3 +47,4 @@ Suggests:
 Config/testthat/edition: 3
 URL: https://github.com/tagteam/rtmle
 BugReports: https://github.com/tagteam/rtmle/issues
+Config/roxygen2/version: 8.1.0

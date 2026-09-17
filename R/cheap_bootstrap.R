@@ -126,7 +126,27 @@ cheap_bootstrap <- function(x,
             if (missing(time_horizon)){
                 time_horizon <- sort(unique(x$estimate[[v]]$Time_horizon))
             }
-            x <- run_rtmle(x = x,refit = TRUE,verbose = verbose,time_horizon = time_horizon,subsets = list(list(label = "CB",id = x$prepared_data[[x$names$id]][inbag],append = TRUE,variable = "B",level = b)),learner = x$unparsed_learner,...)
+            original <- x[c("prepared_data", "followup", "protocols")]
+
+            x$prepared_data <- original$prepared_data[inbag]
+            x$followup <- original$followup[inbag]
+            for (pp in names(x$protocols)) {
+                x$protocols[[pp]]$intervention_match <-
+                    original$protocols[[pp]]$intervention_match[inbag, , drop = FALSE]
+            }
+
+            x <- run_rtmle(
+                x = x, refit = TRUE, verbose = verbose,
+                time_horizon = time_horizon,
+                subsets = list(list(
+                    label = "CB",
+                    id = x$prepared_data[[x$names$id]],
+                    append = TRUE, variable = "B", level = b
+                )),
+                learner = x$unparsed_learner, ...
+            )
+
+            x[names(original)] <- original
         }
         x$estimate$Cheap_bootstrap[[v]] <- x$estimate$CB
         x$estimate$CB <- NULL

@@ -65,7 +65,8 @@ just after the intermediate events have been simulated. The function expects two
 \item{absorbing_events_hook}{Optional hook to alter the absorbing-event model
 over time.}
 
-\item{parameter_values}{Named list of model parameters.}
+\item{parameter_values}{A named list of regression coefficients and scale/shape parameters. 
+For binomial events, parameters are specified on the log-odds scale. Use \code{qlogis(p)} to set baseline probabilities.}
 
 \item{intervention}{Optional named list of constant intervention values.}
 
