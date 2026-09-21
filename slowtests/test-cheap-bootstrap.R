@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Apr  9 2025 (10:02) 
 ## Version: 
-## Last-Updated: Sep 18 2026 (00:13) 
-##           By: Johan Sebastian Ohlendorff
-##     Update #: 28
+## Last-Updated: sep 21 2026 (11:13) 
+##           By: Thomas Alexander Gerds
+##     Update #: 29
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -66,7 +66,7 @@ test_that("cheap bootstrap matches a manual loop with and without replacement", 
     ), verbose = FALSE)
     x <- prepare_rtmle_data(x)
     x <- target(x, name = "Outcome_risk", estimator = "tmle",
-                protocols = "Always_A")
+                regimes = "Always_A")
     x <- model_formula(x, verbose = FALSE)
     x <- run_rtmle(x, learner = "learn_glmnet", time_horizon = 2)
 
@@ -89,7 +89,7 @@ test_that("cheap bootstrap matches a manual loop with and without replacement", 
             xb$prepared_data[, id := seq_len(.N)]
             xb$followup[, id := seq_len(.N)]
             # Recompute protocol matching from the sampled data.
-            xb$protocols$Always_A$intervention_match <- NULL
+            xb$regimes$Always_A$intervention_match <- NULL
             xb$estimate <- NULL
             xb <- run_rtmle(xb, learner = "learn_glmnet",
                             time_horizon = 2, refit = TRUE)

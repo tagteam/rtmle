@@ -42,74 +42,64 @@ export(superlearn)
 export(target)
 export(treat_unless)
 importFrom(Matrix,as.matrix)
-importFrom(data.table,
-  "%chin%",
-  ":=",
-  .BY,
-  .EACHI,
-  .GRP,
-  .I,
-  .N,
-  .NGRP,
-  .SD,
-  as.data.table,
-  copy,
-  data.table,
-  rbindlist,
-  set,
-  setDT,
-  setcolorder,
-  setkey,
-  setkeyv,
-  setnames,
-  uniqueN
-)
-importFrom(ggplot2,
-  aes,
-  autoplot,
-  element_blank,
-  element_text,
-  facet_wrap,
-  geom_hline,
-  geom_line,
-  geom_point,
-  geom_ribbon,
-  geom_smooth,
-  ggplot,
-  ggtitle,
-  labs,
-  position_jitter,
-  scale_x_continuous,
-  theme,
-  theme_bw,
-  theme_minimal,
-  xlab,
-  ylab
-)
-importFrom(prodlim,
-  Hist,
-  ggprodlim,
-  prodlim
-)
+importFrom(data.table,"%chin%")
+importFrom(data.table,":=")
+importFrom(data.table,.BY)
+importFrom(data.table,.EACHI)
+importFrom(data.table,.GRP)
+importFrom(data.table,.I)
+importFrom(data.table,.N)
+importFrom(data.table,.NGRP)
+importFrom(data.table,.SD)
+importFrom(data.table,as.data.table)
+importFrom(data.table,copy)
+importFrom(data.table,data.table)
+importFrom(data.table,rbindlist)
+importFrom(data.table,set)
+importFrom(data.table,setDT)
+importFrom(data.table,setcolorder)
+importFrom(data.table,setkey)
+importFrom(data.table,setkeyv)
+importFrom(data.table,setnames)
+importFrom(data.table,uniqueN)
+importFrom(ggplot2,aes)
+importFrom(ggplot2,autoplot)
+importFrom(ggplot2,element_blank)
+importFrom(ggplot2,element_text)
+importFrom(ggplot2,facet_wrap)
+importFrom(ggplot2,geom_hline)
+importFrom(ggplot2,geom_line)
+importFrom(ggplot2,geom_point)
+importFrom(ggplot2,geom_ribbon)
+importFrom(ggplot2,geom_smooth)
+importFrom(ggplot2,ggplot)
+importFrom(ggplot2,ggtitle)
+importFrom(ggplot2,labs)
+importFrom(ggplot2,position_jitter)
+importFrom(ggplot2,scale_x_continuous)
+importFrom(ggplot2,theme)
+importFrom(ggplot2,theme_bw)
+importFrom(ggplot2,theme_minimal)
+importFrom(ggplot2,xlab)
+importFrom(ggplot2,ylab)
+importFrom(prodlim,Hist)
+importFrom(prodlim,ggprodlim)
+importFrom(prodlim,prodlim)
 importFrom(riskRegression,predictRisk)
-importFrom(stats,
-  coef,
-  formula,
-  glm.control,
-  model.frame,
-  model.matrix,
-  na.fail,
-  na.omit,
-  na.pass,
-  pnorm,
-  predict,
-  qnorm,
-  quasibinomial,
-  sd,
-  time
-)
+importFrom(stats,coef)
+importFrom(stats,formula)
+importFrom(stats,glm.control)
+importFrom(stats,model.frame)
+importFrom(stats,model.matrix)
+importFrom(stats,na.fail)
+importFrom(stats,na.omit)
+importFrom(stats,na.pass)
+importFrom(stats,pnorm)
+importFrom(stats,predict)
+importFrom(stats,qnorm)
+importFrom(stats,quasibinomial)
+importFrom(stats,sd)
+importFrom(stats,time)
 importFrom(survival,Surv)
-importFrom(utils,
-  setTxtProgressBar,
-  txtProgressBar
-)
+importFrom(utils,setTxtProgressBar)
+importFrom(utils,txtProgressBar)
