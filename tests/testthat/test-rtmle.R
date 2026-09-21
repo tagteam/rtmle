@@ -2,6 +2,46 @@ library(testthat)
 library(rtmle)
 library(data.table)
 library(prodlim)
+
+test_that("run_rtmle reports undefined target regimes", {
+    x <- rtmle_init(
+        time_grid = 0:1,
+        name_id = "id",
+        name_outcome = "Y",
+        name_competing = NULL,
+        name_censoring = NULL
+    )
+    x$prepared_data <- data.table(
+        id = 1:2,
+        A_0 = factor(c(0, 1), levels = c("0", "1")),
+        Y_1 = c(0, 1)
+    )
+    x <- regime(
+        x,
+        name = "Always_A",
+        treatment_variables = "A",
+        intervention = 1,
+        verbose = FALSE
+    )
+    x <- target(
+        x,
+        name = "Outcome_risk",
+        estimator = "tmle",
+        regimes = c("Always_A", "Missing_regime")
+    )
+    x$models <- list(placeholder = list())
+
+    expect_error(
+        run_rtmle(
+            x,
+            time_horizon = 1,
+            learner = "learn_glm",
+            verbose = FALSE
+        ),
+        regexp = "not defined: Missing_regime.*Outcome_risk.*Available regimes: Always_A"
+    )
+})
+
 test_that("run rtmle on simulated data",{
     set.seed(112)
     ld <- simulate_long_data(n = 91,number_visits = 20,beta = list(A_on_Y = -.2,A0_on_Y = -0.3,A0_on_A = 6),register_format = TRUE)
@@ -19,17 +59,17 @@ test_that("run rtmle on simulated data",{
                        competing_data=ld$competing_data,
                        timevar_data=ld$timevar_data)
     x <- add_baseline_data(x,data=ld$baseline_data)
-    x <- discretize(x,start_followup_date=0)
-    x <- protocol(x,name = "Always_A",treatment_variables = "A",intervention = 1)
+    x <- discretize_data(x,start_followup_date=0)
+    x <- regime(x,name = "Always_A",treatment_variables = "A",intervention = 1)
     x <- prepare_rtmle_data(x) 
-    x <- target(x,name = "Outcome_risk",estimator = "tmle",protocols = "Always_A")
+    x <- target(x,name = "Outcome_risk",estimator = "tmle",regimes = "Always_A")
     x <- model_formula(x)
     suppressWarnings(x <- run_rtmle(x,time_horizon = 2,refit = TRUE,verbose=0L))
     expect_equal(x$estimate$Main_analysis$Estimate,0.1497072,tolerance = 0.001)
     expect_equal(x$estimate$Main_analysis$Standard_error,0.06217111,tolerance = 0.001)
 })
 
-test_that("censoring models are reused across protocols",{
+test_that("censoring models are reused across regimes",{
     set.seed(42)
     n <- 120
     W <- rnorm(n)
@@ -49,15 +89,15 @@ test_that("censoring models are reused across protocols",{
     x$prepared_data <- data.table(id = 1:n,W = W,A_0 = A_0,C_1 = C_1,Y_1 = Y_1)
     x$names$name_baseline_covariates <- "W"
     x$names$name_time_covariates <- "A"
-    x <- protocol(x,name = "Always_A",
+    x <- regime(x,name = "Always_A",
                   intervention = data.frame(time = x$intervention_nodes,
                                             A = factor("1",levels = c("0","1"))),
                   verbose = FALSE)
-    x <- protocol(x,name = "Never_A",
+    x <- regime(x,name = "Never_A",
                   intervention = data.frame(time = x$intervention_nodes,
                                             A = factor("0",levels = c("0","1"))),
                   verbose = FALSE)
-    x <- target(x,name = "Outcome_risk",estimator = "tmle",protocols = c("Always_A","Never_A"))
+    x <- target(x,name = "Outcome_risk",estimator = "tmle",regimes = c("Always_A","Never_A"))
     x <- model_formula(x,verbose = FALSE)
     fit_calls <- 0
     reuse_calls <- 0
@@ -97,10 +137,10 @@ test_that("run rtmle without covariates",{
     x <- add_long_data(x,outcome_data=ld$outcome_data,censored_data=ld$censored_data,competing_data=ld$competing_data,timevar_data = ld$timevar_data["A"])
     #  need id variable in the baseline data
     x <- add_baseline_data(x,data=ld$baseline_data[,.(id)])
-    x <- discretize(x,start_followup_date=0)
-    x <- protocol(x,name = "Always_A",treatment_variables = "A",intervention = 1)
+    x <- discretize_data(x,start_followup_date=0)
+    x <- regime(x,name = "Always_A",treatment_variables = "A",intervention = 1)
     x <- prepare_rtmle_data(x) 
-    x <- target(x,name = "Outcome_risk",estimator = "tmle",protocols = "Always_A")
+    x <- target(x,name = "Outcome_risk",estimator = "tmle",regimes = "Always_A")
     x <- model_formula(x)
     suppressWarnings(x <- run_rtmle(x,time_horizon = 2,refit = TRUE,verbose = FALSE))
     expect_equal(x$estimate$Main_analysis$Estimate,0.1388889,tolerance = 0.001)
@@ -115,10 +155,10 @@ test_that("run rtmle without competing risks",{
     x$long_data$outcome_data <- rbind(x$long_data$outcome_data,ld$competing_data)
     setkey(x$long_data$outcome_data,id,date)
     x <- add_baseline_data(x,data=ld$baseline_data)
-    x <- discretize(x,start_followup_date = 0)
-    x <- protocol(x,name = "Always_A",treatment_variables = "A",intervention = 1)
+    x <- discretize_data(x,start_followup_date = 0)
+    x <- regime(x,name = "Always_A",treatment_variables = "A",intervention = 1)
     x <- prepare_rtmle_data(x,verbose = FALSE)     
-    x <- target(x,name = "Outcome_risk",estimator = "tmle",protocols = "Always_A")
+    x <- target(x,name = "Outcome_risk",estimator = "tmle",regimes = "Always_A")
     x <- model_formula(x)
     suppressWarnings(x <- run_rtmle(x,verbose = FALSE))
     expect_output(print(summary(x)))
@@ -132,13 +172,13 @@ test_that("rtmle can use g-formula",{
     x$long_data$outcome_data <- rbind(x$long_data$outcome_data,ld$competing_data)
     setkey(x$long_data$outcome_data,id,date)
     x <- add_baseline_data(x,data=ld$baseline_data)
-    x <- discretize(x,start_followup_date = 0)
-    x <- protocol(x,name = "Always_A",treatment_variables = "A",intervention = 1)
+    x <- discretize_data(x,start_followup_date = 0)
+    x <- regime(x,name = "Always_A",treatment_variables = "A",intervention = 1)
     x <- prepare_rtmle_data(x,verbose = FALSE)     
-    x <- target(x,name = "Outcome_risk",protocols = "Always_A")
+    x <- target(x,name = "Outcome_risk",regimes = "Always_A")
     x <- model_formula(x)
     x <- run_rtmle(x,estimator = "tmle",verbose = FALSE)
-    x$protocols$Always_A$cumulative_intervention_probs <- pmax(x$protocols$Always_A$cumulative_intervention_probs,0.5)
+    x$regimes$Always_A$cumulative_intervention_probs <- pmax(x$regimes$Always_A$cumulative_intervention_probs,0.5)
     z <- run_rtmle(x,refit = FALSE,estimator = "tmle",verbose = FALSE)
     y <- run_rtmle(x,estimator = "g-formula",verbose = FALSE)
     expect_output(print(summary(x)))    

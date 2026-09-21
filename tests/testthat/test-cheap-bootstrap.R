@@ -28,19 +28,19 @@ test_that("Cheap bootstrap confidence intervals",{
                     competing_data=ld$competing_data,
                     timevar_data=ld$timevar_data)
     x <- add_baseline_data(x,data=ld$baseline_data)
-    x <- discretize(x,start_followup_date = 0)
-    x <- protocol(x,name = "Always_A",intervention = data.frame("time"=x$intervention_nodes,"A" = factor("1",levels = c("0","1"))),verbose = FALSE)
-    x <- protocol(x,name = "Never_A",intervention = data.frame("time"=x$intervention_nodes,"A" = factor("0",levels = c("0","1"))),verbose = FALSE)
+    x <- discretize_data(x,start_followup_date = 0)
+    x <- regime(x,name = "Always_A",intervention = data.frame("time"=x$intervention_nodes,"A" = factor("1",levels = c("0","1"))),verbose = FALSE)
+    x <- regime(x,name = "Never_A",intervention = data.frame("time"=x$intervention_nodes,"A" = factor("0",levels = c("0","1"))),verbose = FALSE)
     x <- prepare_rtmle_data(x)
-    x <- target(x,name = "Outcome_risk",estimator = "tmle",protocols = c("Always_A","Never_A"))
+    x <- target(x,name = "Outcome_risk",estimator = "tmle",regimes = c("Always_A","Never_A"))
     x <- model_formula(x)
     x <- run_rtmle(x,learner = "learn_glmnet",time_horizon = 1,verbose = FALSE)
     x <- run_rtmle(x,learner = "learn_glmnet",time_horizon = 1:tau,verbose = FALSE)
     x <- cheap_bootstrap(x,B = 2,M = 71)
-    a = x$estimate$Main_analysis[,.(Time_horizon,Protocol,Bootstrap_lower,Bootstrap_upper)]
-    b = x$estimate$Cheap_bootstrap$Main_analysis[B == 2][,.(Time_horizon,Protocol,Bootstrap_lower,Bootstrap_upper)]
-    setkey(a,Time_horizon,Protocol)
-    setkey(b,Time_horizon,Protocol)
+    a = x$estimate$Main_analysis[,.(Time_horizon,Regime,Bootstrap_lower,Bootstrap_upper)]
+    b = x$estimate$Cheap_bootstrap$Main_analysis[B == 2][,.(Time_horizon,Regime,Bootstrap_lower,Bootstrap_upper)]
+    setkey(a,Time_horizon,Regime)
+    setkey(b,Time_horizon,Regime)
     expect_equal(a,b)
 })
 

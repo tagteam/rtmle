@@ -4,7 +4,7 @@ widen_outcome <- function(x,
                           competing_data = NULL,
                           grid = NULL,
                           fun_aggregate = NULL){
-    # The explicit event tables are prepared by discretize(). Allow the
+    # The explicit event tables are prepared by discretize_data(). Allow the
     # outcome table to be omitted for direct internal calls; the normal path
     # passes all event tables after applying the follow-up precedence rules.
     if (is.null(outcome_data)) {

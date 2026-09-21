@@ -17,7 +17,7 @@
 #' Sequential regression with TMLE update step for discretized follow-up data
 #'
 #' Runs the analysis defined by \code{\link{rtmle_init}},
-#' \code{\link{protocol}}, \code{\link{target}}, and
+#' \code{\link{regime}}, \code{\link{target}}, and
 #' \code{\link{model_formula}}.
 #'
 #' @param x Object of class \code{"rtmle"}.
@@ -57,10 +57,11 @@
 #'     \code{x$prepared_data} to identify the subset. The results of
 #'     the subset analysis are stored in
 #'     \code{x$estimate[[subsets[[label]]]]}. An optional element of
-#'     each subset list is called \code{append}; if \code{TRUE}, append the
-#'     estimates to the existing estimates with \code{rbind}. This may be used
-#'     for stratified analyses, seed-dependence studies (Monte Carlo error), and
-#'     bootstrap analyses. See
+#'     each subset list is called \code{append}. If a result with the same
+#'     label already exists, estimates are appended by default; set
+#'     \code{append = FALSE} to replace the existing result. Appending may be
+#'     used for stratified analyses, seed-dependence studies (Monte Carlo
+#'     error), and bootstrap analyses. See
 #'     examples.
 #' @param keep_influence Logical. If \code{TRUE}, store the estimated
 #'     influence function of the estimator in the object.  Currently
@@ -78,8 +79,12 @@
 #'   \code{weight_truncation = c(0.01, 0.99)} to apply weight truncation.
 #' @return The modified object contains the fitted nuisance parameter
 #'     models and the estimate of the target parameter.
+#' @details If the learner specification differs from the learner used for a
+#'   previous run on the same object, learner-dependent estimates, fitted
+#'   objects, diagnostics, and derived intervention probabilities are cleared
+#'   before the new analysis is run.
 #' @seealso \code{\link{rtmle_init}}, \code{\link{prepare_rtmle_data}},
-#'   \code{\link{protocol}}, \code{\link{target}}, \code{\link{model_formula}},
+#'   \code{\link{regime}}, \code{\link{target}}, \code{\link{model_formula}},
 #'   \code{\link{learn_glm}}, \code{\link{learn_glmnet}},
 #'   \code{\link{superlearn}}, \code{\link{summary.rtmle}}
 #' @author Thomas A Gerds \email{tag@@biostat.ku.dk}
@@ -97,17 +102,17 @@
 #'                    competing_data=ld$timevar_data$death,
 #'                    timevar_data=ld$timevar_data[c("bleeding","changeSBP","A","B")])
 #' x <- add_baseline_data(x,data=ld$baseline_data)
-#' x <- discretize(x,start_followup_date=0)
+#' x <- discretize_data(x,start_followup_date=0)
 #' x <- prepare_rtmle_data(x)
-#' x <- protocol(x,name = "Always_A",
+#' x <- regime(x,name = "Always_A",
 #'                     intervention = data.frame(time=x$intervention_nodes,
 #'                                                    "A" = factor("1",levels = c("0","1"))))
-#' x <- protocol(x,name = "Never_A",
+#' x <- regime(x,name = "Never_A",
 #'                     intervention = data.frame(time=x$intervention_nodes,
 #'                                               "A" = factor("0",levels = c("0","1"))))
 #' x <- target(x,name = "Outcome_risk",
 #'                   estimator = "tmle",
-#'                   protocols = c("Always_A","Never_A"))
+#'                   regimes = c("Always_A","Never_A"))
 #' x <- model_formula(x)
 #' # default is undersmoothing which means: take the smallest penalty
 #' # where the model still converges
@@ -122,6 +127,25 @@
 #'                                    selector="min"),
 #'                   time_horizon = tau)
 #' summary(x)
+#' }
+#' \dontrun{
+#' # Super learner combining elastic-net glmnet and ranger
+#' x <- run_rtmle(
+#'     x,
+#'     learner = list(
+#'         folds = 10,
+#'         ensemble_method = "ipa",
+#'         learners = list(
+#'             glmnet = list(fun = "learn_glmnet",
+#'                           selector = "min",
+#'                           alpha = 0.5),
+#'             ranger = list(fun = "learn_ranger",
+#'                           num.trees = 50,
+#'                           min.node.size = 10)
+#'         )
+#'     ),
+#'     time_horizon = tau
+#' )
 #' }
 #' \dontrun{
 #' # stratified analyses
@@ -163,20 +187,79 @@ run_rtmle <- function(x,
             x$tuning_parameters[[ntp]] <- dot_args[[ntp]]
         }
     }
+    learners <- parse_learners(learner)
+    learner_changed <- length(x$learner) > 0L &&
+        !identical(learners, x$learner)
+    if (learner_changed) {
+        # Keep model formulas and regime definitions, but discard anything
+        # that was fitted or calculated under the previous learner.
+        clear_fitted_components <- function(value) {
+            if (!is.list(value)) return(value)
+            if (!is.null(names(value))) {
+                value <- value[!names(value) %chin% c("fit", "fit_summary")]
+            }
+            lapply(value, clear_fitted_components)
+        }
+        x$models <- clear_fitted_components(x$models)
+        x$estimate <- NULL
+        x$IC <- NULL
+        x$sequential_outcome_regression <- NULL
+        x$run_time_horizons <- NULL
+        x$diagnostics <- NULL
+        x$learner <- NULL
+        x$unparsed_learner <- NULL
+        x$save_fitted_objects <- FALSE
+        for (regime_name in names(x$regimes)) {
+            x$regimes[[regime_name]]$intervention_probs <- NULL
+            x$regimes[[regime_name]]$cumulative_intervention_probs <- NULL
+            x$regimes[[regime_name]]$ipw_last_nodes <- NULL
+            x$regimes[[regime_name]]$intervention_last_nodes <- NULL
+        }
+        if (length(x$prepared_data) > 0L &&
+            "rtmle_predicted_outcome" %in% names(x$prepared_data)) {
+            data.table::set(x$prepared_data,
+                            j = "rtmle_predicted_outcome",
+                            value = NULL)
+        }
+    }
     if (length(subsets)>0){
         refit <- TRUE
         for (sub in subsets){
             stopifnot(is.character(sub$label[[1]]))
-            xs <- data.table::copy(x[c("targets","names","time_grid","time_grid_scale","time_grid_labels","protocols","models","intervention_nodes","tuning_parameters")])
-            for (pp in names(xs$protocols)){
-                xs$protocols[[pp]]$intervention_match <- xs$protocols[[pp]]$intervention_match[x$prepared_data[[x$names$id]] %in% sub$id,,drop = FALSE]
-                xs$protocols[[pp]]$intervention_probs <- NULL
-                xs$protocols[[pp]]$cumulative_intervention_probs <- NULL
+            xs <- data.table::copy(x[c("targets","names","time_grid","time_grid_scale","time_grid_labels","regimes","models","intervention_nodes","tuning_parameters")])
+            # Use a data.table as the join input.  A vector i together with
+            # `on` was accepted by older data.table releases but is rejected
+            # by current versions.  Keeping the index also preserves the
+            # order (and possible repeated ids) of bootstrap subsets.
+            subset_ids <- data.table::data.table(subset_id = sub$id)
+            data.table::setnames(subset_ids, "subset_id", x$names$id)
+            source_ids <- x$prepared_data[[x$names$id]]
+            subset_rows <- match(sub$id, source_ids)
+            subset_rows <- subset_rows[!is.na(subset_rows)]
+            for (pp in names(xs$regimes)){
+                xs$regimes[[pp]]$intervention_match <-
+                    xs$regimes[[pp]]$intervention_match[subset_rows,
+                                                          , drop = FALSE]
+                xs$regimes[[pp]]$intervention_probs <- NULL
+                xs$regimes[[pp]]$cumulative_intervention_probs <- NULL
             }
-            # allow for bootstrap with replacement
-            xs$prepared_data <- x$prepared_data[sub$id,on = x$names$id]
-            if (NROW(xs$prepared_data) == 0) stop(paste0("No data in subset: ",label))
-            xs$followup <- x$followup[x$followup[[x$names$id]] %in% sub$id]
+            # Allow for bootstrap with replacement while retaining the
+            # original subject-row order.
+            xs$prepared_data <- x$prepared_data[
+                subset_ids,
+                on = x$names$id,
+                nomatch = 0L,
+                allow.cartesian = TRUE
+            ]
+            if (NROW(xs$prepared_data) == 0) {
+                stop(paste0("No data in subset: ", sub$label[[1]]))
+            }
+            xs$followup <- x$followup[
+                subset_ids,
+                on = x$names$id,
+                nomatch = 0L,
+                allow.cartesian = TRUE
+            ]
             xs <- run_rtmle(xs,
                             targets = targets,
                             time_horizon = time_horizon,
@@ -207,9 +290,9 @@ run_rtmle <- function(x,
                 data.table::setattr(subset_result,"IC",vic)
             }
             # set or replace existing results
-            if (length(x$estimate[[sub$label[[1]]]]) == 0 ||
-                (length(sub$append) == 0) ||
-                sub$append[[1]] == FALSE){
+            replace_subset <- length(x$estimate[[sub$label[[1]]]]) == 0L ||
+                (length(sub$append) > 0L && !isTRUE(sub$append[[1]]))
+            if (replace_subset) {
                 x$estimate[[sub$label[[1]]]] <- subset_result
             }else{
                 # append results
@@ -230,16 +313,17 @@ run_rtmle <- function(x,
                 ## c(sub_level, attr(subset_result,"level",exact = TRUE)))
             }
         }
+        x$unparsed_learner <- learner
+        x$learner <- learners
         x$save_fitted_objects <- save_fitted_objects
         return(x)
     }else{
         #
         # check data
         #
-        learners <- parse_learners(learner)
         # Skipping the nuisance parameter models is only possible when the same
         # learner was used previously
-        if ((length(x$learner) == 0)|| learners$name != x$learner$name){
+        if (length(x$learner) == 0L || learner_changed){
             refit <- TRUE
         }
         if (!identical(isTRUE(x$save_fitted_objects),isTRUE(save_fitted_objects))){
@@ -262,13 +346,13 @@ run_rtmle <- function(x,
         if (!(x$names$id%in%names(x$prepared_data)))
             stop(paste0("Cannot see id variable ",x$names$id," in x$prepared_data."))
         ## make sure that the treatment variables are factors with levels equal to
-        # those specified by the protocols
+        # those specified by the regimes
         for (v in names(x$names$treatment_options)){
             v_treatment_variables <- intersect(paste0(v,"_",x$time_grid),names(x$prepared_data))
             for (v_j in v_treatment_variables){
                 if (inherits(x$prepared_data[[v_j]],"factor")){
                     if (!(all.equal(levels(x$prepared_data[[v_j]]),as.character(x$names$treatment_options[[v]])))){
-                        stop(paste0("The protocols specify the following treatment options (factor levels) for variable ",v,
+                        stop(paste0("The regimes specify the following treatment options (factor levels) for variable ",v,
                                     paste0(x$names$treatment_options[[v]],collapse = ","),"\nBut, the data have: ",
                                     paste0(levels(x$prepared_data[[v_j]]),collapse = ",")))
                     }
@@ -287,16 +371,16 @@ run_rtmle <- function(x,
         names(x$sequential_outcome_regression) = run_these_targets
         # initialize influence curve vector
         x$IC <- stats::setNames(lapply(run_these_targets,function(target_name){
-            stats::setNames(lapply(x$targets[[target_name]]$protocols,function(protocol_name){
+            stats::setNames(lapply(x$targets[[target_name]]$regimes,function(regime_name){
                 stats::setNames(lapply(1:length(time_horizon),function(th){
                     numeric(NROW(x$prepared_data))
                 }),label_time_horizon)
-            }),x$targets[[target_name]]$protocols)}),run_these_targets)
+            }),x$targets[[target_name]]$regimes)}),run_these_targets)
         # initialize estimate table
         empty_estimate <- data.table::rbindlist(lapply(run_these_targets,function(target_name){
-            data.table::rbindlist(lapply(x$targets[[target_name]]$protocols,function(protocol_name){
+            data.table::rbindlist(lapply(x$targets[[target_name]]$regimes,function(regime_name){
                 expand.grid(Target = target_name,
-                            Protocol = protocol_name,
+                            Regime = regime_name,
                             Target_parameter = Target_parameter,
                             Time_horizon = time_horizon,
                             Estimator = estimator,
@@ -309,29 +393,61 @@ run_rtmle <- function(x,
         if (length(x$estimate[["Main_analysis"]]) == 0){
             x$estimate[["Main_analysis"]] <- empty_estimate
         }else{
-            # initialize new targets, new protocols and new time_horizons
+            # initialize new targets, new regimes and new time_horizons
             e <- rbind(x$estimate[["Main_analysis"]],empty_estimate)
-            e <- e[e[,.I[1],by = c("Target","Protocol","Time_horizon","Estimator")]$V1]
+            e <- e[e[,.I[1],by = c("Target","Regime","Time_horizon","Estimator")]$V1]
             x$estimate[["Main_analysis"]] <- e
         }
-        # for loop across protocols
-        run_these_protocols <- unique(unlist(sapply(run_these_targets,function(target_name){
-            x$targets[[target_name]]$protocols})))
-        # use the first protocol to store the censoring models
-        if (length(x$censoring_use_protocol) == 0
-            || !(x$censoring_use_protocol %chin% names(x$protocols))){
-            x$censoring_use_protocol <- run_these_protocols[[1]]
+        # for loop across regimes
+        run_these_regimes <- unique(unlist(sapply(run_these_targets,function(target_name){
+            x$targets[[target_name]]$regimes})))
+        missing_regimes <- setdiff(run_these_regimes, names(x$regimes))
+        if (length(missing_regimes) > 0L) {
+            missing_by_target <- vapply(
+                run_these_targets,
+                function(target_name) {
+                    target_missing <- intersect(
+                        x$targets[[target_name]]$regimes,
+                        missing_regimes
+                    )
+                    if (length(target_missing) == 0L) {
+                        return("")
+                    }
+                    paste0(
+                        "target '", target_name, "': ",
+                        paste(target_missing, collapse = ", ")
+                    )
+                },
+                character(1L)
+            )
+            missing_by_target <- missing_by_target[nzchar(missing_by_target)]
+            available_regimes <- names(x$regimes)
+            if (length(available_regimes) == 0L) {
+                available_regimes <- "(none)"
+            }
+            stop(
+                "Cannot run rtmle because the following regime(s) are not ",
+                "defined: ", paste(missing_regimes, collapse = ", "),
+                ". Referenced by ", paste(missing_by_target, collapse = "; "),
+                ". Available regimes: ",
+                paste(available_regimes, collapse = ", "), "."
+            )
+        }
+        # use the first regime to store the censoring models
+        if (length(x$censoring_use_regime) == 0
+            || !(x$censoring_use_regime %chin% names(x$regimes))){
+            x$censoring_use_regime <- run_these_regimes[[1]]
         }
         if (estimator == "tmle"){
-            for (protocol_name in run_these_protocols){
+            for (regime_name in run_these_regimes){
                 #
                 # G-part: fit nuisance parameter models for propensity and censoring
                 #
-                # when protocols are defined before data are prepared then
+                # when regimes are defined before data are prepared then
                 # intervention_match needs to run here
-                x <- intervention_match(x,protocol_name = protocol_name)
+                x <- intervention_match(x,regime_name = regime_name)
                 x <- intervention_probabilities(x,
-                                                protocol_name = protocol_name,
+                                                regime_name = regime_name,
                                                 max_intervention_node = max(time_horizon)-1,
                                                 refit = refit,
                                                 learner = learners,
@@ -352,9 +468,9 @@ run_rtmle <- function(x,
             }
             x$sequential_outcome_regression[[target_name]] <- vector(mode = "list",3)
             names(x$sequential_outcome_regression[[target_name]]) <- c("predicted_values","fit","intervened_data")
-            for (protocol_name in x$targets[[target_name]]$protocols){
+            for (regime_name in x$targets[[target_name]]$regimes){
                 if (verbose[[1]]){
-                    message("Current protocol: ",protocol_name," ... Set argument verbose = FALSE to suppress this message.")
+                    message("Current regime: ",regime_name," ... Set argument verbose = FALSE to suppress this message.")
                 }
                 #
                 # Q-part: loop backwards in time through iterative condtional expectations
@@ -366,7 +482,7 @@ run_rtmle <- function(x,
                     }
                     x <- sequential_regression(x = x,
                                                target_name = target_name,
-                                               protocol_name = protocol_name,
+                                               regime_name = regime_name,
                                                time_horizon = th,
                                                learner = learners,
                                                estimator = estimator,

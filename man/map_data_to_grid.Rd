@@ -77,7 +77,7 @@ summarized.}
 \code{TRUE} (the default), an exposure whose \code{start_date} matches
 time zero is assigned exposure \code{1} in interval 0. Set to
 \code{FALSE} to use only the measured overlap with interval 0, including
-when that interval is extended by \code{\link{discretize}}'s
+when that interval is extended by \code{\link{discretize_data}}'s
 \code{baseline_lookback}.}
 
 \item{...}{Additional arguments passed to internal computations.}
@@ -93,7 +93,7 @@ onto a discrete time grid and returns a wide-format representation with
 one column per time interval.
 }
 \details{
-This is the core engine used by \code{\link{discretize}} and can also be
+This is the core engine used by \code{\link{discretize_data}} and can also be
 used directly.
 
 
@@ -102,7 +102,7 @@ time grid using either rolling joins (for events and measurements) or
 interval overlap calculations (for exposures).
 
 It is designed to be composable and can be used as a building block for
-custom mapping functions supplied to \code{\link{discretize}}.
+custom mapping functions supplied to \code{\link{discretize_data}}.
 }
 \examples{
 library(data.table)
@@ -147,6 +147,6 @@ map_data_to_grid(
 
 }
 \seealso{
-\code{\link{discretize}}, \code{\link{long_to_wide}},
+\code{\link{discretize_data}}, \code{\link{long_to_wide}},
   \code{\link{fast_cast}}
 }

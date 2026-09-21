@@ -20,7 +20,7 @@ character string.}
 \item{data}{Data used for learning.}
 
 \item{intervened_data}{Data used for prediction after intervention variables
-have been set according to a protocol.}
+have been set according to a regime.}
 
 \item{save_fitted_objects}{Logical. If \code{TRUE}, store the 
 fitted object as element \code{fit}}

@@ -15,16 +15,16 @@
 ##
 ### Code:
 additive_formalizer <- function(x,
-                                protocol,
+                                regime,
                                 treatment_variables,
                                 include_variables = NULL,
                                 exclude_variables = NULL,
                                 Markov = NULL) {
     if (missing(treatment_variables)){
-        treatment_variables <- x$protocols[[protocol]]$treatment_variables
+        treatment_variables <- x$regimes[[regime]]$treatment_variables
     }
     if (length(treatment_variables) == 0) {
-        stop(paste0("rtmle:::additive_formalizer: protocol ",protocol," has no element treatment_variables."))
+        stop(paste0("rtmle:::additive_formalizer: regime ",regime," has no element treatment_variables."))
     }
     name_time_covariates <- setdiff(x$names$name_time_covariates,exclude_variables)
     name_baseline_covariates <- setdiff(x$names$name_baseline_covariates,exclude_variables)

@@ -58,7 +58,7 @@
 #' Rows are ordered by the first occurrence of each id,
 #' and columns are ordered by sorted interval values.
 #'
-#' @seealso \code{\link{map_data_to_grid}}, \code{\link{discretize}}
+#' @seealso \code{\link{map_data_to_grid}}, \code{\link{discretize_data}}
 #'
 #' @examples
 #' library(data.table)

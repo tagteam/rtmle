@@ -373,7 +373,7 @@ Add the outcome data and the longitudinal data (covariates and treatment) with o
 </pre>
 
 <p>
-TODO: The object contains no protocols. Add them with the function 'protocol&lt;-'.
+TODO: The object contains no regimes. Add them with the function 'regime&lt;-'.
 TODO: The object contains no targets yet. Add them with the function 'target&lt;-'.
 </p>
 </div>
@@ -393,7 +393,7 @@ Targeted minimum loss analysis of register data.
   Initialized to 3 time intervals (starting at time zero).
   The name of the subject id variable is 'id'.
   The outcome, competing risk and censoring variables are named 'Y', 'Dead', and 'Censored', respectively.
-TODO: The object contains no protocols. Add them with the function 'protocol&lt;-'.
+TODO: The object contains no regimes. Add them with the function 'regime&lt;-'.
 TODO: The object contains no targets yet. Add them with the function 'target&lt;-'.
 </p>
 </div>
@@ -402,7 +402,7 @@ TODO: The object contains no targets yet. Add them with the function 'target&lt;
 <h3 id="org28f7bd3"><span class="section-number-3">3.3.</span> Preparing the data</h3>
 <div class="outline-text-3" id="text-3-3">
 <div class="org-src-container">
-<pre class="src src-R">x <span style="color: #BFEBBF;">&lt;-</span> discretize(x,breaks = seq(0,2000,30.45*6))
+<pre class="src src-R">x <span style="color: #BFEBBF;">&lt;-</span> discretize_data(x,breaks = seq(0,2000,30.45*6))
 prepare_rtmle_data(x) <span style="color: #BFEBBF;">&lt;-</span> list()
 x$prepared_data
 </pre>
@@ -439,11 +439,11 @@ id   sex      age start<sub>followup</sub><sub>date</sub>   L<sub>0</sub>   A<su
 </div>
 </div>
 <div id="outline-container-orge16f121" class="outline-3">
-<h3 id="orge16f121"><span class="section-number-3">3.4.</span> Defining the protocols</h3>
+<h3 id="orge16f121"><span class="section-number-3">3.4.</span> Defining the regimes</h3>
 <div class="outline-text-3" id="text-3-4">
 <div class="org-src-container">
-<pre class="src src-R">protocol(x) <span style="color: #BFEBBF;">&lt;-</span> list(name = <span style="color: #CC9393;">"always A"</span>,treatment_variables = <span style="color: #CC9393;">"A"</span>,intervention = 1)
-protocol(x) <span style="color: #BFEBBF;">&lt;-</span> list(name = <span style="color: #CC9393;">"never A"</span>,treatment_variables = <span style="color: #CC9393;">"A"</span>,intervention = 0)
+<pre class="src src-R">regime(x) <span style="color: #BFEBBF;">&lt;-</span> list(name = <span style="color: #CC9393;">"always A"</span>,treatment_variables = <span style="color: #CC9393;">"A"</span>,intervention = 1)
+regime(x) <span style="color: #BFEBBF;">&lt;-</span> list(name = <span style="color: #CC9393;">"never A"</span>,treatment_variables = <span style="color: #CC9393;">"A"</span>,intervention = 0)
 x
 </pre>
 </div>
@@ -461,7 +461,7 @@ TODO: The object contains no targets yet. Add them with the function 'target&lt;
 <h3 id="org092ce0e"><span class="section-number-3">3.5.</span> Defining the targets</h3>
 <div class="outline-text-3" id="text-3-5">
 <div class="org-src-container">
-<pre class="src src-R">target(x) <span style="color: #BFEBBF;">&lt;-</span> list(name = <span style="color: #CC9393;">"Outcome_risk"</span>,strategy = <span style="color: #CC9393;">"additive"</span>,estimator = <span style="color: #CC9393;">"tmle"</span>,time_horizon = 3,protocols = c(<span style="color: #CC9393;">"always A"</span>,<span style="color: #CC9393;">"never A"</span>))
+<pre class="src src-R">target(x) <span style="color: #BFEBBF;">&lt;-</span> list(name = <span style="color: #CC9393;">"Outcome_risk"</span>,strategy = <span style="color: #CC9393;">"additive"</span>,estimator = <span style="color: #CC9393;">"tmle"</span>,time_horizon = 3,regimes = c(<span style="color: #CC9393;">"always A"</span>,<span style="color: #CC9393;">"never A"</span>))
 x
 </pre>
 </div>
@@ -484,8 +484,8 @@ Targeted minimum loss analysis of register data.
 
 <p>
 Running target: Outcome<sub>risk</sub>&#x2026; Set argument verbose = FALSE to suppress this message.
-Current protocol: always A &#x2026; Set argument verbose = FALSE to suppress this message.
-Current protocol: never A &#x2026; Set argument verbose = FALSE to suppress this message.
+Current regime: always A &#x2026; Set argument verbose = FALSE to suppress this message.
+Current regime: never A &#x2026; Set argument verbose = FALSE to suppress this message.
 Warning messages:
 1: In tmle<sub>update</sub>(Y = Y, offset = W<sub>previous</sub>, intervention<sub>probs</sub> = inverse<sub>probability</sub><sub>weights</sub>,  :
   No TMLE update because no subject has positive weight
@@ -499,7 +499,7 @@ Warning messages:
 </div>
 
 <p>
-         Target Protocol Target<sub>parameter</sub> Time<sub>horizon</sub> Estimator   Estimate     P<sub>value</sub> Standard<sub>error</sub>        Lower       Upper
+         Target Regime Target<sub>parameter</sub> Time<sub>horizon</sub> Estimator   Estimate     P<sub>value</sub> Standard<sub>error</sub>        Lower       Upper
          &lt;fctr&gt;   &lt;fctr&gt;           &lt;fctr&gt;        &lt;int&gt;    &lt;fctr&gt;      &lt;num&gt;       &lt;num&gt;          &lt;num&gt;        &lt;num&gt;       &lt;num&gt;
 1: Outcome<sub>risk</sub> always A             Risk            3      tmle 0.33494029 1.000000000    0.004767184 -0.009343509 0.009343509
 2: Outcome<sub>risk</sub>  never A             Risk            3      tmle 0.35940602 1.000000000    0.007959865 -0.015601048 0.015601048

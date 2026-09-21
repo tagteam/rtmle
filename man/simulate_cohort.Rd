@@ -112,5 +112,5 @@ scale_dropout = 0.04
 
 }
 \seealso{
-\code{\link{simulate_long_data}}, \code{\link{discretize}}
+\code{\link{simulate_long_data}}, \code{\link{discretize_data}}
 }

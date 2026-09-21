@@ -212,7 +212,7 @@ events, and absorbing events.
 <p>
 The examples below estimate the absolute risks of <code>stroke</code> in the
 presense of the competing risk <code>death without stroke</code> under different
-static treatment protocols.
+static treatment regimes.
 </p>
 </div>
 </div>
@@ -379,9 +379,9 @@ Minority threshold:  8
 Weight truncation:   (0,1)
 Prediction range:    (0.0001,0.9999)
 TODO: The object contains no baseline_data yet. Add them with the function rtmle::add_baseline_data
-TODO: The object contains no time varying data yet. Add them with rtmle::add_wide_data in discretized form or with rtmle::add_long_data followed by rtmle::discretize.
-TODO: The object contains no outcome data yet. Add them with rtmle::add_wide_data in discretized form or with rtmle::add_long_data followed by rtmle::discretize.
-TODO: The object contains no protocols. Add them with the function 'protocol'.
+TODO: The object contains no time varying data yet. Add them with rtmle::add_wide_data in discretized form or with rtmle::add_long_data followed by rtmle::discretize_data.
+TODO: The object contains no outcome data yet. Add them with rtmle::add_wide_data in discretized form or with rtmle::add_long_data followed by rtmle::discretize_data.
+TODO: The object contains no regimes. Add them with the function 'regime'.
 Prepared data:       n=0, p=-1
 TODO: Use the function 'model_formula' to initialize the formula for the nuisance parameter models.
 TODO: Use the function 'run_rtmle' to estimate the nuisance parameter models and the target parameter.
@@ -463,7 +463,7 @@ names(x$long_data$timevar_data)
 <h2 id="org9b54f87"><span class="section-number-2">5.</span> Discretize the longitudinal data onto the discrete time scale</h2>
 <div class="outline-text-2" id="text-5">
 <p>
-<code>discretize()</code> maps the long event-history data onto the discrete time grid.
+<code>discretize_data()</code> maps the long event-history data onto the discrete time grid.
 Because the simulated times are already measured from zero, the start of
 follow-up is set to 0.  Default mappings are used for all supplied
 time-varying variables.
@@ -472,7 +472,7 @@ time-varying variables.
 <div class="org-src-container">
 <pre class="src src-R"># Input: x with baseline_data and long_data plus the time grid from rtmle_init().
 # Output: x$data contains wide outcome and time-varying data on the time grid.
-x &lt;- discretize(x, start_followup_date = 0)
+x &lt;- discretize_data(x, start_followup_date = 0)
 
 names(x$data)
 names(x$data$timevar_data)
@@ -488,10 +488,10 @@ names(x$data$timevar_data)
 
 
 <div id="outline-container-org2c3794f" class="outline-2">
-<h2 id="org2c3794f"><span class="section-number-2">6.</span> Define treatment protocols</h2>
+<h2 id="org2c3794f"><span class="section-number-2">6.</span> Define treatment regimes</h2>
 <div class="outline-text-2" id="text-6">
 <p>
-The function <code>protocol()</code> adds an intervention to the object.  A
+The function <code>regime()</code> adds an intervention to the object.  A
 simple example is a static regime which sets treatment <code>A</code> to 1 at
 every intervention node.  The intervention values are factors so that
 <code>rtmle</code> knows the two treatment options. It is recommended that one
@@ -500,8 +500,8 @@ checks the intervention table after adding the intervention:
 
 <div class="org-src-container">
 <pre class="src src-R"># Input: x with prepared_data and intervention nodes.
-# Output: x$protocols$Always_A with an intervention table and adherence matrix.
-x &lt;- protocol(
+# Output: x$regimes$Always_A with an intervention table and adherence matrix.
+x &lt;- regime(
     x,
     name = "Always_A",
     intervention = data.frame(
@@ -511,7 +511,7 @@ x &lt;- protocol(
     verbose = FALSE
 )
 
-x$protocols$Always_A$intervention_table
+x$regimes$Always_A$intervention_table
 </pre>
 </div>
 
@@ -527,7 +527,7 @@ x$protocols$Always_A$intervention_table
 
 
 <p>
-The protocol function can add more complex interventions that depend
+The regime function can add more complex interventions that depend
 on multiple variables and apply user-written intervention
 functions. Here is an example of a two-factor regime which states that
 people should start treatment 'A', continue treatment 'A' for 20
@@ -537,8 +537,8 @@ allowed to take treatment 'B' in the first 10 months:
 
 <div class="org-src-container">
 <pre class="src src-R"># Input: x with prepared_data and intervention nodes.
-# Output: x$protocols$Always_A_not_B_in_the_beginning with an intervention table and adherence matrix.
-x &lt;- protocol(
+# Output: x$regimes$Always_A_not_B_in_the_beginning with an intervention table and adherence matrix.
+x &lt;- regime(
     x,
     name = "Always_A_not_B_in_the_beginning",
     intervention = data.frame(
@@ -549,7 +549,7 @@ x &lt;- protocol(
     verbose = FALSE
 )
 
-x$protocols$Always_A_not_B_in_the_beginning$intervention_table
+x$regimes$Always_A_not_B_in_the_beginning$intervention_table
 </pre>
 </div>
 
@@ -581,7 +581,7 @@ is no intervention on B at these intervention nodes.
 <p>
 <code>prepare_rtmle_data()</code> checks and combines the baseline, outcome, censoring,
 competing-risk, treatment, and covariate data.  It creates the one-row-per-
-subject analysis table used by <code>protocol()</code>, <code>model_formula()</code>, and
+subject analysis table used by <code>regime()</code>, <code>model_formula()</code>, and
 <code>run_rtmle()</code>.
 </p>
 
@@ -610,18 +610,18 @@ head(names(x$prepared_data), 20)
 <h2 id="orga7395ed"><span class="section-number-2">8.</span> Define the target parameter</h2>
 <div class="outline-text-2" id="text-8">
 <p>
-<code>target()</code> tells <code>rtmle</code> which protocols belong to the estimand and which
+<code>target()</code> tells <code>rtmle</code> which regimes belong to the estimand and which
 estimator should be used.  Here the target is the stroke risk under each
-protocol and the contrast of <code>Always_A_not_B_in_the_beginning</code> against <code>Always_A</code>.
+regime and the contrast of <code>Always_A_not_B_in_the_beginning</code> against <code>Always_A</code>.
 </p>
 
 <div class="org-src-container">
-<pre class="src src-R"># Input: x with both protocols registered.
+<pre class="src src-R"># Input: x with both regimes registered.
 # Output: x$targets contains Stroke_risk and x$estimator includes "tmle".
 x &lt;- target(
     x,
     name = "Stroke_risk",
-    protocols = c("Always_A", "Always_A_not_B_in_the_beginning"),
+    regimes = c("Always_A", "Always_A_not_B_in_the_beginning"),
     estimator = "tmle"
 )
 
@@ -632,7 +632,7 @@ x$estimator
 
 <pre class="example">
 $Stroke_risk
-$Stroke_risk$protocols
+$Stroke_risk$regimes
 [1] "Always_A"                        "Always_A_not_B_in_the_beginning"
 [1] "tmle"
 </pre>
@@ -646,7 +646,7 @@ $Stroke_risk$protocols
 <code>model_formula()</code> creates formulas for the outcome, censoring, and
 treatment models required by the sequential regression and TMLE update
 step. The formulas are derived from the prepared data, the time grid,
-and the treatment variables intervened on by the protocols. In
+and the treatment variables intervened on by the regimes. In
 addition to selecting variables that should be adjusted for, it is
 often useful to consider which variables should not be adjusted
 for. E.g., if <code>A_0</code> is equal to <code>(1-B_0)</code> then it makes little sense
@@ -655,7 +655,7 @@ and all bleeding variables from all censoring models:
 </p>
 
 <div class="org-src-container">
-<pre class="src src-R"># Input: x with prepared_data, protocols, and target definition.
+<pre class="src src-R"># Input: x with prepared_data, regimes, and target definition.
 # Output: x$models, a nested list of formulas indexed by time and model node.
 x &lt;- model_formula(x, verbose = FALSE,exclusion_rules = list("*" = "B_0","dropout" = "bleeding"))
 
@@ -733,7 +733,7 @@ strategies (discrete and ensemble super learners) that can be specified through 
 </p>
 
 <div class="org-src-container">
-<pre class="src src-R"># Input: x with prepared_data, protocols, targets, and model formulas.
+<pre class="src src-R"># Input: x with prepared_data, regimes, targets, and model formulas.
 # Output: x with fitted nuisance models, influence-curve components, and
 # main-analysis estimates for the requested time horizons.
 analysis_horizons &lt;- 1:2
@@ -765,7 +765,7 @@ Prediction range:    (0.0001,0.9999)
 Baseline data:       n=307, p=3
 Timevar data:        bleeding, changeSBP, A, B
 Outcome data:        n=307, p=stroke_0, stroke_1, ..., death_5
-Protocols:           Always_A, Always_A_not_B_in_the_beginning
+Regimes:           Always_A, Always_A_not_B_in_the_beginning
 Target:              Stroke_risk [Always_A, Always_A_not_B_in_the_beginning]
 Number of models:    32
 Learner:             learn_glm
@@ -773,7 +773,7 @@ Fitted time horizons:   1, 2
 Diagnostics:         No warnings (yet)
 
 Results:
-        Target                        Protocol Reference Target_parameter Time_horizon
+        Target                        Regime Reference Target_parameter Time_horizon
         &lt;fctr&gt;                          &lt;fctr&gt;    &lt;char&gt;           &lt;fctr&gt;        &lt;int&gt;
 1: Stroke_risk                        Always_A                       Risk            1
 2: Stroke_risk                        Always_A                       Risk            2
@@ -796,9 +796,9 @@ Results:
 </pre>
 
 <p>
-The rows with <code>Target_parameter = "Risk"</code> are protocol-specific cumulative
+The rows with <code>Target_parameter = "Risk"</code> are regime-specific cumulative
 risks.  The rows with <code>Risk_difference</code> and <code>Risk_ratio</code> compare <code>Always_A_not_B_in_the_beginning</code> to
-the reference protocol <code>Always_A</code> at each requested time horizon.
+the reference regime <code>Always_A</code> at each requested time horizon.
 </p>
 </div>
 
@@ -823,8 +823,8 @@ plot(x)
 <h2 id="org3b6fde2"><span class="section-number-2">11.</span> Inspect the fit, check adherence and inverse-probability weights</h2>
 <div class="outline-text-2" id="text-11">
 <p>
-The fitted object also contains protocol diagnostics.  The adherence matrices
-record whether each subject followed the protocol through each intervention
+The fitted object also contains regime diagnostics.  The adherence matrices
+record whether each subject followed the regime through each intervention
 node.  The cumulative intervention probabilities are used to construct the
 inverse-probability weights in the TMLE update.
 There are useful plot functions:
@@ -872,10 +872,10 @@ x &lt;- add_long_data(
 )
 
 x &lt;- add_baseline_data(x, data = ld$baseline_data)
-x &lt;- discretize(x, start_followup_date = 0)
+x &lt;- discretize_data(x, start_followup_date = 0)
 x &lt;- prepare_rtmle_data(x)
 
-x &lt;- protocol(
+x &lt;- regime(
     x,
     name = "Always_A",
     intervention = data.frame(
@@ -885,7 +885,7 @@ x &lt;- protocol(
     verbose = FALSE
 )
 
-x &lt;- protocol(
+x &lt;- regime(
     x,
     name = "Always_A_not_B_in_the_beginning",
     intervention = data.frame(
@@ -899,7 +899,7 @@ x &lt;- protocol(
 x &lt;- target(
     x,
     name = "Stroke_risk",
-    protocols = c("Always_A", "Always_A_not_B_in_the_beginning"),
+    regimes = c("Always_A", "Always_A_not_B_in_the_beginning"),
     estimator = "tmle"
 )
 
@@ -926,7 +926,7 @@ Prediction range:    (0.0001,0.9999)
 Baseline data:       n=307, p=3
 Timevar data:        bleeding, changeSBP, A, B
 Outcome data:        n=307, p=stroke_0, stroke_1, ..., death_5
-Protocols:           Always_A, Always_A_not_B_in_the_beginning
+Regimes:           Always_A, Always_A_not_B_in_the_beginning
 Target:              Stroke_risk [Always_A, Always_A_not_B_in_the_beginning]
 Number of models:    32
 Learner:             learn_glm
@@ -934,7 +934,7 @@ Fitted time horizons:   1, 2
 Diagnostics:         No warnings (yet)
 
 Results:
-        Target                        Protocol Reference Target_parameter Time_horizon
+        Target                        Regime Reference Target_parameter Time_horizon
         &lt;fctr&gt;                          &lt;fctr&gt;    &lt;char&gt;           &lt;fctr&gt;        &lt;int&gt;
 1: Stroke_risk                        Always_A                       Risk            1
 2: Stroke_risk                        Always_A                       Risk            2

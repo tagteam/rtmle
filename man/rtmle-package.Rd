@@ -22,7 +22,7 @@ Useful links:
 Authors:
 \itemize{
   \item Thomas Alexander Gerds \email{tag@biostat.ku.dk} (\href{https://orcid.org/0000-0002-5955-816X}{ORCID})
-  \item Helene Charlotte Wiese Rytgaard Rytgaard \email{hely@sund.ku.dk}
+  \item Helene Charlotte Wiese Rytgaard \email{hely@sund.ku.dk}
 }
 
 Other contributors:

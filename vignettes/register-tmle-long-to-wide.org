@@ -7,7 +7,7 @@
 #+PROPERTY: header-args:R :async :results output verbatim :exports both :session *R* :cache no
 
 * Aim
-This vignette demonstrates how the function =discretize= from
+This vignette demonstrates how the function =discretize_data= from
 =rtmle= can be used to construct time-discretized wide format data
 from long format register data.
 
@@ -71,9 +71,9 @@ Minority threshold:  8
 Weight truncation:   (0,1)
 Prediction range:    (0.0001,0.9999)
 Baseline data:       n=307, p=3
-TODO: The object contains no time varying data yet. Add them with rtmle::add_wide_data in discretized form or with rtmle::add_long_data followed by rtmle::discretize.
-TODO: The object contains no outcome data yet. Add them with rtmle::add_wide_data in discretized form or with rtmle::add_long_data followed by rtmle::discretize.
-TODO: The object contains no protocols. Add them with the function 'protocol'.
+TODO: The object contains no time varying data yet. Add them with rtmle::add_wide_data in discretized form or with rtmle::add_long_data followed by rtmle::discretize_data.
+TODO: The object contains no outcome data yet. Add them with rtmle::add_wide_data in discretized form or with rtmle::add_long_data followed by rtmle::discretize_data.
+TODO: The object contains no regimes. Add them with the function 'regime'.
 Prepared data:       n=0, p=-1
 TODO: Use the function 'model_formula' to initialize the formula for the nuisance parameter models.
 TODO: Use the function 'run_rtmle' to estimate the nuisance parameter models and the target parameter.
@@ -81,9 +81,9 @@ Diagnostics:         No warnings (yet)
 #+end_example
 
 
-* =discretize= mappings
+* =discretize_data= mappings
 
-The function =discretize= converts long data from registers into
+The function =discretize_data= converts long data from registers into
 wide format data based on the =time_grid= specified in
 =rtmle_init=. This transformation can be done in many different ways,
 and the function supplies some commonly used methods. Which methods
@@ -140,14 +140,14 @@ can be used depend on the data format. In the current =rtmle= object
   : 5:     5   0.000000 17.030020
   : 6:     6   0.000000  4.062148
 
-The function =discretize= will attempt to guess default methods
+The function =discretize_data= will attempt to guess default methods
 based on the data format of each of the variables supplied to the
 =timevar_data= argument of =add_long_data=. The code is easier to
 understand when we instead explicitly specify the method, e.g., as
 follows:
 
 #+BEGIN_SRC R
-x <- discretize(x,
+x <- discretize_data(x,
                   bleeding = list(method = "event"),
                   changeSBP = list(method="locf"),
                   exposure = list(method = "any_exposure"))
@@ -203,7 +203,7 @@ variables from the same long format variable by setting the =variable=
 argument:
 
 #+BEGIN_SRC R
-  x <- discretize(x,
+  x <- discretize_data(x,
 		    exposure_any = list(variable = "exposure", method = "any_exposure"),
 		    exposure_percent = list(variable = "exposure", method = "exposure_percent"))
   lapply(x$data$timevar_data[c("exposure_any", "exposure_percent")], head)
@@ -274,7 +274,7 @@ same names as the examples given at the beginning of this section.
     instead, we can do
 
     #+BEGIN_SRC R
-      x <- discretize(x, changeSBP_mean=list(variable = "changeSBP", method="measurement",fun_aggregate="mean"))
+      x <- discretize_data(x, changeSBP_mean=list(variable = "changeSBP", method="measurement",fun_aggregate="mean"))
     #+END_SRC
 
     #+RESULTS:
@@ -300,8 +300,8 @@ same names as the examples given at the beginning of this section.
   interval.
 
   #+BEGIN_SRC R
-    x <- discretize(x,exposure_threshold = list(variable = "exposure", method = "has_exposure", threshold = 2))
-    x <- discretize(x,
+    x <- discretize_data(x,exposure_threshold = list(variable = "exposure", method = "has_exposure", threshold = 2))
+    x <- discretize_data(x,
 		      exposure_any = list(variable = "exposure", method = "any_exposure"),
 		      exposure_percent = list(variable = "exposure", method = "exposure_percent"),
 		      exposure_time = list(variable = "exposure", method = "exposure_time"),
@@ -399,7 +399,7 @@ same names as the examples given at the beginning of this section.
 * To do's
 
 - [ ] Check with TAG that he agrees about documentation
-- [ ] Add description in the documentation of =discretize= function
+- [ ] Add description in the documentation of =discretize_data= function
   itself or refer to this vignette from there.
 - [ ] Documenting writing own function
 - [ ] What to do about threshold if grid is not equidistant?
@@ -408,7 +408,7 @@ same names as the examples given at the beginning of this section.
   #+BEGIN_SRC R
     # People who start exposure at time 0 have exposure_time==1 at exposure_0:
     x$long_data$timevar_data$exposure[id == 5]
-    x <- discretize(x, exposure = list(method = "exposure_time"))
+    x <- discretize_data(x, exposure = list(method = "exposure_time"))
     x$data$timevar_data$exposure[id == 5]
   #+END_SRC
 

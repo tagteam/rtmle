@@ -4,24 +4,24 @@
 \alias{plot_IPW}
 \title{Boxplots of cumulative intervention probabilities among adherent, at-risk subjects}
 \usage{
-plot_IPW(x, protocols = NULL)
+plot_IPW(x, regimes = NULL)
 }
 \arguments{
 \item{x}{An \code{rtmle} object containing:
 \itemize{
-  \item \code{x$protocols}: named list; each protocol has matrices
+  \item \code{x$regimes}: named list; each regime has matrices
     \code{$cumulative_intervention_probs} and \code{$intervention_match}
   \item \code{x$followup}: data frame or data table with columns \code{id} and \code{last_interval}
   \item \code{x$intervention_nodes}: integer vector of decision nodes (e.g. \code{c(0,1)})
 }}
 
-\item{protocols}{Character vector of protocol names to include. Default \code{NULL} uses all.}
+\item{regimes}{Character vector of regime names to include. Default \code{NULL} uses all.}
 }
 \value{
 A \code{\link[ggplot2]{ggplot}} object.
 }
 \description{
-For each protocol in \code{x$protocols}, extracts cumulative intervention
+For each regime in \code{x$regimes}, extracts cumulative intervention
 probabilities from \code{cumulative_intervention_probs} and produces
 boxplots across intervention nodes, restricted to subjects who are:
 \itemize{
@@ -31,7 +31,7 @@ boxplots across intervention nodes, restricted to subjects who are:
 }
 }
 \details{
-The cumulative probability column is selected from the protocol-specific
+The cumulative probability column is selected from the regime-specific
 \code{ipw_last_nodes} index created by \code{\link{run_rtmle}}.
 }
 \examples{

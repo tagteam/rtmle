@@ -19,23 +19,23 @@
 ### Code:
 sequential_regression <- function(x,
                                   target_name,
-                                  protocol_name,
+                                  regime_name,
                                   time_horizon,
                                   learner,
                                   seed = seed,
                                   ...){
   time = Time_horizon = Estimate = Standard_error = Lower = Upper = NULL
   # FIXME: inconsistent listing:
-  intervention_table <- x$protocols[[protocol_name]]$intervention_table # this would have value=NULL
-  intervention_match <- x$intervention_match[[protocol_name]] ## do not need this for the stochastic intervention
-  intervention_type <- x$protocols[[protocol_name]]$intervention_type
+  intervention_table <- x$regimes[[regime_name]]$intervention_table # this would have value=NULL
+  intervention_match <- x$intervention_match[[regime_name]] ## do not need this for the stochastic intervention
+  intervention_type <- x$regimes[[regime_name]]$intervention_type
   # we might initialize it to null and not change it in the intervention_probabilities function where it has been defined
   if (length(x$time_grid)>1){
     treatment_variables <- sapply(x$time_grid[-length(x$time_grid)],function(tk){
-      paste0(x$protocols[[protocol_name]]$treatment_variables,"_",tk)
+      paste0(x$regimes[[regime_name]]$treatment_variables,"_",tk)
     })
   } else{
-    treatment_variables <- x$protocols[[protocol_name]]$treatment_variables
+    treatment_variables <- x$regimes[[regime_name]]$treatment_variables
   }
   censoring_variables <- paste0(x$names$censoring,"_",1:time_horizon)
   competing_variables <- paste0(x$names$competing,"_",1:(time_horizon-1))
@@ -56,16 +56,16 @@ sequential_regression <- function(x,
     # because the TMLE update step needs to subset the predicted values to the non-NA outcomes
     if (j == time_horizon) { #if it is the last time, then the outer expectation:
       outcome_name <- outcome_variables[[time_horizon]]
-      # FIXME: protocols could share the outcome formula? YES
-      interval_outcome_formula = x$models[[protocol_name]][[outcome_variables[[j]]]]$formula
+      # FIXME: regimes could share the outcome formula? YES
+      interval_outcome_formula = x$models[[regime_name]][[outcome_variables[[j]]]]$formula
     } else {
       outcome_name <- "rtmle_predicted_outcome" #otherwise we use what estimated at the previous step
-      interval_outcome_formula <- stats::update(stats::formula(x$models[[protocol_name]][[outcome_variables[[j]]]]$formula),"rtmle_predicted_outcome~.")
+      interval_outcome_formula <- stats::update(stats::formula(x$models[[regime_name]][[outcome_variables[[j]]]]$formula),"rtmle_predicted_outcome~.")
     }
     ## HERE
     ## Y <- x$prepared_data[outcome_free_and_uncensored][[outcome_name]]
     Y <- x$prepared_data[[outcome_name]]
-    # intervene according to protocol for targets
+    # intervene according to regime for targets
     # FIXME: intervene on all variables or only those after
     #        time j? those in current outcome_formula
     history_of_variables <- names(x$prepared_data)[1:(-1+match(outcome_variables[[j]],names(x$prepared_data)))]
@@ -88,7 +88,7 @@ sequential_regression <- function(x,
     }
     else{
 
-    intervened_data <- do.call(x$protocol[[protocol_name]]$intervene_function,
+    intervened_data <- do.call(x$regime[[regime_name]]$intervene_function,
                                list(data = x$prepared_data[,intervenable_history,with = FALSE],
                                     intervention_table = intervention_table,
                                     time = j))
@@ -151,7 +151,7 @@ else{
       }
     }
     # save fitted object
-    x$models[[protocol_name]][[outcome_variables[[j]]]]$fit <- attr(fit_last,"fit",exact = TRUE)
+    x$models[[regime_name]][[outcome_variables[[j]]]]$fit <- attr(fit_last,"fit",exact = TRUE)
     data.table::setattr(fit_last,"fit",NULL)
     fit_last <- as.numeric(fit_last) # prediction for the logistic regression, still need the update
     # set predicted value as outcome for next regression
@@ -183,27 +183,27 @@ else{
         #Y and outcome_free_and_uncensored have double length as for fit_last:
         W0 <- update_Q(Y = Y,
                       logitQ = Wold,
-                      cum.g = x$cumulative_intervention_probs[[protocol_name]][,censoring_variables[[j]]],
+                      cum.g = x$cumulative_intervention_probs[[regime_name]][,censoring_variables[[j]]],
                       uncensored_undeterministic = outcome_free_and_uncensored,
-                      intervention.match = x$intervention_match[[protocol_name]][,intervention_table[time == j-1]$variable], # this would be ones anyways for the stochastic intervention
+                      intervention.match = x$intervention_match[[regime_name]][,intervention_table[time == j-1]$variable], # this would be ones anyways for the stochastic intervention
                       intervention_type=intervention_type)
 
         Wold <- rep(NA,length(Y))
         Wold[outcome_free_and_uncensored] <- lava::logit(fit_last[(dim_unc+1):length(fit_last)])
         W1 <- update_Q(Y = Y,
                        logitQ = Wold,
-                       cum.g = x$cumulative_intervention_probs[[protocol_name]][,censoring_variables[[j]]],
+                       cum.g = x$cumulative_intervention_probs[[regime_name]][,censoring_variables[[j]]],
                        uncensored_undeterministic = outcome_free_and_uncensored,
-                       intervention.match = x$intervention_match[[protocol_name]][,intervention_table[time == j-1]$variable], # this would be ones anyways for the stochastic intervention
+                       intervention.match = x$intervention_match[[regime_name]][,intervention_table[time == j-1]$variable], # this would be ones anyways for the stochastic intervention
                        intervention_type=intervention_type)
 
 
         # FIX ME::: LESS ERROR IF EVERTHING IS AUTHOMATIC
         ## then we have to marginalize respect to the stochastic function (we have A=0 first and A=1 afterwards in the intervened data)
-        W<-W0*(1-x$stochastic_probs[[protocol_name]][,match(treatment_variables[[j]],
-                                                                   colnames(x$cumulative_stochastic_probs[[protocol_name]]))])+
-               W1*x$stochastic_probs[[protocol_name]][,match(treatment_variables[[j]],
-                                                                     colnames(x$cumulative_stochastic_probs[[protocol_name]]))]
+        W<-W0*(1-x$stochastic_probs[[regime_name]][,match(treatment_variables[[j]],
+                                                                   colnames(x$cumulative_stochastic_probs[[regime_name]]))])+
+               W1*x$stochastic_probs[[regime_name]][,match(treatment_variables[[j]],
+                                                                     colnames(x$cumulative_stochastic_probs[[regime_name]]))]
 
       }
 
@@ -218,15 +218,15 @@ else{
         # and W has the dimension of Y (full data) with NAs if previously censored or had outcome already
         W <- update_Q(Y = Y,
                       logitQ = Wold,
-                      cum.g = x$cumulative_intervention_probs[[protocol_name]][,censoring_variables[[j]]],
+                      cum.g = x$cumulative_intervention_probs[[regime_name]][,censoring_variables[[j]]],
                       uncensored_undeterministic = outcome_free_and_uncensored,
-                      intervention.match = x$intervention_match[[protocol_name]][,intervention_table[time == j-1]$variable],
+                      intervention.match = x$intervention_match[[regime_name]][,intervention_table[time == j-1]$variable],
                       intervention_type=intervention_type)
         ## W <- update_Q(Y = Y[!is.na(Y)],
         ## logitQ = lava::logit(fit_last[!is.na(Y)]),
-        ## cum.g = x$cumulative_intervention_probs[[protocol_name]][,censoring_variables[[j]]][outcome_free_and_uncensored][!is.na(Y)],
+        ## cum.g = x$cumulative_intervention_probs[[regime_name]][,censoring_variables[[j]]][outcome_free_and_uncensored][!is.na(Y)],
         ## uncensored_undeterministic = outcome_free_and_uncensored,
-        ## intervention.match = x$intervention_match[[protocol_name]][,intervention_table[time == j-1]$variable])
+        ## intervention.match = x$intervention_match[[regime_name]][,intervention_table[time == j-1]$variable])
       ),"try-error"))
       stop(paste0("Fluctuation model used in the TMLE update step failed",
                   " in the attempt to run function update_Q at time point: ",j))
@@ -249,9 +249,9 @@ else{
 
     # calculate contribution to influence function
     # in case of the stochastic intervention we have in cumulative_intervention_probs already saved the weights
-    if(intervention_type=="stochastic"){h.g.ratio<- x$cumulative_intervention_probs[[protocol_name]][,match(censoring_variables[[j]],colnames(x$cumulative_stochastic_probs[[protocol_name]]))] }
+    if(intervention_type=="stochastic"){h.g.ratio<- x$cumulative_intervention_probs[[regime_name]][,match(censoring_variables[[j]],colnames(x$cumulative_stochastic_probs[[regime_name]]))] }
     else{
-      h.g.ratio <- 1/x$cumulative_intervention_probs[[protocol_name]][,match(censoring_variables[[j]],colnames(x$cumulative_intervention_probs[[protocol_name]]))]
+      h.g.ratio <- 1/x$cumulative_intervention_probs[[regime_name]][,match(censoring_variables[[j]],colnames(x$cumulative_intervention_probs[[regime_name]]))]
     }
 
     if (any(h.g.ratio>10000)) h.g.ratio <- pmin(h.g.ratio,10000)
@@ -259,7 +259,7 @@ else{
 
     index <- (current_cnode %in% x$names$uncensored_label) &  intervention_match[,intervention_table[time == j-1]$variable]
     if (any(h.g.ratio[index] != 0)) {
-      x$IC[[target_name]][[protocol_name]][[label_time_horizon]][index] <- x$IC[[target_name]][[protocol_name]][[label_time_horizon]][index] + (Y[index] - W[index]) * h.g.ratio[index]
+      x$IC[[target_name]][[regime_name]][[label_time_horizon]][index] <- x$IC[[target_name]][[regime_name]][[label_time_horizon]][index] + (Y[index] - W[index]) * h.g.ratio[index]
     }
     ## curIC <- CalcIC(Qstar.kplus1, Qstar, update.list$h.g.ratio,
     ## uncensored, intervention.match, regimes.with.positive.weight)
@@ -276,12 +276,12 @@ else{
         value = x$prepared_data[[paste0(x$names$outcome,"_",j)]][which(!(outcome_free_and_uncensored))])
   }
   # g-formula and tmle estimator (since we do already before the multiplication with the stochastic function, when we do the mean it is not needed: CHRCK THIS)
-  x$estimate[[target_name]][[protocol_name]][Time_horizon == time_horizon, Estimate := mean(x$prepared_data$rtmle_predicted_outcome)]
-  ic <- x$IC[[target_name]][[protocol_name]][[label_time_horizon]] + x$prepared_data$rtmle_predicted_outcome - mean(x$prepared_data$rtmle_predicted_outcome)
-  x$estimate[[target_name]][[protocol_name]][Time_horizon == time_horizon, Standard_error := sqrt(stats::var(ic)/NROW(x$prepared_data))]
-  x$estimate[[target_name]][[protocol_name]][Time_horizon == time_horizon, Lower := Estimate-stats::qnorm(.975)*Standard_error]
-  x$estimate[[target_name]][[protocol_name]][Time_horizon == time_horizon, Upper := Estimate+stats::qnorm(.975)*Standard_error]
-  x$IC[[target_name]][[protocol_name]][[label_time_horizon]] <- ic
+  x$estimate[[target_name]][[regime_name]][Time_horizon == time_horizon, Estimate := mean(x$prepared_data$rtmle_predicted_outcome)]
+  ic <- x$IC[[target_name]][[regime_name]][[label_time_horizon]] + x$prepared_data$rtmle_predicted_outcome - mean(x$prepared_data$rtmle_predicted_outcome)
+  x$estimate[[target_name]][[regime_name]][Time_horizon == time_horizon, Standard_error := sqrt(stats::var(ic)/NROW(x$prepared_data))]
+  x$estimate[[target_name]][[regime_name]][Time_horizon == time_horizon, Lower := Estimate-stats::qnorm(.975)*Standard_error]
+  x$estimate[[target_name]][[regime_name]][Time_horizon == time_horizon, Upper := Estimate+stats::qnorm(.975)*Standard_error]
+  x$IC[[target_name]][[regime_name]][[label_time_horizon]] <- ic
   return(x[])
 }
 

@@ -22,11 +22,11 @@ x <- add_long_data(x,
                    competing_data=ld$competing_data,
                    timevar_data=ld$timevar_data)
 x <- add_baseline_data(x,data=ld$baseline_data)
-x <- discretize(x)
-x <- protocol(x,name = "Always_A",intervention = data.frame("A" = factor("1",levels = c("0","1"))),verbose = FALSE)
-x <- protocol(x,name = "Never_A",intervention = data.frame("A" = factor("0",levels = c("0","1"))),verbose = FALSE)
+x <- discretize_data(x)
+x <- regime(x,name = "Always_A",intervention = data.frame("A" = factor("1",levels = c("0","1"))),verbose = FALSE)
+x <- regime(x,name = "Never_A",intervention = data.frame("A" = factor("0",levels = c("0","1"))),verbose = FALSE)
 x <- prepare_rtmle_data(x)
-x <- target(x,name = "Outcome_risk",estimator = "tmle",protocols = c("Always_A","Never_A"))
+x <- target(x,name = "Outcome_risk",estimator = "tmle",regimes = c("Always_A","Never_A"))
 x <- model_formula(x)
 # the overall analysis is stored as estimate$Main_analysis
 x <- run_rtmle(x,learner = "learn_glmnet",time_horizon = 1:tau,verbose = FALSE)
@@ -43,11 +43,11 @@ summary(x,analysis = "Old_age")
 
 #+RESULTS[(2025-04-11 14:33:36) 752a6d6be693e63926cf3a8e3faff98dfb78dc18]:
 #+begin_example
-Age       Target Protocol Target_parameter Time_horizon Estimator Reference  Estimate Standard_error      Lower     Upper    P_value
+Age       Target Regime Target_parameter Time_horizon Estimator Reference  Estimate Standard_error      Lower     Upper    P_value
      <char>       <char>   <char>           <char>        <num>    <fctr>    <char>     <num>          <num>      <num>     <num>      <num>
 1: age > 50 Outcome_risk  Never_A  Risk_difference            2      tmle  Always_A 0.2769242      0.1259042 0.03015656 0.5236918 0.02784353
 2: age > 50 Outcome_risk  Never_A       Risk_ratio            2      tmle  Always_A 2.5308787      0.5043919 0.94174254 6.8015904 0.06562705
-        Age       Target Protocol Target_parameter Time_horizon Estimator  Estimate    P_value Standard_error      Lower     Upper
+        Age       Target Regime Target_parameter Time_horizon Estimator  Estimate    P_value Standard_error      Lower     Upper
      <char>       <fctr>   <fctr>           <fctr>        <num>    <fctr>     <num>      <num>          <num>      <num>     <num>
 1: age > 50 Outcome_risk Always_A             Risk            2      tmle 0.1808923 1.00000000     0.08365928 0.01692313 0.3448615
 2: age > 50 Outcome_risk  Never_A             Risk            2      tmle 0.4578165 1.00000000     0.09533059 0.27097199 0.6446610
@@ -75,15 +75,15 @@ summary(x,analysis ="Sex")
 
 #+RESULTS[(2025-04-11 14:33:37) 1863aef966058ec7f7717ac52c26bd86284d3ed4]:
 #+begin_example
-Sex       Target Protocol Target_parameter Time_horizon Estimator Reference  Estimate Standard_error      Lower      Upper    P_value
+Sex       Target Regime Target_parameter Time_horizon Estimator Reference  Estimate Standard_error      Lower      Upper    P_value
    <char>       <char>   <char>           <char>        <num>    <fctr>    <char>     <num>          <num>      <num>      <num>      <num>
 1: Female Outcome_risk  Never_A  Risk_difference            2      tmle  Always_A 0.3544266      0.1415425 0.07700836  0.6318449 0.01227879
 2: Female Outcome_risk  Never_A       Risk_ratio            2      tmle  Always_A 3.2159465      0.5788303 1.03420729 10.0002309 0.04358366
-      Sex       Target Protocol Target_parameter Time_horizon Estimator Reference  Estimate Standard_error      Lower     Upper   P_value
+      Sex       Target Regime Target_parameter Time_horizon Estimator Reference  Estimate Standard_error      Lower     Upper   P_value
    <char>       <char>   <char>           <char>        <num>    <fctr>    <char>     <num>          <num>      <num>     <num>     <num>
 1:   Male Outcome_risk  Never_A  Risk_difference            2      tmle  Always_A 0.0667422      0.1248143 -0.1778894 0.3113738 0.5928352
 2:   Male Outcome_risk  Never_A       Risk_ratio            2      tmle  Always_A 1.2771494      0.4571470  0.5213357 3.1287146 0.5925638
-      Sex       Target Protocol Target_parameter Time_horizon Estimator  Estimate    P_value Standard_error       Lower      Upper
+      Sex       Target Regime Target_parameter Time_horizon Estimator  Estimate    P_value Standard_error       Lower      Upper
    <char>       <fctr>   <fctr>           <fctr>        <num>    <fctr>     <num>      <num>          <num>       <num>      <num>
 1: Female Outcome_risk Always_A             Risk            2      tmle 0.1599437 1.00000000     0.08571434 -0.00805336  0.3279407
 2: Female Outcome_risk  Never_A             Risk            2      tmle 0.5143703 1.00000000     0.11269172  0.29349856  0.7352420
@@ -124,11 +124,11 @@ x <- add_long_data(x,
                    competing_data=ld$competing_data,
                    timevar_data=ld$timevar_data)
 x <- add_baseline_data(x,data=ld$baseline_data)
-x <- discretize(x)
-x <- protocol(x,name = "Always_A",intervention = data.frame("A" = factor("1",levels = c("0","1"))),verbose = FALSE)
-x <- protocol(x,name = "Never_A",intervention = data.frame("A" = factor("0",levels = c("0","1"))),verbose = FALSE)
+x <- discretize_data(x)
+x <- regime(x,name = "Always_A",intervention = data.frame("A" = factor("1",levels = c("0","1"))),verbose = FALSE)
+x <- regime(x,name = "Never_A",intervention = data.frame("A" = factor("0",levels = c("0","1"))),verbose = FALSE)
 x <- prepare_rtmle_data(x)
-x <- target(x,name = "Outcome_risk",estimator = "tmle",protocols = c("Always_A","Never_A"))
+x <- target(x,name = "Outcome_risk",estimator = "tmle",regimes = c("Always_A","Never_A"))
 x <- model_formula(x)
 # the overall analysis is stored as estimate$Main_analysis
 x <- run_rtmle(x,learner = "learn_glmnet",time_horizon = tau,verbose = FALSE)
@@ -140,7 +140,7 @@ summary(x)
 
 #+RESULTS[(2025-04-11 14:33:37) 5b3f3dbf8e2a479ad250e32bc0dab19a3dd005b8]:
 #+begin_example
-Target Protocol Target_parameter Time_horizon Estimator Reference  Estimate Standard_error      Lower     Upper     P_value
+Target Regime Target_parameter Time_horizon Estimator Reference  Estimate Standard_error      Lower     Upper     P_value
          <char>   <char>           <char>        <num>    <fctr>    <char>     <num>          <num>      <num>     <num>       <num>
 1: Outcome_risk  Never_A  Risk_difference            2      tmle  Always_A 0.2127392      0.0709929 0.07359572 0.3518828 0.002729844
 2: Outcome_risk  Never_A       Risk_ratio            2      tmle  Always_A 2.0777129      0.3596420 1.02673349 4.2044902 0.042020065
@@ -148,7 +148,7 @@ Target Protocol Target_parameter Time_horizon Estimator Reference  Estimate Stan
              <num>           <num>                    <num>
 1:       0.1935653       0.2319132               0.07544362
 2:       1.6632658       2.5954306               0.25699049
-         Target Protocol Time_horizon Bootstrap_standard_error Bootstrap_lower Bootstrap_upper Target_parameter Estimator  Estimate     P_value
+         Target Regime Time_horizon Bootstrap_standard_error Bootstrap_lower Bootstrap_upper Target_parameter Estimator  Estimate     P_value
          <fctr>   <fctr>        <num>                    <num>           <num>           <num>           <fctr>    <fctr>     <num>       <num>
 1: Outcome_risk Always_A            2               0.05335699       0.1878081       0.2069895             Risk      tmle 0.1973988 1.000000000
 2: Outcome_risk  Never_A            2               0.09994665       0.3764867       0.4437894             Risk      tmle 0.4101380 1.000000000

@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: apr 23 2026 (16:09) 
 ## Version: 
-## Last-Updated: maj 28 2026 (13:39) 
+## Last-Updated: sep 18 2026 (11:22) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 24
+##     Update #: 29
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -14,21 +14,21 @@
 #----------------------------------------------------------------------
 ## 
 ### Code:
-##' Check adherence to a protocol
+##' Check adherence to a regime
 ##'
-##' Builds the \code{intervention_match} matrix for a protocol. The function is
-##' called by \code{\link{protocol}} when \code{\link{prepare_rtmle_data}} has
+##' Builds the \code{intervention_match} matrix for a regime. The function is
+##' called by \code{\link{regime}} when \code{\link{prepare_rtmle_data}} has
 ##' already been run, and by \code{\link{run_rtmle}} if the matrix is still
 ##' missing at estimation time. For a user-defined intervention, observed
 ##' treatment is compared row by row with the history-dependent values returned
 ##' by the intervention function. Thus stopping treatment after a
 ##' contraindication is adherent when that is what the rule prescribes.
 ##'
-##' @title Check adherence to a protocol
+##' @title Check adherence to a regime
 ##' @param x An \code{rtmle} object as returned by \code{\link{rtmle_init}}.
-##' @param protocol_name Name of the protocol to check.
+##' @param regime_name Name of the regime to check.
 ##' @return The modified \code{rtmle} object.
-##' @seealso \code{\link{protocol}}, \code{\link{prepare_rtmle_data}},
+##' @seealso \code{\link{regime}}, \code{\link{prepare_rtmle_data}},
 ##'   \code{\link{run_rtmle}}, \code{\link{plot_adherence}}
 ##' @examples
 ##' x <- rtmle_init(time_grid = 0:2, name_id = "id", name_outcome = "Y")
@@ -36,29 +36,29 @@
 ##'     id = 1:4,
 ##'     A_0 = factor(c("1", "1", "0", "1"), levels = c("0", "1")),
 ##'     A_1 = factor(c("1", "0", "0", "1"), levels = c("0", "1")))
-##' x <- protocol(x, name = "Always_A",
+##' x <- regime(x, name = "Always_A",
 ##'               intervention = data.frame(time_node = x$intervention_nodes,
 ##'                                         A = factor("1", levels = c("0", "1"))))
-##' x$protocols$Always_A$intervention_match <- NULL
+##' x$regimes$Always_A$intervention_match <- NULL
 ##' x <- intervention_match(x, "Always_A")
-##' x$protocols$Always_A$intervention_match
+##' x$regimes$Always_A$intervention_match
 ##' @export 
 ##' @author Thomas A. Gerds <tag@@biostat.ku.dk>
-intervention_match <- function(x,protocol_name){
-    variable <- time_node <- NULL
+intervention_match <- function(x,regime_name){
+    variable <- time_node <- value <- NULL
     N <- NROW(x$prepared_data)
     # define a matrix which indicates if the intervention is followed
     # the matrix should have a row for each individual and a column for
     # each intervention node (time interval)
     #
-    intervention_table <- na.omit(x$protocols[[protocol_name]]$intervention_table)
+    intervention_table <- na.omit(x$regimes[[regime_name]]$intervention_table)
     if (
         N>0 && 
         # no need to redo this operation ever
-        length(intervention_match <- x$protocols[[protocol_name]]$intervention_match) == 0
+        length(intervention_match <- x$regimes[[regime_name]]$intervention_match) == 0
     ){
         intervention_match <- matrix(0,ncol = length(unique(intervention_table$time_node)),nrow = N)
-        # temporary colnames 
+        # temporary colnames
         colnames(intervention_match) <- paste0("time_node_",unique(intervention_table$time_node))
         # prepare vector of colnames that are passed on
         intervention_match_names <- vector("character",NCOL(intervention_match))
@@ -69,9 +69,12 @@ intervention_match <- function(x,protocol_name){
                 time_node == k & !is.na(value)
             ]
             intervention_variables <- current_intervention[["variable"]]
+            if(!(all(intervention_variables%in%names(x$prepared_data)))){
+                stop(paste0("The following variables mentioned by regime '",regime_name,"' are not in x$prepared_data: ",paste(setdiff(intervention_variables,names(x$prepared_data)),collapse = ", ")))
+            }
             if (length(intervention_variables)>0){
                 intervention <- evaluate_intervention(
-                    protocol = x$protocols[[protocol_name]],
+                    regime = x$regimes[[regime_name]],
                     data = x$prepared_data,
                     intervention_table = intervention_table,
                     time_node = k
@@ -95,7 +98,7 @@ intervention_match <- function(x,protocol_name){
         }
         ## the intervention_match matrix has one column per time point
         colnames(intervention_match) <- as.character(intervention_match_names)
-        x$protocols[[protocol_name]]$intervention_match <- intervention_match
+        x$regimes[[regime_name]]$intervention_match <- intervention_match
     }
     x
 }

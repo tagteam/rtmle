@@ -16,21 +16,21 @@
 ### Code:
 sequential_regression <- function(x,
                                   target_name,
-                                  protocol_name,
+                                  regime_name,
                                   time_horizon,
                                   learner,
                                   estimator,
                                   seed = seed,
                                   progressbar,
                                   save_fitted_objects = FALSE){
-    time_node = Target = Protocol = Time_horizon = Estimator = Estimate = Target_parameter = Standard_error = Lower = Upper = rtmle_predicted_outcome = NULL
+    time_node = Target = Regime = Time_horizon = Estimator = Estimate = Target_parameter = Standard_error = Lower = Upper = rtmle_predicted_outcome = NULL
     N <- NROW(x$prepared_data)
     # for multi-factor interventions, the intervention_table is in long format 
     # hence removing NA values for those variables that
     # are not intervened on at time note k does not remove other variables
     # which are intervened on. hence, the next line is okay.
-    intervention_table <- na.omit(x$protocols[[protocol_name]]$intervention_table)
-    intervention_match <- x$protocols[[protocol_name]]$intervention_match
+    intervention_table <- na.omit(x$regimes[[regime_name]]$intervention_table)
+    intervention_match <- x$regimes[[regime_name]]$intervention_match
     if (length(x$names$censoring)>0){
         censoring_variables <- paste0(x$names$censoring,"_",1:time_horizon)
     }else{
@@ -44,7 +44,7 @@ sequential_regression <- function(x,
     label_time_horizon <- paste0("time_horizon_",time_horizon)
     reverse_time_scale <- rev(seq(1,time_horizon,1))
     if (progressbar){
-        message("Fitting sequential regression: ",protocol_name, " for time horizon ", time_horizon)
+        message("Fitting sequential regression: ",regime_name, " for time horizon ", time_horizon)
         progress <- txtProgressBar(max = length(reverse_time_scale), style = progressbar,width=20)
         action <- 0
     }
@@ -84,11 +84,11 @@ sequential_regression <- function(x,
             interval_outcome_formula <- stats::update(stats::formula(interval_outcome_formula),"rtmle_predicted_outcome~.")
         }
         Y <- x$prepared_data[[outcome_name]]
-        # intervene according to protocol for targets
+        # intervene according to regime for targets
         # Outcome in interval k is evaluated under treatment history through
         # intervention node k - 1.
         intervention <- evaluate_intervention(
-            protocol = x$protocols[[protocol_name]],
+            regime = x$regimes[[regime_name]],
             data = x$prepared_data[outcome_free_and_uncensored],
             intervention_table = intervention_table,
             time_node = k-1,
@@ -107,11 +107,11 @@ sequential_regression <- function(x,
                                     seed = seed,
                                     diagnostics = x$diagnostics,
                                     save_fitted_objects = save_fitted_objects)
-        # save fitted object, respect protocol and time_horizon sequence
+        # save fitted object, respect regime and time_horizon sequence
         if (save_fitted_objects){
-            x$models[[paste0("time_",(k-1))]][["outcome"]][[paste0(x$names$outcome,"_",k)]]$fit[[protocol_name]][[paste0("sequence_time_",time_horizon)]]$fit <- fit_last_interval$fit
+            x$models[[paste0("time_",(k-1))]][["outcome"]][[paste0(x$names$outcome,"_",k)]]$fit[[regime_name]][[paste0("sequence_time_",time_horizon)]]$fit <- fit_last_interval$fit
         }
-        x$models[[paste0("time_",(k-1))]][["outcome"]][[paste0(x$names$outcome,"_",k)]]$fit[[protocol_name]][[paste0("sequence_time_",time_horizon)]]$fit_summary <- fit_last_interval$fit_summary
+        x$models[[paste0("time_",(k-1))]][["outcome"]][[paste0(x$names$outcome,"_",k)]]$fit[[regime_name]][[paste0("sequence_time_",time_horizon)]]$fit_summary <- fit_last_interval$fit_summary
         if (length(dia <- fit_last_interval$diagnostics)>0){
             if (is.null(x$diagnostics)){
                 x$diagnostics <- dia
@@ -133,8 +133,8 @@ sequential_regression <- function(x,
             if (any(fit_last_interval[!is.na(fit_last_interval)] <= 0)) fit_last_interval <- pmax(fit_last_interval,x$tuning_parameters$prediction_range[1])
             if (any(fit_last_interval[!is.na(fit_last_interval)] >= 1)) fit_last_interval <- pmin(fit_last_interval,x$tuning_parameters$prediction_range[2])
             # TMLE update step
-            ipos <- x$protocols[[protocol_name]]$ipw_last_nodes[k]
-            inverse_probability_weights <- x$protocols[[protocol_name]]$cumulative_intervention_probs[,ipos]
+            ipos <- x$regimes[[regime_name]]$ipw_last_nodes[k]
+            inverse_probability_weights <- x$regimes[[regime_name]]$cumulative_intervention_probs[,ipos]
             # weight truncation
             if (is.numeric(x$tuning_parameters$weight_truncation)){
                 inverse_probability_weights <- pmax(pmin(inverse_probability_weights,
@@ -144,12 +144,12 @@ sequential_regression <- function(x,
             # the column names A_1,B_1,E_1 of the intervention_match table are made with paste
             # in function intervention_probabilities
             ## intervention_node_name <- paste(intervention_table[time_node == k-1]$variable,collapse = ",")
-            intervention_node_name <- x$protocols[[protocol_name]]$intervention_last_nodes[[paste0("node_",k-1)]]
+            intervention_node_name <- x$regimes[[regime_name]]$intervention_last_nodes[[paste0("node_",k-1)]]
             # FIXME: this needs more work and testing also with multi-factor interventions
             if (is.na(intervention_node_name)){
                 # no intervention at this node
                 # search for earlier nodes with interventions
-                inodes <- x$protocols[[protocol_name]]$intervention_last_nodes
+                inodes <- x$regimes[[regime_name]]$intervention_last_nodes
                 inode_names <- names(inodes)
                 intervention_node_name <- data.table::last(na.omit(inodes[1:match(paste0("node_",k-1),inode_names,nomatch = NA)]))
                 # case where there is no intervention in the beginning
@@ -176,7 +176,7 @@ sequential_regression <- function(x,
                                                  intervention_probs = inverse_probability_weights,
                                                  outcome_free_and_uncensored = outcome_free_and_uncensored,
                                                  intervention_match = imatch,
-                                                 k = k,protocol = protocol_name)
+                                                 k = k,regime = regime_name)
             ),"try-error")){
                 stop(paste0("Fluctuation model used in the TMLE update step failed",
                             " in the attempt to run function tmle_update at time node: ",k))
@@ -207,7 +207,7 @@ sequential_regression <- function(x,
                 }
             }
             if (any(IPW[index] != 0)) {
-                x$IC[[target_name]][[protocol_name]][[label_time_horizon]][index] <- x$IC[[target_name]][[protocol_name]][[label_time_horizon]][index] + (Y[index] - predicted_outcome[index]) * IPW[index]
+                x$IC[[target_name]][[regime_name]][[label_time_horizon]][index] <- x$IC[[target_name]][[regime_name]][[label_time_horizon]][index] + (Y[index] - predicted_outcome[index]) * IPW[index]
             }
         } else {
             # g-formula
@@ -228,17 +228,17 @@ sequential_regression <- function(x,
     }
     target_parameter <- "Risk"
     # g-formula and tmle estimator
-    ic <- x$IC[[target_name]][[protocol_name]][[label_time_horizon]] + x$prepared_data$rtmle_predicted_outcome - mean(x$prepared_data$rtmle_predicted_outcome)
+    ic <- x$IC[[target_name]][[regime_name]][[label_time_horizon]] + x$prepared_data$rtmle_predicted_outcome - mean(x$prepared_data$rtmle_predicted_outcome)
     SE = sqrt(stats::var(ic)/N)
-    x$estimate[["Main_analysis"]][Target == target_name & Protocol ==  protocol_name & Time_horizon == time_horizon & Target_parameter == target_parameter & Estimator == estimator,
+    x$estimate[["Main_analysis"]][Target == target_name & Regime ==  regime_name & Time_horizon == time_horizon & Target_parameter == target_parameter & Estimator == estimator,
                                   `:=`(Estimate = mean(x$prepared_data$rtmle_predicted_outcome),
                                        Standard_error = SE)]
-    x$estimate[["Main_analysis"]][Target == target_name & Protocol ==  protocol_name & Time_horizon == time_horizon & Target_parameter == target_parameter & Estimator == estimator,
+    x$estimate[["Main_analysis"]][Target == target_name & Regime ==  regime_name & Time_horizon == time_horizon & Target_parameter == target_parameter & Estimator == estimator,
                                   `:=`(Lower = pmax(0,Estimate-stats::qnorm(.975)*SE),
                                        Upper = pmin(1,Estimate+stats::qnorm(.975)*SE))][]
-    x$IC[[target_name]][[protocol_name]][[label_time_horizon]] <- ic
+    x$IC[[target_name]][[regime_name]][[label_time_horizon]] <- ic
     # clean up for the next run
-    data.table::setkey(x$estimate$Main_analysis,Target,Protocol,Target_parameter,Time_horizon,Estimator)
+    data.table::setkey(x$estimate$Main_analysis,Target,Regime,Target_parameter,Time_horizon,Estimator)
     x$prepared_data[,rtmle_predicted_outcome := NULL]
     # NOTE if we would return x[] instead of x then x looses its class!
     if (progressbar){cat("\n")}

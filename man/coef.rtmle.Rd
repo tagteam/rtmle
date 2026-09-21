@@ -17,7 +17,7 @@ object time grid.}
 }
 \value{
 A \code{\link[data.table]{data.table}} with columns identifying the
-  time point, protocol, node, outcome, coefficient term, and coefficient
+  time point, regime, node, outcome, coefficient term, and coefficient
   value.
 }
 \description{

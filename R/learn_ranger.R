@@ -24,7 +24,7 @@
 ##'   character string.
 ##' @param data Data used for learning.
 ##' @param intervened_data Data used for prediction after intervention variables
-##'   have been set according to a protocol.
+##'   have been set according to a regime.
 #' @param save_fitted_objects Logical. If \code{TRUE}, store the 
 #'   fitted object as element \code{fit}
 ##' @param reuse_fit Optional fitted object returned by a previous call. If

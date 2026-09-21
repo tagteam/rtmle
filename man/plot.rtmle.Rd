@@ -8,22 +8,33 @@
 \method{autoplot}{rtmle}(
   object,
   analysis = NULL,
+  targets = NULL,
   xlim,
   ylim,
   y_breaks,
   x_breaks,
   position_atrisk,
   conf_int,
+  bootstrap_conf_int = FALSE,
   ...
 )
 
-\method{plot}{rtmle}(x, ...)
+\method{plot}{rtmle}(
+  x,
+  analysis = NULL,
+  targets = NULL,
+  bootstrap_conf_int = FALSE,
+  ...
+)
 }
 \arguments{
 \item{object}{A prepared and fitted object of class \code{"rtmle"}.}
 
 \item{analysis}{Name of the analysis. If \code{NULL}, use
 \code{object$estimate[["Main_analysis"]]}.}
+
+\item{targets}{Character vector selecting target labels from the
+\code{Target} column. If \code{NULL}, all stored targets are plotted.}
 
 \item{xlim}{Limits for the x-axis.}
 
@@ -36,6 +47,11 @@
 \item{position_atrisk}{Vector of positions on the x-axis where numbers at-risk are shown below the graph.}
 
 \item{conf_int}{Logical. If \code{TRUE}, add confidence bands to the graph.}
+
+\item{bootstrap_conf_int}{Logical. If \code{TRUE}, add shaded confidence
+bands from the cheap-bootstrap results stored in
+\code{object$estimate$Cheap_bootstrap}. The selected analysis must have
+corresponding bootstrap results.}
 
 \item{...}{Not used.}
 

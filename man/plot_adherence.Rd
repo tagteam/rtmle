@@ -2,34 +2,35 @@
 % Please edit documentation in R/plot_adherence.R
 \name{plot_adherence}
 \alias{plot_adherence}
-\title{Plot cumulative non-adherence by protocol}
+\title{Plot cumulative non-adherence by regime}
 \usage{
-plot_adherence(x, protocols, ...)
+plot_adherence(x, regimes = NULL, ...)
 }
 \arguments{
-\item{x}{An object containing protocol-specific adherence information and follow-up
-data. Must include at least \code{x$protocols} (a named list where each element has
+\item{x}{An object containing regime-specific adherence information and follow-up
+data. Must include at least \code{x$regimes} (a named list where each element has
 \code{$intervention_match}), \code{x$followup} (with \code{last_interval}),
 \code{x$prepared_data} (optional; used for censoring indicators), and
 \code{x$names$censoring}.}
 
-\item{protocols}{Names of the protocols to plot. If missing, use all elements
-of \code{x$protocols} that already have an \code{intervention_match} table.}
+\item{regimes}{Optional names of the regimes to plot. If omitted, use
+all regimes that already have an \code{intervention_match} table.}
 
 \item{...}{Currently unused. Included for future extensions.}
 }
 \value{
 A \code{ggplot2} object (as returned by \code{prodlim::ggprodlim}) showing the
-  cumulative incidence of non-adherence (percent) by protocol.
+  cumulative incidence of non-adherence (percent) by regime.
 }
 \description{
-Computes time to first deviation from a treatment regime for each protocol in a
-fitted \code{rtmle} object \code{x}, allowing for right censoring and competing
-risks (e.g., death/outcome). The result is plotted as the cumulative incidence
-(in percent) of non-adherence over follow-up time, stratified by protocol.
+Uses \code{\link{adherence}} to collect time to first deviation from a
+treatment regime for each regime in a fitted \code{rtmle} object \code{x},
+allowing for right censoring and competing risks (e.g., death/outcome). The
+result is plotted as the cumulative incidence (in percent) of non-adherence
+over follow-up time, stratified by regime.
 }
 \details{
-For each protocol, the function restricts to initiators (those with
+The underlying \code{\link{adherence}} function restricts each regime to initiators (those with
 \code{intervention_match[,1] == 1}). It then identifies:
 \itemize{
   \item \code{first_deviation}: the first interval where \code{intervention_match} equals 0.
@@ -51,7 +52,9 @@ class(p)
 
 }
 \seealso{
-\code{\link{intervention_match}}, \code{\link{protocol}},
+  \code{\link{intervention_match}}, \code{\link{regime}},
+  \code{\link{adherence}},
+  \code{\link{summary_adherence}},
   \code{\link{plot_IPW}}, \code{\link[prodlim:prodlim]{prodlim}},
   \code{\link[prodlim:ggprodlim]{ggprodlim}},
   \code{\link[prodlim:Hist]{Hist}}

@@ -2,24 +2,24 @@
 % Please edit documentation in R/intervention_match.R
 \name{intervention_match}
 \alias{intervention_match}
-\title{Check adherence to a protocol}
+\title{Check adherence to a regime}
 \usage{
-intervention_match(x, protocol_name)
+intervention_match(x, regime_name)
 }
 \arguments{
 \item{x}{An \code{rtmle} object as returned by \code{\link{rtmle_init}}.}
 
-\item{protocol_name}{Name of the protocol to check.}
+\item{regime_name}{Name of the regime to check.}
 }
 \value{
 The modified \code{rtmle} object.
 }
 \description{
-Check adherence to a protocol
+Check adherence to a regime
 }
 \details{
-Builds the \code{intervention_match} matrix for a protocol. The function is
-called by \code{\link{protocol}} when \code{\link{prepare_rtmle_data}} has
+Builds the \code{intervention_match} matrix for a regime. The function is
+called by \code{\link{regime}} when \code{\link{prepare_rtmle_data}} has
 already been run, and by \code{\link{run_rtmle}} if the matrix is still
 missing at estimation time. For a user-defined intervention, observed
 treatment is compared row by row with the history-dependent values returned
@@ -32,15 +32,15 @@ x$prepared_data <- data.table::data.table(
     id = 1:4,
     A_0 = factor(c("1", "1", "0", "1"), levels = c("0", "1")),
     A_1 = factor(c("1", "0", "0", "1"), levels = c("0", "1")))
-x <- protocol(x, name = "Always_A",
+x <- regime(x, name = "Always_A",
               intervention = data.frame(time_node = x$intervention_nodes,
                                         A = factor("1", levels = c("0", "1"))))
-x$protocols$Always_A$intervention_match <- NULL
+x$regimes$Always_A$intervention_match <- NULL
 x <- intervention_match(x, "Always_A")
-x$protocols$Always_A$intervention_match
+x$regimes$Always_A$intervention_match
 }
 \seealso{
-\code{\link{protocol}}, \code{\link{prepare_rtmle_data}},
+\code{\link{regime}}, \code{\link{prepare_rtmle_data}},
   \code{\link{run_rtmle}}, \code{\link{plot_adherence}}
 }
 \author{

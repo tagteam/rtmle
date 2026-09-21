@@ -15,7 +15,7 @@
 ##
 ### Code:
 intervention_probabilities <- function(x,
-                                       protocol_name,
+                                       regime_name,
                                        refit = FALSE,
                                        learner,
                                        time_horizon,
@@ -26,10 +26,10 @@ intervention_probabilities <- function(x,
   #
   # a matrix with the cumulative intervention/censoring probabilities
   #
-  current_protocol <- x$protocols[[protocol_name]]
-  intervention_table <- current_protocol$intervention_table
+  current_regime <- x$regimes[[regime_name]]
+  intervention_table <- current_regime$intervention_table
   # added this to check which type of intervention we are doing
-  intervention_type <- current_protocol$intervention_type
+  intervention_type <- current_regime$intervention_type
 
   # since time_horizon can be a vector we need the maximum
   if (missing(time_horizon))
@@ -41,10 +41,10 @@ intervention_probabilities <- function(x,
   eval_times <- eval_times[eval_times < max_time_horizon]
   if (length(x$time_grid)>1){
     treatment_variables <- sapply(eval_times,function(tk){
-      paste0(x$protocols[[protocol_name]]$treatment_variables,"_",tk)
+      paste0(x$regimes[[regime_name]]$treatment_variables,"_",tk)
     })
   } else{
-    treatment_variables <- x$protocols[[protocol_name]]$treatment_variables
+    treatment_variables <- x$regimes[[regime_name]]$treatment_variables
   }
   censoring_variables <- paste0(x$names$censoring,"_",1:max_time_horizon)
   competing_variables <- paste0(x$names$competing,"_",1:(max_time_horizon-1))
@@ -58,12 +58,12 @@ intervention_probabilities <- function(x,
     stochastic_probs <- cbind(stochastic_probs,matrix(1,nrow = N,ncol = length(treatment_variables)+length(censoring_variables) ))
     setnames(stochastic_probs,c(x$names$id,c(rbind(treatment_variables,censoring_variables))))
   }
-  if (refit || length(x$cumulative_intervention_probs[[protocol_name]]) == 0){
+  if (refit || length(x$cumulative_intervention_probs[[regime_name]]) == 0){
     intervention_probs <- data.table(ID = x$prepared_data[[x$names$id]])
     intervention_probs <- cbind(intervention_probs,matrix(1,nrow = N,ncol = length(treatment_variables)+length(censoring_variables) )) # initialize this to a matrix of 1s
     setnames(intervention_probs,c(x$names$id,c(rbind(treatment_variables,censoring_variables))))
     # predict the propensity score/1-probability of censored
-    # intervene according to protocol for targets
+    # intervene according to regime for targets
     # in the last time interval we do not need propensities/censoring probabilities
     # we can initialize to be equal to 1 because we take track of the censored info at each time and we do the average onlu over the uncensored and outcome free
     for (j in eval_times){
@@ -83,7 +83,7 @@ intervention_probabilities <- function(x,
         }else{
           current_constants <- NULL
         }
-        # set the treatment variables to their protocolled values
+        # set the treatment variables to their regimeled values
         # for the stochastic intervention we still need that for the nuisance parameter of the propensity score
         # in fact we need the predicted value at this time based on the history (depending on the formula)
         # this is why we ll let value as their observed value through intervene_function
@@ -95,7 +95,7 @@ intervention_probabilities <- function(x,
         else{
           # WHY do we need this? cause we do not need to predict the propensity score in the intervened data, not even for the statics intervention
           # also at the end you ll calculate the average only on the ones that followed the intervention, thx to intervention_match table
-          intervened_data <- do.call(x$protocol[[protocol_name]]$intervene_function,
+          intervened_data <- do.call(x$regime[[regime_name]]$intervene_function,
                                      list(data = current_data,
                                           intervention_table = intervention_table,
                                           time = j)) # not sure why time is there, but maybe will make sense
@@ -105,16 +105,16 @@ intervention_probabilities <- function(x,
         for (G in c(treatment_variables[[j+1]],censoring_variables[[j+1]]))
           # fit the propensity and censoring regression models
           # and store probabilities as intervention_probs
-          if (refit || length(x$models[[protocol_name]][[G]]$fit) == 0){
+          if (refit || length(x$models[[regime_name]][[G]]$fit) == 0){
             if (G %in% current_constants){
               if (G %in% censoring_variables){
                 predicted_values <- 1*(current_data[[G]] == x$names$uncensored_label)
               }else{
                 predicted_values <- current_data[[G]] ### WHY THIS?
               }
-              x$models[[protocol_name]][[G]]$fit <- "No variation in this variable"
+              x$models[[regime_name]][[G]]$fit <- "No variation in this variable"
             }else{
-              if (length(ff <- x$models[[protocol_name]][[G]]$formula)>0){
+              if (length(ff <- x$models[[regime_name]][[G]]$formula)>0){
                 # remove constant predictor variables
                 ff_vars <- all.vars(stats::formula(ff))
                 if (length(current_constants)>0){
@@ -149,13 +149,13 @@ intervention_probabilities <- function(x,
                   }
                 }
               }
-              x$models[[protocol_name]][[G]]$fit <- attr(predicted_values,"fit",exact = TRUE)
+              x$models[[regime_name]][[G]]$fit <- attr(predicted_values,"fit",exact = TRUE)
               data.table::setattr(predicted_values,"fit",NULL)
               intervention_probs[outcome_free_and_uncensored][[G]] <- predicted_values # this is where I have \hat{g_t} (propensity score saved)
 
               # we have to calculate the stochastic probability in the observed data (current_data)
               if(intervention_type=="stochastic" & G %in% treatment_variables){
-              stochastic_probs[outcome_free_and_uncensored][[G]]<-do.call(x$protocol[[protocol_name]]$intervene_function,
+              stochastic_probs[outcome_free_and_uncensored][[G]]<-do.call(x$regime[[regime_name]]$intervene_function,
                                                                           list(data = current_data,
                                                                                intervention_table=intervention_table,
                                                                                current.time = j))
@@ -177,9 +177,9 @@ intervention_probabilities <- function(x,
       }
     }
     # FIXME: remove this when not needed anymore
-    x$intervention_probs[[protocol_name]] <- intervention_probs # here we have th propensity score for treatment and censoring
+    x$intervention_probs[[regime_name]] <- intervention_probs # here we have th propensity score for treatment and censoring
     # FIXME: write this rowCumprods in armadillo
-    x$cumulative_intervention_probs[[protocol_name]] <- matrixStats::rowCumprods(as.matrix(intervention_probs[,-1,with = FALSE]))
+    x$cumulative_intervention_probs[[regime_name]] <- matrixStats::rowCumprods(as.matrix(intervention_probs[,-1,with = FALSE]))
 
   }
   #
@@ -189,10 +189,10 @@ intervention_probabilities <- function(x,
   # and we can do that before, no need for another loop
   #
   if(intervention_type!="stochastic"){
-  if (length(intervention_match <- x$intervention_match[[protocol_name]]) == 0
+  if (length(intervention_match <- x$intervention_match[[regime_name]]) == 0
       ||
       ## the previous run could have produced the matrix but maybe not for all time points
-      NCOL(x$intervention_match[[protocol_name]])<length(eval_times)){
+      NCOL(x$intervention_match[[regime_name]])<length(eval_times)){
     intervention_match <- matrix(0,ncol = length(treatment_variables),nrow = N) # this only refers to the treatment "match" to the target intervention
     for(j in eval_times){
       if (j == 0)
@@ -201,20 +201,20 @@ intervention_probabilities <- function(x,
         intervention_match[,j+1] <- previous <- previous*(x$prepared_data[[intervention_table[j+1]$variable]] %in% c(intervention_table[j+1]$value,NA))
     }
     colnames(intervention_match) <- treatment_variables
-    x$intervention_match[[protocol_name]] <- intervention_match
+    x$intervention_match[[regime_name]] <- intervention_match
   }
   }
   else{
 
-    x$stochastic_probs[[protocol_name]] <- stochastic_probs # here we have the estimated stochastic probability in the observed data
-    x$cumulative_stochastic_probs[[protocol_name]] <- matrixStats::rowCumprods(as.matrix(stochastic_probs[,-1,with = FALSE]))
+    x$stochastic_probs[[regime_name]] <- stochastic_probs # here we have the estimated stochastic probability in the observed data
+    x$cumulative_stochastic_probs[[regime_name]] <- matrixStats::rowCumprods(as.matrix(stochastic_probs[,-1,with = FALSE]))
     # here we have to divide the stochastic intervention with the propensity score of treatment and censoring:
     # stochastic weights (here we have basically the definition of the clever covariate)
-    x$cumulative_intervention_probs[[protocol_name]]<- x$cumulative_stochastic_probs[[protocol_name]]/ x$cumulative_intervention_probs[[protocol_name]]
+    x$cumulative_intervention_probs[[regime_name]]<- x$cumulative_stochastic_probs[[regime_name]]/ x$cumulative_intervention_probs[[regime_name]]
 
     intervention_match <- matrix(1,ncol = length(treatment_variables),nrow = N)
     colnames(intervention_match) <- treatment_variables
-    x$intervention_match[[protocol_name]] <-intervention_match # we put 1 so that in the sequential regression considers everyone at risk for the weight (all matches)
+    x$intervention_match[[regime_name]] <-intervention_match # we put 1 so that in the sequential regression considers everyone at risk for the weight (all matches)
   }
   x
 }

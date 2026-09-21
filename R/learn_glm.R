@@ -26,7 +26,7 @@
 ##'   character string.
 ##' @param data Data used for learning.
 ##' @param intervened_data Data used for prediction after intervention variables
-##'   have been set according to a protocol.
+##'   have been set according to a regime.
 ##' @param learn_variables Optional vector of variable names to include in the
 ##'   learner. Use \code{"NONE"} to fit an intercept-only model that predicts
 ##'   the mean outcome.

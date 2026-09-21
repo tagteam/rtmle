@@ -17,19 +17,22 @@
 #' Summarize rtmle estimates
 #'
 #' For each target in the object, summarizes risk estimates and their 95%
-#' confidence limits. If a target includes multiple protocols, the summary also
+#' confidence limits. If a target includes multiple regimes, the summary also
 #' includes risk differences and risk ratios.
 #'
 #' @title Summarize an rtmle analysis
 #' @param object Object to summarize.
-#' @param analysis Name of the analysis to summarize.
+#' @param analysis Name of the analysis to summarize. If omitted, the Main
+#'   analysis and all available subset analyses are combined.
 #' @param digits Number of decimals for confidence intervals.
 #' @param targets Names of targets to summarize. Defaults to all targets in the
 #'   object.
-#' @param reference (Optional) Named list of reference protocols, one for each target.
+#' @param reference (Optional) Named list of reference regimes, one for each target.
 #' @param ... Not used.
+#' @details When \code{analysis} is omitted, the Main analysis is row-bound
+#'   with all available subset analyses.
 #' @return A \code{\link[data.table]{data.table}} with estimates, confidence
-#'   limits, and, when relevant, protocol contrasts.
+#'   limits, and, when relevant, regime contrasts.
 #' @seealso \code{\link{run_rtmle}}, \code{\link{target}},
 #'   \code{\link{cheap_bootstrap}}, \code{\link{plot.rtmle}}
 #' @examples
@@ -45,16 +48,16 @@
 #'                    competing_data=ld$timevar_data$death,
 #'                    timevar_data=ld$timevar_data[c("bleeding","changeSBP","A","B")])
 #' x <- add_baseline_data(x,data=ld$baseline_data)
-#' x <- discretize(x,start_followup_date=0)
+#' x <- discretize_data(x,start_followup_date=0)
 #' x <- prepare_rtmle_data(x)
-#' x <- protocol(x,name = "Always_A",
+#' x <- regime(x,name = "Always_A",
 #'               intervention = data.frame(time=x$intervention_nodes,
 #'                                         "A" = factor("1",levels = c("0","1"))))
-#' x <- protocol(x,name = "Never_A",
+#' x <- regime(x,name = "Never_A",
 #'               intervention = data.frame(time=x$intervention_nodes,
 #'                                         "A" = factor("0",levels = c("0","1"))))
 #' x <- target(x,name = "Outcome_risk",
-#'                   estimator = "tmle",protocols = c("Always_A","Never_A"))
+#'                   estimator = "tmle",regimes = c("Always_A","Never_A"))
 #' x <- model_formula(x)
 #' x <- run_rtmle(x,time_horizon=1:2)
 #' summary(x)
@@ -62,18 +65,53 @@
 #' @export
 #' @method summary rtmle
 summary.rtmle <- function(object,analysis = "Main_analysis",targets,reference = NULL,digits = 1,...){
-    Reference <- risk_ratio_estimate <- risk_difference_estimate <- Protocol <- Target <- Estimate <- Upper <- Lower <- Target_parameter <- Time_horizon <- x <- NULL
+    Reference <- risk_ratio_estimate <- risk_difference_estimate <- Regime <- Target <- Estimate <- Upper <- Lower <- Target_parameter <- Time_horizon <- x <- NULL
     Target_parameter_label <- c("Risk_difference", "Risk_ratio")
+    if (length(object$estimate) == 0) {
+        message("The object contains no estimates. To obtain estimates You have to call run_rtmle first. See examples.")
+        return(NULL)
+    }
+    if (missing(analysis)) {
+        subset_analyses <- setdiff(
+            names(object$estimate),
+            c("Main_analysis", "Cheap_bootstrap")
+        )
+        if (length(subset_analyses) > 0L) {
+            targets_missing <- missing(targets)
+            summarize_one <- function(current_analysis) {
+                if (targets_missing) {
+                    summary.rtmle(
+                        object,
+                        analysis = current_analysis,
+                        reference = reference,
+                        digits = digits,
+                        ...
+                    )
+                } else {
+                    summary.rtmle(
+                        object,
+                        analysis = current_analysis,
+                        targets = targets,
+                        reference = reference,
+                        digits = digits,
+                        ...
+                    )
+                }
+            }
+            analyses <- c("Main_analysis", subset_analyses)
+            return(data.table::rbindlist(
+                lapply(analyses, summarize_one),
+                use.names = TRUE,
+                fill = TRUE
+            ))
+        }
+    }
     if (!(analysis %in% names(object$estimate))){
         stop(paste0("The object does not contain an analysis called '",
                     analysis,
                     "'."))
     }else{
         available_targets <- levels(object$estimate[[analysis]]$Target)
-    }
-    if (length(object$estimate) == 0) {
-        message("The object contains no estimates. To obtain estimates You have to call run_rtmle first. See examples.")
-        return(NULL)
     }
     if (missing(targets)) {
         targets <- available_targets
@@ -84,10 +122,10 @@ summary.rtmle <- function(object,analysis = "Main_analysis",targets,reference = 
     outcome_scale <- function(x){pmin(pmax(0,100*x),100)}
     sum <- lapply(targets,function(target_name){
         target <- object$targets[[target_name]]
-        protocols <- target$protocols
-        risk <- do.call(rbind,lapply(protocols,function(protocol_name){
+        regimes <- target$regimes
+        risk <- do.call(rbind,lapply(regimes,function(regime_name){
             # to avoid the internal selfdetect problem we take a copy
-            e <- data.table::copy(object$estimate[[analysis]][Target == target_name & Protocol == protocol_name])
+            e <- data.table::copy(object$estimate[[analysis]][Target == target_name & Regime == regime_name])
             e[,"Estimate (CI_95)":= Publish::formatCI(x = outcome_scale(e$Estimate),
                                                       lower = outcome_scale(e$Lower),
                                                       upper = outcome_scale(e$Upper),
@@ -100,18 +138,18 @@ summary.rtmle <- function(object,analysis = "Main_analysis",targets,reference = 
         } else{
             subset_variable <- attr(object$estimate[[analysis]],which = "variable",exact = TRUE)
         }
-        # contrasting protocols
-        if (length(protocols)>1){
+        # contrasting regimes
+        if (length(regimes)>1){
             if (length(reference) == 0){
-                ref <- protocols[[1]]
+                ref <- regimes[[1]]
             }else{
-                stopifnot(reference[[target_name]] %in% protocols)
+                stopifnot(reference[[target_name]] %in% regimes)
                 ref <- reference[[target_name]]
             }
-            contrast <- do.call(rbind,lapply(setdiff(protocols,ref),function(protocol_name){
+            contrast <- do.call(rbind,lapply(setdiff(regimes,ref),function(regime_name){
                 do.call(rbind,lapply(unique(risk$Time_horizon),function(tp){
                     # the estimate of the reference intervention
-                    reference_estimate <- object$estimate[[analysis]][Target == target_name & Protocol == ref & Time_horizon == tp]$Estimate
+                    reference_estimate <- object$estimate[[analysis]][Target == target_name & Regime == ref & Time_horizon == tp]$Estimate
                     if (analysis == "Main_analysis"){
                         analysis_levels <- 1
                         reference_IC <- list(object$IC[[target_name]][[ref]][[paste0("time_horizon_",tp)]])
@@ -127,14 +165,14 @@ summary.rtmle <- function(object,analysis = "Main_analysis",targets,reference = 
                     }
                     N <- NROW(reference_IC[[1]])
                     if (analysis == "Main_analysis"&&length(object$estimate$Cheap_bootstrap)>0){
-                        reference_boot <- object$estimate[["Cheap_bootstrap"]][Target == target_name & Protocol == ref & Time_horizon == tp]$Bootstrap_estimate
+                        reference_boot <- object$estimate[["Cheap_bootstrap"]][Target == target_name & Regime == ref & Time_horizon == tp]$Bootstrap_estimate
                     }
-                    this_estimate <- object$estimate[[analysis]][Target == target_name & Protocol == protocol_name & Time_horizon == tp]$Estimate
+                    this_estimate <- object$estimate[[analysis]][Target == target_name & Regime == regime_name & Time_horizon == tp]$Estimate
                     if (analysis == "Main_analysis"){
-                        this_IC <- list("Main_analysis" = object$IC[[target_name]][[protocol_name]][[paste0("time_horizon_",tp)]])
+                        this_IC <- list("Main_analysis" = object$IC[[target_name]][[regime_name]][[paste0("time_horizon_",tp)]])
                     }else{
                         this_IC <- lapply(analysis_levels,function(level){
-                            subset_IC[[level]][[target_name]][[protocol_name]][[paste0("time_horizon_",tp)]]                        
+                            subset_IC[[level]][[target_name]][[regime_name]][[paste0("time_horizon_",tp)]]                        
                         })
                         names(this_IC) <- names(subset_IC)
                     }
@@ -149,11 +187,11 @@ summary.rtmle <- function(object,analysis = "Main_analysis",targets,reference = 
                         risk_ratio_lower <- risk_ratio_estimate*exp(-qnorm(.975)*risk_ratio_log_se)
                         risk_ratio_upper <- risk_ratio_estimate*exp(qnorm(.975)*risk_ratio_log_se)
                         e1 <- data.table(Target = rep(target_name,2),
-                                         Protocol = rep(protocol_name, 2),
+                                         Regime = rep(regime_name, 2),
                                          Reference = rep(ref, 2),
                                          Target_parameter=Target_parameter_label,
                                          Time_horizon = rep(tp,2),
-                                         Estimator = rep(object$estimate[[analysis]][Target == target_name & Protocol == ref]$Estimator[[1]],2),
+                                         Estimator = rep(object$estimate[[analysis]][Target == target_name & Regime == ref]$Estimator[[1]],2),
                                          Estimate = c(risk_difference_estimate, risk_ratio_estimate),
                                          Standard_error = c(risk_difference_se, risk_ratio_log_se),
                                          Lower = c(risk_difference_lower, risk_ratio_lower),
@@ -161,7 +199,7 @@ summary.rtmle <- function(object,analysis = "Main_analysis",targets,reference = 
                                          P_value = c(2*pnorm(-abs(risk_difference_estimate/risk_difference_se)), 2*pnorm(-abs(log(risk_ratio_estimate)/risk_ratio_log_se))))
 
                         if (analysis == "Main_analysis" && length(object$estimate$Cheap_bootstrap)>0){
-                            this_boot <- object$estimate[["Cheap_bootstrap"]][Target == target_name & Protocol == protocol_name & Time_horizon == tp]$Bootstrap_estimate
+                            this_boot <- object$estimate[["Cheap_bootstrap"]][Target == target_name & Regime == regime_name & Time_horizon == tp]$Bootstrap_estimate
                             boot_difference <- this_boot-reference_boot
                             boot_ratio <- this_boot/reference_boot
                             cheap_scale <- attr(object$estimate[["Cheap_bootstrap"]],"cheap_scale",exact = TRUE)
@@ -203,13 +241,13 @@ summary.rtmle <- function(object,analysis = "Main_analysis",targets,reference = 
                 out[is.na(Reference),Reference := ""][]
                 data.table::setcolorder(out, append(setdiff(names(out),"Reference"),
                                                     values = "Reference",
-                                        after = match("Protocol",setdiff(names(out),"Reference"))))
+                                        after = match("Regime",setdiff(names(out),"Reference"))))
             }
             
             if (length(subset_variable)>0){
-                data.table::setkeyv(out,c(subset_variable,"Target_parameter","Protocol"))
+                data.table::setkeyv(out,c(subset_variable,"Target_parameter","Regime"))
             }else{
-                data.table::setkeyv(out,cols = c("Target_parameter","Protocol"))
+                data.table::setkeyv(out,cols = c("Target_parameter","Regime"))
             }
             return(out)
         }else{

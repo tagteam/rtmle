@@ -9,7 +9,8 @@ parse_learners(learners)
 \arguments{
 \item{learners}{A learner specification: a character vector of learner names,
 a single learner list, or a super-learner list containing \code{folds} and
-\code{learners}.}
+\code{learners}. Character learner names may be given with or without the
+\code{"learn_"} prefix.}
 }
 \value{
 A normalized learner list.
@@ -21,8 +22,9 @@ Parse learner specifications
 Normalizes learner specifications for \code{\link{run_rtmle}} and
 \code{\link{superlearn}}. Available names are used to fill missing
 \code{fun} elements, and available \code{fun} elements are used to fill
-missing names. The returned object receives an attribute so repeated parsing
-leaves it unchanged.
+missing names. Learner names may omit the \code{"learn_"} prefix; for
+example, \code{"glm"} is interpreted as \code{"learn_glm"}. The returned
+object receives an attribute so repeated parsing leaves it unchanged.
 }
 \examples{
 parse_learners(c("learn_glm","learn_glmnet"))
@@ -31,7 +33,7 @@ parse_learners(list(folds=5,
                          "glm100"=list(maxit=200,fun="learn_glm"))))
 parse_learners(list(folds=10,
                learners=list(
-                        "learn_glmnet",
+                        "glmnet",
                         "glm"=list(learn_variables="A",fun="glm"),
                         list(name="learn_ranger", fun="learn_ranger",num.trees=5))))
 }

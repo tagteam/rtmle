@@ -32,5 +32,5 @@ x$data$baseline_data
 }
 \seealso{
 \code{\link{add_long_data}}, \code{\link{add_wide_data}},
-  \code{\link{discretize}}, \code{\link{prepare_rtmle_data}}
+  \code{\link{discretize_data}}, \code{\link{prepare_rtmle_data}}
 }

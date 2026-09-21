@@ -1,157 +1,66 @@
 ### parse_instructions.R ---
 #----------------------------------------------------------------------
-## Parse propensity instructions supplied through protocol()
+## Validate adherence-model stratification supplied through regime()
 #----------------------------------------------------------------------
 
-parse_instructions <- function(propensity_instructions,
-                               n,
-                               full_n = n,
-                               allow_full_length = FALSE) {
-    parse_propensity_instruction <- function(spec, label) {
-        if (is.numeric(spec) && is.null(dim(spec))) {
-            probability <- spec
-            if (length(probability) == 1L && n != 1L) {
-                probability <- rep(probability, n)
-            }
-            if (length(probability) != n &&
-                !(allow_full_length && length(probability) == full_n)) {
-                stop("The `probability` in ", label,
-                     " must have length 1 or NROW(data).")
-            }
-            if (any(is.nan(probability))) {
-                stop("The `probability` in ", label,
-                     " cannot contain NaN; use NA to request estimation.")
-            }
-            observed <- probability[!is.na(probability)]
-            if (any(!is.finite(observed)) ||
-                any(observed < 0 | observed > 1)) {
-                stop("Non-missing probabilities in ", label,
-                     " must be finite values in [0, 1].")
-            }
-            return(list(
-                mode = "fixed",
-                probability = probability,
-                stratify_by = NULL
-            ))
-        }
-        if (!is.list(spec) || is.null(spec$mode)) {
-            stop(label, " must be a numeric fixed-probability vector or a list with `mode`.")
-        }
-        mode <- as.character(spec$mode)
-        if (length(mode) != 1L || is.na(mode) ||
-            !mode %in% c("fixed", "adherence")) {
-            stop("The `mode` in ", label,
-                 " must be `fixed` or `adherence`.")
-        }
-        unknown <- setdiff(names(spec), c("mode", "probability", "stratify_by"))
-        if (length(unknown) > 0) {
-            stop("Unknown element(s) in ", label, ": ",
-                 paste(unknown, collapse = ", "), ".")
-        }
-        stratify_by <- spec$stratify_by
-        if (length(stratify_by) > 0) {
-            if (!is.character(stratify_by) || anyNA(stratify_by) ||
-                any(!nzchar(stratify_by))) {
-                stop("`stratify_by` in ", label,
-                     " must contain non-missing variable names.")
-            }
-            stratify_by <- unique(stratify_by)
-        } else {
-            stratify_by <- NULL
-        }
-        if (identical(mode, "fixed")) {
-            if (length(stratify_by) > 0) {
-                stop("`stratify_by` can only be used with `mode = \"adherence\"`.")
-            }
-            if (is.null(spec$probability)) {
-                stop("A fixed propensity instruction must supply `probability`.")
-            }
-            probability <- spec$probability
-            if (!is.numeric(probability) || !is.null(dim(probability))) {
-                stop("The `probability` in ", label,
-                     " must be a numeric vector.")
-            }
-            if (length(probability) == 1L && n != 1L) {
-                probability <- rep(probability, n)
-            }
-            if (length(probability) != n &&
-                !(allow_full_length && length(probability) == full_n)) {
-                stop("The `probability` in ", label,
-                     " must have length 1 or NROW(data).")
-            }
-            if (any(is.nan(probability))) {
-                stop("The `probability` in ", label,
-                     " cannot contain NaN; use NA to request estimation.")
-            }
-            observed <- probability[!is.na(probability)]
-            if (any(!is.finite(observed)) ||
-                any(observed < 0 | observed > 1)) {
-                stop("Non-missing probabilities in ", label,
-                     " must be finite values in [0, 1].")
-            }
-        } else {
-            if (!is.null(spec$probability)) {
-                stop("An adherence propensity instruction must not supply `probability`.")
-            }
-            probability <- NULL
-        }
-        list(
-            mode = mode,
-            probability = probability,
-            stratify_by = stratify_by
-        )
+validate_adherence_model_strata <- function(
+    strata,
+    label = "`adherence_model_strata`"
+) {
+    if (is.null(strata)) {
+        return(invisible(NULL))
     }
+    if (!is.character(strata) || anyNA(strata) || any(!nzchar(strata))) {
+        stop(label, " must be NULL or a character vector of variable names.")
+    }
+    invisible(NULL)
+}
 
-    if (length(propensity_instructions) == 0L) {
+resolve_adherence_model_strata <- function(strata, time_node, available_names) {
+    validate_adherence_model_strata(strata)
+    if (is.null(strata) || length(strata) == 0L) {
         return(NULL)
     }
-    if (is.numeric(propensity_instructions) &&
-        is.null(dim(propensity_instructions))) {
-        return(list(
-            .default = parse_propensity_instruction(
-                propensity_instructions,
-                "the unnamed propensity instruction"
-            )
-        ))
+    if (length(time_node) != 1L || is.na(time_node) ||
+        !is.finite(time_node)) {
+        stop("`time_node` must be one finite value.")
     }
-    if (inherits(propensity_instructions, "data.frame") ||
-        is.matrix(propensity_instructions)) {
-        instruction_names <- colnames(propensity_instructions)
-        if (is.null(instruction_names) || any(!nzchar(instruction_names))) {
-            stop("A table of propensity instructions must have treatment-variable column names.")
-        }
-        parsed <- lapply(instruction_names, function(variable) {
-            parse_propensity_instruction(
-                propensity_instructions[[variable]],
-                paste0("propensity instruction `", variable, "`")
-            )
-        })
-        names(parsed) <- instruction_names
-        return(parsed)
-    }
-    if (is.list(propensity_instructions)) {
-        instruction_names <- names(propensity_instructions)
-        if (!is.null(propensity_instructions$mode)) {
-            return(list(
-                .default = parse_propensity_instruction(
-                    propensity_instructions,
-                    "the default propensity instruction"
+    time_node <- as.integer(time_node)
+    resolved <- vapply(strata, function(reference) {
+        # Explicit time suffixes are useful for lagged variables, but a
+        # current- or future-node variable would violate the pre-decision
+        # history restriction. Node zero is the baseline/pre-first-decision
+        # convention used throughout the prepared data.
+        if (grepl("_[0-9]+$", reference)) {
+            suffix <- as.integer(sub(".*_", "", reference))
+            if (suffix > 0L && suffix >= time_node) {
+                stop(
+                    "`adherence_model_strata` must use variables known before ",
+                    "the treatment decision at node ", time_node, ". `",
+                    reference, "` is not pre-decision there."
                 )
-            ))
+            }
+            return(reference)
         }
-        if (is.null(instruction_names) || any(!nzchar(instruction_names))) {
-            stop("Propensity instructions must be named by treatment variable.")
+
+        # An unsuffixed time-varying name means the latest available value,
+        # not the value from the current interval.
+        lagged_reference <- paste0(reference, "_", max(0L, time_node - 1L))
+        if (lagged_reference %in% available_names) {
+            return(lagged_reference)
         }
-        parsed <- lapply(instruction_names, function(variable) {
-            parse_propensity_instruction(
-                propensity_instructions[[variable]],
-                paste0("propensity instruction `", variable, "`")
-            )
-        })
-        names(parsed) <- instruction_names
-        return(parsed)
+        reference
+    }, character(1))
+    unique(resolved)
+}
+
+validate_multiple_treatment_factorization <- function(value, label) {
+    allowed <- c("joint", "sequential", "independent")
+    if (length(value) != 1L || !is.character(value) || is.na(value) ||
+        !value %in% allowed) {
+        stop(label, " must be one of: ", paste(allowed, collapse = ", "), ".")
     }
-    stop("Unsupported `propensity_instructions`; use fixed numeric vectors or named instruction lists.")
+    invisible(value)
 }
 
 ######################################################################

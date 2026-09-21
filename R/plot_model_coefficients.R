@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: feb 23 2026 (06:38) 
 ## Version: 
-## Last-Updated: maj 28 2026 (13:55) 
+## Last-Updated: sep 20 2026 (07:01) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 139
+##     Update #: 142
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -47,9 +47,9 @@
 #' Optional selection of time horizon. If \code{NULL},
 #' \code{max(x$time_grid)} is used.
 #'
-#' @param protocol
-#' Optional protocol selection. If \code{NULL},
-#' \code{names(x$protocols)[[1]]} is used.
+#' @param regime
+#' Optional regime selection. If \code{NULL},
+#' \code{names(x$regimes)[[1]]} is used.
 #'
 #' @param times
 #' Optional time selection. If \code{NULL}, all \code{time_*} elements are used.
@@ -91,7 +91,7 @@
 #'
 #' @param manhattan_color_by
 #' For \code{plot_style = "manhattan"} only. Character scalar controlling point
-#' coloring: \code{"node"} (protocol, censoring, or outcome), \code{"time"}
+#' coloring: \code{"node"} (regime, censoring, or outcome), \code{"time"}
 #' (time index), \code{"term"} (coefficient term), or \code{"none"} (single
 #' color).
 #'
@@ -140,7 +140,7 @@
 #' @export
 plot_model_coefficients <- function(x,
                                     time_horizon,
-                                    protocol,
+                                    regime,
                                     times = NULL,
                                     nodes,
                                     term = NULL,
@@ -170,11 +170,11 @@ plot_model_coefficients <- function(x,
         stopifnot(time_horizon %in% x$time_grid)
     }
 
-    if (missing(protocol)){
-        protocol <- names(x$protocols)[[1]]
+    if (missing(regime)){
+        regime <- names(x$regimes)[[1]]
     }else{
-        stopifnot(length(protocol) == 1)
-        stopifnot(protocol %in% names(x$protocols))
+        stopifnot(length(regime) == 1)
+        stopifnot(regime %in% names(x$regimes))
     }
 
 
@@ -195,11 +195,13 @@ plot_model_coefficients <- function(x,
     # ---- extract long table ----
     df <- coef(x)
     df[,nth_time := suppressWarnings(as.integer(sub("^time_", "", time)))]
-    # labels for the discrete time scale 
-    df[,time_label := factor(
-            nth_time,
-            levels = as.character(x$time_grid_labels[1:length(unique(nth_time))])
-        )]
+    # labels for the discrete time scale
+    df[,time_label := factor(nth_time,)]
+    ## df[,time_label := factor(
+            ## nth_time,
+            ## levels = unique(nth_time),
+            ## labels = as.character(x$time_grid_labels[1:length(unique(nth_time))])
+        ## )]
     if (!include_intercept){
         df <- df[terms != "(Intercept)"]
     }
@@ -259,7 +261,7 @@ plot_model_coefficients <- function(x,
 
     # ---- manhattan style: SINGLE PANEL ----
     # You asked: one panel; x-axis = "outcome variables" ordered by time_0..time_K and within time by:
-    # protocol variables, censoring, outcome. y-axis = all corresponding betas.
+    # regime variables, censoring, outcome. y-axis = all corresponding betas.
     #
     # We'll create a single categorical x-axis label per (time, node, outcome),
     # and then plot ALL betas (terms) vertically at that x position.

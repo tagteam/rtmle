@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 19 2024 (07:23) 
 ## Version: 
-## Last-Updated: apr 25 2026 (06:56) 
+## Last-Updated: sep 18 2026 (08:24) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 57
+##     Update #: 58
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -17,7 +17,7 @@
 ##' Initialize an rtmle analysis
 ##'
 ##' Creates an empty object of class \code{"rtmle"} that stores analysis
-##' settings and can then be populated with data, protocols, targets, and model
+##' settings and can then be populated with data, regimes, targets, and model
 ##' formulas.
 ##'
 ##' @title Register Targeted Minimum Loss Estimation
@@ -60,6 +60,8 @@
 ##'   \code{c(0.0001, 0.9999)}.
 ##' @param time_grid_labels Labels used for the time-grid points on plot
 ##'   x-axes. Defaults to \code{time_grid}.
+##' @param time_unit Character string used as the x-axis label in plots. If
+##'   \code{NULL} (the default), plots use \code{"Time"}.
 ##' @return A list with class \code{"rtmle"} and the following elements:
 ##' \itemize{
 ##' \item targets
@@ -68,8 +70,8 @@
 ##' \item times
 ##' }
 ##' @seealso \code{\link{add_baseline_data}}, \code{\link{add_long_data}},
-##'   \code{\link{add_wide_data}}, \code{\link{discretize}},
-##'   \code{\link{prepare_rtmle_data}}, \code{\link{protocol}},
+##'   \code{\link{add_wide_data}}, \code{\link{discretize_data}},
+##'   \code{\link{prepare_rtmle_data}}, \code{\link{regime}},
 ##'   \code{\link{target}}, \code{\link{model_formula}},
 ##'   \code{\link{run_rtmle}}
 ##' @examples
@@ -96,11 +98,17 @@ rtmle_init <- function(time_grid,
                        minority_threshold = 8,
                        weight_truncation = c(0,1),
                        prediction_range = c(0.0001,0.9999),
-                       time_grid_labels = time_grid){
+                       time_grid_labels = time_grid,
+                       time_unit = NULL){
     if(!(time_grid[1] == 0 & length(time_grid) > 1))
         stop("time_grid must be a vector of length > 1 starting with 0")
     if (length(time_grid_labels) != length(time_grid)){
         stop("time_grid_labels must have the same length as time_grid")
+    }
+    if (!is.null(time_unit) &&
+        (!is.character(time_unit) || length(time_unit) != 1L ||
+         is.na(time_unit) || !nzchar(time_unit))) {
+        stop("time_unit must be NULL or a non-empty character string.")
     }
     if (length(name_censoring)>0){
         if (length(censored_label) != 1 ||
@@ -130,6 +138,7 @@ rtmle_init <- function(time_grid,
              version = utils::packageVersion("rtmle"),
              time_grid_scale = time_grid,
              time_grid_labels = as.character(time_grid_labels),
+             time_unit = time_unit,
              time_grid = 0:(length(time_grid)-1),
              intervention_nodes = 0:(length(time_grid)-2),
              tuning_parameters = list(minority_threshold = minority_threshold,

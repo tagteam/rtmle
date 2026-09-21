@@ -64,9 +64,9 @@ is a list requiring a label, to name the subset, and a
 subset of the variable \code{x$names$id} in the data
 \code{x$prepared_data} to identify the subset. The results of
 the subset analysis are stored in
-\code{x$estimate[[subsets[[label]]]]}. An optional element of
-each subset list is called \code{append}; if \code{TRUE}, append the
-estimates to the existing estimates with \code{rbind}. This may be used
+\code{x$estimate[[subsets[[label]]]]}. If a result with the same
+label already exists, estimates are appended by default; set
+\code{append = FALSE} to replace the existing result. Appending may be used
 for stratified analyses, seed-dependence studies (Monte Carlo error), and
 bootstrap analyses. See
 examples.}
@@ -96,8 +96,14 @@ The modified object contains the fitted nuisance parameter
 }
 \description{
 Runs the analysis defined by \code{\link{rtmle_init}},
-\code{\link{protocol}}, \code{\link{target}}, and
+\code{\link{regime}}, \code{\link{target}}, and
 \code{\link{model_formula}}.
+}
+\details{
+If the learner specification differs from the learner used for a
+  previous run on the same object, learner-dependent estimates, fitted
+  objects, diagnostics, and derived intervention probabilities are cleared
+  before the new analysis is run.
 }
 \examples{
 tau <- 3
@@ -113,17 +119,17 @@ x <- add_long_data(x,
                    competing_data=ld$timevar_data$death,
                    timevar_data=ld$timevar_data[c("bleeding","changeSBP","A","B")])
 x <- add_baseline_data(x,data=ld$baseline_data)
-x <- discretize(x,start_followup_date=0)
+x <- discretize_data(x,start_followup_date=0)
 x <- prepare_rtmle_data(x)
-x <- protocol(x,name = "Always_A",
+x <- regime(x,name = "Always_A",
                     intervention = data.frame(time=x$intervention_nodes,
                                                    "A" = factor("1",levels = c("0","1"))))
-x <- protocol(x,name = "Never_A",
+x <- regime(x,name = "Never_A",
                     intervention = data.frame(time=x$intervention_nodes,
                                               "A" = factor("0",levels = c("0","1"))))
 x <- target(x,name = "Outcome_risk",
                   estimator = "tmle",
-                  protocols = c("Always_A","Never_A"))
+                  regimes = c("Always_A","Never_A"))
 x <- model_formula(x)
 # default is undersmoothing which means: take the smallest penalty
 # where the model still converges
@@ -140,6 +146,25 @@ weight_truncation=c(0.4,0.6))
 summary(x)
 }
 \dontrun{
+# Super learner combining elastic-net glmnet and ranger
+x <- run_rtmle(
+    x,
+    learner = list(
+        folds = 10,
+        ensemble_method = "ipa",
+        learners = list(
+            glmnet = list(fun = "learn_glmnet",
+                          selector = "min",
+                          alpha = 0.5),
+            ranger = list(fun = "learn_ranger",
+                          num.trees = 50,
+                          min.node.size = 10)
+        )
+    ),
+    time_horizon = tau
+)
+}
+\dontrun{
 # stratified analyses
 x <- run_rtmle(x,learner = "learn_glmnet",time_horizon = tau,
                verbose=FALSE,
@@ -154,7 +179,7 @@ x <- run_rtmle(x,learner = "learn_glmnet",time_horizon = tau,
 }
 \seealso{
 \code{\link{rtmle_init}}, \code{\link{prepare_rtmle_data}},
-  \code{\link{protocol}}, \code{\link{target}}, \code{\link{model_formula}},
+  \code{\link{regime}}, \code{\link{target}}, \code{\link{model_formula}},
   \code{\link{learn_glm}}, \code{\link{learn_glmnet}},
   \code{\link{superlearn}}, \code{\link{summary.rtmle}}
 }

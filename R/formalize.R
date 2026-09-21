@@ -107,11 +107,21 @@ formalize <- function(timepoint,
         if (handle_concomitant_variables == "sequential"){
             form <- vector(mode = "list",length = nvars)
             for (j in 1:nvars){
-                concomitant_rhs <- paste0(name_outcome_variable[-c(j:nvars)],collapse = "+")
-                if (rhs != "1"){
-                    concomitant_rhs <- paste0(rhs,"+",concomitant_rhs)
-                }else{
-                    concomitant_rhs <- "1"
+                preceding_variables <- name_outcome_variable[
+                    seq_len(max(0L, j - 1L))
+                ]
+                if (length(preceding_variables) == 0L) {
+                    concomitant_rhs <- rhs
+                } else if (rhs == "1") {
+                    concomitant_rhs <- paste(
+                        preceding_variables,
+                        collapse = "+"
+                    )
+                } else {
+                    concomitant_rhs <- paste(
+                        c(rhs, preceding_variables),
+                        collapse = "+"
+                    )
                 }
                 form[[j]] <- list(list(formula = paste0(outcome_string[[j]]," ~ ",concomitant_rhs)))
                 names(form[[j]]) <- name_outcome_variable[[j]]

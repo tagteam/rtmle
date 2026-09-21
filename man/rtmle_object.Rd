@@ -10,7 +10,7 @@ components, including:
 \describe{
   \item{prepared_data}{A wide analysis data set with 307 subjects and 38
   variables.}
-  \item{protocols}{Three protocols: \code{"Always_A"}, \code{"Never_A"}, and
+  \item{regimes}{Three regimes: \code{"Always_A"}, \code{"Never_A"}, and
   \code{"Always_B"}.}
   \item{targets}{Two target definitions: \code{"Treatment effect"} and
   \code{"Treatment contrast"}.}
@@ -29,7 +29,7 @@ data(rtmle_object)
 \description{
 A fitted \code{"rtmle"} analysis object built from
 \code{simulated_cohort}. The object is prepared, has three treatment
-protocols, and includes fitted nuisance models and main-analysis estimates at
+regimes, and includes fitted nuisance models and main-analysis estimates at
 time horizons 1 through 4.
 }
 \keyword{datasets}

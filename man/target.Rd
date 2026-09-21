@@ -4,14 +4,14 @@
 \alias{target}
 \title{Define a target parameter}
 \usage{
-target(x, name, protocols, estimator, ...)
+target(x, name, regimes, estimator, ...)
 }
 \arguments{
 \item{x}{An \code{rtmle} object as returned by \code{\link{rtmle_init}}.}
 
 \item{name}{Name of the target parameter.}
 
-\item{protocols}{Names of the protocol(s) involved in the target parameter.}
+\item{regimes}{Names of the regime(s) involved in the target parameter.}
 
 \item{estimator}{Character string specifying the estimator: either
 \code{"tmle"} or \code{"g-formula"}.}
@@ -22,23 +22,23 @@ target(x, name, protocols, estimator, ...)
 The modified \code{rtmle} object.
 }
 \description{
-A target records the protocol(s) and estimator used for a target parameter.
+A target records the regime(s) and estimator used for a target parameter.
 }
 \examples{
 x <- rtmle_init(time_grid = 0:2, name_id = "id", name_outcome = "Y")
-x <- protocol(x, name = "Always_A",
+x <- regime(x, name = "Always_A",
               intervention = data.frame(time = x$intervention_nodes,
                                         A = factor("1", levels = c("0", "1"))))
-x <- protocol(x, name = "Never_A",
+x <- regime(x, name = "Never_A",
               intervention = data.frame(time = x$intervention_nodes,
                                         A = factor("0", levels = c("0", "1"))))
 x <- target(x, name = "Outcome_risk",
-            protocols = c("Always_A", "Never_A"),
+            regimes = c("Always_A", "Never_A"),
             estimator = "tmle")
 x$targets
 x$estimator
 }
 \seealso{
-\code{\link{protocol}}, \code{\link{model_formula}},
+\code{\link{regime}}, \code{\link{model_formula}},
   \code{\link{run_rtmle}}, \code{\link{summary.rtmle}}
 }

@@ -26,7 +26,7 @@
 #'   object time grid.
 #' @param ... Not used.
 #' @return A \code{\link[data.table]{data.table}} with columns identifying the
-#'   time point, protocol, node, outcome, coefficient term, and coefficient
+#'   time point, regime, node, outcome, coefficient term, and coefficient
 #'   value.
 #' @examples
 #' data(rtmle_object)
@@ -53,17 +53,17 @@ coef.rtmle <- function(object,time_horizon,...){
             }
             df <- do.call(rbind,lapply(model_names,function(this_outcome){
                 if (node_name == "outcome"){
-                    do.call(rbind,lapply(names(time_block[[node_name]][[current_outcome]]$fit),function(protocol){
-                        fit_summary <- time_block[[node_name]][[current_outcome]]$fit[[protocol]][[this_outcome]]$fit_summary
+                    do.call(rbind,lapply(names(time_block[[node_name]][[current_outcome]]$fit),function(regime){
+                        fit_summary <- time_block[[node_name]][[current_outcome]]$fit[[regime]][[this_outcome]]$fit_summary
                         if (inherits(fit_summary,"constant_probability")){
-                            data.table(time = time_name,protocol = node_name,node = node_name,outcome = this_outcome,terms = "",beta = 0,stringsAsFactors = FALSE)
+                            data.table(time = time_name,regime = node_name,node = node_name,outcome = this_outcome,terms = "",beta = 0,stringsAsFactors = FALSE)
                         }else{
                             if ("selected_beta" %chin% names(fit_summary)){
                                 fit_summary = fit_summary[["selected_beta"]]
                             }
                             if (length(dim(fit_summary))>1 && (is.numeric(coefs <- fit_summary[,1]))){
                                 names(coefs) <- rownames(fit_summary)
-                                data.table(time = time_name,protocol = protocol,node = node_name,outcome = current_outcome,terms = names(coefs),beta = as.numeric(coefs),stringsAsFactors = FALSE)
+                                data.table(time = time_name,regime = regime,node = node_name,outcome = current_outcome,terms = names(coefs),beta = as.numeric(coefs),stringsAsFactors = FALSE)
                             }else{
                                 NULL
                             }
@@ -72,7 +72,7 @@ coef.rtmle <- function(object,time_horizon,...){
                 }else{
                     fit_summary <- time_block[[node_name]][[this_outcome]]$fit_summary
                     if (inherits(fit_summary,"constant_probability")){
-                        data.table(time = time_name,protocol = node_name,node = node_name,outcome = this_outcome,terms = "",beta = 0,stringsAsFactors = FALSE)
+                        data.table(time = time_name,regime = node_name,node = node_name,outcome = this_outcome,terms = "",beta = 0,stringsAsFactors = FALSE)
                     }else{
                         if ("selected_beta" %chin% names(fit_summary)){
                             fit_summary = fit_summary[["selected_beta"]]
@@ -81,7 +81,7 @@ coef.rtmle <- function(object,time_horizon,...){
                             && (is.numeric(coefs <- fit_summary[,1]))){
                             names(coefs) <- rownames(fit_summary)
                             data.table(time = time_name,
-                                       protocol = node_name,
+                                       regime = node_name,
                                        node = node_name,
                                        outcome = this_outcome,
                                        terms = names(coefs),

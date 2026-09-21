@@ -20,7 +20,7 @@ tmle_update <- function(Y,
                         outcome_free_and_uncensored,
                         intervention_match,
                         k,
-                        protocol) {
+                        regime) {
     N <- length(Y)
     if (length(intervention_probs) == 0) intervention_probs <- rep(1,N)
     ## NOTE: the first clause !is.na(Y) removes those censored in current interval:
@@ -42,7 +42,7 @@ tmle_update <- function(Y,
     } else {
         Qstar <- stats::plogis(offset)
         attr(Qstar,"diagnostics") <- data.table(Function = 'rtmle::tmle_update',
-                                                             Protocol = protocol,
+                                                             Regime = regime,
                                                              Step = k,
                                                              Event = "No positive weights")
     }

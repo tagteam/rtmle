@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 19 2024 (08:31) 
 ## Version: 
-## Last-Updated: maj 20 2026 (14:35) 
+## Last-Updated: sep 12 2026 (06:45)
 ##           By: Thomas Alexander Gerds
-##     Update #: 190
+##     Update #: 191
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -68,24 +68,24 @@ print.rtmle <- function(x, ...) {
         if (length(x$data$timevar_data) > 0){
     cat(sep = "","\nTimevar data:        ",format_index(names(x$data$timevar_data)))
         }else{
-            cat(sep = "","\nTODO: The object contains no time varying data yet. Add them with rtmle::add_wide_data in discretized form or with rtmle::add_long_data followed by rtmle::discretize.")
+            cat(sep = "","\nTODO: The object contains no time varying data yet. Add them with rtmle::add_wide_data in discretized form or with rtmle::add_long_data followed by rtmle::discretize_data.")
         }
     }
     if (length(x$data$outcome_data) > 0){
     cat(sep = "","\nOutcome data:        n=",NROW(x$data$outcome_data),", p=",format_index(names(x$data$outcome_data)[-1]))
     }else{
-        cat(sep = "","\nTODO: The object contains no outcome data yet. Add them with rtmle::add_wide_data in discretized form or with rtmle::add_long_data followed by rtmle::discretize.")
+        cat(sep = "","\nTODO: The object contains no outcome data yet. Add them with rtmle::add_wide_data in discretized form or with rtmle::add_long_data followed by rtmle::discretize_data.")
     }
-    # Target trial protocols
-    if (length(x$protocols) > 0) {
-    cat(sep = "","\nProtocols:           ", paste(names(x$protocols), collapse = ", "))
+    # Target trial regimes
+    if (length(x$regimes) > 0) {
+    cat(sep = "","\nRegimes:           ", paste(names(x$regimes), collapse = ", "))
     } else {
-        cat(sep = "","\nTODO: The object contains no protocols. Add them with the function 'protocol'.")
+        cat(sep = "","\nTODO: The object contains no regimes. Add them with the function 'regime'.")
     }
     
     if (length(x$targets) > 0) {
         for (t in names(x$targets)) {
-            cat(sep = "","\nTarget:              ", t, " [",paste(x$targets[[t]]$protocols, collapse = ", "),"]")
+            cat(sep = "","\nTarget:              ", t, " [",paste(x$targets[[t]]$regimes, collapse = ", "),"]")
         }
         if (length(x$prepared_data) == 0) {
             cat(sep = "","\nTODO: Use the function 'prepare_rtmle_data' to prepare the wide format data.")
@@ -168,15 +168,24 @@ print.rtmle <- function(x, ...) {
     }
     if (length(x$estimate)>0){
         cat("\n\nResults:\n")
-        sx = summary(x)[,c(
-                        "Target",
-                        "Protocol",
-                        "Reference",
-                        "Target_parameter",
-                        "Time_horizon",
-                        "Estimator",
-                        "Estimate (CI_95)"
-                    ),with = FALSE]
+        sx = summary(x)
+        base_columns <- c(
+            "Target",
+            "Regime",
+            "Reference",
+            "Target_parameter",
+            "Time_horizon",
+            "Estimator",
+            "Estimate (CI_95)"
+        )
+        subset_variables <- unique(unlist(lapply(
+            x$estimate[setdiff(names(x$estimate), c("Main_analysis", "Cheap_bootstrap"))],
+            attr,
+            which = "variable",
+            exact = TRUE
+        ), use.names = FALSE))
+        display_columns <- c(subset_variables, base_columns)
+        sx = sx[,intersect(display_columns,names(sx)),with = FALSE]
         print(sx)
     }
     cat("\n")

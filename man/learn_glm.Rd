@@ -22,7 +22,7 @@ character string.}
 \item{data}{Data used for learning.}
 
 \item{intervened_data}{Data used for prediction after intervention variables
-have been set according to a protocol.}
+have been set according to a regime.}
 
 \item{learn_variables}{Optional vector of variable names to include in the
 learner. Use \code{"NONE"} to fit an intercept-only model that predicts

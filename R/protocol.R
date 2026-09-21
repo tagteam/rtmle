@@ -1,192 +1,101 @@
-### protocol.R ---
 #----------------------------------------------------------------------
-## Author: Thomas Alexander Gerds & Alessandra
-## Created: Jul 3 2024 (13:46)
-## Version:
-## Last-Updated: sep 10 2026 (15:00) 
-##           By: Thomas Alexander Gerds
-##     Update #: 148
+## Define a treatment regime for an emulated trial
 #----------------------------------------------------------------------
-##
-### Commentary: 
-##
-### Change Log:
-#----------------------------------------------------------------------
-## ### Code:
-##' Define a treatment protocol for an emulated trial
+
+##' Define a treatment regime for an emulated trial
 ##'
-##' Adds a named protocol to an existing \code{rtmle} object. A protocol
-##' defines the values of the treatment variable(s) at each time point
-##' during follow-up, including time zero (baseline).
+##' Adds a named regime to an existing \code{rtmle} object. A regime
+##' defines treatment values at each time point during follow-up.
 ##'
 ##' @param x An \code{rtmle} object as returned by \code{\link{rtmle_init}}.
-##' @param name Name of the protocol.
+##' @param name Name of the regime.
 ##' @param intervention A vector, data frame, tibble, or data table specifying
-##'   the treatment values dictated by the protocol. If a vector is supplied, it
-##'   should contain 0/1 values corresponding to \code{treatment_variables}. If a
-##'   data frame, tibble, or data table is supplied, its treatment columns must
-##'   be factors whose levels specify the treatment options; in this case
-##'   \code{treatment_variables} is ignored. In longitudinal settings, include a
-##'   \code{"time"} column in addition to the treatment variables. Ideally,
-##'   \code{intervention} supplies values for every value in
-##'   \code{x$intervention_nodes}. If fewer rows are supplied and \code{expand =
-##'   TRUE}, the last supplied value is used for later time intervals. If
-##'   \code{expand = FALSE}, missing time intervals are interpreted as having no
-##'   intervention.
+##'   the treatment values dictated by the regime. A vector contains 0/1
+##'   values corresponding to \code{treatment_variables}; a data frame must
+##'   contain factor treatment columns with two levels and a time column in
+##'   longitudinal settings.
 ##' @param expand Logical. If \code{FALSE} and \code{intervention} contains a
-##'   \code{"time"} column, do not expand static interventions across time.
-##' @param treatment_variables A vector with the name(s) of the
-##'     variable(s) that the protocol intervenes on. In
-##'     longitudinal settings, when a treatment variable is named \code{"A"},
-##'     the prepared data contain one column for each of
-##'     \code{A_0}, \code{A_1}, \dots, \code{A_k}. This argument can be left
-##'     unspecified in which case the argument \code{intervention}
-##'     must be given.
+##'   time column, do not expand static interventions across time.
+##' @param treatment_variables Names of the treatment variable(s) when
+##'   \code{intervention} is supplied as a 0/1 vector.
 ##' @param intervene_function A function, or a character string naming one,
-##'     used to apply the protocol. It is called as
-##'     \code{fun(data, intervention_table, time_node)} and must preserve the
-##'     rows and columns of \code{data}. It must return the complete modified
-##'     data directly. Propensity metadata are supplied separately through
-##'     \code{propensity_instructions} and \code{propensity_variables}.
-##'     Defaults to \code{\link{intervene}}, which implements static
-##'     interventions.
-##' @param verbose Logical. If \code{FALSE} suppress all messages. \code{TRUE} is the default.
-##' @param propensity_instructions Optional fixed-probability or adherence
-##'     instructions for the treatment propensity. This may be a static numeric
-##'     vector, a named list/table of numeric vectors, a descriptor with
-##'     \code{mode = "fixed"} or \code{mode = "adherence"}, or a function
-##'     returning one of these objects. A function is called with
-##'     \code{data}, \code{intervention_table}, and \code{time_node} at the
-##'     same analysis stage as \code{intervene_function}. Fixed non-missing
-##'     values are assigned directly and excluded from model fitting;
-##'     \code{mode = "adherence"} models whether observed treatment matches the
-##'     intervention-updated data. Use \code{stratify_by} in an adherence
-##'     descriptor to fit separate models by observed strata. Static fixed
-##'     probability vectors may be given for the full prepared cohort and are
-##'     subset automatically for at-risk nuisance fits.
-##' @param propensity_variables Optional prepared-data variable names to add to
-##'     the treatment propensity formulas. This may be a character vector, a
-##'     named list, or a function returning either form. A function is called
-##'     with \code{data}, \code{intervention_table}, and \code{time_node}.
-##' @param ... Not used.
-#' @return The modified object contains the treatment variables and
-#'     \code{intervention_table} as list elements of \code{x$protocols[[name]]}.
-#'     When supplied, \code{propensity_instructions} and
-#'     \code{propensity_variables} are stored there as well.
-#' @details A history-dependent intervention only needs to return the
-#'   intervention-updated data. Propensity metadata are declared in the
-#'   protocol call. They may be static objects or functions evaluated with the
-#'   current observed history. The callback and metadata functions are called
-#'   on the full prepared cohort during formula construction and adherence
-#'   matching, and on the current at-risk subset during G and Q nuisance-model
-#'   fitting. In the G step this is the subset entering treatment node code{k}.
-#'   In the Q step it is the subset entering the outcome interval, with
-#'   code{time_node = k - 1}; the returned data are passed as prediction data
-#'   (code{newdata}) to the outcome learner before the TMLE fluctuation. They
-#'   are not the outcomes or data produced by the fluctuation step itself.
-#' @seealso \code{\link{rtmle_init}}, \code{\link{prepare_rtmle_data}},
-#'   \code{\link{intervention_match}}, \code{\link{target}},
-#'   \code{\link{model_formula}},
-#'   \code{\link{run_rtmle}}
-#' @author Thomas A Gerds \email{tag@@biostat.ku.dk}
-#' @examples
-#' # ------------------------------------------------------------------------------------------
-#' # Intervening on a single treatment variable
-#' # ------------------------------------------------------------------------------------------
-#' x <- rtmle_init(time_grid=0:3,name_id = "id",name_outcome = "Y",name_competing = "Dead",
-#'                 name_censoring = "Censored",censored_label = "censored")
-#' x <- protocol(x,name = "Always_A",
-#'                 intervention = data.frame(time_node=x$intervention_nodes,
-#'                                           "A" = factor("1",levels = c("0","1"))))
-#' x <- protocol(x,name = "Never_A",
-#'               intervention = data.frame(time_node=x$intervention_nodes,
-#'                                         "A" = factor("0",levels = c("0","1"))))
-#' x <- protocol(x,name = "Initiate_A_then_stop",
-#'               intervention = data.frame(time_node=x$intervention_nodes,
-#'                                         "A" = factor(c("1","0","0"),levels = c("0","1"))))
-#' x$protocols
-#' # ------------------------------------------------------------------------------------------
-#' # Intervening on more than one treatment variable
-#' # ------------------------------------------------------------------------------------------
-#' x <- rtmle_init(time_grid=0:3,name_id = "id",name_outcome = "Y",name_competing = "Dead",
-#'                 name_censoring = "Censored",censored_label = "censored")
-#' x <- protocol(x,name = "Always_A_never_B",
-#'                 intervention = data.frame(time_node=x$intervention_nodes,
-#'                                      "A" = factor("1",levels = c("0","1")),
-#'                                      "B" = factor("0",levels = c("0","1"))))
-#' x <- protocol(x,name = "Always_A_and_B_never_C",
-#'                     intervention = data.frame(time_node=x$intervention_nodes,
-#'                                               "A" = factor("1",levels = c("0","1")),
-#'                                               "B" = factor("1",levels = c("0","1")),
-#'                                               "C" = factor("0",levels = c("0","1"))))
-#' x$protocols
-#' # ------------------------------------------------------------------------------------------
-#' # Dynamic regime/History-dependent intervention: stop A after bleeding
-#' # ------------------------------------------------------------------------------------------
-#' data(simulated_cohort, package = "rtmle")
-#' ld <- register_format(simulated_cohort)
-#' y <- rtmle_init(time_grid = seq(0, 20, 4), name_id = "id",
-#'                 name_outcome = "stroke", name_competing = "death",
-#'                 name_censoring = "dropout", censored_label = "censored")
-#' y <- add_long_data(
-#'     y,
-#'     outcome_data = ld$timevar_data$stroke[!duplicated(id)],
-#'     censored_data = ld$timevar_data$dropout,
-#'     competing_data = ld$timevar_data$death,
-#'     timevar_data = ld$timevar_data[c("bleeding", "changeSBP", "A", "B")]
-#' )
-#' y <- add_baseline_data(y, data = ld$baseline_data)
-#' y <- discretize(y, start_followup_date = 0)
-#' y <- prepare_rtmle_data(y)
-#'
-#' has_bled_by <- function(data, node) {
-#'     history <- intersect(paste0("bleeding_", 0:node), names(data))
-#'     if (length(history) == 0L) return(rep(FALSE, NROW(data)))
-#'     bleeding_history <- do.call(
-#'         cbind,
-#'         lapply(history, function(v) data[[v]] %in% c(1, "1"))
-#'     )
-#'     rowSums(bleeding_history) > 0
-#' }
-#' stop_after_bleeding <- function(data, intervention_table, time_node) {
-#'     intervened_data <- intervene(data, intervention_table, time_node)
-#'     for (node in unique(intervention_table$time_node)) {
-#'         action <- paste0("A_", node)
-#'         intervened_data[[action]][has_bled_by(data, node)] <- factor(
-#'             "0", levels = levels(data[[action]])
-#'         )
-#'     }
-#'     intervened_data
-#' }
-#' bleeding_propensity_instructions <- function(data, intervention_table,
-#'                                              time_node) {
-#'     action <- paste0("A_", time_node)
-#'     stats::setNames(list(list(mode = "adherence")), action)
-#' }
-#' bleeding_propensity_variables <- function(data, intervention_table,
-#'                                           time_node) {
-#'     action <- paste0("A_", time_node)
-#'     stats::setNames(list(paste0("bleeding_", time_node)), action)
-#' }
-#' y <- protocol(
-#'     y,
-#'     name = "A_until_bleeding",
-#'     intervention = data.frame(
-#'         time_node = y$intervention_nodes,
-#'         A = factor("1", levels = c("0", "1"))
-#'     ),
-#'     intervene_function = stop_after_bleeding,
-#'     propensity_instructions = bleeding_propensity_instructions,
-#'     propensity_variables = bleeding_propensity_variables,
-#'     verbose = FALSE
-#' )
-#' y <- target(y, name = "Stroke_risk", estimator = "tmle",
-#'             protocols = "A_until_bleeding")
-#' y <- model_formula(y, verbose = FALSE)
-#' y <- run_rtmle(y, learner = "learn_glm", time_horizon = 2,
-#'                 refit = TRUE, verbose = FALSE)
-#' y$estimate$Main_analysis
-#' @export
+##'   called as \code{fun(data, intervention_table, time_node)}. It must return
+##'   the complete intervention-updated data while preserving its rows and
+##'   required columns. For a dynamic treatment regime, use it to update
+##'   treatment values according to the observed history.
+##' @param intervene_function_args Named list of additional arguments passed to
+##'   \code{intervene_function} at every intervention node. This is useful for
+##'   parameterized functions such as \code{\link{treat_unless}}, for example
+##'   \code{list(contra_indication = "bleeding", action = 0)}. The names
+##'   \code{data}, \code{intervention_table}, and the time argument are reserved.
+##' @param multiple_treatment_factorization How propensity models for multiple
+##'   treatment variables assigned at the same node are factorized. One of
+##'   \code{"joint"}, \code{"sequential"}, or \code{"independent"}; the
+##'   default is \code{"joint"}.
+##' @param adherence_model_strata Optional character vector of prepared-data
+##'   variables defining subgroups in which separate adherence propensities are
+##'   fitted. This argument is only for dynamic treatment rules. If it is
+##'   \code{NULL}, one pooled binary adherence model is fitted. Unsuffixed
+##'   time-varying names, such as \code{"bleeding"}, refer to the latest value
+##'   known before the decision: \code{bleeding_{k-1}} at node \code{k}; at
+##'   node 0, \code{bleeding_0} is treated as pre-first-decision information.
+##'   Unsuffixed time-varying names are lagged automatically: at node (k),
+##'   "bleeding" resolves to \code{bleeding_{k-1}}.
+##'   The argument only defines fitting strata and never adds predictors to the adherence-model
+##'   Multiple variables define strata by their combinations.
+##' @param verbose Logical. If \code{FALSE}, suppress all messages.
+##' @param ... Additional arguments are not used. The former
+##'   \code{dynamic_propensity_instructions} interface is no longer supported;
+##'   use \code{adherence_model_strata} instead.
+##' @return The modified object contains the treatment variables and
+##'   \code{intervention_table} in \code{x$regimes[[name]]}.
+##' @details A dynamic intervention function returns data only. The
+##'   \code{data} argument is the current prepared cohort or at-risk subset.
+##'   For a dynamic rule, \code{rtmle} constructs a binary adherence response
+##'   indicating whether the observed treatment agrees with the
+##'   intervention-updated treatment. \code{adherence_model_strata} controls
+##'   whether this response is modelled in one pooled model or in separate
+##'   pre-decision subgroups. The intervention function determines the regime
+##'   itself, including whether a contraindication pauses treatment for one
+##'   interval or stops it permanently. A static regime uses the ordinary
+##'   observed-treatment model. Additional intervention-function arguments can
+##'   be supplied through \code{intervene_function_args}, avoiding a wrapper
+##'   when a dynamic rule such as \code{\link{treat_unless}} has fixed
+##'   parameters.
+##' @seealso \code{\link{rtmle_init}}, \code{\link{prepare_rtmle_data}},
+##'   \code{\link{intervention_match}}, \code{\link{target}},
+##'   \code{\link{model_formula}}, \code{\link{run_rtmle}}
+##' @author Thomas A. Gerds \email{tag@@biostat.ku.dk}
+##' @examples
+##' x <- rtmle_init(time_grid = 0:3, name_id = "id",
+##'                 name_outcome = "Y", name_competing = "Dead",
+##'                 name_censoring = "Censored", censored_label = "censored")
+##' x <- regime(
+##'     x,
+##'     name = "Always_A_never_B",
+##'     intervention = data.frame(
+##'         time_node = x$intervention_nodes,
+##'         A = factor("1", levels = c("0", "1")),
+##'         B = factor("0", levels = c("0", "1"))
+##'     ),
+##'     multiple_treatment_factorization = "sequential"
+##' )
+##'
+##' # A dynamic rule can stop A after a contraindication in the history.
+##' x <- regime(
+##'     x, name = "A_until_bleeding",
+##'     intervention = data.frame(
+##'         time_node = x$intervention_nodes,
+##'         A = factor("1", levels = c("0", "1"))
+##'     ),
+##'     intervene_function = treat_unless(
+##'         contra_indication = "bleeding",
+##'         action = 0
+##'     ),
+##'     adherence_model_strata = "bleeding",
+##'     verbose = FALSE
+##' )
+##' @export
 protocol <- function(x,
                      name,
                      intervention,
@@ -194,121 +103,216 @@ protocol <- function(x,
                      treatment_variables,
                      intervene_function = NULL,
                      verbose = TRUE,
-                     propensity_instructions = NULL,
-                     propensity_variables = NULL,
+                     multiple_treatment_factorization = "joint",
+                     adherence_model_strata = NULL,
+                     intervene_function_args = NULL,
                      ...) {
+    dots <- list(...)
+    if (length(dots) > 0L) {
+        dot_names <- names(dots)
+        if (!is.null(dot_names) &&
+            "dynamic_propensity_instructions" %in% dot_names) {
+            stop(
+                "The former interface was removed: ",
+                "dynamic_propensity_instructions; use adherence_model_strata instead."
+            )
+        }
+        stop(
+            "Unused argument(s): ",
+            paste(dot_names[!is.na(dot_names) & nzchar(dot_names)], collapse = ", ")
+        )
+    }
     variable <- time_node <- NULL
-    #
-    # User provided a data.frame
-    #
-    allowed_intervention_node_names <- c("time_node","intervention_node","node","time_grid","time")
-    if (inherits(intervention,"data.frame")){
+    validate_multiple_treatment_factorization(
+        multiple_treatment_factorization,
+        "multiple_treatment_factorization"
+    )
+    validate_adherence_model_strata(adherence_model_strata)
+    if (length(adherence_model_strata) == 0L) {
+        adherence_model_strata <- NULL
+    }
+    if (!is.null(adherence_model_strata) && length(intervene_function) == 0L) {
+        stop(
+            "`adherence_model_strata` is only for dynamic treatment rules; ",
+            "supply `intervene_function`."
+        )
+    }
+
+    allowed_intervention_node_names <- c(
+        "time_node", "intervention_node", "node", "time_grid", "time"
+    )
+    if (inherits(intervention, "data.frame")) {
         intervention_table <- data.table::copy(intervention)
         data.table::setDT(intervention_table)
         treatment_variables <- names(intervention_table)
-        if(length(intervention_node_name <- intersect(treatment_variables,allowed_intervention_node_names))>0){
-            if (length(intervention_node_name)>1) intervention_node_name <- intervention_node_name[[1]]
-            treatment_variables <- setdiff(treatment_variables,intervention_node_name)
-        }else{
-            if (length(x$intervention_nodes)>1){
-                stop("Argument intervention needs to have a variable called 'intervention_node' with values that are equal to or a subset of x$intervention_nodes.")
+        intervention_node_name <- intersect(
+            treatment_variables,
+            allowed_intervention_node_names
+        )
+        if (length(intervention_node_name) > 0L) {
+            if (length(intervention_node_name) > 1L) {
+                intervention_node_name <- intervention_node_name[[1L]]
             }
+            treatment_variables <- setdiff(
+                treatment_variables,
+                intervention_node_name
+            )
+        } else if (length(x$intervention_nodes) > 1L) {
+            stop(
+                "Argument intervention needs to have a variable called ",
+                "'intervention_node' with values equal to or a subset of ",
+                "x$intervention_nodes."
+            )
         }
-        if (any(grepl(pattern = "_[0-9]+$",x = treatment_variables))){
+        if (any(grepl("_[0-9]+$", treatment_variables))) {
             stop("Treatment variables should be given without time suffix.")
         }
-        if (any(is.na(too_many <- which(is.na(match(intervention_table[["time_node"]],x$intervention_nodes,nomatch = NA))))))
-            stop(paste0("The following time points are not registered as intervention nodes in the object:",
-                        paste0(intervention_table[["time_node"]][too_many],collapse = ", ")))
-        setnames(intervention_table,old = intervention_node_name,new = "time_node")
-        treatment_options <- sapply(treatment_variables,
-                                    function(v){
-                                        if (is.factor(intervention[[v]])){
-                                            if (length(levels(intervention[[v]])) == 2){
-                                                levels(intervention[[v]])
-                                            }else{
-                                                stop(paste0("All treatment variables must have exactly 2 levels. Problem with variable ",
-                                                            v),".")
-                                            }
-                                        } else{
-                                            stop(paste0("The treatment variables must be factors. Problem with variable ",v,"."))
-                                        }
-                                    },simplify = FALSE)
-    }else{
-        #
-        # User provided a intervention values and separately names of treatment variables 
-        # 
-        if (!missing(treatment_variables) && 
+        if (any(is.na(match(
+            intervention_table[["time_node"]],
+            x$intervention_nodes,
+            nomatch = NA
+        )))) {
+            too_many <- which(is.na(match(
+                intervention_table[["time_node"]],
+                x$intervention_nodes,
+                nomatch = NA
+            )))
+            stop(
+                "The following time points are not registered as intervention ",
+                "nodes in the object: ",
+                paste(intervention_table[["time_node"]][too_many], collapse = ", ")
+            )
+        }
+        data.table::setnames(
+            intervention_table,
+            old = intervention_node_name,
+            new = "time_node"
+        )
+        treatment_options <- lapply(treatment_variables, function(variable) {
+            if (!is.factor(intervention[[variable]])) {
+                stop(
+                    "The treatment variables must be factors. Problem with ",
+                    variable, "."
+                )
+            }
+            if (length(levels(intervention[[variable]])) != 2L) {
+                stop(
+                    "All treatment variables must have exactly 2 levels. ",
+                    "Problem with variable ", variable, "."
+                )
+            }
+            levels(intervention[[variable]])
+        })
+        names(treatment_options) <- treatment_variables
+    } else {
+        if (!missing(treatment_variables) &&
             length(treatment_variables) == length(intervention) &&
-            all(intervention %in% c(0,1))){
-            intervention_table <- data.table::as.data.table(lapply(1:length(treatment_variables),function(v){
-                factor(intervention[[v]],levels = c(0,1))
-            }))
-            intervention_table <- cbind(time_node = x$intervention_nodes,
-                                        intervention_table)
-            data.table::setnames(intervention_table,c("time_node",treatment_variables))
-            treatment_options <- sapply(treatment_variables,function(x)c(0,1),simplify = FALSE)
-        }else{
-            stop("Argument `intervention' is not a data.frame. Hence it must be a vector of 0s and 1s
-                  with the same length as argument treatment_variables")
+            all(intervention %in% c(0, 1))) {
+            intervention_table <- data.table::as.data.table(lapply(
+                seq_along(treatment_variables),
+                function(index) factor(intervention[[index]], levels = c(0, 1))
+            ))
+            intervention_table <- cbind(
+                time_node = x$intervention_nodes,
+                intervention_table
+            )
+            data.table::setnames(
+                intervention_table,
+                c("time_node", treatment_variables)
+            )
+            treatment_options <- lapply(treatment_variables, function(x) c(0, 1))
+            names(treatment_options) <- treatment_variables
+        } else {
+            stop(
+                "Argument intervention is not a data.frame. Hence it must ",
+                "be a vector of 0s and 1s with the same length as ",
+                "argument treatment_variables."
+            )
         }
     }
-    # turn from wide into long format
+
     intervention_table <- data.table::melt(
-                                          intervention_table, 
-                                          id.vars = "time_node", 
-                                          variable.name = "variable", 
-                                          value.name = "value",
-                                          value.factor = TRUE
-                                      )[, variable := paste0(variable, "_", time_node)]
-    if (length(intervene_function)>0){
-        if (!(is.function(intervene_function) ||
-              (is.character(intervene_function) &&
-               length(intervene_function) == 1L &&
-               !is.na(intervene_function) && nzchar(intervene_function)))) {
-            stop("intervene_function must be a function or the name of a function.")
+        intervention_table,
+        id.vars = "time_node",
+        variable.name = "variable",
+        value.name = "value",
+        value.factor = TRUE
+    )[, variable := paste0(variable, "_", time_node)]
+
+    if (length(intervene_function) > 0L &&
+        !(is.function(intervene_function) ||
+          (is.character(intervene_function) && length(intervene_function) == 1L &&
+           !is.na(intervene_function) && nzchar(intervene_function)))) {
+        stop("intervene_function must be a function or the name of a function.")
+    }
+    if (!is.null(intervene_function_args) &&
+        !is.list(intervene_function_args)) {
+        stop("intervene_function_args must be a named list.")
+    }
+    if (length(intervene_function_args) > 0L) {
+        argument_names <- names(intervene_function_args)
+        reserved_names <- c(
+            "data",
+            "intervention_table",
+            "time_node",
+            "time",
+            "current_time",
+            "current.time"
+        )
+        if (is.null(argument_names) ||
+            anyNA(argument_names) ||
+            any(!nzchar(argument_names)) ||
+            anyDuplicated(argument_names) ||
+            any(argument_names %in% reserved_names)) {
+            stop(
+                "intervene_function_args must be a named list with unique ",
+                "non-reserved argument names."
+            )
+        }
+        if (length(intervene_function) == 0L) {
+            stop(
+                "intervene_function_args requires an intervene_function."
+            )
         }
     }
-    if (!is.null(propensity_instructions) &&
-        !(is.function(propensity_instructions) ||
-          is.numeric(propensity_instructions) ||
-          inherits(propensity_instructions, "data.frame") ||
-          is.matrix(propensity_instructions) ||
-          is.list(propensity_instructions))) {
-        stop("`propensity_instructions` must be a function or a supported instruction object.")
+
+    x$regimes[[name]] <- NULL
+    x$regimes[[name]]$dynamic_intervention <- length(intervene_function) > 0L
+    x$regimes[[name]]$intervene_function <- if (length(intervene_function) > 0L) {
+        intervene_function
+    } else {
+        "intervene"
     }
-    if (!is.null(propensity_variables) &&
-        !(is.function(propensity_variables) ||
-          is.character(propensity_variables) ||
-          is.list(propensity_variables))) {
-        stop("`propensity_variables` must be a function, character vector, or named list.")
-    }
-    # Re-registering a protocol invalidates all derived adherence and
-    # probability objects from the previous definition.
-    x$protocols[[name]] <- NULL
-    if (length(intervene_function)>0){
-        x$protocols[[name]]$intervene_function <- intervene_function
-    }else{
-        x$protocols[[name]]$intervene_function <- "intervene"
-    }
-    x$protocols[[name]]$treatment_variables <- treatment_variables
-    x$protocols[[name]]$intervention_table <- intervention_table[]
-    x$protocols[[name]]$propensity_instructions <- propensity_instructions
-    x$protocols[[name]]$propensity_variables <- propensity_variables
-    # adding the treatment options if necessary
-    if (length(x$names$treatment_options) == 0){
+    x$regimes[[name]]$intervene_function_args <- intervene_function_args
+    x$regimes[[name]]$treatment_variables <- treatment_variables
+    x$regimes[[name]]$treatment_options <- treatment_options
+    x$regimes[[name]]$intervention_table <- intervention_table[]
+    x$regimes[[name]]$multiple_treatment_factorization <-
+        multiple_treatment_factorization
+    x$regimes[[name]]$adherence_model_strata <- adherence_model_strata
+
+    if (length(x$names$treatment_options) == 0L) {
         x$names$treatment_options <- treatment_options
-    }else{
-        new_options <- setdiff(names(treatment_options),
-                               names(x$names$treatment_options))
-        if (length(new_options)>0){
-            x$names$treatment_options <- c(x$names$treatment_options,treatment_options[new_options])
+    } else {
+        new_options <- setdiff(
+            names(treatment_options),
+            names(x$names$treatment_options)
+        )
+        if (length(new_options) > 0L) {
+            x$names$treatment_options <- c(
+                x$names$treatment_options,
+                treatment_options[new_options]
+            )
         }
     }
-    # check adherence
-    x <- intervention_match(x,protocol_name = name)
+    x <- intervention_match(x, regime_name = name)
     x
 }
+
+######################################################################
+##' @rdname protocol
+##' @export
+regime <- protocol
 
 ######################################################################
 ### protocol.R ends here

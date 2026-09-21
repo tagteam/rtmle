@@ -3,15 +3,14 @@
 ## Evaluate and validate a user-defined intervention function
 #----------------------------------------------------------------------
 
-evaluate_intervention <- function(protocol,
+evaluate_intervention <- function(regime,
                                   data,
                                   intervention_table,
                                   time_node,
                                   full_n = NROW(data),
                                   row_indices = seq_len(NROW(data))) {
     if (length(full_n) != 1L || is.na(full_n) || !is.finite(full_n) ||
-        full_n < 0L ||
-        full_n != as.integer(full_n)) {
+        full_n < 0L || full_n != as.integer(full_n)) {
         stop("`full_n` must be one non-negative integer.")
     }
     if (!is.numeric(row_indices) || length(row_indices) != NROW(data) ||
@@ -19,11 +18,12 @@ evaluate_intervention <- function(protocol,
         any(row_indices > full_n)) {
         stop("`row_indices` must identify the rows of `data` in the full cohort.")
     }
-    if (length(protocol$intervene_function) == 0) {
-        stop("The protocol has no intervene_function.")
+    if (length(regime$intervene_function) == 0) {
+        stop("The regime has no intervene_function.")
     }
+
     history_table <- data.table::copy(intervention_table)
-    if (NROW(history_table) > 0 && "time_node" %in% names(history_table)) {
+    if (NROW(history_table) > 0L && "time_node" %in% names(history_table)) {
         keep <- !is.na(history_table[["time_node"]]) &
             history_table[["time_node"]] <= time_node
         if ("value" %in% names(history_table)) {
@@ -31,9 +31,14 @@ evaluate_intervention <- function(protocol,
         }
         history_table <- history_table[keep]
     }
+    if (!is.null(regime$treatment_options)) {
+        data.table::setattr(
+            history_table,
+            "treatment_options",
+            regime$treatment_options
+        )
+    }
 
-    # The intervention and optional propensity callbacks share the same
-    # stage-specific data, intervention history, and node arguments.
     call_with_context <- function(fun) {
         if (!is.function(fun)) {
             if (!is.character(fun) || length(fun) != 1L || is.na(fun) ||
@@ -47,10 +52,22 @@ evaluate_intervention <- function(protocol,
             }
         }
         formal_names <- names(formals(fun))
-        args <- list(
+        function_args <- regime$intervene_function_args
+        if (is.null(function_args)) {
+            function_args <- list()
+        }
+        if (!is.list(function_args) ||
+            (length(function_args) > 0L &&
+             (is.null(names(function_args)) ||
+              anyNA(names(function_args)) ||
+              any(!nzchar(names(function_args))) ||
+              anyDuplicated(names(function_args))))) {
+            stop("intervene_function_args must be a named list.")
+        }
+        args <- c(list(
             data = data.table::copy(data),
             intervention_table = data.table::copy(history_table)
-        )
+        ), function_args)
         recognized_time_names <- c(
             "time_node", "time", "current_time", "current.time"
         )
@@ -65,134 +82,46 @@ evaluate_intervention <- function(protocol,
         do.call(fun, args)
     }
 
-    intervened_data <- call_with_context(protocol$intervene_function)
+    intervened_data <- call_with_context(regime$intervene_function)
     if (!(inherits(intervened_data, "data.frame") ||
           is.matrix(intervened_data))) {
         stop(
             "The intervene_function must return the intervention-updated data ",
-            "as a data frame or matrix. Supply propensity_instructions and ",
-            "propensity_variables to protocol() instead of returning metadata."
+            "as a data frame or matrix; do not return adherence-model metadata."
         )
     }
-
-    instructions_are_static <- !is.function(protocol$propensity_instructions)
-    propensity_instructions <- protocol$propensity_instructions
-    if (is.function(propensity_instructions)) {
-        propensity_instructions <- call_with_context(propensity_instructions)
-    }
-    propensity_instructions <- parse_instructions(
-        propensity_instructions,
-        NROW(data),
-        full_n = full_n,
-        allow_full_length = instructions_are_static
-    )
-
-    # Static fixed probabilities are often declared once for the full cohort,
-    # while nuisance fits use an at-risk subset. Align those vectors with the
-    # rows being evaluated before handing them to downstream code. A
-    # function-valued instruction is evaluated separately on each subset and
-    # therefore must already have the current length.
-    if (instructions_are_static && length(propensity_instructions) > 0L &&
-        full_n != NROW(data)) {
-        for (instruction_name in names(propensity_instructions)) {
-            instruction <- propensity_instructions[[instruction_name]]
-            if (identical(instruction$mode, "fixed") &&
-                length(instruction$probability) == full_n) {
-                instruction$probability <- instruction$probability[row_indices]
-                propensity_instructions[[instruction_name]] <- instruction
-            }
-        }
-    }
-
-    propensity_variables <- protocol$propensity_variables
-    if (is.function(propensity_variables)) {
-        propensity_variables <- call_with_context(propensity_variables)
-    }
-    if (length(propensity_variables) > 0L) {
-        if (is.character(propensity_variables)) {
-            if (anyNA(propensity_variables) || any(!nzchar(propensity_variables))) {
-                stop("`propensity_variables` must contain non-missing prepared-data column names.")
-            }
-            propensity_variables <- unique(propensity_variables)
-        } else if (is.list(propensity_variables) &&
-                   !is.null(names(propensity_variables))) {
-            valid <- vapply(propensity_variables, function(value) {
-                is.character(value) && !anyNA(value) && all(nzchar(value))
-            }, logical(1))
-            if (!all(valid)) {
-                stop("Each `propensity_variables` list element must be a character vector.")
-            }
-            propensity_variables <- lapply(propensity_variables, unique)
-        } else {
-            stop("`propensity_variables` must be a character vector or named list.")
-        }
-    } else {
-        propensity_variables <- NULL
-    }
-
     if (NROW(intervened_data) != NROW(data)) {
         stop("The intervention function must preserve the number and order of rows.")
     }
     missing_columns <- setdiff(names(data), colnames(intervened_data))
     if (length(missing_columns) > 0L) {
-        stop("The intervention function removed required data column(s): ",
-             paste(missing_columns, collapse = ", "), ".")
+        stop(
+            "The intervention function removed required data column(s): ",
+            paste(missing_columns, collapse = ", "), "."
+        )
     }
     intervened_data <- data.table::as.data.table(intervened_data)
 
-    declared_variables <- if (is.list(propensity_variables)) {
-        unique(unlist(propensity_variables, use.names = FALSE))
-    } else {
-        propensity_variables
-    }
-    missing_propensity_variables <- setdiff(declared_variables, names(data))
-    if (length(missing_propensity_variables) > 0L) {
-        stop("Unknown propensity_variables supplied to protocol(): ",
-             paste(missing_propensity_variables, collapse = ", "), ".")
-    }
-
-    if (length(propensity_instructions) > 0L) {
-        current_variables <- history_table[["variable"]][
-            history_table[["time_node"]] == time_node
-        ]
-        # Static metadata may declare one instruction for every treatment
-        # node, even though the callback is being evaluated at an earlier
-        # node. Validate names against the complete protocol table; downstream
-        # task selection still uses only the current treatment columns.
-        all_intervention_variables <- if (!is.null(protocol$intervention_table) &&
-                                          "variable" %in% names(protocol$intervention_table)) {
-            protocol$intervention_table[["variable"]]
-        } else {
-            intervention_table[["variable"]]
-        }
-        permitted_names <- unique(c(
-            all_intervention_variables,
-            paste(current_variables, collapse = ","),
-            ".default"
-        ))
-        unknown_instructions <- setdiff(
-            names(propensity_instructions),
-            permitted_names
+    validate_adherence_model_strata(regime$adherence_model_strata)
+    adherence_model_strata <- resolve_adherence_model_strata(
+        regime$adherence_model_strata,
+        time_node = time_node,
+        available_names = names(data)
+    )
+    missing_strata <- setdiff(adherence_model_strata, names(data))
+    if (length(missing_strata) > 0L) {
+        stop(
+            "Unknown variable(s) supplied in `adherence_model_strata`: ",
+            paste(missing_strata, collapse = ", ")
         )
-        if (length(unknown_instructions) > 0L) {
-            stop("Unknown propensity-instruction treatment column(s): ",
-                 paste(unknown_instructions, collapse = ", "), ".")
-        }
-        declared_strata <- unique(unlist(lapply(
-            propensity_instructions,
-            function(instruction) instruction$stratify_by
-        ), use.names = FALSE))
-        missing_strata <- setdiff(declared_strata, names(data))
-        if (length(missing_strata) > 0L) {
-            stop("Unknown `stratify_by` variable(s) supplied to protocol(): ",
-                 paste(missing_strata, collapse = ", "), ".")
-        }
     }
 
     list(
         data = intervened_data,
-        propensity_instructions = propensity_instructions,
-        propensity_variables = propensity_variables
+        dynamic_adherence = isTRUE(regime$dynamic_intervention),
+        adherence_model_strata = adherence_model_strata,
+        multiple_treatment_factorization =
+            regime$multiple_treatment_factorization
     )
 }
 

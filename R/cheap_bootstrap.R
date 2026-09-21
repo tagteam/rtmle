@@ -43,17 +43,17 @@
 #'                    competing_data=ld$timevar_data$death,
 #'                    timevar_data=ld$timevar_data[c("bleeding","changeSBP","A","B")])
 #' x <- add_baseline_data(x,data=ld$baseline_data)
-#' x <- discretize(x,start_followup_date=0)
+#' x <- discretize_data(x,start_followup_date=0)
 #' x <- prepare_rtmle_data(x)
-#' x <- protocol(x,name = "Always_A",
+#' x <- regime(x,name = "Always_A",
 #'                     intervention = data.frame(time=x$intervention_nodes,
 #'                                               "A" = factor("1",levels = c("0","1"))))
-#' x <- protocol(x,name = "Never_A",
+#' x <- regime(x,name = "Never_A",
 #'                     intervention = data.frame(time=x$intervention_nodes,
 #'                                               "A" = factor("0",levels = c("0","1"))))
 #' x <- target(x,name = "Outcome_risk",
 #'                   estimator = "tmle",
-#'                   protocols = c("Always_A","Never_A"))
+#'                   regimes = c("Always_A","Never_A"))
 #'  x <- model_formula(x)
 #'  x <- run_rtmle(x,learner = "learn_glm",time_horizon = 1:tau)
 #'  x <- cheap_bootstrap(x,B=5,time_horizon=1:tau, M = 0.632*NROW(x$prepared_data))
@@ -91,7 +91,7 @@ cheap_bootstrap <- function(x,
         }
     }
     analyses <- setdiff(analyses,"Cheap_bootstrap")
-    Target_parameter <- Main_estimate <- Bootstrap_estimate <- Bootstrap_lower <- Bootstrap_upper <- Main <- cheap_lower <- cheap_upper <- cheap_variance <- Estimate <- Estimator <- tq <- Time_horizon <- Protocol <- Target <- NULL
+    Target_parameter <- Main_estimate <- Bootstrap_estimate <- Bootstrap_lower <- Bootstrap_upper <- Main <- cheap_lower <- cheap_upper <- cheap_variance <- Estimate <- Estimator <- tq <- Time_horizon <- Regime <- Target <- NULL
     for (v in analyses){
         if (verbose) message(paste0("Cheap bootstrap for '",v,"'"))
         # add to existing bootstrap results if any
@@ -156,7 +156,7 @@ cheap_bootstrap <- function(x,
         data.table::set(x$estimate$Cheap_bootstrap[[v]],j = "Main",value = NULL)
       }
       data.table::setnames(x$estimate$Cheap_bootstrap[[v]],"Estimate","Bootstrap_estimate")
-      cb <- x$estimate[[v]][,list(Target,Protocol,Time_horizon,Main_estimate = Estimate)][x$estimate$Cheap_bootstrap[[v]],on = c("Target","Protocol","Time_horizon")]
+      cb <- x$estimate[[v]][,list(Target,Regime,Time_horizon,Main_estimate = Estimate)][x$estimate$Cheap_bootstrap[[v]],on = c("Target","Regime","Time_horizon")]
       if (replace){
         cheap_scale <- sqrt(M / N)
       } else {
@@ -164,12 +164,12 @@ cheap_bootstrap <- function(x,
       }
       # t-distribution 
       cb[,tq := stats::qt(1 - alpha / 2, df = B)]
-      cb[,cheap_variance := cumsum((Main_estimate-Bootstrap_estimate)^2)/seq_len(.N),by = c("Target","Protocol","Time_horizon")]
+      cb[,cheap_variance := cumsum((Main_estimate-Bootstrap_estimate)^2)/seq_len(.N),by = c("Target","Regime","Time_horizon")]
       cb[,cheap_lower := Main_estimate - tq * cheap_scale * sqrt(cheap_variance)]
       cb[,cheap_upper := Main_estimate + tq * cheap_scale * sqrt(cheap_variance)]
       x$estimate$Cheap_bootstrap[[v]] <- cb[,list(B,
                                                                Target,
-                                                               Protocol,
+                                                               Regime,
                                                                Time_horizon,
                                                                Target_parameter,
                                                                Estimator,
@@ -192,8 +192,8 @@ cheap_bootstrap <- function(x,
       }
       cb <- cb[B == max_B,list(Bootstrap_standard_error = sqrt(cheap_variance),
                                                  Bootstrap_lower = pmax(0,cheap_lower),
-                                                 Bootstrap_upper = pmin(1,cheap_upper)),by = c("Target","Protocol","Time_horizon")]
-      x$estimate[[v]] <- cb[x$estimate[[v]],on = c("Target","Protocol","Time_horizon")]
+                                                 Bootstrap_upper = pmin(1,cheap_upper)),by = c("Target","Regime","Time_horizon")]
+      x$estimate[[v]] <- cb[x$estimate[[v]],on = c("Target","Regime","Time_horizon")]
     }
     # NOTE if we would return x[] instead of x then x looses its class!
     return(x)

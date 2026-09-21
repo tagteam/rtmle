@@ -26,7 +26,7 @@ character string.}
 \item{data}{Data used for learning.}
 
 \item{intervened_data}{Data used for prediction after intervention variables
-have been set according to a protocol.}
+have been set according to a regime.}
 
 \item{selector}{Character value controlling how the penalty parameter
 \code{lambda} is selected. If \code{"undersmooth"}, use the least

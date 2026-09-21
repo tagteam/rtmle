@@ -10,20 +10,23 @@ intervene(data, intervention_table, time_node)
 \item{data}{The current history data.}
 
 \item{intervention_table}{Long-format intervention table supplied by
-\code{protocol()}.}
+\code{regime()}.}
 
 \item{time_node}{Current intervention node. Only treatment assignments up to
 and including this node are applied.}
 }
 \value{
-A copy of \code{data} with protocol treatment values applied.
+A copy of \code{data} with regime treatment values applied.
+Binary factor values in the intervention table are coerced to the type of
+the corresponding data column, so integer treatment histories are handled
+in the same way as factor histories.
 }
 \description{
-This is the default function used by \code{\link{protocol}}. It is also a
+This is the default function used by \code{\link{regime}}. It is also a
 convenient starting point inside a user-defined intervention function:
-first apply the nominal protocol values, then replace treatment values for
+first apply the nominal regime values, then replace treatment values for
 rows governed by a history-dependent rule.
 }
 \seealso{
-\code{\link{protocol}}
+\code{\link{regime}}
 }

@@ -11,7 +11,7 @@
 ### Commentary: when assigning a stochastic intervention, we need the definition of
 #               the probability distribution for the Treatment assignment
 #               this is an example for the definition of the stochastic intervention that
-#               needs to be specified in the protocol function
+#               needs to be specified in the regime function
 ##
 ### Change Log:
 #----------------------------------------------------------------------

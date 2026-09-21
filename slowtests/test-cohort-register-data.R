@@ -64,19 +64,19 @@ x <- add_long_data(x,
                    competing_data=ld$timevar_data$death,
                    timevar_data=ld$timevar_data[c("bleeding","changeSBP","A","B")])
 x <- add_baseline_data(x,data=ld$baseline_data)
-x <- discretize(x,start_followup_date=0)
+x <- discretize_data(x,start_followup_date=0)
 x <- prepare_rtmle_data(x)
-x <- protocol(x,name = "Always_A",
+x <- regime(x,name = "Always_A",
               intervention = data.frame(time=x$intervention_nodes,
                                         "A" = factor("1",levels = c("0","1"))))
-x <- protocol(x,name = "Never_A",
+x <- regime(x,name = "Never_A",
               intervention = data.frame(time=x$intervention_nodes,
                                         "A" = factor("0",levels = c("0","1"))))
-x <- protocol(x,name = "Always_B",
+x <- regime(x,name = "Always_B",
               intervention = data.frame(time=x$intervention_nodes,
                                         "B" = factor("1",levels = c("0","1"))))
 x <- target(x,name = "Treatment effect",
-            protocols = c("Always_A","Always_B","Never_A"))
+            regimes = c("Always_A","Always_B","Never_A"))
 plot_adherence(x)
 x <- model_formula(x)
 x <- run_rtmle(x,time_horizon = 1:4)

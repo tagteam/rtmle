@@ -24,7 +24,7 @@
 ##'   character string.
 ##' @param data Data used for learning.
 ##' @param intervened_data Data used for prediction after intervention variables
-##'   have been set according to a protocol.
+##'   have been set according to a regime.
 ##' @param selector Character value controlling how the penalty parameter
 ##'   \code{lambda} is selected. If \code{"undersmooth"}, use the least
 ##'   penalized value that still fits the model. The other options,

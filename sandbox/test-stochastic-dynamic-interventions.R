@@ -27,7 +27,7 @@ x <- add_long_data(x,
                     competing_data=ld$competing_data,
                     timevar_data=ld$timevar_data)
 x <- add_baseline_data(x,data=ld$baseline_data)
-x <- discretize(x,start_followup_date = 0)
+x <- discretize_data(x,start_followup_date = 0)
 my_break <- function(data,time){
     ## browser(skipCalls=1L)
     if (time == 0)
@@ -35,9 +35,9 @@ my_break <- function(data,time){
     else
         data[,{.SD},.SDcols = paste0("A_",0:(time-1))]
 }
-x <- protocol(x,name = "Always_A",treatment_variables = "A",intervention = "my_break")
+x <- regime(x,name = "Always_A",treatment_variables = "A",intervention = "my_break")
 x <- prepare_rtmle_data(x)
-x <- target(x,name = "Outcome_risk",estimator = "tmle",protocols = "Always_A")
+x <- target(x,name = "Outcome_risk",estimator = "tmle",regimes = "Always_A")
 x <- model_formula(x)
 system.time(x <- run_rtmle(x,refit = TRUE,time_horizon = 2,learner = "learn_glm"))
 

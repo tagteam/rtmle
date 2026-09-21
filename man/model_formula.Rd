@@ -6,40 +6,37 @@
 \usage{
 model_formula(
   x,
-  propensity_model = "joint",
   Markov = NULL,
   verbose = TRUE,
   exclude_variables = NULL,
   exclusion_rules = NULL,
-  inclusion_rules = NULL,
-  ...
+  inclusion_rules = NULL
 )
 }
 \arguments{
 \item{x}{An object of class \code{"rtmle"} with prepared data and at least
-one protocol defined by \code{\link{protocol}}.}
-
-\item{propensity_model}{Relevant only for interventions depending on
-multiple treatment variables. Controls how to model the propensity of the
-regimen dictated by the protocol. Possible values are \code{"joint"},
-\code{"sequential"}, and \code{"independent"}.}
+one regime defined by \code{\link{regime}}.}
 
 \item{Markov}{Names of time-dependent variables that should appear only with
 their most recent values on the right-hand side of formulas.}
 
 \item{verbose}{Logical. If \code{FALSE} suppress all messages. \code{TRUE} is the default.}
 
-\item{exclude_variables}{Variables to exclude from the formulas for the nuisance parameters.}
+\item{exclude_variables}{Variables to exclude from all formulas of the nuisance parameter models.}
 
-\item{exclusion_rules}{Experimental. Additional exclusion rules given as a
+\item{exclusion_rules}{Additional exclusion rules given as a
 named list. Names are variables occurring on the left-hand side of a
-formula, and elements are variables to exclude from the right-hand side.}
+formula, and elements are variables to exclude from the right-hand side.
+E.g., \code{list("A_4"="age")} removes variable \code{"age"} from the propensity
+score model for treatment variable \code{"A_4"}.
+Regular expressions are interpreted by \code{grep} so that
+\code{list("*"="age")} removes variable \code{"age"} from all formulas and
+\code{list("dropout_*"="age")} removes variable \code{"age"} from all formulas
+where the outcome is a censoring node (assuming \code{x$name$censoring="dropout"}).}
 
-\item{inclusion_rules}{Experimental. Additional inclusion rules given as a
+\item{inclusion_rules}{Additional inclusion rules given as a
 named list. Names are variables occurring on the left-hand side of a
 formula, and elements are variables to include on the right-hand side.}
-
-\item{...}{Not used.}
 }
 \value{
 The modified \code{rtmle} object.
@@ -52,10 +49,22 @@ Because the data are discretized, time-dependent covariates at time \code{k}
 are not included in treatment models at time \code{k}, except at time 0.
 This avoids encoding an ordering assumption in which \code{L_k} precedes
 \code{A_k} when, in the original event history, \code{A_k} may occur before
-\code{L_k}. A history-dependent intervention can explicitly declare
-\code{L_k} in the \code{propensity_variables} supplied to
-\code{\link{protocol}}. Doing so asserts that \code{L_k} is known before
-the treatment decision at node \code{k}.
+\code{L_k}. Dynamic adherence models therefore use the history available
+before the treatment decision. See \code{adherence_model_strata} in
+\code{\link{regime}} for optional subgroup-specific fitting; those
+variables are not added as current-node predictors.
+
+The treatment factorization is set separately for each regime with
+\code{multiple_treatment_factorization}. See \code{\link{regime}}
+for the dynamic-regime instruction interface.
+The factorization choice matters only when multiple treatment variables
+are assigned at the same intervention node.
+
+For a dynamic regime, a user-supplied \code{intervene_function} changes the
+treatment response to observed-versus-intervened adherence. The response is
+binary, and \code{adherence_model_strata} in \code{\link{regime}} can
+request separate fits in pre-decision subgroups. Stratification variables
+are not added as current-interval predictors.
 }
 \examples{
 data(simulated_cohort)
@@ -69,18 +78,19 @@ x <- add_long_data(x,
                    competing_data=ld$timevar_data$death,
                    timevar_data=ld$timevar_data[c("bleeding","changeSBP","A","B")])
 x <- add_baseline_data(x,data=ld$baseline_data)
-x <- discretize(x,start_followup_date=0)
+x <- discretize_data(x,start_followup_date=0)
 x <- prepare_rtmle_data(x)
-x <- protocol(x,name = "Always_A",
+x <- regime(x,name = "Always_A",
               intervention = data.frame(time=x$intervention_nodes,
                                         "A" = factor("1",levels = c("0","1"))))
-x <- protocol(x,name = "Never_A",
+x <- regime(x,name = "Never_A",
               intervention = data.frame(time=x$intervention_nodes,
                                         "A" = factor("0",levels = c("0","1"))))
-x <- protocol(x,name = "Use_A_not_B",
+x <- regime(x,name = "Use_A_not_B",
               intervention = data.frame(time=x$intervention_nodes,
                                         "A" = factor("1",levels = c("0","1")),
-                                        "B" = factor("0",levels = c("0","1"))))
+                                        "B" = factor("0",levels = c("0","1"))),
+              multiple_treatment_factorization = "sequential")
 x <- model_formula(x)
 x$models
 # remove age from all formulas
@@ -98,7 +108,7 @@ x <- model_formula(x,exclusion_rules=list("dropout_[1:2]"="changeSBP_*"))
 x$models
 }
 \seealso{
-\code{\link{prepare_rtmle_data}}, \code{\link{protocol}},
+\code{\link{prepare_rtmle_data}}, \code{\link{regime}},
   \code{\link{target}}, \code{\link{make_exclusion_rule}},
   \code{\link{run_rtmle}}
 }

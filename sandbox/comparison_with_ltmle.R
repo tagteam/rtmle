@@ -48,10 +48,10 @@ ld <- simulate_long_data(n = 1891,number_visits = 20,beta = list(A_on_Y = -.2,A0
 x <- rtmle_init(time_grid = seq(0,2000,30.45*6),name_id = "id",name_outcome = "Y",name_competing = "Dead",name_censoring = "Censored",censored_label = "censored")
 x <- add_long_data(x,outcome_data=ld$outcome_data,censored_data=ld$censored_data,competing_data=ld$competing_data,timevar_data=ld$timevar_data)
 x <- add_baseline_data(x,data=ld$baseline_data)
-x <- discretize(x,start_followup_date = 0)
-x <- protocol(x,name = "Always_A",intervention = data.frame(time = 0:tau,"A" = factor(1,levels = c(0,1))))
+x <- discretize_data(x,start_followup_date = 0)
+x <- regime(x,name = "Always_A",intervention = data.frame(time = 0:tau,"A" = factor(1,levels = c(0,1))))
 x <- prepare_rtmle_data(x) 
-x <- target(x,name = "Outcome_risk",estimator = "tmle",protocols = "Always_A")
+x <- target(x,name = "Outcome_risk",estimator = "tmle",regimes = "Always_A")
 x <- model_formula(x) 
 x <- run_rtmle(x,learner = "learn_glm",time_horizon = 1:tau)
 x$estimate
@@ -84,13 +84,13 @@ ld$timevar_data$B <- ld$timevar_data$A[id %in% sort(sample(1:91,size = 75,replac
 x <- rtmle_init(time_grid = seq(0,1600,30.45*6),name_id = "id",name_outcome = "Y",name_competing = "Dead",name_censoring = "Censored",censored_label = "censored")
 x <- add_long_data(x,outcome_data = ld[["outcome_data"]],censored_data = ld[["censored_data"]],competing_data = ld[["competing_data"]],timevar_data = ld[["timevar_data"]])
 x <- add_baseline_data(x,data = ld$baseline_data)
-x <- discretize(x,start_followup_date = 0)
+x <- discretize_data(x,start_followup_date = 0)
 x <- prepare_rtmle_data(x)
-x <- protocol(x,name = "Always_A_Never_B",intervention = data.frame(time = 0:(tau-1),"A" = factor(rep(1,2),levels = c(0,1)),"B" = factor(c(NA,0),levels = c(0,1))))
-x <- protocol(x,name = "Always_B_Never_A",intervention = data.frame(time = 0:(tau-1),"A" = factor(c(NA,0),levels = c(0,1)),"B" = factor(rep(1,2),levels = c(0,1))))
+x <- regime(x,name = "Always_A_Never_B",intervention = data.frame(time = 0:(tau-1),"A" = factor(rep(1,2),levels = c(0,1)),"B" = factor(c(NA,0),levels = c(0,1))), multiple_treatment_factorization = "independent")
+x <- regime(x,name = "Always_B_Never_A",intervention = data.frame(time = 0:(tau-1),"A" = factor(c(NA,0),levels = c(0,1)),"B" = factor(rep(1,2),levels = c(0,1))), multiple_treatment_factorization = "independent")
 x <- model_formula(x)
-x <- target(x,name = "Outcome_risk",estimator = "tmle",protocols = c("Always_A_Never_B","Always_B_Never_A"))
-x <- model_formula(x,propensity_model = "independent")
+x <- target(x,name = "Outcome_risk",estimator = "tmle",regimes = c("Always_A_Never_B","Always_B_Never_A"))
+x <- model_formula(x)
 x <- run_rtmle(x,refit = TRUE,learner = "learn_glm",time_horizon = tau)
 summary(x)
 # Ltmle
@@ -110,7 +110,7 @@ tfit <- run_ltmle(name_outcome="Y",time_horizon=tau,reduce = FALSE,regimen_data=
 ## sapply(x$models[[1]],function(x)x$formula)
 uu <- head(tfit$A$Ltmle_fit$cum.g.used)
 Lcum <- tfit$A$Ltmle_fit$cum.g[uu]
-Rcum <- x$protocols$Always_B_Never_A$cumulative_intervention_probs[,-2]
+Rcum <- x$regimes$Always_B_Never_A$cumulative_intervention_probs[,-2]
 all.equal(Lcum,Rcum)
 
 colnames(x$cumulative_intervention_probs[[1]])
@@ -124,8 +124,8 @@ summary(tfit)
 summary(x)
 
 c(LTMLE = as.numeric(tfit$A$Ltmle_fit$estimate),
-  RTMLE = x$estimate$Main_analysis[Protocol == "Always_A_Never_B"]$Estimate)
-all.equal(as.numeric(tfit$A$Ltmle_fit$estimate),x$estimate$Main_analysis[Protocol == "Always_A_Never_B"]$Estimate)
+  RTMLE = x$estimate$Main_analysis[Regime == "Always_A_Never_B"]$Estimate)
+all.equal(as.numeric(tfit$A$Ltmle_fit$estimate),x$estimate$Main_analysis[Regime == "Always_A_Never_B"]$Estimate)
 all.equal(c(tfit$A$Ltmle_fit$IC),unlist(x$IC$Outcome_risk$Always_A_Never_B,use.names = FALSE))
 
 # FixedTimeTMLE can output the intervention_match matrix
@@ -149,10 +149,10 @@ if (FALSE){
                     competing_data=ld$competing_data,
                     timevar_data=ld$timevar_data)
     x <- add_baseline_data(x,data=ld$baseline_data)
-    x <- discretize(x,start_followup_date = 0)
-    x <- protocol(x,name = "Always_A",intervention = data.frame(time = 0:(tau-1),"A" = factor(1,levels = c(0,1))))
+    x <- discretize_data(x,start_followup_date = 0)
+    x <- regime(x,name = "Always_A",intervention = data.frame(time = 0:(tau-1),"A" = factor(1,levels = c(0,1))))
     x <- prepare_rtmle_data(x)
-    x <- target(x,name = "Outcome_risk",estimator = "tmle",protocols = "Always_A")
+    x <- target(x,name = "Outcome_risk",estimator = "tmle",regimes = "Always_A")
     x <- model_formula(x)
     x <- run_rtmle(x,learner = "learn_glm",time_horizon = 1:tau)
     ldata <- copy(x$prepared_data)

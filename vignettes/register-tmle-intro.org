@@ -180,8 +180,8 @@ See name of the subject id variable is 'id'.
 See x$names for the names of the other variables.
 TODO: The object contains no data yet.
       - Add baseline data with the function 'add_baseline_data'
-      - Use the functions 'add_long_data' and 'discretize' to add and discretize the dates of outcome, censored and competing events and to the longitudinal data (covariates and treatment).
-      - Alternatively, use the function 'add_wide_data' to add the readily discretized data.TODO: The object contains no protocols. Add them with the function 'protocol'.
+      - Use the functions 'add_long_data' and 'discretize_data' to add and convert the dates of outcome, censored and competing events and the longitudinal data (covariates and treatment).
+      - Alternatively, use the function 'add_wide_data' to add the readily discretized data.TODO: The object contains no regimes. Add them with the function 'regime'.
 TODO: The object contains no targets yet. Add them with the function 'target'.
 :end:
 
@@ -207,7 +207,7 @@ initialized to 3 time intervals (starting at time zero).
 See name of the subject id variable is 'id'.
 See x$names for the names of the other variables.
 
-TODO: The object contains no protocols. Add them with the function 'protocol'.
+TODO: The object contains no regimes. Add them with the function 'regime'.
 TODO: The object contains no targets yet. Add them with the function 'target'.
 :end:
 
@@ -216,7 +216,7 @@ TODO: The object contains no targets yet. Add them with the function 'target'.
 
 #+ATTR_LATEX: :options otherkeywords={}, deletekeywords={}
 #+BEGIN_SRC R  :results output verbatim drawer  :exports both  :session *R* :cache yes  
-x <- discretize(x)
+x <- discretize_data(x)
 x <- prepare_rtmle_data(x)
 x$prepared_data
 #+END_SRC
@@ -252,12 +252,12 @@ x$prepared_data
 :end:
 
 
-** Defining the protocols
+** Defining the regimes
 
 #+ATTR_LATEX: :options otherkeywords={}, deletekeywords={}
 #+BEGIN_SRC R  :results output verbatim drawer  :exports both  :session *R* :cache yes  
-x <- protocol(x,name = "always A",treatment_variables = "A",intervention = 1)
-x <- protocol(x,name = "never A",treatment_variables = "A",intervention = 0)
+x <- regime(x,name = "always A",treatment_variables = "A",intervention = 1)
+x <- regime(x,name = "never A",treatment_variables = "A",intervention = 0)
 x
 #+END_SRC
 
@@ -275,7 +275,7 @@ TODO: The object contains no targets yet. Add them with the function 'target<-'.
 
 #+ATTR_LATEX: :options otherkeywords={}, deletekeywords={}
 #+BEGIN_SRC R  :results output verbatim drawer  :exports both  :session *R* :cache yes  
-x <- target(x,name = "Outcome_risk",estimator = "tmle",time_horizon = 3,protocols = c("always A","never A"))
+x <- target(x,name = "Outcome_risk",estimator = "tmle",time_horizon = 3,regimes = c("always A","never A"))
 x <- model_formula(x)
 x
 #+END_SRC
@@ -298,8 +298,8 @@ x <- run_rtmle(x,learn = "learn_glm")
 #+RESULTS[(2025-04-10 11:48:19) f4b6ba5c87a4fcdc5adb0f95cc42bbc7a591718f]:
 :results:
 Running target: Outcome_risk... Set argument verbose = FALSE to suppress this message.
-Current protocol: always A ... Set argument verbose = FALSE to suppress this message.
-Current protocol: never A ... Set argument verbose = FALSE to suppress this message.
+Current regime: always A ... Set argument verbose = FALSE to suppress this message.
+Current regime: never A ... Set argument verbose = FALSE to suppress this message.
 Warning messages:
 1: In tmle_update(Y = Y, offset = W_previous, intervention_probs = inverse_probability_weights,  :
   No TMLE update because no subject has positive weight
@@ -314,7 +314,7 @@ summary(x)
 
 #+RESULTS[(2025-04-10 11:48:19) ed7f60068378803177c2f5dd0741b7b6f64e7766]:
 :results:
-         Target Protocol Target_parameter Time_horizon Estimator   Estimate     P_value Standard_error        Lower       Upper
+         Target Regime Target_parameter Time_horizon Estimator   Estimate     P_value Standard_error        Lower       Upper
          <fctr>   <fctr>           <fctr>        <int>    <fctr>      <num>       <num>          <num>        <num>       <num>
 1: Outcome_risk always A             Risk            3      tmle 0.33494029 1.000000000    0.004767184 -0.009343509 0.009343509
 2: Outcome_risk  never A             Risk            3      tmle 0.35940602 1.000000000    0.007959865 -0.015601048 0.015601048
@@ -344,4 +344,3 @@ summary(x)
 #+LaTeX_HEADER:\author{Thomas Alexander Gerds}
 #+LaTeX_HEADER:\affil{Department of Biostatistics, University of Copenhagen}
 #+set: superman-org-export-target: html
-

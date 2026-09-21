@@ -43,7 +43,7 @@
 #'   covariates. This is an alternative to passing those data frames through
 #'   \code{timevar_data}.
 #' @seealso \code{\link{rtmle_init}}, \code{\link{add_baseline_data}},
-#'   \code{\link{add_wide_data}}, \code{\link{discretize}},
+#'   \code{\link{add_wide_data}}, \code{\link{discretize_data}},
 #'   \code{\link{prepare_rtmle_data}}
 #' @return The modified \code{rtmle} object.
 #' @author Thomas A. Gerds <tag@@biostat.ku.dk>
@@ -59,19 +59,19 @@
 #'                    competing_data=ld$timevar_data$death,
 #'                    timevar_data=ld$timevar_data[c("bleeding","changeSBP","A","B")])
 #' x <- add_baseline_data(x,data=ld$baseline_data)
-#' x <- discretize(x,start_followup_date=0)
+#' x <- discretize_data(x,start_followup_date=0)
 #' x <- prepare_rtmle_data(x)
-#' x <- protocol(x,name = "Always_A",
+#' x <- regime(x,name = "Always_A",
 #'                     intervention = data.frame(
 #'                                    time=x$intervention_nodes,
 #'                                    "A" = factor("1",levels = c("0","1"))))
-#' x <- protocol(x,name = "Never_A",
+#' x <- regime(x,name = "Never_A",
 #'                     intervention = data.frame(
 #'                                               time=x$intervention_nodes,
 #'                                               "A" = factor("0",levels = c("0","1"))))
 #' x <- target(x,name = "Outcome_risk",
 #'                   estimator = "tmle",
-#'                   protocols = c("Always_A","Never_A"))
+#'                   regimes = c("Always_A","Never_A"))
 #' x <- model_formula(x)
 #' x <- run_rtmle(x,learner = "learn_glmnet",time_horizon = 1:3)
 #' summary(x)
@@ -83,8 +83,8 @@ add_long_data <- function(x,
                           timevar_data,
                           ...){
     # A new long-format data set may contain calendar dates even when a
-    # previous call to discretize() converted the old data to time-on-study
-    # values. Force discretize() to re-evaluate the date representation.
+    # previous call to discretize_data() converted the old data to time-on-study
+    # values. Force discretize_data() to re-evaluate the date representation.
     if (is.null(x$progress)) x$progress <- list()
     x$progress$substracted_start_followup_date <- FALSE
     if(missing(timevar_data)) timevar_data <- NULL

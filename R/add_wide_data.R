@@ -29,7 +29,7 @@
 #' @param ... Not used.
 #' @return The modified \code{rtmle} object.
 ##' @seealso \code{\link{add_baseline_data}}, \code{\link{add_long_data}},
-##'   \code{\link{discretize}}, \code{\link{prepare_rtmle_data}}
+##'   \code{\link{discretize_data}}, \code{\link{prepare_rtmle_data}}
 ##' @examples
 #' # Create wide-format data from simulated long-format data.
 #' data(simulated_cohort)
@@ -43,7 +43,7 @@
 #'                    competing_data=ld$timevar_data$death,
 #'                    timevar_data=ld$timevar_data[c("bleeding","changeSBP","A","B")])
 #' x <- add_baseline_data(x,data=ld$baseline_data)
-#' x <- discretize(x,start_followup_date=0)
+#' x <- discretize_data(x,start_followup_date=0)
 #' outcome_data <- x$data$outcome_data
 #' timevar_data <- x$data$timevar_data
 #' x <- rtmle_init(time_grid = seq(0,20,4), name_id = "id",

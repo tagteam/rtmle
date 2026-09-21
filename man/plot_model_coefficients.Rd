@@ -7,7 +7,7 @@
 plot_model_coefficients(
   x,
   time_horizon,
-  protocol,
+  regime,
   times = NULL,
   nodes,
   term = NULL,
@@ -29,8 +29,8 @@ nuisance-parameter models.}
 \item{time_horizon}{Optional selection of time horizon. If \code{NULL},
 \code{max(x$time_grid)} is used.}
 
-\item{protocol}{Optional protocol selection. If \code{NULL},
-\code{names(x$protocols)[[1]]} is used.}
+\item{regime}{Optional regime selection. If \code{NULL},
+\code{names(x$regimes)[[1]]} is used.}
 
 \item{times}{Optional time selection. If \code{NULL}, all \code{time_*} elements are used.
 If numeric, values \code{0:K} are translated to names \code{time_0}, \dots.
@@ -77,7 +77,7 @@ time index; \code{"none"} uses a single panel.}
 }}}
 
 \item{manhattan_color_by}{For \code{plot_style = "manhattan"} only. Character scalar controlling point
-coloring: \code{"node"} (protocol, censoring, or outcome), \code{"time"}
+coloring: \code{"node"} (regime, censoring, or outcome), \code{"time"}
 (time index), \code{"term"} (coefficient term), or \code{"none"} (single
 color).}
 

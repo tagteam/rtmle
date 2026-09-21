@@ -19,13 +19,15 @@
 ##' Normalizes learner specifications for \code{\link{run_rtmle}} and
 ##' \code{\link{superlearn}}. Available names are used to fill missing
 ##' \code{fun} elements, and available \code{fun} elements are used to fill
-##' missing names. The returned object receives an attribute so repeated parsing
-##' leaves it unchanged.
+##' missing names. Learner names may omit the \code{"learn_"} prefix; for
+##' example, \code{"glm"} is interpreted as \code{"learn_glm"}. The returned
+##' object receives an attribute so repeated parsing leaves it unchanged.
 ##'
 ##' @title Parse learner specifications
 ##' @param learners A learner specification: a character vector of learner names,
 ##'   a single learner list, or a super-learner list containing \code{folds} and
-##'   \code{learners}.
+##'   \code{learners}. Character learner names may be given with or without the
+##'   \code{"learn_"} prefix.
 ##' @return A normalized learner list.
 ##' @seealso \code{\link{superlearn}}, \code{\link{run_rtmle}}
 ##' @examples
@@ -35,12 +37,32 @@
 ##'                          "glm100"=list(maxit=200,fun="learn_glm"))))
 ##' parse_learners(list(folds=10,
 ##'                learners=list(
-##'                         "learn_glmnet",
+##'                         "glmnet",
 ##'                         "glm"=list(learn_variables="A",fun="glm"),
 ##'                         list(name="learn_ranger", fun="learn_ranger",num.trees=5))))
 ##' @export 
 ##' @author Thomas A. Gerds <tag@@biostat.ku.dk>
 parse_learners <- function(learners){
+    normalize_fun_name <- function(fun) {
+        if (startsWith(fun, "learn_")) fun else paste0("learn_", fun)
+    }
+    resolve_fun_name <- function(fun) {
+        if (!is.character(fun) || length(fun) != 1L ||
+            is.na(fun) || !nzchar(fun)) {
+            stop("The learners must specify a single non-empty learner function name as element fun.")
+        }
+        fun <- normalize_fun_name(fun)
+        has_fun <- try(
+            do.call("inherits",
+                    list(x = as.name(fun), what = "function")),
+            silent = TRUE
+        )
+        if (inherits(has_fun, "try-error") || !isTRUE(has_fun)) {
+            stop(paste0("cannot find function ", fun,
+                        " maybe you have to write this first?"))
+        }
+        fun
+    }
     ## Make sure that formatting is obeyed
     ## 1. If learners is a single string
     ## 2. Learners is a vector of strings
@@ -97,13 +119,9 @@ list(
         stop("Invalid 'learners' specification.")
     }
     if (is.character(learners) && length(learners) == 1){
-        fun <- learners
-        if (inherits(try(has_fun <- do.call("inherits",list(x = as.name(fun),"function")),silent = TRUE),
-                     "try-error")|| !has_fun){
-            stop(paste0("Cannot parse the fun as a function for learner '",learners,"'\nYou may need to load a library first?"))
-        }
+        fun <- resolve_fun_name(learners)
         # NORMALIZE: use list() instead of NULL so it matches list-form learners
-        parsed_learners <- list(name = learners, fun = learners, args = list())
+        parsed_learners <- list(name = fun, fun = fun, args = list())
     } else {
         if (is.character(learners)) {
             parsed_learners <- list(
@@ -131,13 +149,7 @@ list(
                              "Problem with learner: ",
                              paste(utils::capture.output(utils::str(learners)), collapse = "\n"))
                     }
-                    fun <- learners$fun
-                    if (inherits(try(has_fun <- do.call("inherits",list(x = as.name(fun),"function")),silent = TRUE),
-                                 "try-error")|| !has_fun){
-                        stop(paste0("Cannot parse the fun as a function for learner: ",
-                                    learner_name,
-                                    "\nYou may need to load a library first?"))
-                    }
+                    fun <- resolve_fun_name(learners$fun)
                 }
                 learner_args <- learners
                 learner_args$name <- NULL

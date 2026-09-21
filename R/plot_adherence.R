@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: dec 11 2025 (10:23) 
 ## Version: 
-## Last-Updated: maj  4 2026 (07:02) 
+## Last-Updated: sep 18 2026 (11:39)
 ##           By: Thomas Alexander Gerds
-##     Update #: 39
+##     Update #: 41
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -14,24 +14,25 @@
 #----------------------------------------------------------------------
 ## 
 ### Code:
-#' Plot cumulative non-adherence by protocol
+#' Plot cumulative non-adherence by regime
 #'
-#' Computes time to first deviation from a treatment regime for each protocol in a
-#' fitted \code{rtmle} object \code{x}, allowing for right censoring and competing
-#' risks (e.g., death/outcome). The result is plotted as the cumulative incidence
-#' (in percent) of non-adherence over follow-up time, stratified by protocol.
+#' Uses \code{\link{adherence}} to collect time to first deviation from a
+#' treatment regime for each regime in a fitted \code{rtmle} object
+#' \code{x}, allowing for right censoring and competing risks (e.g.,
+#' death/outcome). The result is plotted as the cumulative incidence (in
+#' percent) of non-adherence over follow-up time, stratified by regime.
 #'
-#' @param x An object containing protocol-specific adherence information and follow-up
-#'   data. Must include at least \code{x$protocols} (a named list where each element has
-#'   \code{$intervention_match}), \code{x$followup} (with \code{last_interval}),
-#'   \code{x$prepared_data} (optional; used for censoring indicators), and
-#'   \code{x$names$censoring}.
-#' @param protocols Names of the protocols to plot. If missing, use all elements
-#' of \code{x$protocols} that already have an \code{intervention_match} table.
+#' @param x An object containing regime-specific adherence information and follow-up
+#'   data. Must include at least \code{x$regimes} (a named list where each element has
+#'   \code{$intervention_match}), \code{x$followup} (with
+#'   \code{last_interval}), \code{x$prepared_data} (optional; used for
+#'   censoring indicators), and \code{x$names$censoring}.
+#' @param regimes Optional names of the regimes to plot. If omitted, use
+#'   all regimes that already have an \code{intervention_match} table.
 #' @param ... Currently unused. Included for future extensions.
 #'
 #' @details
-#' For each protocol, the function restricts to initiators (those with
+#' The underlying \code{\link{adherence}} function restricts each regime to initiators (those with
 #' \code{intervention_match[,1] == 1}). It then identifies:
 #' \itemize{
 #'   \item \code{first_deviation}: the first interval where \code{intervention_match} equals 0.
@@ -47,72 +48,33 @@
 #' \code{prodlim::ggprodlim} for cause 1 (non-adherence).
 #'
 #' @return A \code{ggplot2} object (as returned by \code{prodlim::ggprodlim}) showing the
-#'   cumulative incidence of non-adherence (percent) by protocol.
+#'   cumulative incidence of non-adherence (percent) by regime.
 #'
 #' @examples
 #' data(rtmle_object)
 #' p <- plot_adherence(rtmle_object)
 #' class(p)
 #'
-#' @seealso \code{\link{intervention_match}}, \code{\link{protocol}},
+#' @seealso \code{\link{intervention_match}}, \code{\link{regime}},
+#'   \code{\link{adherence}},
+#'   \code{\link{summary_adherence}},
 #'   \code{\link{plot_IPW}}, \code{\link[prodlim:prodlim]{prodlim}},
 #'   \code{\link[prodlim:ggprodlim]{ggprodlim}},
 #'   \code{\link[prodlim:Hist]{Hist}}
 #'
 #' @importFrom prodlim prodlim ggprodlim Hist
-#' @importFrom data.table data.table :=
 #' @export
-plot_adherence <- function(x,protocols,...){
-    time_nonadherence = last_interval = event_nonadherence = value = variable = first_event = event = treatment = NULL
-    # find time to first deviation from regime where
-    # death is a competing risk and data may be right censored
-    available_protocols <- sapply(names(x$protocols),function(p){NROW(x$protocols[[p]]$intervention_match)>0})
-    available_protocols <- names(available_protocols[available_protocols])
-    if (length(available_protocols) == 0){
-        stop("rtmle::plot_adherence: No protocol has prepared the intervention_match table yet.\nTo fix this apply protocol() after rtmle_prepare_data() or apply run_rtmle() or call intervention_match().")
-    }
-    if (missing(protocols)){
-        protocols <- available_protocols
-    }else{
-        if (length(unavailable <- setdiff(protocols,available_protocols))>0){
-            if (NROW(x$prepared_data)>0){
-                stop(paste0("The following protocols have no element intervention_match yet:\n",
-                            paste0(unavailable,collapse = ", "),
-                            "\nRun x <- intervention_match(x,protocol_name)."))
-            }else{
-                stop(paste0("The object does not contain the prepared data yet.\n",
-                            "Run x <-  prepare_rtmle_data(x)\n",
-                            "and then x <- intervention_match(x,protocol_name)."))
-            }
-        }
-    }
-    dt_nonadherence <- do.call(rbind,lapply(names(x$protocols),function(pro){
-        initiators <- x$protocols[[pro]]$intervention_match[,1,drop = TRUE] == 1
-        first_deviation <- apply(x$protocols[[pro]]$intervention_match[initiators == 1,,drop = FALSE], 1, function(x) match(0, x))
-        if (length(x$names$censoring)>0){
-            Cvars <- grep(paste0("^",x$names$censoring,"_[0-9]+$"),names(x$prepared_data),value = TRUE)
-            censored_time <- apply(x$prepared_data[initiators == 1,Cvars,with = FALSE], 1, function(x) match("censored", x))
-        }
-        adherence_data <- cbind(protocol = pro, data.table(x$followup[initiators == 1]),first_deviation = first_deviation,censored_time = censored_time)
-        adherence_data[,time_nonadherence := pmin(last_interval,first_deviation,censored_time,na.rm = TRUE)]
-        # initialize with 0
-        adherence_data[,event_nonadherence := 0]
-        # value 2 if not censored (competing risk or outcome)
-        adherence_data[is.na(censored_time),event_nonadherence := 2]
-        # value 2 when non-adherence is observed
-        adherence_data[!is.na(first_deviation),event_nonadherence := 1]
-        adherence_data[,list(protocol,time_nonadherence,event_nonadherence)]
-    }))
-    dt_nonadherence[,protocol := factor(protocol)]
-    fit_nonadherence <- prodlim::prodlim(Hist(time_nonadherence,event_nonadherence)~protocol,
+plot_adherence <- function(x, regimes = NULL, ...) {
+    time_unit <- if (is.null(x$time_unit)) "Time" else x$time_unit
+    dt_nonadherence <- adherence(x, regimes = regimes)
+    fit_nonadherence <- prodlim::prodlim(Hist(time_nonadherence,event_nonadherence)~regime,
                                          data = dt_nonadherence)
     p <- prodlim::ggprodlim(fit_nonadherence,
                             cause = 1,
+                            type = "risk",
                             ylim = c(0,100))
     suppressMessages(p <- p+ggplot2::scale_x_continuous(breaks = x$time_grid, labels = x$time_grid_labels))
-    p+
-        ggplot2::xlab("Time")+
-        ggplot2::ylab("Non-adherence")
+    p+ ggplot2::xlab(time_unit)+ ggplot2::ylab("Non-adherence")
 }
 
 

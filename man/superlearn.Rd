@@ -55,7 +55,7 @@ avoid overhead in the parsing of the formula.}
 \item{data}{Data used for learning.}
 
 \item{intervened_data}{Data in which all intervention variables have already
-been set according to the intervention protocol.}
+been set according to the intervention regime.}
 
 \item{ensemble_method}{How to combine learners. Implemented methods are
 non-linear least squares (\code{"nnls"}), index-of-prediction-accuracy

@@ -2,21 +2,21 @@
 % Please edit documentation in R/long_to_wide.R
 \name{long_to_wide}
 \alias{long_to_wide}
-\title{Obsolete alias for \code{\link{discretize}}}
+\title{Obsolete alias for \code{\link{discretize_data}}}
 \usage{
 long_to_wide(...)
 }
 \arguments{
-\item{...}{Arguments forwarded to \code{\link{discretize}}.}
+\item{...}{Arguments forwarded to \code{\link{discretize_data}}.}
 }
 \value{
-The modified \code{rtmle} object returned by \code{discretize}.
+The modified \code{rtmle} object returned by \code{discretize_data}.
 }
 \description{
-\code{long_to_wide()} has been renamed to \code{discretize()}.
+\code{long_to_wide()} has been renamed to \code{discretize_data()}.
 This alias is retained for existing scripts and forwards all arguments to
 the new function.
 }
 \seealso{
-\code{\link{discretize}}, \code{\link{map_data_to_grid}}
+\code{\link{discretize_data}}, \code{\link{map_data_to_grid}}
 }

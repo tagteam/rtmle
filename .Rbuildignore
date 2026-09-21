@@ -1,4 +1,5 @@
 ^sandbox
+^slowtests$
 ^data-raw$
 ^attic
 ^.*\.o$

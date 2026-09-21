@@ -19,36 +19,74 @@
 ## 
 ### Code:
 intervention_probabilities <- function(x,
-                                       protocol_name,
+                                       regime_name,
                                        max_intervention_node,
                                        refit = FALSE,
                                        learner,
                                        seed,
                                        progressbar,
                                        save_fitted_objects = FALSE){
-    variable = type = time_node = NULL
-    # set the treatment variables to their protocolled values
-    if (length(x$protocols[[protocol_name]]$intervene_function) == 0){
-        stop(paste0("No intervene function defined for protocol ",protocol_name,"."))
+    variable = type = time_node = value = NULL
+    # set the treatment variables to their regimeled values
+    if (length(x$regimes[[regime_name]]$intervene_function) == 0){
+        stop(paste0("No intervene function defined for regime ",regime_name,"."))
     }
     N <- NROW(x$prepared_data)
     # restrict actions to the intervention_nodes before the max of the current run
     action_nodes <- x$intervention_nodes[x$intervention_nodes <= max_intervention_node]
-    current_protocol <- x$protocols[[protocol_name]]
+    current_regime <- x$regimes[[regime_name]]
     # extract intervention_table for the intervention nodes before max_intervention_node
-    intervention_table <- na.omit(current_protocol$intervention_table[time_node <= max_intervention_node])
+    intervention_table <- na.omit(current_regime$intervention_table[time_node <= max_intervention_node])
     #
     # construct a matrices with the intervention/censoring probabilities
     #
     task_list <- do.call(rbind,lapply(action_nodes, function(k){
-        rbind(do.call(rbind,lapply(x$models[[paste0("time_",k)]][protocol_name],function(w){
-            do.call(rbind,lapply(names(w),function(v){
-                data.table(time = k,type = protocol_name,variable = v,formula = w[[v]]$formula)
-            }))})),
-            do.call(rbind,lapply(x$models[[paste0("time_",k)]]["censoring"],function(w){
-                do.call(rbind,lapply(names(w),function(v){
-                    data.table(time = k,type = "censoring",variable = v,formula = w[[v]]$formula)
-                }))})))
+        regime_models <- x$models[[paste0("time_", k)]][[regime_name]]
+        treatment_tasks <- if (length(regime_models) == 0L) {
+            NULL
+        } else if (all(vapply(
+            regime_models,
+            function(model) !is.null(model$formula),
+            logical(1)
+        ))) {
+            # Joint and independent propensity models are represented as a
+            # named list of model specifications.
+            do.call(rbind, lapply(names(regime_models), function(v) {
+                data.table(
+                    time = k,
+                    type = regime_name,
+                    variable = v,
+                    formula = regime_models[[v]]$formula
+                )
+            }))
+        } else {
+            # Sequential propensity models are represented as a list of
+            # ordered steps, each containing one named model specification.
+            do.call(rbind, lapply(regime_models, function(step) {
+                do.call(rbind, lapply(names(step), function(v) {
+                    data.table(
+                        time = k,
+                        type = regime_name,
+                        variable = v,
+                        formula = step[[v]]$formula
+                    )
+                }))
+            }))
+        }
+        censoring_tasks <- do.call(rbind, lapply(
+            x$models[[paste0("time_", k)]]["censoring"],
+            function(w) {
+                do.call(rbind, lapply(names(w), function(v) {
+                    data.table(
+                        time = k,
+                        type = "censoring",
+                        variable = v,
+                        formula = w[[v]]$formula
+                    )
+                }))
+            }
+        ))
+        rbind(treatment_tasks, censoring_tasks)
     }))
     # the number of columns is defined by the number of censoring models plus the
     # number of propensitity scores models which in case of multiple treatment variables
@@ -57,9 +95,9 @@ intervention_probabilities <- function(x,
     if (refit ||
         # only run the necessary models for the current maximal time
         # horizon which is here defined by NC via max_intervention_node 
-        (NCOL(current_protocol$cumulative_intervention_probs) < NC)){
+        (NCOL(current_regime$cumulative_intervention_probs) < NC)){
         if (progressbar){
-            message("Fitting propensity score and censoring models: ",protocol_name)
+            message("Fitting propensity score and censoring models: ",regime_name)
             progress <- txtProgressBar(max = NC, style = progressbar, width=20)
             action <- 0
         }
@@ -81,7 +119,22 @@ intervention_probabilities <- function(x,
         # now the same for non-censoring intervention nodes
         intervention_last_nodes <- rep(NA,length(action_nodes))
         names(intervention_last_nodes) <- paste0("node_",action_nodes)
-        intervention_last_nodes_data <- task_list[type != "censoring",variable[.N],by = time]
+        # intervention_match has one column per intervention node containing
+        # all treatment variables separated by commas (for example
+        # A_1,B_1).  This differs from the last nuisance task under
+        # sequential or independent propensity models, where the last task
+        # would be only B_1.  Keep the matching name aligned with the
+        # intervention table so the TMLE update can find the column.
+        intervention_last_nodes_data <- intervention_table[
+            !is.na(value),
+            list(V1 = paste(variable, collapse = ",")),
+            by = time_node
+        ]
+        data.table::setnames(
+            intervention_last_nodes_data,
+            "time_node",
+            "time"
+        )
         if (NROW(intervention_last_nodes_data)>0){
             actual_intervention_last_nodes <- intervention_last_nodes_data$V1
             names(actual_intervention_last_nodes) <- paste0("node_",intervention_last_nodes_data$time)
@@ -98,13 +151,14 @@ intervention_probabilities <- function(x,
             }
             # prepare data used to fit the models in this time interval 
             current_data <- x$prepared_data[outcome_free_and_uncensored]
-            # Evaluate a user-defined intervention once per node. The returned
-            # object may provide fixed probabilities or an adherence-model
-            # instruction for the treatment task.
+            # Evaluate a user-defined intervention once per node. A custom
+            # intervention function requests an adherence model; optional
+            # adherence_model_strata only controls whether that model is fit
+            # separately in pre-decision subgroups.
             intervention_key <- paste0("node_",k)
             if (is.null(evaluated_interventions[[intervention_key]])){
                 evaluated_interventions[[intervention_key]] <- evaluate_intervention(
-                    protocol = current_protocol,
+                    regime = current_regime,
                     data = current_data,
                     intervention_table = intervention_table,
                     time_node = k,
@@ -115,8 +169,8 @@ intervention_probabilities <- function(x,
             intervention <- evaluated_interventions[[intervention_key]]
             intervened_data <- data.table::copy(intervention$data)
             task_variable <- as.character(task_list[task,variable])
-            propensity_instruction <- NULL
-            fixed_probability <- rep(NA_real_, NROW(current_data))
+            dynamic_adherence <- FALSE
+            adherence_model_strata <- NULL
             current_formula <- as.character(task_list[task,formula])
             if (task_list[task,type] != "censoring"){
                 current_treatment_variables <- intervention_table[
@@ -126,114 +180,9 @@ intervention_probabilities <- function(x,
                     strsplit(task_variable, ",", fixed = TRUE)[[1L]],
                     current_treatment_variables
                 )
-                instructions <- intervention$propensity_instructions
-                if (length(instructions) > 0L) {
-                    task_variables <- strsplit(
-                        task_variable,
-                        ",",
-                        fixed = TRUE
-                    )[[1L]]
-                    if (task_variable %in% names(instructions)) {
-                        propensity_instruction <- instructions[[task_variable]]
-                    } else if (length(task_variables) == 1L &&
-                               ".default" %in% names(instructions)) {
-                        propensity_instruction <- instructions[[".default"]]
-                    } else {
-                        selected <- instructions[
-                            intersect(task_variables, names(instructions))
-                        ]
-                        if (length(selected) == 1L &&
-                            length(task_variables) == 1L) {
-                            propensity_instruction <- selected[[1L]]
-                        } else if (length(selected) == 0L) {
-                            propensity_instruction <- NULL
-                        } else {
-                            if (length(selected) != length(task_variables)) {
-                                stop(
-                                    "A joint propensity instruction must name the joint task or every treatment in it."
-                                )
-                            }
-                            modes <- vapply(
-                                selected,
-                                `[[`,
-                                character(1),
-                                "mode"
-                            )
-                            if (all(modes == "adherence")) {
-                                strata <- lapply(selected, `[[`, "stratify_by")
-                                if (!all(vapply(
-                                    strata,
-                                    identical,
-                                    logical(1),
-                                    strata[[1L]]
-                                ))) {
-                                    stop(
-                                        "Joint adherence instructions must use the same `stratify_by` variables for every treatment."
-                                    )
-                                }
-                                propensity_instruction <- list(
-                                    mode = "adherence",
-                                    probability = NULL,
-                                    stratify_by = strata[[1L]]
-                                )
-                            } else if (all(modes == "fixed")) {
-                                values <- as.data.frame(
-                                    lapply(selected, `[[`, "probability"),
-                                    check.names = FALSE
-                                )
-                                overridden <- !is.na(as.matrix(values))
-                                partial <- rowSums(overridden) > 0 &
-                                    rowSums(overridden) < NCOL(values)
-                                if (any(partial)) {
-                                    stop(
-                                        "Partial row-wise fixed probabilities are not valid for a joint propensity model; use sequential or independent propensity models."
-                                    )
-                                }
-                                combined <- rep(NA_real_, NROW(values))
-                                complete <- rowSums(overridden) == NCOL(values)
-                                if (any(complete)) {
-                                    complete_values <- as.matrix(
-                                        values[complete, , drop = FALSE]
-                                    )
-                                    if (any(complete_values != 1)) {
-                                        stop(
-                                            "Non-unit joint fixed probabilities must be supplied in a column named for the joint propensity task."
-                                        )
-                                    }
-                                    combined[complete] <- 1
-                                }
-                                propensity_instruction <- list(
-                                    mode = "fixed",
-                                    probability = combined,
-                                    stratify_by = NULL
-                                )
-                            } else {
-                                stop(
-                                    "Joint propensity instructions cannot mix `fixed` and `adherence` modes."
-                                )
-                            }
-                        }
-                    }
-                }
-                if (!is.null(propensity_instruction) &&
-                    identical(propensity_instruction$mode, "fixed")) {
-                    fixed_probability <- propensity_instruction$probability
-                    if (length(fixed_probability) == 1L &&
-                        NROW(current_data) != 1L) {
-                        fixed_probability <- rep(
-                            fixed_probability,
-                            NROW(current_data)
-                        )
-                    }
-                    if (length(fixed_probability) != NROW(current_data)) {
-                        stop(
-                            "A fixed propensity instruction must have length 1 or the number of rows being evaluated."
-                        )
-                    }
-                    fixed_probability <- as.numeric(fixed_probability)
-                }
-                if (!is.null(propensity_instruction) &&
-                    identical(propensity_instruction$mode, "adherence")) {
+                dynamic_adherence <- isTRUE(intervention$dynamic_adherence)
+                adherence_model_strata <- intervention$adherence_model_strata
+                if (dynamic_adherence) {
                     task_variables <- strsplit(
                         task_variable,
                         ",",
@@ -279,9 +228,8 @@ intervention_probabilities <- function(x,
                     )
                 } else {
                     # The ordinary treatment formula has a nominal, fixed
-                    # response (for example I(A_k == 1)). A dynamic rule that
-                    # changes that value must therefore either provide a fixed
-                    # instruction or explicitly request an adherence model.
+                    # response. The default intervention function is static;
+                    # a custom dynamic intervention is handled above.
                     changed_from_nominal <- rep(FALSE, NROW(current_data))
                     for (treatment_variable in task_treatment_variables){
                         nominal_value <- intervention_table[
@@ -293,49 +241,47 @@ intervention_probabilities <- function(x,
                         changed[is.na(changed)] <- TRUE
                         changed_from_nominal <- changed_from_nominal | changed
                     }
-                    if (any(changed_from_nominal & is.na(fixed_probability))){
+                    if (any(changed_from_nominal)){
                         stop(
                             "The intervention changes a nominal treatment value for ",
                             task_variable,
-                            " without a propensity instruction. Return a fixed ",
-                            "probability for those rows or use `mode = \"adherence\"`."
+                            " without a custom `intervene_function`."
                         )
                     }
                 }
             }
-            fit_rows <- is.na(fixed_probability)
-            # Fit all nuisance parameter models for intervention node k (time
-            # interval k). Adherence instructions can optionally split the
-            # fitting rows into separate strata.
+            # Fit all nuisance parameter models for intervention node k. A
+            # dynamic adherence model can be split by pre-decision strata.
             if (task_list[task,type] == "censoring" ||
-                is.null(propensity_instruction) ||
-                !identical(propensity_instruction$mode, "adherence")) {
-                fit_groups <- list(.all = which(fit_rows))
+                !dynamic_adherence ||
+                is.null(adherence_model_strata) ||
+                length(adherence_model_strata) == 0L) {
+                fit_groups <- list(.all = seq_len(NROW(current_data)))
             } else {
-                stratify_by <- propensity_instruction$stratify_by
-                if (length(stratify_by) == 0L) {
+                strata <- adherence_model_strata
+                if (length(strata) == 0L) {
                     fit_groups <- list(.all = seq_len(NROW(current_data)))
                 } else {
-                    missing_strata <- setdiff(stratify_by, names(current_data))
+                    missing_strata <- setdiff(strata, names(current_data))
                     if (length(missing_strata) > 0L) {
                         stop(
-                            "Unknown `stratify_by` variable(s): ",
+                            "Unknown `strata` variable(s): ",
                             paste(missing_strata, collapse = ", "),
                             "."
                         )
                     }
                     if (any(vapply(
-                        stratify_by,
+                        strata,
                         function(variable_name) anyNA(current_data[[variable_name]]),
                         logical(1)
                     ))) {
                         stop(
-                            "`stratify_by` variables must be observed for every row used ",
+                            "`strata` variables must be observed for every row used ",
                             "to fit an adherence propensity."
                         )
                     }
                     strata_values <- lapply(
-                        stratify_by,
+                        strata,
                         function(variable_name) {
                             as.character(current_data[[variable_name]])
                         }
@@ -350,9 +296,7 @@ intervention_probabilities <- function(x,
                         drop = TRUE
                     )
                 }
-                fit_groups <- lapply(fit_groups, function(indices) {
-                    intersect(indices, which(fit_rows))
-                })
+                fit_groups <- lapply(fit_groups, identity)
             }
             if (progressbar){
                 action <- action + 1
@@ -362,7 +306,7 @@ intervention_probabilities <- function(x,
             reuse_fit <- NULL
             save_current_fit <- save_fitted_objects
             if (task_list[task,type] == "censoring"){
-                if (protocol_name == x$censoring_use_protocol){
+                if (regime_name == x$censoring_use_regime){
                     # store the fit
                     save_current_fit <- TRUE
                 }else{
@@ -371,7 +315,7 @@ intervention_probabilities <- function(x,
                     reuse_fit <- x$models[[paste0("time_",k)]][[task_list[task,type]]][[task_list[task,variable]]][c("fit","fit_summary")]
                 }
             }
-            predicted_values <- fixed_probability
+            predicted_values <- rep(NA_real_, NROW(current_data))
             fitted_objects <- list()
             fit_summaries <- list()
             fit_diagnostics <- list()
@@ -407,8 +351,8 @@ intervention_probabilities <- function(x,
             fitted <- length(fit_summaries) > 0L
             if (!fitted) {
                 fit_summary <- structure(
-                    "No model fitted: all probabilities supplied by the propensity instruction.",
-                    class = "fixed_probability_instruction"
+                    "No model fitted for this treatment task.",
+                    class = "no_propensity_model"
                 )
                 fitted_objects <- NULL
             } else if (length(fit_summaries) == 1L &&
@@ -423,15 +367,50 @@ intervention_probabilities <- function(x,
                 if (!save_current_fit) fitted_objects <- NULL
             }
             # store the fit
+            model_time <- paste0("time_", k)
+            model_type <- as.character(task_list[task, type])
+            model_container <- x$models[[model_time]][[model_type]]
+            model_is_flat <- length(model_container) == 0L ||
+                all(vapply(
+                    model_container,
+                    function(model) !is.null(model$formula),
+                    logical(1)
+                ))
+            if (model_is_flat) {
+                model_index <- task_variable
+            } else {
+                model_index <- which(vapply(
+                    model_container,
+                    function(step) task_variable %in% names(step),
+                    logical(1)
+                ))
+                if (length(model_index) != 1L) {
+                    stop(
+                        "Could not locate the sequential propensity model for ",
+                        task_variable, " at node ", k, "."
+                    )
+                }
+            }
             if (save_current_fit){
                 fit_to_store <- fitted_objects
                 if (length(fitted_objects) == 1L &&
                     ".all" %in% names(fitted_objects)) {
                     fit_to_store <- fitted_objects[[".all"]]
                 }
-                x$models[[paste0("time_",k)]][[task_list[task,type]]][[task_variable]]$fit <- fit_to_store
+                if (model_is_flat) {
+                    model_container[[model_index]]$fit <- fit_to_store
+                } else {
+                    model_container[[model_index]][[task_variable]]$fit <-
+                        fit_to_store
+                }
             }
-            x$models[[paste0("time_",k)]][[task_list[task,type]]][[task_variable]]$fit_summary <- fit_summary
+            if (model_is_flat) {
+                model_container[[model_index]]$fit_summary <- fit_summary
+            } else {
+                model_container[[model_index]][[task_variable]]$fit_summary <-
+                    fit_summary
+            }
+            x$models[[model_time]][[model_type]] <- model_container
             # update diagnostics
             for (dia in fit_diagnostics) {
                 if (is.null(x$diagnostics)){
@@ -461,12 +440,12 @@ intervention_probabilities <- function(x,
             intervention_probs[outcome_free_and_uncensored,task] <- predicted_values
         }
         # Store the intervention probabilities
-        x$protocols[[protocol_name]]$intervention_probs <- intervention_probs
-        x$protocols[[protocol_name]]$ipw_last_nodes <- ipw_last_nodes
-        x$protocols[[protocol_name]]$intervention_last_nodes <- intervention_last_nodes
+        x$regimes[[regime_name]]$intervention_probs <- intervention_probs
+        x$regimes[[regime_name]]$ipw_last_nodes <- ipw_last_nodes
+        x$regimes[[regime_name]]$intervention_last_nodes <- intervention_last_nodes
         # FIXME: write this rowCumprods in armadillo
         #        and only keep the columns of the ipw_last_nodes
-        x$protocols[[protocol_name]]$cumulative_intervention_probs <- matrixStats::rowCumprods(as.matrix(intervention_probs))
+        x$regimes[[regime_name]]$cumulative_intervention_probs <- matrixStats::rowCumprods(as.matrix(intervention_probs))
     }
     if (progressbar){cat("\n")}
     x

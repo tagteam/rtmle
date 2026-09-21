@@ -4,16 +4,28 @@
 \alias{register_format}
 \title{Register Format Conversion for Simulated Cohort Data}
 \usage{
-register_format(cohort)
+register_format(cohort, treatment_variables = NULL)
 }
 \arguments{
 \item{cohort}{A data object of class \code{"simulated_cohort"}.}
+
+\item{treatment_variables}{Optional character vector naming treatment
+variables. These variables are returned as exposure intervals with the
+columns \code{id}, \code{start_date}, and \code{end_date}; rows where the
+treatment is equal to 1 are combined into contiguous intervals. If
+omitted, all time-varying variables are returned in the usual
+\code{id}, \code{date}, \code{value} format.}
 }
 \value{
 A list with two components:
   \itemize{
     \item \code{baseline_data}: A data.table containing baseline variables for each individual.
-    \item \code{timevar_data}: A list of data.tables representing time-varying information, including event data and visit-related measurements.
+    \item \code{timevar_data}: A list of data.tables representing
+      time-varying information, including event data and visit-related
+      measurements. Treatment variables named in
+      \code{treatment_variables} have columns \code{id},
+      \code{start_date}, and \code{end_date}; other visit variables have
+      columns \code{id}, \code{date}, and \code{value}.
   }
 }
 \description{
@@ -25,10 +37,15 @@ facilitating further analysis.
 \details{
 The function assumes the input object has attributes specifying baseline variables, intermediate events, 
 absorbing events, baseline visits, visit events, and visit measurements. It extracts relevant information 
-for each category and organizes it into a structured format.
+for each category and organizes it into a structured format. For a
+treatment variable, a value of 1 denotes exposure. Exposure starts at the
+corresponding baseline or visit time and ends at the next baseline or visit
+at which the treatment is no longer 1, or at the subject's last observed
+time if no later treatment observation is available.
 }
 \examples{
 data(simulated_cohort)
-result <- register_format(simulated_cohort)
+result <- register_format(simulated_cohort,
+                          treatment_variables = c("A", "B"))
 
 }

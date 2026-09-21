@@ -19,7 +19,7 @@ events, and absorbing events.
 
 The examples below estimate the absolute risks of =stroke= in the
 presense of the competing risk =death without stroke= under different
-static treatment protocols.
+static treatment regimes.
 
 * Preparation
 ** Install and load package 
@@ -146,9 +146,9 @@ Minority threshold:  8
 Weight truncation:   (0,1)
 Prediction range:    (0.0001,0.9999)
 TODO: The object contains no baseline_data yet. Add them with the function rtmle::add_baseline_data
-TODO: The object contains no time varying data yet. Add them with rtmle::add_wide_data in discretized form or with rtmle::add_long_data followed by rtmle::discretize.
-TODO: The object contains no outcome data yet. Add them with rtmle::add_wide_data in discretized form or with rtmle::add_long_data followed by rtmle::discretize.
-TODO: The object contains no protocols. Add them with the function 'protocol'.
+TODO: The object contains no time varying data yet. Add them with rtmle::add_wide_data in discretized form or with rtmle::add_long_data followed by rtmle::discretize_data.
+TODO: The object contains no outcome data yet. Add them with rtmle::add_wide_data in discretized form or with rtmle::add_long_data followed by rtmle::discretize_data.
+TODO: The object contains no regimes. Add them with the function 'regime'.
 Prepared data:       n=0, p=-1
 TODO: Use the function 'model_formula' to initialize the formula for the nuisance parameter models.
 TODO: Use the function 'run_rtmle' to estimate the nuisance parameter models and the target parameter.
@@ -207,7 +207,7 @@ names(x$long_data$timevar_data)
 
 * Discretize the longitudinal data onto the discrete time scale
 
-=discretize()= maps the long event-history data onto the discrete time grid.
+=discretize_data()= maps the long event-history data onto the discrete time grid.
 Because the simulated times are already measured from zero, the start of
 follow-up is set to 0.  Default mappings are used for all supplied
 time-varying variables.
@@ -215,7 +215,7 @@ time-varying variables.
 #+BEGIN_SRC R
 # Input: x with baseline_data and long_data plus the time grid from rtmle_init().
 # Output: x$data contains wide outcome and time-varying data on the time grid.
-x <- discretize(x, start_followup_date = 0)
+x <- discretize_data(x, start_followup_date = 0)
 
 names(x$data)
 names(x$data$timevar_data)
@@ -226,9 +226,9 @@ names(x$data$timevar_data)
 : [1] "bleeding"  "changeSBP" "A"         "B"
 
 
-* Define treatment protocols
+* Define treatment regimes
 
-The function =protocol()= adds an intervention to the object.  A
+The function =regime()= adds an intervention to the object.  A
 simple example is a static regime which sets treatment =A= to 1 at
 every intervention node.  The intervention values are factors so that
 =rtmle= knows the two treatment options. It is recommended that one
@@ -236,8 +236,8 @@ checks the intervention table after adding the intervention:
 
 #+BEGIN_SRC R
 # Input: x with prepared_data and intervention nodes.
-# Output: x$protocols$Always_A with an intervention table and adherence matrix.
-x <- protocol(
+# Output: x$regimes$Always_A with an intervention table and adherence matrix.
+x <- regime(
     x,
     name = "Always_A",
     intervention = data.frame(
@@ -247,7 +247,7 @@ x <- protocol(
     verbose = FALSE
 )
 
-x$protocols$Always_A$intervention_table
+x$regimes$Always_A$intervention_table
 #+END_SRC
 
 #+RESULTS:
@@ -259,7 +259,7 @@ x$protocols$Always_A$intervention_table
 : 4:         3      A_3      1
 : 5:         4      A_4      1
 
-The protocol function can add more complex interventions that depend
+The regime function can add more complex interventions that depend
 on multiple variables and apply user-written intervention
 functions. Here is an example of a two-factor regime which states that
 people should start treatment 'A', continue treatment 'A' for 20
@@ -268,8 +268,8 @@ allowed to take treatment 'B' in the first 10 months:
 
 #+BEGIN_SRC R
 # Input: x with prepared_data and intervention nodes.
-# Output: x$protocols$Always_A_not_B_in_the_beginning with an intervention table and adherence matrix.
-x <- protocol(
+# Output: x$regimes$Always_A_not_B_in_the_beginning with an intervention table and adherence matrix.
+x <- regime(
     x,
     name = "Always_A_not_B_in_the_beginning",
     intervention = data.frame(
@@ -280,7 +280,7 @@ x <- protocol(
     verbose = FALSE
 )
 
-x$protocols$Always_A_not_B_in_the_beginning$intervention_table
+x$regimes$Always_A_not_B_in_the_beginning$intervention_table
 #+END_SRC
 
 #+RESULTS:
@@ -306,7 +306,7 @@ is no intervention on B at these intervention nodes.
 
 =prepare_rtmle_data()= checks and combines the baseline, outcome, censoring,
 competing-risk, treatment, and covariate data.  It creates the one-row-per-
-subject analysis table used by =protocol()=, =model_formula()=, and
+subject analysis table used by =regime()=, =model_formula()=, and
 =run_rtmle()=.
 
 #+BEGIN_SRC R
@@ -329,16 +329,12 @@ head(names(x$prepared_data), 20)
 A user-defined intervention can make treatment depend on a patient's
 history. The following rule prescribes =A= at every node until
 =bleeding= occurs and sets =A= equal to zero from then on. The
-intervention function returns only the intervention-updated data. The
-propensity instructions are supplied separately in the =protocol= call:
-
-- =propensity_instructions= declares how the adherence propensity should be
-  constructed. Here the binary observed-versus-intervened treatment match is
-  modeled, so people who continue =A= after bleeding contribute as non-adherent
-  observations; and
-- =propensity_variables= adds current-node bleeding to the treatment
-  model. Declaring =bleeding_k= also asserts that bleeding is observed
-  before the decision about =A_k=.
+intervention function returns only the intervention-updated data. For a
+dynamic rule, =rtmle= automatically models the binary observed-versus-
+intervened treatment match, so people who continue =A= after bleeding
+contribute as non-adherent observations. Treatment decisions use only the
+history available before the decision; current-interval covariates are not
+added to the propensity model.
 
 #+BEGIN_SRC R
 has_bled_by <- function(data, node) {
@@ -357,24 +353,12 @@ stop_A_after_bleeding <- function(data, intervention_table, time_node) {
     intervened_data <- intervene(data, intervention_table, time_node)
     for (node in unique(intervention_table$time_node)) {
         action <- paste0("A_", node)
-        intervened_data[[action]][has_bled_by(data, node)] <- "0"
+        intervened_data[[action]][has_bled_by(data, max(0, node - 1))] <- "0"
     }
     intervened_data
 }
 
-bleeding_propensity_instructions <- function(data, intervention_table,
-                                             time_node) {
-    current_action <- paste0("A_", time_node)
-    setNames(list(list(mode = "adherence")), current_action)
-}
-
-bleeding_propensity_variables <- function(data, intervention_table,
-                                          time_node) {
-    current_action <- paste0("A_", time_node)
-    setNames(list(paste0("bleeding_", time_node)), current_action)
-}
-
-x_dynamic <- protocol(
+x_dynamic <- regime(
     x,
     name = "A_until_bleeding",
     intervention = data.frame(
@@ -382,36 +366,52 @@ x_dynamic <- protocol(
         A = factor("1", levels = c("0", "1"))
     ),
     intervene_function = stop_A_after_bleeding,
-    propensity_instructions = bleeding_propensity_instructions,
-    propensity_variables = bleeding_propensity_variables,
+    adherence_model_strata = NULL,
     verbose = FALSE
 )
 x_dynamic <- model_formula(x_dynamic, verbose = FALSE)
 x_dynamic$models$time_1$A_until_bleeding$A_1$formula
 #+END_SRC
 
-To impose the simpler deterministic stopping approximation instead, replace
-=bleeding_propensity_instructions= with a function returning =list(mode =
-"fixed", probability = ifelse(has_bled_by(data, time_node), 1, NA_real_))=.
-Non-missing fixed values are assigned directly and those rows are excluded
-from the corresponding propensity-model fit. Use the adherence instruction
-when continuation after bleeding should inform the estimated probability. To
-fit separate adherence models for the bleeding and non-bleeding strata, add
-=stratify_by = paste0("bleeding_", time_node)= to the adherence instruction.
+There are two useful propensity specifications for this type of rule:
+
+1. A pooled adherence model (the example above). The binary
+   observed-versus-intervened treatment match is modelled using the ordinary
+   pre-decision history.
+2. Separate adherence models for patients with and without the latest
+   pre-decision bleeding history. Supply =adherence_model_strata= with the
+   value ="bleeding"=;
+   the unsuffixed name is resolved to =bleeding_(k-1)= at node =k=. If
+   =bleeding= is an event indicator rather than a cumulative history,
+   precompute a cumulative history column and use its unsuffixed name instead.
+
+#+BEGIN_SRC R
+x_stratified <- regime(
+    x,
+    name = "A_until_bleeding_stratified",
+    intervention = data.frame(
+        time_node = x$intervention_nodes,
+        A = factor("1", levels = c("0", "1"))
+    ),
+    intervene_function = stop_A_after_bleeding,
+    adherence_model_strata = "bleeding",
+    verbose = FALSE
+)
+#+END_SRC
 
 * Define the target parameter
 
-=target()= tells =rtmle= which protocols belong to the estimand and which
+=target()= tells =rtmle= which regimes belong to the estimand and which
 estimator should be used.  Here the target is the stroke risk under each
-protocol and the contrast of =Always_A_not_B_in_the_beginning= against =Always_A=.
+regime and the contrast of =Always_A_not_B_in_the_beginning= against =Always_A=.
 
 #+BEGIN_SRC R
-# Input: x with both protocols registered.
+# Input: x with both regimes registered.
 # Output: x$targets contains Stroke_risk and x$estimator includes "tmle".
 x <- target(
     x,
     name = "Stroke_risk",
-    protocols = c("Always_A", "Always_A_not_B_in_the_beginning"),
+    regimes = c("Always_A", "Always_A_not_B_in_the_beginning"),
     estimator = "tmle"
 )
 
@@ -421,7 +421,7 @@ x$estimator
 
 #+RESULTS:
 : $Stroke_risk
-: $Stroke_risk$protocols
+: $Stroke_risk$regimes
 : [1] "Always_A"                        "Always_A_not_B_in_the_beginning"
 : 
 : 
@@ -432,7 +432,7 @@ x$estimator
 =model_formula()= creates formulas for the outcome, censoring, and
 treatment models required by the sequential regression and TMLE update
 step. The formulas are derived from the prepared data, the time grid,
-and the treatment variables intervened on by the protocols. In
+and the treatment variables intervened on by the regimes. In
 addition to selecting variables that should be adjusted for, it is
 often useful to consider which variables should not be adjusted
 for. E.g., if =A_0= is equal to =(1-B_0)= then it makes little sense
@@ -440,7 +440,7 @@ to have both variables in the adjustment set. To show how this works we here rem
 and all bleeding variables from all censoring models:
 
 #+BEGIN_SRC R
-  # Input: x with prepared_data, protocols, and target definition.
+  # Input: x with prepared_data, regimes, and target definition.
   # Output: x$models, a nested list of formulas indexed by time and model node.
   x <- model_formula(x, verbose = FALSE,exclusion_rules = list("*" = "B_0","dropout" = "bleeding"))
 
@@ -513,7 +513,7 @@ as well as super-learner
 strategies (discrete and ensemble super learners) that can be specified through the =learner= argument.
 
 #+BEGIN_SRC R
-# Input: x with prepared_data, protocols, targets, and model formulas.
+# Input: x with prepared_data, regimes, targets, and model formulas.
 # Output: x with fitted nuisance models, influence-curve components, and
 # main-analysis estimates for the requested time horizons.
 analysis_horizons <- 1:2
@@ -545,7 +545,7 @@ Prediction range:    (0.0001,0.9999)
 Baseline data:       n=307, p=3
 Timevar data:        bleeding, changeSBP, A, B
 Outcome data:        n=307, p=stroke_0, stroke_1, ..., death_5
-Protocols:           Always_A, Always_A_not_B_in_the_beginning
+Regimes:           Always_A, Always_A_not_B_in_the_beginning
 Target:              Stroke_risk [Always_A, Always_A_not_B_in_the_beginning]
 Number of models:    32
 Learner:             learn_glm
@@ -553,7 +553,7 @@ Fitted time horizons:   1, 2
 Diagnostics:         No warnings (yet)
 
 Results:
-        Target                        Protocol Reference Target_parameter Time_horizon Estimator Estimate (CI_95)
+        Target                        Regime Reference Target_parameter Time_horizon Estimator Estimate (CI_95)
         <fctr>                          <fctr>    <char>           <fctr>        <int>    <fctr>           <char>
 1: Stroke_risk                        Always_A                       Risk            1      tmle    0.7 [0.0;2.1]
 2: Stroke_risk                        Always_A                       Risk            2      tmle   7.3 [2.5;12.2]
@@ -565,9 +565,9 @@ Results:
 8: Stroke_risk Always_A_not_B_in_the_beginning  Always_A       Risk_ratio            2      tmle    1.3 [0.7;2.5]
 #+end_example
 
-The rows with =Target_parameter = "Risk"= are protocol-specific cumulative
+The rows with =Target_parameter = "Risk"= are regime-specific cumulative
 risks.  The rows with =Risk_difference= and =Risk_ratio= compare =Always_A_not_B_in_the_beginning= to
-the reference protocol =Always_A= at each requested time horizon.
+the reference regime =Always_A= at each requested time horizon.
 
 ** Plotting the estimated values across time horizons
 
@@ -583,8 +583,8 @@ plot(x)
 
 * Inspect the fit, check adherence and inverse-probability weights
 
-The fitted object also contains protocol diagnostics.  The adherence matrices
-record whether each subject followed the protocol through each intervention
+The fitted object also contains regime diagnostics.  The adherence matrices
+record whether each subject followed the regime through each intervention
 node.  The cumulative intervention probabilities are used to construct the
 inverse-probability weights in the TMLE update.
 There are useful plot functions:
@@ -624,10 +624,10 @@ x <- add_long_data(
 )
 
 x <- add_baseline_data(x, data = ld$baseline_data)
-x <- discretize(x, start_followup_date = 0)
+x <- discretize_data(x, start_followup_date = 0)
 x <- prepare_rtmle_data(x)
 
-x <- protocol(
+x <- regime(
     x,
     name = "Always_A",
     intervention = data.frame(
@@ -637,7 +637,7 @@ x <- protocol(
     verbose = FALSE
 )
 
-x <- protocol(
+x <- regime(
     x,
     name = "Always_A_not_B_in_the_beginning",
     intervention = data.frame(
@@ -651,7 +651,7 @@ x <- protocol(
 x <- target(
     x,
     name = "Stroke_risk",
-    protocols = c("Always_A", "Always_A_not_B_in_the_beginning"),
+    regimes = c("Always_A", "Always_A_not_B_in_the_beginning"),
     estimator = "tmle"
 )
 
@@ -678,7 +678,7 @@ Prediction range:    (0.0001,0.9999)
 Baseline data:       n=307, p=3
 Timevar data:        bleeding, changeSBP, A, B
 Outcome data:        n=307, p=stroke_0, stroke_1, ..., death_5
-Protocols:           Always_A, Always_A_not_B_in_the_beginning
+Regimes:           Always_A, Always_A_not_B_in_the_beginning
 Target:              Stroke_risk [Always_A, Always_A_not_B_in_the_beginning]
 Number of models:    32
 Learner:             learn_glm
@@ -686,7 +686,7 @@ Fitted time horizons:   1, 2
 Diagnostics:         No warnings (yet)
 
 Results:
-        Target                        Protocol Reference Target_parameter Time_horizon Estimator Estimate (CI_95)
+        Target                        Regime Reference Target_parameter Time_horizon Estimator Estimate (CI_95)
         <fctr>                          <fctr>    <char>           <fctr>        <int>    <fctr>           <char>
 1: Stroke_risk                        Always_A                       Risk            1      tmle    0.7 [0.0;2.1]
 2: Stroke_risk                        Always_A                       Risk            2      tmle   7.3 [2.5;12.2]

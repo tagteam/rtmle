@@ -26,8 +26,8 @@ res <- plot_model_coefficients(
   z,
   plot_style = "manhattan",
   times = 0:10,
-  node_order = c("protocol","censoring","outcome"),
-  protocol_nodes = c("Placebo","Lira"),
+  node_order = c("regime","censoring","outcome"),
+  regime_nodes = c("Placebo","Lira"),
   manhattan_color_by = "node_group",
   show_x_labels = FALSE
 )

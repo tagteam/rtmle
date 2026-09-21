@@ -109,7 +109,7 @@ fitter <- function(intervention_node,
                                      fit = fit,
                                      fit_summary = mean_Y)
         } else {
-            ## avoid fitting the same censoring model multiple times (for multiple protocols)
+            ## avoid fitting the same censoring model multiple times (for multiple regimes)
             ## but still need to predict intervened data
             ## do not save the same censoring model multiple times!
             if (length(reuse_fit) > 0){

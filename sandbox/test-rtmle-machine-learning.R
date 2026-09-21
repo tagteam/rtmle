@@ -23,10 +23,10 @@ ld <- simulate_long_data(n = 1113,number_visits = 20,beta = list(A_on_Y = -.2,A0
 x <- rtmle_init(time_grid = seq(0,2000,30.45*12),name_id = "id",name_outcome = "Y",name_competing = "Dead",name_censoring = "Censored",censored_label = "censored")
 x <- add_long_data(x,outcome_data=ld$outcome_data,censored_data=ld$censored_data,competing_data=ld$competing_data,timevar_data=ld$timevar_data)
 x <- add_baseline_data(x,data=ld$baseline_data)
-x <- discretize(x,start_followup_date = 0)
-x <- protocol(x,name = "Always_A",treatment_variables = "A",intervention = 1)
+x <- discretize_data(x,start_followup_date = 0)
+x <- regime(x,name = "Always_A",treatment_variables = "A",intervention = 1)
 x <- prepare_rtmle_data(x)
-x <- target(x,name = "Outcome_risk",estimator = "tmle",protocols = "Always_A")
+x <- target(x,name = "Outcome_risk",estimator = "tmle",regimes = "Always_A")
 x <- model_formula(x)
 system.time(x <- run_rtmle(x,refit = TRUE,time_horizon = 2,learner = c("learn_glm","learn_glm")))
 

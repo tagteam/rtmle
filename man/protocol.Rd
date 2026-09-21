@@ -2,7 +2,8 @@
 % Please edit documentation in R/protocol.R
 \name{protocol}
 \alias{protocol}
-\title{Define a treatment protocol for an emulated trial}
+\alias{regime}
+\title{Define a treatment regime for an emulated trial}
 \usage{
 protocol(
   x,
@@ -12,200 +13,137 @@ protocol(
   treatment_variables,
   intervene_function = NULL,
   verbose = TRUE,
-  propensity_instructions = NULL,
-  propensity_variables = NULL,
+  multiple_treatment_factorization = "joint",
+  adherence_model_strata = NULL,
+  intervene_function_args = NULL,
+  ...
+)
+
+regime(
+  x,
+  name,
+  intervention,
+  expand = TRUE,
+  treatment_variables,
+  intervene_function = NULL,
+  verbose = TRUE,
+  multiple_treatment_factorization = "joint",
+  adherence_model_strata = NULL,
+  intervene_function_args = NULL,
   ...
 )
 }
 \arguments{
 \item{x}{An \code{rtmle} object as returned by \code{\link{rtmle_init}}.}
 
-\item{name}{Name of the protocol.}
+\item{name}{Name of the regime.}
 
 \item{intervention}{A vector, data frame, tibble, or data table specifying
-the treatment values dictated by the protocol. If a vector is supplied, it
-should contain 0/1 values corresponding to \code{treatment_variables}. If a
-data frame, tibble, or data table is supplied, its treatment columns must
-be factors whose levels specify the treatment options; in this case
-\code{treatment_variables} is ignored. In longitudinal settings, include a
-\code{"time"} column in addition to the treatment variables. Ideally,
-\code{intervention} supplies values for every value in
-\code{x$intervention_nodes}. If fewer rows are supplied and \code{expand =
-TRUE}, the last supplied value is used for later time intervals. If
-\code{expand = FALSE}, missing time intervals are interpreted as having no
-intervention.}
+the treatment values dictated by the regime. A vector contains 0/1
+values corresponding to \code{treatment_variables}; a data frame must
+contain factor treatment columns with two levels and a time column in
+longitudinal settings.}
 
 \item{expand}{Logical. If \code{FALSE} and \code{intervention} contains a
-\code{"time"} column, do not expand static interventions across time.}
+time column, do not expand static interventions across time.}
 
-\item{treatment_variables}{A vector with the name(s) of the
-variable(s) that the protocol intervenes on. In
-longitudinal settings, when a treatment variable is named \code{"A"},
-the prepared data contain one column for each of
-\code{A_0}, \code{A_1}, \dots, \code{A_k}. This argument can be left
-unspecified in which case the argument \code{intervention}
-must be given.}
+\item{treatment_variables}{Names of the treatment variable(s) when
+\code{intervention} is supplied as a 0/1 vector.}
 
 \item{intervene_function}{A function, or a character string naming one,
-used to apply the protocol. It is called as
-\code{fun(data, intervention_table, time_node)} and must preserve the
-rows and columns of \code{data}. It must return the complete modified
-data directly. Propensity metadata are supplied separately through
-\code{propensity_instructions} and \code{propensity_variables}.
-Defaults to \code{\link{intervene}}, which implements static
-interventions.}
+called as \code{fun(data, intervention_table, time_node)}. It must return
+the complete intervention-updated data while preserving its rows and
+required columns. For a dynamic treatment regime, use it to update
+treatment values according to the observed history.}
 
-\item{verbose}{Logical. If \code{FALSE} suppress all messages. \code{TRUE} is the default.}
+\item{intervene_function_args}{Named list of additional arguments passed to
+\code{intervene_function} at every intervention node. This is useful for
+parameterized functions such as \code{\link{treat_unless}}, for example
+\code{list(contra_indication = "bleeding", action = 0)}. The names
+\code{data}, \code{intervention_table}, and the time argument are reserved.}
 
-\item{propensity_instructions}{Optional fixed-probability or adherence
-instructions for the treatment propensity. This may be a static numeric
-vector, a named list/table of numeric vectors, a descriptor with
-\code{mode = "fixed"} or \code{mode = "adherence"}, or a function
-returning one of these objects. A function is called with
-\code{data}, \code{intervention_table}, and \code{time_node} at the
-same analysis stage as \code{intervene_function}. Fixed non-missing
-values are assigned directly and excluded from model fitting;
-\code{mode = "adherence"} models whether observed treatment matches the
-intervention-updated data. Use \code{stratify_by} in an adherence
-descriptor to fit separate models by observed strata. Static fixed
-probability vectors may be given for the full prepared cohort and are
-subset automatically for at-risk nuisance fits.}
+\item{verbose}{Logical. If \code{FALSE}, suppress all messages.}
 
-\item{propensity_variables}{Optional prepared-data variable names to add to
-the treatment propensity formulas. This may be a character vector, a
-named list, or a function returning either form. A function is called
-with \code{data}, \code{intervention_table}, and \code{time_node}.}
+\item{multiple_treatment_factorization}{How propensity models for multiple
+treatment variables assigned at the same node are factorized. One of
+\code{"joint"}, \code{"sequential"}, or \code{"independent"}; the
+default is \code{"joint"}.}
 
-\item{...}{Not used.}
+\item{adherence_model_strata}{Optional character vector of prepared-data
+variables defining subgroups in which separate adherence propensities are
+fitted. This argument is only for dynamic treatment rules. If it is
+\code{NULL}, one pooled binary adherence model is fitted. Unsuffixed
+time-varying names, such as \code{"bleeding"}, refer to the latest value
+known before the decision: \code{bleeding_{k-1}} at node \code{k}; at
+node 0, \code{bleeding_0} is treated as pre-first-decision information.
+Unsuffixed time-varying names are lagged automatically: at node (k),
+"bleeding" resolves to \code{bleeding_{k-1}}.
+The argument only defines fitting strata and never adds predictors to the adherence-model
+Multiple variables define strata by their combinations.}
+
+\item{...}{Additional arguments are not used. The former
+\code{dynamic_propensity_instructions} interface is no longer supported;
+use \code{adherence_model_strata} instead.}
+
 }
 \value{
 The modified object contains the treatment variables and
-    \code{intervention_table} as list elements of \code{x$protocols[[name]]}.
-    When supplied, \code{propensity_instructions} and
-    \code{propensity_variables} are stored there as well.
+  \code{intervention_table} in \code{x$regimes[[name]]}.
 }
 \description{
-Adds a named protocol to an existing \code{rtmle} object. A protocol
-defines the values of the treatment variable(s) at each time point
-during follow-up, including time zero (baseline).
+Adds a named regime to an existing \code{rtmle} object. A regime
+defines treatment values at each time point during follow-up.
 }
 \details{
-A history-dependent intervention only needs to return the
-  intervention-updated data. Propensity metadata are declared in the
-  protocol call. They may be static objects or functions evaluated with the
-  current observed history. The callback and metadata functions are called
-  on the full prepared cohort during formula construction and adherence
-  matching, and on the current at-risk subset during G and Q nuisance-model
-  fitting. In the G step this is the subset entering treatment node code{k}.
-  In the Q step it is the subset entering the outcome interval, with
-  code{time_node = k - 1}; the returned data are passed as prediction data
-  (code{newdata}) to the outcome learner before the TMLE fluctuation. They
-  are not the outcomes or data produced by the fluctuation step itself.
+A dynamic intervention function returns data only. The
+  \code{data} argument is the current prepared cohort or at-risk subset.
+  For a dynamic rule, \code{rtmle} constructs a binary adherence response
+  indicating whether the observed treatment agrees with the
+  intervention-updated treatment. \code{adherence_model_strata} controls
+  whether this response is modelled in one pooled model or in separate
+  pre-decision subgroups. The intervention function determines the regime
+  itself, including whether a contraindication pauses treatment for one
+  interval or stops it permanently. A static regime uses the ordinary
+  observed-treatment model. Additional intervention-function arguments can
+  be supplied through \code{intervene_function_args}, avoiding a wrapper
+  when a dynamic rule such as \code{\link{treat_unless}} has fixed
+  parameters.
 }
 \examples{
-# ------------------------------------------------------------------------------------------
-# Intervening on a single treatment variable
-# ------------------------------------------------------------------------------------------
-x <- rtmle_init(time_grid=0:3,name_id = "id",name_outcome = "Y",name_competing = "Dead",
-                name_censoring = "Censored",censored_label = "censored")
-x <- protocol(x,name = "Always_A",
-                intervention = data.frame(time_node=x$intervention_nodes,
-                                          "A" = factor("1",levels = c("0","1"))))
-x <- protocol(x,name = "Never_A",
-              intervention = data.frame(time_node=x$intervention_nodes,
-                                        "A" = factor("0",levels = c("0","1"))))
-x <- protocol(x,name = "Initiate_A_then_stop",
-              intervention = data.frame(time_node=x$intervention_nodes,
-                                        "A" = factor(c("1","0","0"),levels = c("0","1"))))
-x$protocols
-# ------------------------------------------------------------------------------------------
-# Intervening on more than one treatment variable
-# ------------------------------------------------------------------------------------------
-x <- rtmle_init(time_grid=0:3,name_id = "id",name_outcome = "Y",name_competing = "Dead",
-                name_censoring = "Censored",censored_label = "censored")
-x <- protocol(x,name = "Always_A_never_B",
-                intervention = data.frame(time_node=x$intervention_nodes,
-                                     "A" = factor("1",levels = c("0","1")),
-                                     "B" = factor("0",levels = c("0","1"))))
-x <- protocol(x,name = "Always_A_and_B_never_C",
-                    intervention = data.frame(time_node=x$intervention_nodes,
-                                              "A" = factor("1",levels = c("0","1")),
-                                              "B" = factor("1",levels = c("0","1")),
-                                              "C" = factor("0",levels = c("0","1"))))
-x$protocols
-# ------------------------------------------------------------------------------------------
-# Dynamic regime/History-dependent intervention: stop A after bleeding
-# ------------------------------------------------------------------------------------------
-data(simulated_cohort, package = "rtmle")
-ld <- register_format(simulated_cohort)
-y <- rtmle_init(time_grid = seq(0, 20, 4), name_id = "id",
-                name_outcome = "stroke", name_competing = "death",
-                name_censoring = "dropout", censored_label = "censored")
-y <- add_long_data(
-    y,
-    outcome_data = ld$timevar_data$stroke[!duplicated(id)],
-    censored_data = ld$timevar_data$dropout,
-    competing_data = ld$timevar_data$death,
-    timevar_data = ld$timevar_data[c("bleeding", "changeSBP", "A", "B")]
-)
-y <- add_baseline_data(y, data = ld$baseline_data)
-y <- discretize(y, start_followup_date = 0)
-y <- prepare_rtmle_data(y)
-
-has_bled_by <- function(data, node) {
-    history <- intersect(paste0("bleeding_", 0:node), names(data))
-    if (length(history) == 0L) return(rep(FALSE, NROW(data)))
-    bleeding_history <- do.call(
-        cbind,
-        lapply(history, function(v) data[[v]] \%in\% c(1, "1"))
-    )
-    rowSums(bleeding_history) > 0
-}
-stop_after_bleeding <- function(data, intervention_table, time_node) {
-    intervened_data <- intervene(data, intervention_table, time_node)
-    for (node in unique(intervention_table$time_node)) {
-        action <- paste0("A_", node)
-        intervened_data[[action]][has_bled_by(data, node)] <- factor(
-            "0", levels = levels(data[[action]])
-        )
-    }
-    intervened_data
-}
-bleeding_propensity_instructions <- function(data, intervention_table,
-                                             time_node) {
-    action <- paste0("A_", time_node)
-    stats::setNames(list(list(mode = "adherence")), action)
-}
-bleeding_propensity_variables <- function(data, intervention_table,
-                                          time_node) {
-    action <- paste0("A_", time_node)
-    stats::setNames(list(paste0("bleeding_", time_node)), action)
-}
-y <- protocol(
-    y,
-    name = "A_until_bleeding",
+x <- rtmle_init(time_grid = 0:3, name_id = "id",
+                name_outcome = "Y", name_competing = "Dead",
+                name_censoring = "Censored", censored_label = "censored")
+x <- regime(
+    x,
+    name = "Always_A_never_B",
     intervention = data.frame(
-        time_node = y$intervention_nodes,
+        time_node = x$intervention_nodes,
+        A = factor("1", levels = c("0", "1")),
+        B = factor("0", levels = c("0", "1"))
+    ),
+    multiple_treatment_factorization = "sequential"
+)
+
+# A dynamic rule can stop A after a contraindication in the history.
+x <- regime(
+    x, name = "A_until_bleeding",
+    intervention = data.frame(
+        time_node = x$intervention_nodes,
         A = factor("1", levels = c("0", "1"))
     ),
-    intervene_function = stop_after_bleeding,
-    propensity_instructions = bleeding_propensity_instructions,
-    propensity_variables = bleeding_propensity_variables,
+    intervene_function = treat_unless(
+        contra_indication = "bleeding",
+        action = 0
+    ),
+    adherence_model_strata = "bleeding",
     verbose = FALSE
 )
-y <- target(y, name = "Stroke_risk", estimator = "tmle",
-            protocols = "A_until_bleeding")
-y <- model_formula(y, verbose = FALSE)
-y <- run_rtmle(y, learner = "learn_glm", time_horizon = 2,
-                refit = TRUE, verbose = FALSE)
-y$estimate$Main_analysis
 }
 \seealso{
 \code{\link{rtmle_init}}, \code{\link{prepare_rtmle_data}},
   \code{\link{intervention_match}}, \code{\link{target}},
-  \code{\link{model_formula}},
-  \code{\link{run_rtmle}}
+  \code{\link{model_formula}}, \code{\link{run_rtmle}}
 }
 \author{
-Thomas A Gerds \email{tag@biostat.ku.dk}
+Thomas A. Gerds \email{tag@biostat.ku.dk}
 }

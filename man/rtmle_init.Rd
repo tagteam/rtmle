@@ -16,7 +16,8 @@ rtmle_init(
   minority_threshold = 8,
   weight_truncation = c(0, 1),
   prediction_range = c(0.0001, 0.9999),
-  time_grid_labels = time_grid
+  time_grid_labels = time_grid,
+  time_unit = NULL
 )
 }
 \arguments{
@@ -70,6 +71,9 @@ logit transformation used in the TMLE fluctuation model. The default is
 
 \item{time_grid_labels}{Labels used for the time-grid points on plot
 x-axes. Defaults to \code{time_grid}.}
+
+\item{time_unit}{Character string used as the x-axis label in plots. If
+\code{NULL} (the default), plots use \code{"Time"}.}
 }
 \value{
 A list with class \code{"rtmle"} and the following elements:
@@ -85,7 +89,7 @@ Initialize an rtmle analysis
 }
 \details{
 Creates an empty object of class \code{"rtmle"} that stores analysis
-settings and can then be populated with data, protocols, targets, and model
+settings and can then be populated with data, regimes, targets, and model
 formulas.
 }
 \examples{
@@ -102,8 +106,8 @@ x <- rtmle_init(time_grid=c(0,6,12,18),
 }
 \seealso{
 \code{\link{add_baseline_data}}, \code{\link{add_long_data}},
-  \code{\link{add_wide_data}}, \code{\link{discretize}},
-  \code{\link{prepare_rtmle_data}}, \code{\link{protocol}},
+  \code{\link{add_wide_data}}, \code{\link{discretize_data}},
+  \code{\link{prepare_rtmle_data}}, \code{\link{regime}},
   \code{\link{target}}, \code{\link{model_formula}},
   \code{\link{run_rtmle}}
 }

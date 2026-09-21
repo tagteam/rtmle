@@ -1,8 +1,8 @@
 Package: rtmle
 Title: Analysing Longitudinal Observational and Randomized Data with the Targeted Minimum Loss Estimator
-Version: 2026.09.10
+Version: 2026.09.21
 Authors@R: c(
-    person("Helene Charlotte Wiese Rytgaard", "Rytgaard", , "hely@sund.ku.dk", role = c("aut")),
+    person("Helene Charlotte Wiese", "Rytgaard", , "hely@sund.ku.dk", role = c("aut")),
     person("Joshua", "Schwab", role = "ctb", comment = "Maintainer and primary author of the ltmle package which inspired this work"),
     person("Alessandra", "Meddis", , "alme@sund.ku.dk", role = "ctb"),
     person("Anders", "Munch", , "a.munch@sund.ku.dk", role = "ctb"),
@@ -12,12 +12,19 @@ Authors@R: c(
     person("Thomas Alexander", "Gerds", , "tag@biostat.ku.dk", role = c("aut","cre"),
            comment = c(ORCID = "0000-0002-5955-816X"))
   )
+Author: Helene Charlotte Wiese Rytgaard [aut],
+    Joshua Schwab [ctb] (Maintainer and primary author of the ltmle package which inspired this work),
+    Alessandra Meddis [ctb], Anders Munch [ctb], Kathrine Kold Sørensen [ctb],
+    Christian Torp-Pedersen [ctb], Johan Sebastian Ohlendorff [ctb],
+    Thomas Alexander Gerds [aut, cre] (ORCID: <https://orcid.org/0000-0002-5955-816X>)
+Maintainer: Thomas Alexander Gerds <tag@biostat.ku.dk>
 Description: Flexible implementation of targeted minimum loss estimators.
              Some functions are optimized for large-scale register data.
 	     Some functions in this package were inspired by the 'ltmle' package developed by Joshua Schwab, Samuel Lendle, Maya Petersen, and Mark J. van der Laan, but rtmle provides an independent implementation with a different architecture and extensions to competing risks.
 License: GPL (>= 3)
 Encoding: UTF-8
 VignetteBuilder: R.rsp
+Depends: R (>= 3.5.0)
 Imports:
     stats,
     nnls,
@@ -30,7 +37,6 @@ Imports:
     survival,
     lava,
     glmnet,
-    rlang,
     matrixStats,
     Matrix
 Suggests: 

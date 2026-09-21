@@ -45,34 +45,35 @@ We specify the different scenarios this package can be used for:
 | Stochastic   | continuous                 | Binary/Survival | No        |
 |--------------|----------------------------|-----------------|-----------|
 
-## Defining the protocol
+## Defining the regime
 
-The function *protocol* is needed as first step to define the type of intervention of interest.
+The function *regime* is needed as first step to define the type of intervention of interest.
 Here we specify:
 
- - *name* : name of the protocol 
- - *treatment_variables*:  name(s) of the variable(s) that the protocols intervenes upon
+ - *name* : name of the regime 
+ - *treatment_variables*:  name(s) of the variable(s) that the regimes intervenes upon
  - *intervention*: the values of the treatment(s) the variables are set to under the intervention.
  If two treatments this would be either a list or a matrix. 
- In case of stochastic or dynamic intervention, a function needs to be specified
- through *intervene_function*. For a history-dependent treatment rule, declare
- any fixed/adherence *propensity_instructions* and additional
- *propensity_variables* in the same *protocol* call.
+ In case of a dynamic intervention, a function needs to be specified through
+ *intervene_function*. For a history-dependent treatment rule, declare
+ *adherence_model_strata* to request separate adherence models in pre-decision
+ subgroups; omit it for one pooled dynamic adherence model. The treatment
+ factorization is selected separately with *multiple_treatment_factorization*.
  
 
 ### Examples: 
 
-#### Static Intervention: One single binary variable exposure (Always treated protocol)
+#### Static Intervention: One single binary variable exposure (Always treated regime)
 
 ```{r}
-x <- protocol(x,name = "always A",treatment_variables = "A",
+x <- regime(x,name = "always A",treatment_variables = "A",
 intervention = 1)
 ```
 
 OR 
 
 ```{r}
-x <- protocol(x,name = "always A",treatment_variables = c("A_1","A_2","A_3"),
+x <- regime(x,name = "always A",treatment_variables = c("A_1","A_2","A_3"),
 intervention = 1)
 ```
 
@@ -80,28 +81,28 @@ intervention = 1)
 OR 
 
 ```{r}
-x <- protocol(x,name = "always A",treatment_variables = c("A_1","A_2","A_3"),
+x <- regime(x,name = "always A",treatment_variables = c("A_1","A_2","A_3"),
 intervention = c(1,1,1))
 ```
 
 #### Static Intervention: Two binary variables exposures (A,B)
 
 ```{r}
-x <- protocol(x,name = "always combined",treatment_variables = list("A"=c("A_1","A_2","A_3"),"B"=c("B_1","B_2","B_3")),
+x <- regime(x,name = "always combined",treatment_variables = list("A"=c("A_1","A_2","A_3"),"B"=c("B_1","B_2","B_3")),
 intervention = list("A"=c(1,1,1),"B"=c(1,1,1)))
 ```
 
 OR
 
 ```{r}
-x <- protocol(x,name = "always combined",treatment_variables = matrix(c("A_1","A_2","A_3", "B_1","B_2","B_3"),3),
+x <- regime(x,name = "always combined",treatment_variables = matrix(c("A_1","A_2","A_3", "B_1","B_2","B_3"),3),
 intervention = matrix(rep(1,6),3))
 ```
 
 OR
 
 ```{r}
-x <- protocol(x,name = "always combined", treatment_variables = c("A","B"),
+x <- regime(x,name = "always combined", treatment_variables = c("A","B"),
 intervention = c(1,1))
 ```
 

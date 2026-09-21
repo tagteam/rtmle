@@ -226,11 +226,11 @@ ld <span style="color: #BFEBBF;">&lt;-</span> simulate_long_data(n = 91,number_v
 x <span style="color: #BFEBBF;">&lt;-</span> rtmle_init(intervals = tau,name_id = <span style="color: #CC9393;">"id"</span>,name_outcome = <span style="color: #CC9393;">"Y"</span>,name_competing = <span style="color: #CC9393;">"Dead"</span>,name_censoring = <span style="color: #CC9393;">"Censored"</span>,censored_label = <span style="color: #CC9393;">"censored"</span>)
 x$long_data <span style="color: #BFEBBF;">&lt;-</span> ld[c(<span style="color: #CC9393;">"outcome_data"</span>,<span style="color: #CC9393;">"censored_data"</span>,<span style="color: #CC9393;">"competing_data"</span>,<span style="color: #CC9393;">"timevar_data"</span>)]
 add_baseline_data(x) <span style="color: #BFEBBF;">&lt;-</span> ld$baseline_data
-x <span style="color: #BFEBBF;">&lt;-</span> discretize(x,breaks = seq(0,2000,30.45*12))
-protocol(x) <span style="color: #BFEBBF;">&lt;-</span> list(name = <span style="color: #CC9393;">"Always_A"</span>,intervention = data.frame(<span style="color: #CC9393;">"A"</span> = factor(<span style="color: #CC9393;">"1"</span>,levels = c(<span style="color: #CC9393;">"0"</span>,<span style="color: #CC9393;">"1"</span>))),verbose = <span style="color: #7CB8BB;">FALSE</span>)
-protocol(x) <span style="color: #BFEBBF;">&lt;-</span> list(name = <span style="color: #CC9393;">"Never_A"</span>,intervention = data.frame(<span style="color: #CC9393;">"A"</span> = factor(<span style="color: #CC9393;">"0"</span>,levels = c(<span style="color: #CC9393;">"0"</span>,<span style="color: #CC9393;">"1"</span>))),verbose = <span style="color: #7CB8BB;">FALSE</span>)
+x <span style="color: #BFEBBF;">&lt;-</span> discretize_data(x,breaks = seq(0,2000,30.45*12))
+regime(x) <span style="color: #BFEBBF;">&lt;-</span> list(name = <span style="color: #CC9393;">"Always_A"</span>,intervention = data.frame(<span style="color: #CC9393;">"A"</span> = factor(<span style="color: #CC9393;">"1"</span>,levels = c(<span style="color: #CC9393;">"0"</span>,<span style="color: #CC9393;">"1"</span>))),verbose = <span style="color: #7CB8BB;">FALSE</span>)
+regime(x) <span style="color: #BFEBBF;">&lt;-</span> list(name = <span style="color: #CC9393;">"Never_A"</span>,intervention = data.frame(<span style="color: #CC9393;">"A"</span> = factor(<span style="color: #CC9393;">"0"</span>,levels = c(<span style="color: #CC9393;">"0"</span>,<span style="color: #CC9393;">"1"</span>))),verbose = <span style="color: #7CB8BB;">FALSE</span>)
 prepare_rtmle_data(x) <span style="color: #BFEBBF;">&lt;-</span> list()
-target(x) <span style="color: #BFEBBF;">&lt;-</span> list(name = <span style="color: #CC9393;">"Outcome_risk"</span>,strategy = <span style="color: #CC9393;">"additive"</span>,estimator = <span style="color: #CC9393;">"tmle"</span>,protocols = c(<span style="color: #CC9393;">"Always_A"</span>,<span style="color: #CC9393;">"Never_A"</span>))
+target(x) <span style="color: #BFEBBF;">&lt;-</span> list(name = <span style="color: #CC9393;">"Outcome_risk"</span>,strategy = <span style="color: #CC9393;">"additive"</span>,estimator = <span style="color: #CC9393;">"tmle"</span>,regimes = c(<span style="color: #CC9393;">"Always_A"</span>,<span style="color: #CC9393;">"Never_A"</span>))
 <span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">the overall analysis is stored as estimate$Main_analysis</span>
 x <span style="color: #BFEBBF;">&lt;-</span> run_rtmle(x,learner = <span style="color: #CC9393;">"learn_glmnet"</span>,time_horizon = 1:tau,verbose = <span style="color: #7CB8BB;">FALSE</span>)
 <span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">subset analysis</span>
@@ -246,11 +246,11 @@ summary(x,analysis = <span style="color: #CC9393;">"Old_age"</span>)
 </div>
 
 <pre class="example" id="orgf828946">
-Age       Target Protocol Target_parameter Time_horizon Estimator Reference  Estimate Standard_error      Lower     Upper    P_value
+Age       Target Regime Target_parameter Time_horizon Estimator Reference  Estimate Standard_error      Lower     Upper    P_value
      &lt;char&gt;       &lt;char&gt;   &lt;char&gt;           &lt;char&gt;        &lt;num&gt;    &lt;fctr&gt;    &lt;char&gt;     &lt;num&gt;          &lt;num&gt;      &lt;num&gt;     &lt;num&gt;      &lt;num&gt;
 1: age &gt; 50 Outcome_risk  Never_A  Risk_difference            2      tmle  Always_A 0.2769242      0.1259042 0.03015656 0.5236918 0.02784353
 2: age &gt; 50 Outcome_risk  Never_A       Risk_ratio            2      tmle  Always_A 2.5308787      0.5043919 0.94174254 6.8015904 0.06562705
-        Age       Target Protocol Target_parameter Time_horizon Estimator  Estimate    P_value Standard_error      Lower     Upper
+        Age       Target Regime Target_parameter Time_horizon Estimator  Estimate    P_value Standard_error      Lower     Upper
      &lt;char&gt;       &lt;fctr&gt;   &lt;fctr&gt;           &lt;fctr&gt;        &lt;num&gt;    &lt;fctr&gt;     &lt;num&gt;      &lt;num&gt;          &lt;num&gt;      &lt;num&gt;     &lt;num&gt;
 1: age &gt; 50 Outcome_risk Always_A             Risk            2      tmle 0.1808923 1.00000000     0.08365928 0.01692313 0.3448615
 2: age &gt; 50 Outcome_risk  Never_A             Risk            2      tmle 0.4578165 1.00000000     0.09533059 0.27097199 0.6446610
@@ -279,15 +279,15 @@ summary(x,analysis =<span style="color: #CC9393;">"Sex"</span>)
 </div>
 
 <pre class="example" id="orgaab345b">
-Sex       Target Protocol Target_parameter Time_horizon Estimator Reference  Estimate Standard_error      Lower      Upper    P_value
+Sex       Target Regime Target_parameter Time_horizon Estimator Reference  Estimate Standard_error      Lower      Upper    P_value
    &lt;char&gt;       &lt;char&gt;   &lt;char&gt;           &lt;char&gt;        &lt;num&gt;    &lt;fctr&gt;    &lt;char&gt;     &lt;num&gt;          &lt;num&gt;      &lt;num&gt;      &lt;num&gt;      &lt;num&gt;
 1: Female Outcome_risk  Never_A  Risk_difference            2      tmle  Always_A 0.3544266      0.1415425 0.07700836  0.6318449 0.01227879
 2: Female Outcome_risk  Never_A       Risk_ratio            2      tmle  Always_A 3.2159465      0.5788303 1.03420729 10.0002309 0.04358366
-      Sex       Target Protocol Target_parameter Time_horizon Estimator Reference  Estimate Standard_error      Lower     Upper   P_value
+      Sex       Target Regime Target_parameter Time_horizon Estimator Reference  Estimate Standard_error      Lower     Upper   P_value
    &lt;char&gt;       &lt;char&gt;   &lt;char&gt;           &lt;char&gt;        &lt;num&gt;    &lt;fctr&gt;    &lt;char&gt;     &lt;num&gt;          &lt;num&gt;      &lt;num&gt;     &lt;num&gt;     &lt;num&gt;
 1:   Male Outcome_risk  Never_A  Risk_difference            2      tmle  Always_A 0.0667422      0.1248143 -0.1778894 0.3113738 0.5928352
 2:   Male Outcome_risk  Never_A       Risk_ratio            2      tmle  Always_A 1.2771494      0.4571470  0.5213357 3.1287146 0.5925638
-      Sex       Target Protocol Target_parameter Time_horizon Estimator  Estimate    P_value Standard_error       Lower      Upper
+      Sex       Target Regime Target_parameter Time_horizon Estimator  Estimate    P_value Standard_error       Lower      Upper
    &lt;char&gt;       &lt;fctr&gt;   &lt;fctr&gt;           &lt;fctr&gt;        &lt;num&gt;    &lt;fctr&gt;     &lt;num&gt;      &lt;num&gt;          &lt;num&gt;       &lt;num&gt;      &lt;num&gt;
 1: Female Outcome_risk Always_A             Risk            2      tmle 0.1599437 1.00000000     0.08571434 -0.00805336  0.3279407
 2: Female Outcome_risk  Never_A             Risk            2      tmle 0.5143703 1.00000000     0.11269172  0.29349856  0.7352420
@@ -327,11 +327,11 @@ ld <span style="color: #BFEBBF;">&lt;-</span> simulate_long_data(n = 91,number_v
 x <span style="color: #BFEBBF;">&lt;-</span> rtmle_init(intervals = tau,name_id = <span style="color: #CC9393;">"id"</span>,name_outcome = <span style="color: #CC9393;">"Y"</span>,name_competing = <span style="color: #CC9393;">"Dead"</span>,name_censoring = <span style="color: #CC9393;">"Censored"</span>,censored_label = <span style="color: #CC9393;">"censored"</span>)
 x$long_data <span style="color: #BFEBBF;">&lt;-</span> ld[c(<span style="color: #CC9393;">"outcome_data"</span>,<span style="color: #CC9393;">"censored_data"</span>,<span style="color: #CC9393;">"competing_data"</span>,<span style="color: #CC9393;">"timevar_data"</span>)]
 add_baseline_data(x) <span style="color: #BFEBBF;">&lt;-</span> ld$baseline_data
-x <span style="color: #BFEBBF;">&lt;-</span> discretize(x,breaks = seq(0,2000,30.45*12))
-protocol(x) <span style="color: #BFEBBF;">&lt;-</span> list(name = <span style="color: #CC9393;">"Always_A"</span>,intervention = data.frame(<span style="color: #CC9393;">"A"</span> = factor(<span style="color: #CC9393;">"1"</span>,levels = c(<span style="color: #CC9393;">"0"</span>,<span style="color: #CC9393;">"1"</span>))),verbose = <span style="color: #7CB8BB;">FALSE</span>)
-protocol(x) <span style="color: #BFEBBF;">&lt;-</span> list(name = <span style="color: #CC9393;">"Never_A"</span>,intervention = data.frame(<span style="color: #CC9393;">"A"</span> = factor(<span style="color: #CC9393;">"0"</span>,levels = c(<span style="color: #CC9393;">"0"</span>,<span style="color: #CC9393;">"1"</span>))),verbose = <span style="color: #7CB8BB;">FALSE</span>)
+x <span style="color: #BFEBBF;">&lt;-</span> discretize_data(x,breaks = seq(0,2000,30.45*12))
+regime(x) <span style="color: #BFEBBF;">&lt;-</span> list(name = <span style="color: #CC9393;">"Always_A"</span>,intervention = data.frame(<span style="color: #CC9393;">"A"</span> = factor(<span style="color: #CC9393;">"1"</span>,levels = c(<span style="color: #CC9393;">"0"</span>,<span style="color: #CC9393;">"1"</span>))),verbose = <span style="color: #7CB8BB;">FALSE</span>)
+regime(x) <span style="color: #BFEBBF;">&lt;-</span> list(name = <span style="color: #CC9393;">"Never_A"</span>,intervention = data.frame(<span style="color: #CC9393;">"A"</span> = factor(<span style="color: #CC9393;">"0"</span>,levels = c(<span style="color: #CC9393;">"0"</span>,<span style="color: #CC9393;">"1"</span>))),verbose = <span style="color: #7CB8BB;">FALSE</span>)
 prepare_rtmle_data(x) <span style="color: #BFEBBF;">&lt;-</span> list()
-target(x) <span style="color: #BFEBBF;">&lt;-</span> list(name = <span style="color: #CC9393;">"Outcome_risk"</span>,strategy = <span style="color: #CC9393;">"additive"</span>,estimator = <span style="color: #CC9393;">"tmle"</span>,protocols = c(<span style="color: #CC9393;">"Always_A"</span>,<span style="color: #CC9393;">"Never_A"</span>))
+target(x) <span style="color: #BFEBBF;">&lt;-</span> list(name = <span style="color: #CC9393;">"Outcome_risk"</span>,strategy = <span style="color: #CC9393;">"additive"</span>,estimator = <span style="color: #CC9393;">"tmle"</span>,regimes = c(<span style="color: #CC9393;">"Always_A"</span>,<span style="color: #CC9393;">"Never_A"</span>))
 <span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">the overall analysis is stored as estimate$Main_analysis</span>
 x <span style="color: #BFEBBF;">&lt;-</span> run_rtmle(x,learner = <span style="color: #CC9393;">"learn_glmnet"</span>,time_horizon = tau,verbose = <span style="color: #7CB8BB;">FALSE</span>)
 <span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">the bootstrap results are stored as estimate$Cheap_bootstrap</span>
@@ -342,7 +342,7 @@ summary(x)
 </div>
 
 <pre class="example" id="org27232f6">
-Target Protocol Target_parameter Time_horizon Estimator Reference  Estimate Standard_error      Lower     Upper     P_value
+Target Regime Target_parameter Time_horizon Estimator Reference  Estimate Standard_error      Lower     Upper     P_value
          &lt;char&gt;   &lt;char&gt;           &lt;char&gt;        &lt;num&gt;    &lt;fctr&gt;    &lt;char&gt;     &lt;num&gt;          &lt;num&gt;      &lt;num&gt;     &lt;num&gt;       &lt;num&gt;
 1: Outcome_risk  Never_A  Risk_difference            2      tmle  Always_A 0.2127392      0.0709929 0.07359572 0.3518828 0.002729844
 2: Outcome_risk  Never_A       Risk_ratio            2      tmle  Always_A 2.0777129      0.3596420 1.02673349 4.2044902 0.042020065
@@ -350,7 +350,7 @@ Target Protocol Target_parameter Time_horizon Estimator Reference  Estimate Stan
              &lt;num&gt;           &lt;num&gt;                    &lt;num&gt;
 1:       0.1935653       0.2319132               0.07544362
 2:       1.6632658       2.5954306               0.25699049
-         Target Protocol Time_horizon Bootstrap_standard_error Bootstrap_lower Bootstrap_upper Target_parameter Estimator  Estimate     P_value
+         Target Regime Time_horizon Bootstrap_standard_error Bootstrap_lower Bootstrap_upper Target_parameter Estimator  Estimate     P_value
          &lt;fctr&gt;   &lt;fctr&gt;        &lt;num&gt;                    &lt;num&gt;           &lt;num&gt;           &lt;num&gt;           &lt;fctr&gt;    &lt;fctr&gt;     &lt;num&gt;       &lt;num&gt;
 1: Outcome_risk Always_A            2               0.05335699       0.1878081       0.2069895             Risk      tmle 0.1973988 1.000000000
 2: Outcome_risk  Never_A            2               0.09994665       0.3764867       0.4437894             Risk      tmle 0.4101380 1.000000000
