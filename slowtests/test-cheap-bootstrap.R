@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Apr  9 2025 (10:02) 
 ## Version: 
-## Last-Updated: sep 21 2026 (11:13) 
-##           By: Thomas Alexander Gerds
-##     Update #: 29
+## Last-Updated: Sep 21 2026 (13:02) 
+##           By: Johan Sebastian Ohlendorff
+##     Update #: 32
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -60,7 +60,7 @@ test_that("cheap bootstrap matches a manual loop with and without replacement", 
         competing_data = ld$competing_data, timevar_data = ld$timevar_data
     )
     x <- add_baseline_data(x, data = ld$baseline_data)
-    x <- long_to_wide(x,start_followup_date = 0)
+    x <- discretize_data(x,start_followup_date = 0)
     x <- protocol(x, name = "Always_A", intervention = data.frame(
         time = x$intervention_nodes, A = factor("1", levels = c("0", "1"))
     ), verbose = FALSE)

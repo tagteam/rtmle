@@ -130,6 +130,8 @@ cheap_bootstrap <- function(x,
 
             x$prepared_data <- original$prepared_data[inbag]
             x$followup <- original$followup[inbag]
+            data.table::set(x$prepared_data, j = x$names$id, value = seq_along(inbag))
+            data.table::set(x$followup, j = x$names$id, value = seq_along(inbag))
             for (pp in names(x$regimes)) {
                 x$regimes[[pp]]$intervention_match <-
                     original$regimes[[pp]]$intervention_match[inbag, , drop = FALSE]
