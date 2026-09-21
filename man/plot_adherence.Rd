@@ -9,9 +9,9 @@ plot_adherence(x, regimes = NULL, ...)
 \arguments{
 \item{x}{An object containing regime-specific adherence information and follow-up
 data. Must include at least \code{x$regimes} (a named list where each element has
-\code{$intervention_match}), \code{x$followup} (with \code{last_interval}),
-\code{x$prepared_data} (optional; used for censoring indicators), and
-\code{x$names$censoring}.}
+\code{$intervention_match}), \code{x$followup} (with
+\code{last_interval}), \code{x$prepared_data} (optional; used for
+censoring indicators), and \code{x$names$censoring}.}
 
 \item{regimes}{Optional names of the regimes to plot. If omitted, use
 all regimes that already have an \code{intervention_match} table.}
@@ -24,10 +24,10 @@ A \code{ggplot2} object (as returned by \code{prodlim::ggprodlim}) showing the
 }
 \description{
 Uses \code{\link{adherence}} to collect time to first deviation from a
-treatment regime for each regime in a fitted \code{rtmle} object \code{x},
-allowing for right censoring and competing risks (e.g., death/outcome). The
-result is plotted as the cumulative incidence (in percent) of non-adherence
-over follow-up time, stratified by regime.
+treatment regime for each regime in a fitted \code{rtmle} object
+\code{x}, allowing for right censoring and competing risks (e.g.,
+death/outcome). The result is plotted as the cumulative incidence (in
+percent) of non-adherence over follow-up time, stratified by regime.
 }
 \details{
 The underlying \code{\link{adherence}} function restricts each regime to initiators (those with
@@ -52,7 +52,7 @@ class(p)
 
 }
 \seealso{
-  \code{\link{intervention_match}}, \code{\link{regime}},
+\code{\link{intervention_match}}, \code{\link{regime}},
   \code{\link{adherence}},
   \code{\link{summary_adherence}},
   \code{\link{plot_IPW}}, \code{\link[prodlim:prodlim]{prodlim}},

@@ -56,12 +56,6 @@ the complete intervention-updated data while preserving its rows and
 required columns. For a dynamic treatment regime, use it to update
 treatment values according to the observed history.}
 
-\item{intervene_function_args}{Named list of additional arguments passed to
-\code{intervene_function} at every intervention node. This is useful for
-parameterized functions such as \code{\link{treat_unless}}, for example
-\code{list(contra_indication = "bleeding", action = 0)}. The names
-\code{data}, \code{intervention_table}, and the time argument are reserved.}
-
 \item{verbose}{Logical. If \code{FALSE}, suppress all messages.}
 
 \item{multiple_treatment_factorization}{How propensity models for multiple
@@ -81,10 +75,15 @@ Unsuffixed time-varying names are lagged automatically: at node (k),
 The argument only defines fitting strata and never adds predictors to the adherence-model
 Multiple variables define strata by their combinations.}
 
+\item{intervene_function_args}{Named list of additional arguments passed to
+\code{intervene_function} at every intervention node. This is useful for
+parameterized functions such as \code{\link{treat_unless}}, for example
+\code{list(contra_indication = "bleeding", action = 0)}. The names
+\code{data}, \code{intervention_table}, and the time argument are reserved.}
+
 \item{...}{Additional arguments are not used. The former
 \code{dynamic_propensity_instructions} interface is no longer supported;
 use \code{adherence_model_strata} instead.}
-
 }
 \value{
 The modified object contains the treatment variables and

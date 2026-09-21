@@ -19,13 +19,7 @@
   ...
 )
 
-\method{plot}{rtmle}(
-  x,
-  analysis = NULL,
-  targets = NULL,
-  bootstrap_conf_int = FALSE,
-  ...
-)
+\method{plot}{rtmle}(x, analysis = NULL, targets = NULL, bootstrap_conf_int = FALSE, ...)
 }
 \arguments{
 \item{object}{A prepared and fitted object of class \code{"rtmle"}.}

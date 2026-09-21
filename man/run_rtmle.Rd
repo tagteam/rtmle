@@ -64,11 +64,12 @@ is a list requiring a label, to name the subset, and a
 subset of the variable \code{x$names$id} in the data
 \code{x$prepared_data} to identify the subset. The results of
 the subset analysis are stored in
-\code{x$estimate[[subsets[[label]]]]}. If a result with the same
+\code{x$estimate[[subsets[[label]]]]}. An optional element of
+each subset list is called \code{append}. If a result with the same
 label already exists, estimates are appended by default; set
-\code{append = FALSE} to replace the existing result. Appending may be used
-for stratified analyses, seed-dependence studies (Monte Carlo error), and
-bootstrap analyses. See
+\code{append = FALSE} to replace the existing result. Appending may be
+used for stratified analyses, seed-dependence studies (Monte Carlo
+error), and bootstrap analyses. See
 examples.}
 
 \item{keep_influence}{Logical. If \code{TRUE}, store the estimated

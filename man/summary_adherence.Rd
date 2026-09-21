@@ -22,11 +22,11 @@ all regimes with a prepared \code{intervention_match} table are used.}
 }
 \value{
 A \code{data.table} with one row per selected regime and interval.
-The columns are \code{regime}, \code{time_node},
-\code{n_initiated}, \code{n_adherent}, \code{n_outcome},
-\code{n_death}, and \code{n_censored}. The first two counts refer to
-regime initiators; the last three counts identify the cause of the end
-of follow-up in that interval.
+  The columns are \code{regime}, \code{time_node},
+  \code{n_initiated}, \code{n_adherent}, \code{n_outcome},
+  \code{n_death}, and \code{n_censored}. The first two counts refer to
+  regime initiators; the last three counts identify the cause of the end
+  of follow-up in that interval.
 }
 \description{
 For each selected regime and intervention interval, counts the people who
@@ -47,5 +47,5 @@ adherence_summary
 }
 \seealso{
 \code{\link{adherence}}, \code{\link{intervention_match}},
-\code{\link{plot_adherence}}
+  \code{\link{plot_adherence}}
 }

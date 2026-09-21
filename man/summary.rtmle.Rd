@@ -38,8 +38,10 @@ Summarize rtmle estimates
 \details{
 For each target in the object, summarizes risk estimates and their 95%
 confidence limits. If a target includes multiple regimes, the summary also
-includes risk differences and risk ratios. When \code{analysis} is omitted,
-the Main analysis is row-bound with all available subset analyses.
+includes risk differences and risk ratios.
+
+When \code{analysis} is omitted, the Main analysis is row-bound
+  with all available subset analyses.
 }
 \examples{
 

@@ -10,8 +10,8 @@ adherence(x, regimes = NULL)
 \item{x}{An object containing regime-specific adherence information and
 follow-up data. It must include \code{x$regimes} with
 \code{$intervention_match} tables and \code{x$followup} with the subject
-identifier \code{x$names$id} and a \code{last_interval} column. If censoring
-variables are present,
+identifier \code{x$names$id} and a \code{last_interval} column. If
+censoring variables are present,
 \code{x$prepared_data} and \code{x$names$censoring} are used to identify
 censoring times.}
 
@@ -19,13 +19,14 @@ censoring times.}
 all regimes with a prepared \code{intervention_match} table are used.}
 }
 \value{
-A \code{data.table} with one row per regime initiator and the configured
-subject identifier column \code{x$names$id}, followed by \code{regime},
-\code{time_nonadherence}, and \code{event_nonadherence}. The event indicator
-is 0 for censoring, 1 for non-adherence, and 2 for a competing event or
-outcome. The returned table has class \code{"adherence"}, so
-\code{summary(non_adherence)} returns the corresponding
-\code{\link{summary_adherence}} table when prepared data are available.
+A \code{data.table} with one row per regime initiator and the
+  configured subject identifier column \code{x$names$id}, followed by
+  \code{regime}, \code{time_nonadherence}, and
+  \code{event_nonadherence}. The event indicator is 0 for censoring, 1 for
+  non-adherence, and 2 for a competing event or outcome.
+  The returned table has class \code{"adherence"}, so
+  \code{summary(non_adherence)} returns the corresponding
+  \code{\link{summary_adherence}} table when prepared data are available.
 }
 \description{
 Computes the time and event indicator used to describe the first deviation
@@ -33,11 +34,11 @@ from each treatment regime. Only initiators, namely rows whose first
 intervention matches the regime, are included.
 }
 \details{
-For each selected regime, the function identifies the first interval where
-\code{intervention_match} equals 0 and the first interval marked
-\code{"censored"} in the prepared data. The non-adherence time is
-\code{pmin(last_interval, first_deviation, censored_time, na.rm = TRUE)}.
-This is the data collection step used by \code{\link{plot_adherence}}.
+For each selected regime, the function identifies the first
+  interval where \code{intervention_match} equals 0 and the first interval
+  marked \code{"censored"} in the prepared data. The non-adherence time is
+  \code{pmin(last_interval, first_deviation, censored_time, na.rm = TRUE)}.
+  This is the data collection step used by \code{\link{plot_adherence}}.
 }
 \examples{
 data(rtmle_object)
@@ -46,5 +47,5 @@ head(non_adherence)
 }
 \seealso{
 \code{\link{plot_adherence}}, \code{\link{summary_adherence}},
-\code{\link{intervention_match}}, \code{\link{regime}}
+  \code{\link{intervention_match}}, \code{\link{regime}}
 }

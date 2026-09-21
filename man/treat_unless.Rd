@@ -23,8 +23,9 @@ intervention function.}
 \code{time_node} to create a configured intervention function.}
 
 \item{time_node}{Current intervention node. Only treatment assignments up
-to and including this node are applied. Omit this together with \code{data}
-and \code{intervention_table} to create a configured intervention function.}
+to and including this node are applied. Omit this together with
+\code{data} and \code{intervention_table} to create a configured
+intervention function.}
 
 \item{contra_indication}{Character vector of contraindication variable names
 without time suffixes, such as \code{c("bleeding", "surgery")}. A row is
@@ -35,12 +36,13 @@ contraindicated when any available historical value is non-zero or
 contraindication. A single value is recycled across treatment variables;
 otherwise values must be supplied in the order of the treatment variables
 in \code{intervention_table}. Named values may instead be supplied using
-the unsuffixed treatment names; names for treatment variables not yet assigned
-at the current node are ignored. Values whose character representation matches
-a treatment-option label are converted to a factor using those options; thus
-both \code{0} and \code{"0"} match a treatment option labelled \code{"0"}.
-\code{NA} always means that the original observed treatment value is retained,
-so no intervention is applied after the contraindication.}
+the unsuffixed treatment names; names for treatment variables not yet
+assigned at the current node are ignored. Values whose character
+representation matches a treatment-option label are converted to a
+factor using those options; thus both \code{0} and \code{"0"} match a
+treatment option labelled \code{"0"}. \code{NA} always means that the
+original observed treatment value is retained, so no intervention is
+applied after the contraindication.}
 
 \item{lookback_window}{Non-negative integer or \code{Inf}. For a treatment
 assignment at node \code{k}, contraindications from nodes
@@ -50,29 +52,30 @@ all available nodes up to and including the current node.}
 }
 \value{
 A copy of \code{data} with the static intervention applied and the
-contraindication rule enforced. If \code{data},
-\code{intervention_table}, and \code{time_node} are omitted, a configured
-intervention function is returned for use as a \code{regime}
-\code{intervene_function}.
+  contraindication rule enforced. If \code{data},
+  \code{intervention_table}, and \code{time_node} are omitted, a configured
+  intervention function is returned for use as a \code{regime}
+  \code{intervene_function}.
 }
 \description{
 This is a convenience intervention function for dynamic treatment rules. It
 first applies the static values in \code{intervention_table} with
 \code{\link{intervene}}. For each treatment assignment, it then checks the
-selected history window of the variables in \code{contra_indication} and changes
-the assignment to the corresponding value in \code{action} when a
+selected history window of the variables in \code{contra_indication} and
+changes the assignment to the corresponding value in \code{action} when a
 contraindication is present.
 }
 \details{
-Treatment assignments are evaluated separately by intervention node. At node
-\code{k}, the contraindication history consists of the available columns
-\code{variable_j}, where \code{j} ranges from
-\code{max(0, k - lookback_window)} through \code{k}; the current node is
-therefore included in the history window. Treatment values before the first
-contraindication are left as specified by the static intervention. Calling
-\code{treat_unless} with only \code{contra_indication}, \code{action}, and
-optionally \code{lookback_window} creates a configured intervention function,
-so it can be supplied directly to \code{\link{regime}} without a wrapper.
+Treatment assignments are evaluated separately by intervention
+  node. At node \code{k}, the contraindication history consists of the
+  available columns \code{variable_j}, where \code{j} ranges from
+  \code{max(0, k - lookback_window)} through \code{k}; the current node is
+  therefore included in the history window. Treatment values before the first
+  contraindication are left as specified by the static intervention. Calling
+  \code{treat_unless} with only \code{contra_indication}, \code{action}, and
+  optionally \code{lookback_window} creates a configured intervention
+  function, so it can be supplied directly to \code{\link{regime}} without
+  a wrapper.
 }
 \examples{
 ## Register a configured rule directly as a regime intervention function.
