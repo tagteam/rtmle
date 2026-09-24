@@ -1,19 +1,22 @@
 #----------------------------------------------------------------------
-## Define a treatment regime for an emulated trial
+## Define a treatment regime for an emulated target trial
 #----------------------------------------------------------------------
 
-##' Define a treatment regime for an emulated trial
+##' Define a treatment regime for an emulated target trial
 ##'
 ##' Adds a named regime to an existing \code{rtmle} object. A regime
 ##' defines treatment values at each time point during follow-up.
 ##'
 ##' @param x An \code{rtmle} object as returned by \code{\link{rtmle_init}}.
 ##' @param name Name of the regime.
-##' @param intervention A vector, data frame, tibble, or data table specifying
-##'   the treatment values dictated by the regime. A vector contains 0/1
-##'   values corresponding to \code{treatment_variables}; a data frame must
-##'   contain factor treatment columns with two levels and a time column in
-##'   longitudinal settings.
+##' @param intervention A vector or a data frame (tibble, data table) specifying
+##'   factor columns with the treatment values dictated by the regime.
+##'   A data frame must contain a time column with values that match all or a
+##'   subset of \code{x$time_grid} and columns for all treatments that each contain factors
+##'   with two levels allowing \code{NA} to mean no intervention on this variable at that time node.  
+##'   The vector version is a shortcut to create the data.frame for regimes that are dictating
+##'   the same value for all time nodes. It has 
+##'   a single 0/1 value for each element of argument \code{treatment_variables}. 
 ##' @param expand Logical. If \code{FALSE} and \code{intervention} contains a
 ##'   time column, do not expand static interventions across time.
 ##' @param treatment_variables Names of the treatment variable(s) when
@@ -49,8 +52,7 @@
 ##'   use \code{adherence_model_strata} instead.
 ##' @return The modified object contains the treatment variables and
 ##'   \code{intervention_table} in \code{x$regimes[[name]]}.
-##' @details A dynamic intervention function returns data only. The
-##'   \code{data} argument is the current prepared cohort or at-risk subset.
+##' @details
 ##'   For a dynamic rule, \code{rtmle} constructs a binary adherence response
 ##'   indicating whether the observed treatment agrees with the
 ##'   intervention-updated treatment. \code{adherence_model_strata} controls

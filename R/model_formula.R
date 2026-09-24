@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jun 16 2025 (08:58) 
 ## Version: 
-## Last-Updated: sep 19 2026 (07:34)
+## Last-Updated: sep 23 2026 (08:36) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 168
+##     Update #: 169
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -234,7 +234,7 @@ model_formula <- function(x,
                             adherence_model_strata
                         {
                             adherence_name <- paste0(
-                                ".rtmle_adherence_",
+                                "rtmle_adherence_",
                                 gsub(
                                     "[^A-Za-z0-9_]",
                                     "_",
@@ -271,7 +271,7 @@ model_formula <- function(x,
                                 adherence_model_strata
                             {
                                 adherence_name <- paste0(
-                                    ".rtmle_adherence_",
+                                    "rtmle_adherence_",
                                     gsub(
                                         "[^A-Za-z0-9_]",
                                         "_",
