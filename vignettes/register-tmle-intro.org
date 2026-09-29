@@ -6,7 +6,7 @@ functionality is similar to the established R-package =ltmle= with the
 following additional features and focus points:
 
 - explicit handling of competing risks
-- polypharmacy
+- polypharmacy (more than one treatment variable are controlled by the regimes of the target trial)
 - descriptive statistics
 - diagnostic tools (not to be confused with model goodness of fit)
 - subgroup analyses

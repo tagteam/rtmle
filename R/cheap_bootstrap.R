@@ -31,33 +31,12 @@
 ##'     \email{tag@@biostat.ku.dk}
 #' @examples
 #' \dontrun{
-#' tau <- 3
-#' data(simulated_cohort)
-#' ld <- register_format(simulated_cohort)
-#' x <- rtmle_init(time_grid = seq(0,20,4),name_id = "id",
-#'                 name_outcome = "stroke",name_competing = "death",
-#'                 name_censoring = "dropout",censored_label = "censored")
-#' x <- add_long_data(x,
-#'                    outcome_data=ld$timevar_data$stroke[!duplicated(id)],
-#'                    censored_data=ld$timevar_data$dropout,
-#'                    competing_data=ld$timevar_data$death,
-#'                    timevar_data=ld$timevar_data[c("bleeding","changeSBP","A","B")])
-#' x <- add_baseline_data(x,data=ld$baseline_data)
-#' x <- discretize_data(x,start_followup_date=0)
-#' x <- prepare_rtmle_data(x)
-#' x <- regime(x,name = "Always_A",
-#'                     intervention = data.frame(time=x$intervention_nodes,
-#'                                               "A" = factor("1",levels = c("0","1"))))
-#' x <- regime(x,name = "Never_A",
-#'                     intervention = data.frame(time=x$intervention_nodes,
-#'                                               "A" = factor("0",levels = c("0","1"))))
-#' x <- target(x,name = "Outcome_risk",
-#'                   estimator = "tmle",
-#'                   regimes = c("Always_A","Never_A"))
-#'  x <- model_formula(x)
-#'  x <- run_rtmle(x,learner = "learn_glm",time_horizon = 1:tau)
-#'  x <- cheap_bootstrap(x,B=5,time_horizon=1:tau, M = 0.632*NROW(x$prepared_data))
-#'  summary(x)
+#' data(rtmle_object)
+#' rtmle_object <- cheap_bootstrap(rtmle_object,
+#'                                  B=5,
+#'                                  time_horizon=1:3,
+#'                                  M = 0.632*NROW(x$prepared_data))
+#'  summary(rtmle_object)
 #' }
 #'
 #' @export
@@ -117,7 +96,16 @@ cheap_bootstrap <- function(x,
             x$estimate$Cheap_bootstrap[[v]] <- NULL
             B_offset <- 0
         }
-        if (missing(seeds)) seeds <- sample.int(1e+09, B+B_offset)
+        if (missing(seeds)) {
+            seeds <- sample.int(1e+09, B+B_offset)
+        }else{
+            if (length(seeds) == 1){
+                set.seed(seeds)
+                seeds <- sample.int(1e+09, B+B_offset)
+            }else{
+                stopifnot(length(seeds) == B)
+            }
+        }
         N <- NROW(x$prepared_data)
         for (b in (1:B)+B_offset){
             set.seed(seeds[[b]])
