@@ -16,6 +16,7 @@
 #' @param visit_events Named list describing time-updated treatment variables.
 #' @param visit_measurements Named list describing time-updated measurements.
 #' @param post_visit_hook Optional function applied to alter the data.table \code{update_information} after each visit update.
+#' @param next_visit_hook Optional hook applied to adjust next visit times (e.g., due to treatment pauses).
 #' @param intermediate_events Named list describing non-absorbing events.
 #' @param pre_intermediate_events_hook Optional hook to alter the intermediate-event
 #'   model before simulating the next intermediate events
@@ -77,6 +78,7 @@ simulate_cohort <- function(n,
                             visit_events = NULL, 
                             visit_measurements = NULL, 
                             post_visit_hook = NULL, 
+                            next_visit_hook = NULL,
                             intermediate_events = NULL, 
                             pre_intermediate_events_hook = NULL,
                             post_intermediate_events_hook = NULL,
@@ -259,6 +261,12 @@ simulate_cohort <- function(n,
                                  sd = visit_schedule[["sd"]]),
                     visit_schedule[["minimum_time_between_visits"]]
                 )
+          
+            ## New hook to adjust next visit times (in our case due to platelets or ANC)
+            if(is.function(next_visit_hook)){
+                next_visit <- next_visit_hook(next_visit = next_visit,
+                                              last_entry = last_entry)
+            }
             
             # respect planned visit times
             if (length(visit_schedule[["schedule"]])){
