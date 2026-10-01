@@ -259,6 +259,12 @@ simulate_cohort <- function(n,
                                  sd = visit_schedule[["sd"]]),
                     visit_schedule[["minimum_time_between_visits"]]
                 )
+          
+            ## New hook to adjust next visit times (in our case due to platelets or ANC)
+            if(is.function(next_visit_hook)){
+                next_visit <- next_visit_hook(next_visit = next_visit,
+                                              last_entry = last_entry)
+            }
             
             # respect planned visit times
             if (length(visit_schedule[["schedule"]])){
