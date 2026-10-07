@@ -17,21 +17,20 @@ before a regime has been added to an object.}
 }
 \value{
 A \code{ggplot2} object. The y-axis contains subjects numbered from
-1 to the number of subjects, but subject labels are intentionally hidden.
+  1 to the number of subjects, but subject labels are intentionally hidden.
 }
 \description{
 Shows subject-level treatment histories from an \code{rtmle} object. When
-long-format treatment data are available, the continuous-time panel uses the
-exposure intervals in \code{x$long_data$timevar_data}. When discretized data
-are available, the discrete-time panel uses \code{x$data$timevar_data} or
-\code{x$prepared_data}. If both representations are present, the panels are
-displayed side by side.
+long-format treatment data are available, the continuous-time panel uses
+the exposure intervals in \code{x$long_data$timevar_data}. When discretized
+data are available, the discrete-time panel uses \code{x$data$timevar_data}
+or \code{x$prepared_data}. If both representations are present, the panels
+are displayed side by side.
 }
 \details{
-For multiple treatment variables, colour identifies the joint treatment state
-(for example, \code{A=1, B=0}), preserving one horizontal trajectory per
-subject. Discrete-time grid points are shown as vertical lines in the
-discrete-time panel.
+For multiple treatment variables, colour identifies the joint treatment
+state (for example, \code{A=1, B=0}), preserving one horizontal trajectory
+per subject.
 }
 \examples{
 data(rtmle_object)
@@ -40,5 +39,5 @@ p
 }
 \seealso{
 \code{\link{add_long_data}}, \code{\link{discretize_data}},
-\code{\link{add_wide_data}}, \code{\link{prepare_rtmle_data}}
+  \code{\link{add_wide_data}}, \code{\link{prepare_rtmle_data}}
 }

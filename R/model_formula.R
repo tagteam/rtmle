@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jun 16 2025 (08:58) 
 ## Version: 
-## Last-Updated: sep 23 2026 (08:36) 
+## Last-Updated: okt  7 2026 (06:53) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 169
+##     Update #: 171
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -151,15 +151,7 @@ model_formula <- function(x,
                 adherence_model_strata <-
                     intervention$adherence_model_strata
                 dynamic_adherence <- intervention$dynamic_adherence
-                regime_factorization <-
-                    intervention$multiple_treatment_factorization
-                validate_multiple_treatment_factorization(
-                    regime_factorization,
-                    paste0(
-                        "`multiple_treatment_factorization` for regime '",
-                        regime_name, "'"
-                    )
-                )
+                regime_factorization <- intervention$multiple_treatment_factorization
                 list(values = vals,
                      adherence_model_strata = adherence_model_strata,
                      dynamic_adherence = dynamic_adherence,

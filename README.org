@@ -20,11 +20,91 @@ You can install the development version of rtmle from [GitHub](https://github.co
 devtools::install_github("tagteam/rtmle")
 #+END_SRC
 
+
 ** Checks
 
 # [[https://www.r-pkg.org/badges/version/rtmle][CRAN_Status_Badge]] 
 # [[https://CRAN.R-project.org/package=rtmle][![](https://cranlogs.r-pkg.org/badges/rtmle)]]
 [[https://github.com/tagteam/rtmle/actions/workflows/R-CMD-check.yaml][R-CMD-check]]
+
+* User interface
+
+** Interactive functions
+
+*** Data preparation
+
+  [[./R/add_baseline_data.R]]
+  [[./R/add_long_data.R]]
+  [[./R/add_wide_data.R]]
+  [[./R/discretize_data.R]]
+  [[./R/map_data_to_grid.R]]
+  [[./R/long_to_wide.R]]
+  [[./R/prepare_rtmle_data.R]]
+  [[./R/widen_outcome.R]]
+
+*** Descriptive 
+
+  [[./R/adherence.R]]
+  [[./R/coef.rtmle.R]]
+  [[./R/plot.rtmle.R]]
+  [[./R/plot_IPW.R]]
+  [[./R/plot_adherence.R]]
+  [[./R/plot_model_coefficients.R]]
+  [[./R/plot_treatment_trajectories.R]]
+  [[./R/print.rtmle.R]]
+  [[./R/summary.rtmle.R]]
+  [[./R/summary_adherence.R]]
+
+*** Target trial 
+
+  [[./R/intervene.R]]
+  [[./R/intervention_match.R]]
+  [[./R/treat_unless.R]]
+  [[./R/target.R]]
+  [[./R/protocol.R]]
+
+*** Analysis
+
+  [[./R/rtmle_init.R]]
+  [[./R/run_rtmle.R]]
+  [[./R/intervention_probabilities.R]]
+  [[./R/sequential_regression.R]]
+  [[./R/cheap_bootstrap.R]]
+
+*** Model fitting
+
+  [[./R/model_formula.R]]
+  [[./R/formalize.R]]
+  [[./R/make_exclusion_rule.R]]
+  [[./R/parse_learners.R]]
+  [[./R/fitter.R]]
+  [[./R/glm_net.R]]
+  [[./R/predictRisk.glm_net.R]]
+  [[./R/learn_glm.R]]
+  [[./R/learn_glmnet.R]]
+  [[./R/learn_ranger.R]]
+  [[./R/learn_xgboost.R]]
+  [[./R/superlearn.R]]
+
+
+*** Simulation functions
+
+  [[./R/simulate_cohort.R]]
+  [[./R/simulate_long_data.R]]
+  [[./R/make_regression_model.R]]
+  [[./R/reventtime.R]]
+  [[./R/register_format.R]]
+
+*** Internal functions
+
+ [[./R/rtmle-package.R]]
+ [[./R/change_outcome_in_formula.R]]
+ [[./R/count_followup.R]]
+ [[./R/delete_variables_from_formula.R]]
+ [[./R/evaluate_intervention.R]]
+ [[./R/fast_cast.R]]
+ [[./R/tmle_update.R]]
+ [[./R/data.R]]
 
 #+TITLE: Development area for R-package rtmle
 #+Author: 

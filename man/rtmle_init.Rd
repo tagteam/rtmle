@@ -2,7 +2,7 @@
 % Please edit documentation in R/rtmle_init.R
 \name{rtmle_init}
 \alias{rtmle_init}
-\title{Register Targeted Minimum Loss Estimation}
+\title{Initialize Register Targeted Minimum Loss Estimation}
 \usage{
 rtmle_init(
   time_grid,
@@ -21,12 +21,11 @@ rtmle_init(
 )
 }
 \arguments{
-\item{time_grid}{Vector of time points that define the discrete
+\item{time_grid}{Vector of time points that define the 
 time intervals for updating information in a longitudinal
-setting. The first value must be 0 and the length of the
-vector must be at least 2. When \code{time_grid} is of length
-2, no information is updated
-after time zero.}
+setting. The first value must be 0 and other values have to be on the 
+scale of the data (see @details). When \code{time_grid} is of length
+2, no information is updated after time zero.}
 
 \item{name_id}{Name of the subject identifier variable.}
 

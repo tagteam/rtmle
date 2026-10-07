@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 25 2024 (11:24)
 ## Version:
-## Last-Updated: okt  6 2026 (07:29) 
+## Last-Updated: okt  6 2026 (12:11) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 79
+##     Update #: 84
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -71,8 +71,11 @@
 #'                    changeSBP=ld$timevar_data[["changeSBP"]],
 #'                    A=ld$timevar_data[["A"]],
 #'                    B=ld$timevar_data[["B"]])
-# TESTS
-# testthat 
+#' names(x$long_data)
+#' x$long_data$outcome_data
+#' x$long_data$competing_data
+#' x$long_data$censored_data
+#' x$long_data$timevar_data
 #' @export
 add_long_data <- function(x,
                           outcome_data,
@@ -106,29 +109,53 @@ add_long_data <- function(x,
     timevar_data = c(timevar_data,dots)
     if(!is.null(timevar_data)){
         for (name in names(timevar_data)){
+            if (!is.data.frame(timevar_data[[name]])) {
+                stop("Element ", name,
+                     " of argument 'timevar_data' must be a data.frame.")
+            }
             current_data <- copy(as.data.table(timevar_data[[name]]))
-            if (!(x$names$id %in% names(current_data))){
+            id_name <- x$names$id
+            if (!(id_name %in% names(current_data))){
                 stop(paste0("Element ",
                             name,
                             " of argument 'timevar_data' does not have a variable called '",
-                            x$names$id))
-            }else{
-                if (length(names(current_data))>2) {
-                    if (!(length(names(current_data)) == 3 & ("value" %in%names(current_data) || all(c("start_date","end_date")%in%names(current_data)))))
-                        stop(paste0("Element ",
-                                    name,
-                                    " of argument 'timevar_data' is inconsistent with the three accepted formats:\n (id,date,value)\n (id,start_date,end_date) \n(id,date)."))
-                }
-                if (match(name,names(x$long_data$timevar_data),nomatch = 0)>0){
-                    # replace existing element
-                    x$long_data$timevar_data[[name]] <- current_data
-                }
-                else{
-                    # append
-                    tv <- list(current_data)
-                    names(tv) <- name
-                    x$long_data$timevar_data <- c(x$long_data$timevar_data,tv)
-                }
+                            id_name, "'."))
+            }
+
+            has_date <- "date" %in% names(current_data)
+            has_interval <- all(c("start_date", "end_date") %in%
+                                names(current_data))
+            allowed_names <- if (has_interval && !has_date) {
+                c(id_name, "start_date", "end_date", "value")
+            } else if (has_date && !has_interval) {
+                c(id_name, "date", "value")
+            } else {
+                character()
+            }
+            if (length(allowed_names) == 0L ||
+                length(setdiff(names(current_data), allowed_names)) > 0L) {
+                stop(paste0(
+                    "Element ", name,
+                    " of argument 'timevar_data' is inconsistent with the " ,
+                    "accepted formats: (id,date), (id,date,value), ",
+                    "(id,start_date,end_date), or ",
+                    "(id,start_date,end_date,value)."
+                ))
+            }
+
+            order_names <- c(id_name,
+                             if (has_interval) "start_date" else "date")
+            data.table::setorderv(current_data, order_names)
+
+            if (match(name,names(x$long_data$timevar_data),nomatch = 0)>0){
+                # replace existing element
+                x$long_data$timevar_data[[name]] <- current_data
+            }
+            else{
+                # append
+                tv <- list(current_data)
+                names(tv) <- name
+                x$long_data$timevar_data <- c(x$long_data$timevar_data,tv)
             }
         }
     }
@@ -138,13 +165,21 @@ add_long_data <- function(x,
     nv = nv[sapply(nv,NROW)>0]
     # check if id variable is stored
     for (name in names(nv)){
-        if (!(x$names$id %in% names(nv[[name]])))
-            stop(paste0("Element ",name," does not have a variable called ",x$names$id,"."))
-        else{
-            if (any(duplicated(nv[[name]][[x$names$id]])))
-                stop("Duplicated values of variable '",x$names$id,"' in dataset '",name,"' are not allowed")
-            x$long_data[[name]] <- copy(as.data.table(nv[[name]]))
+        if (!is.data.frame(nv[[name]])) {
+            stop("Element ", name, " must be a data.frame.")
         }
+        current_data <- copy(as.data.table(nv[[name]]))
+        if (!(x$names$id %in% names(current_data)) ||
+            !("date" %in% names(current_data))) {
+            stop(paste0("Element ", name,
+                        " must contain variables called '",
+                        x$names$id, "' and 'date'."))
+        }
+        data.table::setorderv(current_data, c(x$names$id, "date"))
+        current_data <- current_data[
+            !duplicated(current_data[[x$names$id]])
+        ]
+        x$long_data[[name]] <- current_data
     }
     x
 }

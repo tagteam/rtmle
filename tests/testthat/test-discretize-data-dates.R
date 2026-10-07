@@ -1,8 +1,6 @@
 library(testthat)
 library(data.table)
 library(rtmle)
-
-
 make_calendar_date_object <- function() {
     starts <- as.Date(c("2020-01-01", "2020-01-03", "2020-01-05"))
     x <- rtmle_init(

@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 19 2024 (07:23) 
 ## Version: 
-## Last-Updated: sep 18 2026 (08:24) 
+## Last-Updated: okt  6 2026 (08:22) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 58
+##     Update #: 59
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -20,13 +20,12 @@
 ##' settings and can then be populated with data, regimes, targets, and model
 ##' formulas.
 ##'
-##' @title Register Targeted Minimum Loss Estimation
-##' @param time_grid Vector of time points that define the discrete
+##' @title Initialize Register Targeted Minimum Loss Estimation
+##' @param time_grid Vector of time points that define the 
 ##'     time intervals for updating information in a longitudinal
-##'     setting. The first value must be 0 and the length of the
-##'     vector must be at least 2. When \code{time_grid} is of length
-##'     2, no information is updated
-##'     after time zero.
+##'     setting. The first value must be 0 and other values have to be on the 
+##'     scale of the data (see @details). When \code{time_grid} is of length
+##'     2, no information is updated after time zero.
 ##' @param name_id Name of the subject identifier variable.
 ##' @param name_time Name of the time variable. For example, \code{"date"} is
 ##'   appropriate when the data are recorded as calendar dates.

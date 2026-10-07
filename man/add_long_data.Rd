@@ -14,31 +14,35 @@ add_long_data(
 )
 }
 \arguments{
-\item{x}{An object of class \code{"rtmle"}, typically created by
+\item{x}{An object of class \code{"rtmle"}, created by
 \code{\link{rtmle_init}}.}
 
-\item{outcome_data}{A data frame whose first relevant column is the subject
-identifier initialized as \code{x$names$id} and whose date column records
-outcome event times. Only subjects who experience the outcome need rows.
-The date column must match \code{x$names$time}; it may contain calendar
-dates or precomputed durations since time zero.}
+\item{outcome_data}{A data frame with two columns. The first column
+is the subject identifier and needs to be named as \code{x$names$id}.
+The second column is called \code{"date"} and contains outcome event times either as
+calendar dates or as numeric values. Date values are used by \code{discretize_data} to calculate
+durations from a subject specific start of followup date. Numeric values are typically  
+pre-computed durations since a start of followup date.
+Only subjects who experience an outcome event need rows. In case of multiple rows per
+subject only the first occurrence is stored.}
 
-\item{censored_data}{A data frame whose first relevant column is the subject
-identifier initialized as \code{x$names$id} and whose date column records
-end-of-follow-up times. Rows for subjects who experience the outcome or a
-competing risk are ignored. The date column must match \code{x$names$time};
-it may contain calendar dates or precomputed durations since time zero.}
+\item{censored_data}{Similar as \code{outcome_data} but with dates and duration indicating
+end-of-followup instead of outcome event. Only subjects who are lost to followup before the outcome/competing revent need rows.
+In case of multiple rows per
+subject only the first occurrence is stored.}
 
-\item{competing_data}{A data frame whose first relevant column is the subject
-identifier initialized as \code{x$names$id} and whose date column records
-competing event times. Only subjects who experience a competing event need
-rows. The date column must match \code{x$names$time}; it may contain
-calendar dates or precomputed durations since time zero.}
+\item{competing_data}{Similar as \code{outcome_data} but with dates and duration indicating
+  a competing event instead of an outcome event. Only subjects who experience a competing event need rows.
+In case of multiple rows per
+  subject only the first occurrence is stored.}
 
 \item{timevar_data}{A named list of data frames for treatment and
 time-varying covariates. Each data frame must contain the subject
-identifier initialized as \code{x$names$id} and date information; it may
-also contain a \code{value} column.}
+identifier initialized as \code{x$names$id} and date information: 
+either a single variable called \code{"date"} or two columns called \code{"start_date"} and \code{"end_date"}. 
+The date information is either provided as calendar dates or as pre-computed durations since
+a start of followup date. In addition the data frame may 
+contain a \code{value} column. No entry, one row, or multiple rows per subject are allowed.}
 
 \item{...}{Named data-frame arguments for treatment or time-varying
 covariates. This is an alternative to passing those data frames through
@@ -51,8 +55,8 @@ The modified \code{rtmle} object.
 Add long-format data to an rtmle object
 }
 \details{
-Adds event, censoring, competing-risk, treatment, and time-varying covariate
-data in long format, with potentially multiple rows per subject.
+This function adds dates where outcome, censoring, treatment and confounders change
+in long format to an rtmle object.
 }
 \examples{
 data(simulated_cohort)
@@ -65,23 +69,20 @@ x <- add_long_data(x,
                    censored_data=ld$timevar_data$dropout,
                    competing_data=ld$timevar_data$death,
                    timevar_data=ld$timevar_data[c("bleeding","changeSBP","A","B")])
-x <- add_baseline_data(x,data=ld$baseline_data)
-x <- discretize_data(x,start_followup_date=0)
-x <- prepare_rtmle_data(x)
-x <- regime(x,name = "Always_A",
-                    intervention = data.frame(
-                                   time=x$intervention_nodes,
-                                   "A" = factor("1",levels = c("0","1"))))
-x <- regime(x,name = "Never_A",
-                    intervention = data.frame(
-                                              time=x$intervention_nodes,
-                                              "A" = factor("0",levels = c("0","1"))))
-x <- target(x,name = "Outcome_risk",
-                  estimator = "tmle",
-                  regimes = c("Always_A","Never_A"))
-x <- model_formula(x)
-x <- run_rtmle(x,learner = "learn_glmnet",time_horizon = 1:3)
-summary(x)
+# alternative way to pass the time-varying covariates/treatments
+x <- add_long_data(x,
+                   outcome_data=ld$timevar_data$stroke[!duplicated(id)],
+                   censored_data=ld$timevar_data$dropout,
+                   competing_data=ld$timevar_data$death,
+                   bleeding=ld$timevar_data[["bleeding"]],
+                   changeSBP=ld$timevar_data[["changeSBP"]],
+                   A=ld$timevar_data[["A"]],
+                   B=ld$timevar_data[["B"]])
+names(x$long_data)
+x$long_data$outcome_data
+x$long_data$competing_data
+x$long_data$censored_data
+x$long_data$timevar_data
 }
 \seealso{
 \code{\link{rtmle_init}}, \code{\link{add_baseline_data}},

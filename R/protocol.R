@@ -125,11 +125,13 @@ protocol <- function(x,
         )
     }
     variable <- time_node <- NULL
-    validate_multiple_treatment_factorization(
-        multiple_treatment_factorization,
-        "multiple_treatment_factorization"
-    )
-    validate_adherence_model_strata(adherence_model_strata)
+    if (length(multiple_treatment_factorization) != 1L || !is.character(multiple_treatment_factorization) || is.na(multiple_treatment_factorization) ||
+        !multiple_treatment_factorization %in% c("joint", "sequential", "independent")) {
+        stop("Argument multiple_treatment_factorization must be one of: ", paste(c("joint", "sequential", "independent"), collapse = ", "), ".")
+    }
+    if (!is.null(adherence_model_strata) && (!is.character(adherence_model_strata) || anyNA(adherence_model_strata) || any(!nzchar(adherence_model_strata)))){
+        stop("Argument adherence_model_strata must be NULL or a character vector of variable names.")
+    }
     if (length(adherence_model_strata) == 0L) {
         adherence_model_strata <- NULL
     }
