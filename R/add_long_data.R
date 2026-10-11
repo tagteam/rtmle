@@ -95,9 +95,11 @@ add_long_data <- function(x,
     }
     # A new long-format data set may contain calendar dates even when a
     # previous call to discretize_data() readily converted dates to time-on-study
-    # values. Setting the following variable, forces
-    # discretize_data() to re-evaluate the date representation.
+    # values. Setting the following variables forces discretize_data() to
+    # re-evaluate the date representation and the event histories.
     x$progress$substracted_start_followup_date <- FALSE
+    x$progress$discretized_outcome <- FALSE
+    x$progress$discretized_grid <- NULL
     ## Add timevar_data supplied by dots:
     dots <- list(...)
     if (length(dots) == 0) {

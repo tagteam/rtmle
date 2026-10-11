@@ -34,7 +34,9 @@
 #' @param method Character string specifying how the long-format data should
 #'   be mapped to the discrete grid. Built-in methods include:
 #'   \describe{
-#'     \item{"measurement"}{Aggregate measurements within intervals.}
+#'     \item{"measurement"}{Averages multiple measurements within an interval
+#'       by default and carries the last interval value forward when no new
+#'       measurement overlaps an interval.}
 #'     \item{"locf"}{Last observation carried forward.}
 #'     \item{"event"}{Event indicator carried forward after occurrence.}
 #'     \item{"event_interval"}{Indicator for events occurring within an interval.}
@@ -77,10 +79,12 @@
 #' @param values Length-2 vector specifying values used for binary indicators,
 #'   typically \code{c(1, 0)} for event/no event.
 #'
-#' @param fun_aggregate Optional function used to aggregate multiple values
-#'   within the same interval (e.g., \code{mean}, \code{median}). For
-#'   \code{method = "measurement"}, this determines how measurements are
-#'   summarized.
+#' @param fun_aggregate Optional function, or name of a function, used to
+#'   aggregate multiple values within the same interval (e.g., \code{mean},
+#'   \code{median}). For \code{method = "measurement"}, the default is
+#'   \code{mean}; the resulting interval value is carried forward when no
+#'   measurement overlaps an interval. Use \code{last} to select the last
+#'   measurement within each interval before carrying it forward.
 #'
 #' @param fill Value used to fill missing cells in the wide-format output.
 #'
@@ -172,7 +176,10 @@ map_data_to_grid <- function(method,
     data <- copy(data)
     grid <- copy(grid)
     if (length(data) == 0) return(NULL)
-    if (method == "measurement" && (length(fun_aggregate) == 0 || fun_aggregate != "last")){
+    if (method == "measurement") {
+        if (length(fun_aggregate) == 0L || is.null(fun_aggregate)) {
+            fun_aggregate <- mean
+        }
         data[, interval := NA_integer_]
         # exact zero goes to interval 0
         data[date == 0, interval := 0L]
@@ -188,13 +195,30 @@ map_data_to_grid <- function(method,
                                          x.interval]]
         ## discard information beyond the last interval (outside the grid)
         overlap <- overlap[!is.na(interval)]
-        ## if (missing(fun_aggregate) || is.null(fun_aggregate)){
-        if (is.function(fun_aggregate)){
-            overlap[,list(value = fun_aggregate(value)),by = c(id,"interval")]
+        overlap <- overlap[, c(id, "interval", "date", "value"), with = FALSE]
+        data.table::setorderv(overlap, c(id, "interval", "date"))
+        if (identical(fun_aggregate, "last")) {
+            overlap <- overlap[
+                , list(value = value[.N]),
+                by = c(id, "interval")
+            ]
+        } else {
+            fun_aggregate <- match.fun(fun_aggregate)
+            overlap <- overlap[
+                , list(value = fun_aggregate(value)),
+                by = c(id, "interval")
+            ]
         }
-    }
-    if ((method %chin% c("event","locf","time_since_event"))
-        || (method == "measurement" && (length(fun_aggregate)>0 &&fun_aggregate == "last"))){
+        # Fill intervals without a new measurement using the most recent
+        # aggregated interval value for the same subject.
+        setkeyv(overlap, c(id, "interval"))
+        grid_index_columns <- c(id, "interval")
+        overlap <- overlap[
+            grid[, grid_index_columns, with = FALSE],
+            on = c(id, "interval"),
+            roll = Inf
+        ]
+    } else if (method %chin% c("event","locf","time_since_event")) {
         setnames(grid,"end_interval","date")
         if (method == "event" && length(values) == 2) {
             data[, value := values[[1]]]

@@ -23,7 +23,9 @@ map_data_to_grid(
 \item{method}{Character string specifying how the long-format data should
 be mapped to the discrete grid. Built-in methods include:
 \describe{
-  \item{"measurement"}{Aggregate measurements within intervals.}
+  \item{"measurement"}{Averages multiple measurements within an interval
+    by default and carries the last interval value forward when no new
+    measurement overlaps an interval.}
   \item{"locf"}{Last observation carried forward.}
   \item{"event"}{Event indicator carried forward after occurrence.}
   \item{"event_interval"}{Indicator for events occurring within an interval.}
@@ -66,10 +68,12 @@ values are carried forward.}
 \item{values}{Length-2 vector specifying values used for binary indicators,
 typically \code{c(1, 0)} for event/no event.}
 
-\item{fun_aggregate}{Optional function used to aggregate multiple values
-within the same interval (e.g., \code{mean}, \code{median}). For
-\code{method = "measurement"}, this determines how measurements are
-summarized.}
+\item{fun_aggregate}{Optional function, or name of a function, used to
+aggregate multiple values within the same interval (e.g., \code{mean},
+\code{median}). For \code{method = "measurement"}, the default is
+\code{mean}; the resulting interval value is carried forward when no
+measurement overlaps an interval. Use \code{last} to select the last
+measurement within each interval before carrying it forward.}
 
 \item{fill}{Value used to fill missing cells in the wide-format output.}
 
