@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Oct 28 2024 (09:26) 
 ## Version: 
-## Last-Updated: maj  7 2026 (14:56) 
-##           By: Thomas Alexander Gerds
-##     Update #: 91
+## Last-Updated: Nov 18 2026 (12:08) 
+##           By: Johan Sebastian Ohlendorff
+##     Update #: 92
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -80,6 +80,7 @@ learn_ranger <- function(
         }
     }else{
         fit <- reuse_fit$fit
+        probability <- identical(fit$treetype, "Probability estimation")
         summary = reuse_fit$fit_summary
     }
     predicted_values <- vector(mode = "numeric",length = NROW(intervened_data))

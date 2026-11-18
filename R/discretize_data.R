@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 22 2024 (14:07)
 ## Version:
-## Last-Updated: okt 11 2026 (14:44) 
-##           By: Thomas Alexander Gerds
-##     Update #: 410
+## Last-Updated: Nov 18 2026 (15:49) 
+##           By: Johan Sebastian Ohlendorff
+##     Update #: 411
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -514,6 +514,7 @@ discretize_data <- function(x,
         if (anyNA(start_dates)) {
             stop("The start_followup_date column cannot contain missing values.")
         }
+        x$long_data <- data.table::copy(x$long_data)
         subtract_start_followup <- function(current_data, date_columns, label) {
             if (is.null(current_data) || NROW(current_data) == 0L) {
                 return(invisible(NULL))

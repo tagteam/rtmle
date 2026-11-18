@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 29 2024 (10:44) 
 ## Version: 
-## Last-Updated: maj 20 2026 (14:45) 
-##           By: Thomas Alexander Gerds
-##     Update #: 209
+## Last-Updated: Nov 18 2026 (16:49) 
+##           By: Johan Sebastian Ohlendorff
+##     Update #: 221
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -163,8 +163,8 @@ summary.rtmle <- function(object,analysis = "Main_analysis",targets,reference = 
                         })
                         names(reference_IC) <- names(subset_IC)
                     }
-                    N <- NROW(reference_IC[[1]])
-                    if (analysis == "Main_analysis"&&length(object$estimate$Cheap_bootstrap)>0){
+                    bootstrap <- object$estimate$Cheap_bootstrap$Main_analysis
+                    if (analysis == "Main_analysis"&& NROW(bootstrap)>0){
                         reference_boot <- object$estimate[["Cheap_bootstrap"]][Target == target_name & Regime == ref & Time_horizon == tp]$Bootstrap_estimate
                     }
                     this_estimate <- object$estimate[[analysis]][Target == target_name & Regime == regime_name & Time_horizon == tp]$Estimate
@@ -180,6 +180,7 @@ summary.rtmle <- function(object,analysis = "Main_analysis",targets,reference = 
                     e <- do.call(rbind,lapply(1:length(analysis_levels),function(level){
                         risk_difference_estimate <- this_estimate[[level]] - reference_estimate[[level]]
                         risk_ratio_estimate <- exp(log(this_estimate[[level]]) - log(reference_estimate[[level]]))
+                        N <- NROW(reference_IC[[level]])
                         risk_difference_se <- sd(this_IC[[level]] - reference_IC[[level]])/sqrt(N)
                         risk_difference_lower <- risk_difference_estimate - qnorm(.975)*risk_difference_se
                         risk_difference_upper <- risk_difference_estimate + qnorm(.975)*risk_difference_se
@@ -198,18 +199,23 @@ summary.rtmle <- function(object,analysis = "Main_analysis",targets,reference = 
                                          Upper = c(risk_difference_upper, risk_ratio_upper),
                                          P_value = c(2*pnorm(-abs(risk_difference_estimate/risk_difference_se)), 2*pnorm(-abs(log(risk_ratio_estimate)/risk_ratio_log_se))))
 
-                        if (analysis == "Main_analysis" && length(object$estimate$Cheap_bootstrap)>0){
-                            this_boot <- object$estimate[["Cheap_bootstrap"]][Target == target_name & Regime == regime_name & Time_horizon == tp]$Bootstrap_estimate
+                        if (analysis == "Main_analysis" && NROW(bootstrap)>0){
+                            reference_boot <- bootstrap[
+                                Target == target_name & Regime == ref & Time_horizon == tp
+                            ][order(B), Bootstrap_estimate]
+                            this_boot <- bootstrap[
+                                Target == target_name & Regime == regime_name & Time_horizon == tp
+                            ][order(B), Bootstrap_estimate]
                             boot_difference <- this_boot-reference_boot
                             boot_ratio <- this_boot/reference_boot
-                            cheap_scale <- attr(object$estimate[["Cheap_bootstrap"]],"cheap_scale",exact = TRUE)
-                            tq <- attr(object$estimate[["Cheap_bootstrap"]],"tq",exact = TRUE)
+                            cheap_scale <- attr(bootstrap,"cheap_scale",exact = TRUE)
+                            tq <- attr(bootstrap,"tq",exact = TRUE)
                             cheap_variance <- mean((risk_difference_estimate-boot_difference)^2)
-                            risk_difference_boot_lower <- risk_difference_estimate - tq * cheap_scale * cheap_variance
-                            risk_difference_boot_upper <- risk_difference_estimate + tq * cheap_scale * cheap_variance
+                            risk_difference_boot_lower <- risk_difference_estimate - tq * cheap_scale * sqrt(cheap_variance)
+                            risk_difference_boot_upper <- risk_difference_estimate + tq * cheap_scale * sqrt(cheap_variance)
                             cheap_log_variance <- mean((log(risk_ratio_estimate)-log(boot_ratio))^2)
-                            risk_ratio_boot_lower <- exp(log(risk_ratio_estimate) - tq * cheap_scale * cheap_log_variance)
-                            risk_ratio_boot_upper <- exp(log(risk_ratio_estimate) + tq * cheap_scale * cheap_log_variance)
+                            risk_ratio_boot_lower <- exp(log(risk_ratio_estimate) - tq * cheap_scale * sqrt(cheap_log_variance))
+                            risk_ratio_boot_upper <- exp(log(risk_ratio_estimate) + tq * cheap_scale * sqrt(cheap_log_variance))
                             data.table::set(e1,j = "Bootstrap_lower",value = c(risk_difference_boot_lower,risk_ratio_boot_lower))
                             data.table::set(e1,j = "Bootstrap_upper",value = c(risk_difference_boot_upper,risk_ratio_boot_upper))
                             data.table::set(e1,j = "Bootstrap_standard_error",value = c(sqrt(cheap_variance),sqrt(cheap_log_variance)))
