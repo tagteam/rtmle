@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 22 2024 (14:07)
 ## Version:
-## Last-Updated: okt 11 2026 (10:06) 
+## Last-Updated: okt 11 2026 (14:44) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 408
+##     Update #: 410
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -68,47 +68,44 @@
 #'       has occurred and 0 before it. The source data require a \code{date}
 #'       column.}
 #'     \item{\code{"time_since_event"}}{Returns the time elapsed since the
-#'       most recent event at each grid time.}
+#'       most recent event at each grid time. The source data require a \code{date}
+#'       column.}
 #'     \item{\code{"chronic_disease"}}{Categorizes the time since the most
 #'       recent event as \code{"never"}, \code{"acute"}, or \code{"chronic"};
 #'       the built-in cut points are 0 and approximately six months (using
-#'       30.45 days per month).}
+#'       30.45 days per month). The source data require a \code{date}
+#'       column.
+#' }
 #'     \item{\code{"event_interval"}}{Creates an indicator that an event
 #'       occurred within the corresponding grid interval, rather than an
 #'       indicator carried forward after the first event.}
-#'     \item{\code{"periodic_event"}}{Alias for \code{"event_interval"};
-#'       indicates whether an event occurred in the corresponding grid
-#'       interval.}
-#'     \item{\code{"any_exposure"}}{Creates an indicator that exposure
+#'     \item{\code{"periodic_event"}}{Alias for \code{"event_interval"}}
+#'     \item{\code{"any_exposure"}}{Calculates the overlap between exposure intervals
+#'       and intervals on the discrete time grid. Creates an indicator that exposure
 #'       overlaps the grid interval by more than \code{threshold} time units.
-#'       The default threshold is 0, so any positive overlap counts as
-#'       exposure.}
-#'     \item{\code{"has_exposure"}}{Creates an indicator that the exposed
-#'       fraction of the grid interval exceeds \code{threshold}. The default
-#'       threshold is 0.5, and must be between 0 and 1.}
+#'       The threshold must be between 0 and 1. The default threshold is 0, so any
+#'       positive overlap counts as
+#'       exposure. When \code{baseline_exposure_start}
+#'       is set to \code{TRUE} then the wide format variable at time zero takes value 1
+#'       if a {start_date} equals time zero. This is interpreted as a baseline treatment assignment. The source data require a \code{start_date}
+#'       and a \code{end_date} column.}
+#'     \item{\code{"has_exposure"}}{Same as \code{any_exposure} but with default threshold 0.5.}
 #'     \item{\code{"exposure_time"}}{Returns the total amount of time for
-#'       which the exposure overlaps each grid interval.}
+#'       which the exposure overlaps each grid interval. When \code{baseline_exposure_start}
+#'       is set to \code{TRUE} then the wide format variable at time zero takes value 1
+#'       if a {start_date} equals time zero. This is interpreted as a baseline treatment assignment. 
+#'       The source data require a \code{start_date} and a \code{end_date}
+#'       column.}
 #'     \item{\code{"exposure_percent"}}{Returns the fraction of each grid
-#'       interval covered by the exposure, on a 0--1 scale.}
+#'       interval covered by the exposure. When \code{baseline_exposure_start}
+#'       is set to \code{TRUE} then the wide format variable at time zero takes value 1
+#'       if a {start_date} equals time zero. This is interpreted as a baseline treatment assignment.
+#'       The source data require a \code{start_date} and a \code{end_date}
+#'       column.}
 #'   }
 #'
-#'   Event-history methods use a \code{date} column; \code{measurement} and
-#'   \code{locf} additionally require \code{value}; exposure methods use
-#'   \code{start_date} and \code{end_date}. For the duration-based exposure
-#'   methods, \code{baseline_exposure_start} has a special treatment
-#'   interpretation at interval 0. When it is \code{TRUE} (the default), an
-#'   exposure episode whose \code{start_date} is exactly time zero is treated
-#'   as the baseline treatment assignment and contributes exposure value 1 in
-#'   interval 0. This is an assignment convention, not a claim that a
-#'   positive amount of exposure occurred at time zero: interval 0 has zero
-#'   length on the ordinary grid, and with a positive \code{baseline_lookback}
-#'   it represents the interval \code{[-baseline_lookback, 0]}. Set
-#'   \code{baseline_exposure_start = FALSE} for an ordinary exposure or
-#'   time-varying covariate when interval 0 should reflect only measured
-#'   overlap with that interval. For example, use
-#'   \code{A = list(method = "exposure_percent",
-#'   baseline_exposure_start = TRUE)} when \code{A} records treatment
-#'   assignment at baseline.
+#'   With a positive value for \code{baseline_lookback} the time grid is expanded by 
+#'   the interval \code{[-baseline_lookback, 0]} for the calculation of exposure at time 0. 
 #'
 #' @param verbose Logical. If \code{FALSE}, suppress informational messages
 #'   generated while checking date formats.
@@ -241,7 +238,7 @@ discretize_data <- function(x,
             event            = list(method = "event",            fun = map_data_to_grid, columns = "date"),
             periodic_event   = list(method = "event_interval",   fun = map_data_to_grid, columns = "date"),
             time_since_event = list(method = "time_since_event", fun = map_data_to_grid, columns = "date"),
-            chronic_disease  = list(method = "time_since_event", fun = map_data_to_grid, columns = "date", fun_aggregate = function(x){cut(x,breaks = c(-Inf,0,6*30.45,Inf),labels = c("never","acute","chronic"))}),
+            chronic_disease  = list(method = "time_since_event", fun = map_data_to_grid, columns = "date", values = c("acute", "never"), fun_aggregate = function(x){cut(x,breaks = c(-Inf,0,6*30.45,Inf),labels = c("never","acute","chronic"))}),
             event_interval   = list(method = "event_interval",   fun = map_data_to_grid, columns = "date"),
             any_exposure     = list(method = "any_exposure",     fun = map_data_to_grid, columns = c("start_date","end_date"), threshold = 0, baseline_exposure_start = TRUE),
             has_exposure     = list(method = "has_exposure",     fun = map_data_to_grid, columns = c("start_date","end_date"), threshold = 0.5, baseline_exposure_start = TRUE),
@@ -283,7 +280,12 @@ discretize_data <- function(x,
                 base <- discretize_methods[[method_name]]
                 out <- c(spec, base)
                 out <- out[!duplicated(names(out))]
-                out$method <- method_name
+                ## Store the engine method rather than the public alias.  The
+                ## latter is useful for users (e.g. "periodic_event" and
+                ## "chronic_disease"), while map_data_to_grid() dispatches on
+                ## the underlying methods ("event_interval" and
+                ## "time_since_event").
+                out$method <- base$method
                 if (is.null(out$fun)) out$fun <- base$fun
                 if (is.null(out$args)) out$args <- list()
             } else {

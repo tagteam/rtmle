@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: feb 24 2026 (11:04)
 ## Version:
-## Last-Updated: aug 13 2026 (08:30)
+## Last-Updated: okt 22 2026 (16:39) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 140
+##     Update #: 141
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -14,14 +14,6 @@
 #----------------------------------------------------------------------
 ##
 ### Code:
-# data contains exposure episodes
-# grid contains intervals on a discrete time scale
-# the function discretizes how many days a subject
-# was exposed within the interval and defines exposure when the
-# number of days exceeds threshold. E.g., when the length of the
-# interval is 6 months (180 days) and the threshold is set to 91 then exposure
-# is 1 if the treatment duration exceeds 50% of the length interval
-# and 0 otherwise
 #' Map long-format time-dependent data onto a discrete time grid
 #'
 #' Maps long-format event, measurement, or exposure histories

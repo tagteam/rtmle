@@ -13,7 +13,9 @@
 #'
 #' For multiple treatment variables, colour identifies the joint treatment
 #' state (for example, \code{A=1, B=0}), preserving one horizontal trajectory
-#' per subject.
+#' per subject. In the continuous-time panel, observed point-format values are
+#' overlaid as points; exposure-interval starts and ends are marked as points.
+#' Legend entries are sorted, with states containing \code{Missing} last.
 #'
 #' @param x An object of class \code{"rtmle"} containing long-format and/or
 #'   wide-format treatment data.
@@ -29,12 +31,12 @@
 #' data(rtmle_object)
 #' p <- plot_treatment_trajectories(rtmle_object)
 #' p
-#' @importFrom ggplot2 aes facet_grid geom_segment geom_vline ggplot labs
+#' @importFrom ggplot2 aes facet_grid geom_point geom_segment geom_vline ggplot labs
 #'   scale_colour_manual scale_x_continuous scale_y_continuous theme theme_bw
 #' @export
 plot_treatment_trajectories <- function(x, treatment_variables = NULL) {
 
-    start <- end <- subject <- state <- xintercept <- NULL
+    start <- end <- subject <- state <- xintercept <- time <- NULL
 
 
     if (!inherits(x, "rtmle")) {
@@ -120,6 +122,56 @@ plot_treatment_trajectories <- function(x, treatment_variables = NULL) {
         as.numeric(values)
     }
 
+    helper_plot_value_label <- function(value) {
+        if (length(value) == 0L || is.na(value[[1L]])) {
+            return("Missing")
+        }
+        value <- value[[1L]]
+        if (is.logical(value)) {
+            return(if (isTRUE(value)) "1" else "0")
+        }
+        as.character(value)
+    }
+
+    helper_plot_state <- function(values, variables) {
+        paste(
+            paste0(
+                variables, "=",
+                vapply(values, helper_plot_value_label, character(1L))
+            ),
+            collapse = ", "
+        )
+    }
+
+    helper_plot_long_values <- function(table_info, subject_rows, time) {
+        lapply(names(table_info), function(variable) {
+            info <- table_info[[variable]]
+            rows <- subject_rows[[variable]]
+            if (length(rows) == 0L) {
+                return(if (info$interval) 0 else NA)
+            }
+            if (info$interval) {
+                starts <- info$starts[rows]
+                ends <- info$ends[rows]
+                exposed <- any(
+                    is.finite(starts) & starts <= time &
+                        (is.na(ends) | !is.finite(ends) | ends > time)
+                )
+                return(if (exposed) 1 else 0)
+            }
+            times <- info$times[rows]
+            observed <- which(
+                !is.na(times) & is.finite(times) & times <= time &
+                    !is.na(info$values[rows])
+            )
+            if (length(observed) == 0L) {
+                return(NA)
+            }
+            last_observation <- observed[[which.max(times[observed])]]
+            info$values[rows][last_observation]
+        })
+    }
+
     helper_plot_long_segments <- function(variables, subject_ids, subject_rank,
                                           end_followup) {
         table_info <- list()
@@ -170,6 +222,7 @@ plot_treatment_trajectories <- function(x, treatment_variables = NULL) {
         }
 
         out <- vector("list", 0L)
+        points <- vector("list", 0L)
         for (subject_index in seq_along(subject_ids)) {
             subject_id <- subject_ids[[subject_index]]
             end <- end_followup[[subject_index]]
@@ -213,46 +266,10 @@ plot_treatment_trajectories <- function(x, treatment_variables = NULL) {
                     next
                 }
                 midpoint <- (start + finish) / 2
-                values <- lapply(names(table_info), function(variable) {
-                    info <- table_info[[variable]]
-                    rows <- subject_rows[[variable]]
-                    if (length(rows) == 0L) {
-                        return(if (info$interval) 0 else NA)
-                    }
-                    if (info$interval) {
-                        starts <- info$starts[rows]
-                        ends <- info$ends[rows]
-                        exposed <- any(
-                            is.finite(starts) & starts <= midpoint &
-                                (is.na(ends) | !is.finite(ends) | ends > midpoint)
-                        )
-                        return(if (exposed) 1 else 0)
-                    }
-                    times <- info$times[rows]
-                    observed <- which(!is.na(times) & is.finite(times) &
-                                      times <= midpoint & !is.na(info$values[rows]))
-                    if (length(observed) == 0L) {
-                        return(NA)
-                    }
-                    last_observation <- observed[[which.max(times[observed])]]
-                    info$values[rows][last_observation]
-                })
-                state <- paste(
-                    paste0(
-                        names(table_info), "=",
-                        vapply(values, function(value) {
-                            if (length(value) == 0L || is.na(value[[1L]])) {
-                                return("Missing")
-                            }
-                            value <- value[[1L]]
-                            if (is.logical(value)) {
-                                return(if (isTRUE(value)) "1" else "0")
-                            }
-                            as.character(value)
-                        }, character(1L))
-                    ),
-                    collapse = ", "
+                values <- helper_plot_long_values(
+                    table_info, subject_rows, midpoint
                 )
+                state <- helper_plot_state(values, names(table_info))
                 out[[length(out) + 1L]] <- data.frame(
                     panel = "Continuous time",
                     start = start,
@@ -262,8 +279,100 @@ plot_treatment_trajectories <- function(x, treatment_variables = NULL) {
                     stringsAsFactors = FALSE
                 )
             }
+
+            ## Add the raw observed values as points.  Point-format histories
+            ## contribute one point per observed value.  For interval-format
+            ## histories the start and end of each observed exposure interval
+            ## are marked, including the clipped baseline/follow-up boundary.
+            for (variable in names(table_info)) {
+                info <- table_info[[variable]]
+                rows <- subject_rows[[variable]]
+                if (length(rows) == 0L) {
+                    next
+                }
+                if (info$interval) {
+                    starts <- info$starts[rows]
+                    ends <- info$ends[rows]
+                    for (row_index in seq_along(rows)) {
+                        interval_start <- starts[[row_index]]
+                        interval_end <- ends[[row_index]]
+                        if (is.finite(interval_start) &&
+                            (is.na(interval_end) ||
+                             !is.finite(interval_end) ||
+                             interval_end > 0)) {
+                            point_time <- max(0, interval_start)
+                            if (point_time <= end &&
+                                (is.na(interval_end) ||
+                                 !is.finite(interval_end) ||
+                                 interval_end > point_time)) {
+                                values <- helper_plot_long_values(
+                                    table_info, subject_rows, point_time
+                                )
+                                points[[length(points) + 1L]] <- data.frame(
+                                    panel = "Continuous time",
+                                    time = point_time,
+                                    subject = subject_rank[[subject_index]],
+                                    state = helper_plot_state(
+                                        values, names(table_info)
+                                    ),
+                                    stringsAsFactors = FALSE
+                                )
+                            }
+                        }
+                        if (is.finite(interval_end) &&
+                            interval_end >= 0 && interval_end <= end &&
+                            (is.na(interval_start) ||
+                             interval_end >= interval_start)) {
+                            values <- helper_plot_long_values(
+                                table_info, subject_rows, interval_end
+                            )
+                            points[[length(points) + 1L]] <- data.frame(
+                                panel = "Continuous time",
+                                time = interval_end,
+                                subject = subject_rank[[subject_index]],
+                                state = helper_plot_state(
+                                    values, names(table_info)
+                                ),
+                                stringsAsFactors = FALSE
+                            )
+                        }
+                    }
+                } else {
+                    times <- info$times[rows]
+                    observed <- which(
+                        !is.na(times) & is.finite(times) &
+                            times >= 0 & times <= end &
+                            !is.na(info$values[rows])
+                    )
+                    for (row_index in observed) {
+                        point_time <- times[[row_index]]
+                        values <- helper_plot_long_values(
+                            table_info, subject_rows, point_time
+                        )
+                        points[[length(points) + 1L]] <- data.frame(
+                            panel = "Continuous time",
+                            time = point_time,
+                            subject = subject_rank[[subject_index]],
+                            state = helper_plot_state(
+                                values, names(table_info)
+                            ),
+                            stringsAsFactors = FALSE
+                        )
+                    }
+                }
+            }
         }
-        if (length(out) == 0L) NULL else do.call(rbind, out)
+        if (length(out) == 0L) {
+            return(NULL)
+        }
+        list(
+            segments = do.call(rbind, out),
+            points = if (length(points) > 0L) {
+                do.call(rbind, points)
+            } else {
+                NULL
+            }
+        )
     }
 
     helper_plot_discrete_segments <- function(variables, subject_ids, subject_rank,
@@ -537,12 +646,22 @@ plot_treatment_trajectories <- function(x, treatment_variables = NULL) {
         stop("No treatment data were found for the requested treatment_variables.")
     }
 
-    continuous <- if (length(long_variables) > 0L) {
+    continuous_result <- if (length(long_variables) > 0L) {
         helper_plot_long_segments(
             long_variables, subject_ids, subject_rank, end_followup
         )
     } else {
         NULL
+    }
+    continuous <- if (is.null(continuous_result)) {
+        NULL
+    } else {
+        continuous_result$segments
+    }
+    points <- if (is.null(continuous_result)) {
+        NULL
+    } else {
+        continuous_result$points
     }
     discrete <- if (length(wide_variables) > 0L) {
         helper_plot_discrete_segments(
@@ -556,11 +675,30 @@ plot_treatment_trajectories <- function(x, treatment_variables = NULL) {
     }
 
     segments <- do.call(rbind, Filter(NROW, list(continuous, discrete)))
-    panel_levels <- unique(segments$panel)
+    panel_levels <- unique(as.character(segments$panel))
     segments$panel <- factor(segments$panel, levels = panel_levels)
-    states <- unique(as.character(segments$state))
+    if (!is.null(points)) {
+        points$panel <- factor(points$panel, levels = panel_levels)
+    }
+    state_values <- c(
+        as.character(segments$state),
+        if (is.null(points)) character() else as.character(points$state)
+    )
+    all_states <- unique(state_values)
+    missing_state <- all_states == "Missing" |
+        grepl("=Missing($|, )", all_states)
+    states <- c(
+        sort(all_states[!missing_state]),
+        sort(all_states[missing_state])
+    )
+    if (length(states) == 0L) {
+        stop("The treatment data do not contain any plot-able states.")
+    }
     segments$state <- factor(segments$state, levels = states)
-    nonmissing <- setdiff(states, "Missing")
+    if (!is.null(points)) {
+        points$state <- factor(points$state, levels = states)
+    }
+    nonmissing <- states[!grepl("=Missing($|, )", states) & states != "Missing"]
     palette <- if (length(nonmissing) > 0L) {
         if (length(nonmissing) <= 8L) {
             c("#000000", "#E69F00", "#56B4E9", "#009E73",
@@ -575,7 +713,12 @@ plot_treatment_trajectories <- function(x, treatment_variables = NULL) {
         character()
     }
     names(palette) <- nonmissing
-    if ("Missing" %in% states) palette <- c(palette, Missing = "#BDBDBD")
+    missing_states <- setdiff(states, nonmissing)
+    if (length(missing_states) > 0L) {
+        missing_palette <- rep("#BDBDBD", length(missing_states))
+        names(missing_palette) <- missing_states
+        palette <- c(palette, missing_palette)
+    }
     palette <- palette[states]
 
     vertical <- if ("Discrete time" %in% panel_levels) {
@@ -612,6 +755,14 @@ plot_treatment_trajectories <- function(x, treatment_variables = NULL) {
                 lineend = "butt"
             )
     }
+    if (!is.null(points)) {
+        p <- p + ggplot2::geom_point(
+            data = points,
+            mapping = ggplot2::aes(x = time, y = subject, colour = state),
+            inherit.aes = FALSE,
+            size = 2.1
+        )
+    }
     p <- p +
         ggplot2::scale_colour_manual(
             values = palette,
@@ -628,7 +779,7 @@ plot_treatment_trajectories <- function(x, treatment_variables = NULL) {
             expand = c(0, 0)
         ) +
         ggplot2::scale_y_continuous(
-            limits = c(1, max(1L, length(subject_ids))),
+            limits = c(1, length(subject_ids) + 1L),
             breaks = NULL,
             labels = NULL,
             expand = c(0, 0)
@@ -641,6 +792,9 @@ plot_treatment_trajectories <- function(x, treatment_variables = NULL) {
             panel.grid.major.y = ggplot2::element_blank(),
             panel.grid.minor = ggplot2::element_blank()
         )
+    ## Keep the requested y scale (1 to N + 1), but allow the marker at the
+    ## first subject position to extend into the lower plot margin.
+    p <- p + ggplot2::coord_cartesian(clip = "off")
     if (length(panel_levels) > 1L) {
         p <- p + ggplot2::facet_grid(. ~ panel, scales = "free_x", space = "free_x")
     }

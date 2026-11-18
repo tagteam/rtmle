@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 19 2024 (10:07)
 ## Version:
-## Last-Updated: apr 29 2026 (07:31) 
+## Last-Updated: okt 22 2026 (16:37) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 272
+##     Update #: 273
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -15,13 +15,13 @@
 ##
 ### Code:
 ##' Prepare an \code{rtmle} object for estimation by checking the supplied data
-##' and storing the analysis data in \code{x$prepared_data}.
+##' and storing the wide-format analysis data in \code{x$prepared_data}.
 ##'
-##' As part of this preparation, the function identifies intervention variables
-##' (\code{A_variables}), time-dependent covariates (\code{B_variables}),
-##' outcome variables (\code{outcome_variables}), competing-risk variables
-##' (\code{competing_variables}), and censoring variables
-##' (\code{censoring_variables}), and stores those names in the object.
+##' As part of this preparation, the function 
+##' stores the names of the baseline covariates as \code{x$names$name_baseline_covariates},
+##' the names of the time-dependent covariates (including treatment/intervention variables)
+##' as \code{x$names$name_baseline_covariates}, and the names of constant variables (if any)
+##' as \code{x$names$name_constant_covariates}.
 ##'
 ##' @title Prepare a targeted minimum loss-based analysis
 ##' @param x An object initialized with \code{\link{rtmle_init}} containing

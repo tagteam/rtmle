@@ -11,12 +11,23 @@ test_that("treatment trajectories show continuous and discrete representations",
         c("Continuous time", "Discrete time")
     )
     expect_equal(max(plot$data$subject), NROW(rtmle_object$prepared_data))
+    expect_equal(
+        plot$scales$get_scales("y")$limits,
+        c(1, NROW(rtmle_object$prepared_data) + 1)
+    )
+    expect_identical(plot$coordinates$clip, "off")
     expect_true(all(c("A=0, B=0", "A=1, B=0", "A=0, B=1", "A=1, B=1") %in%
                     levels(plot$data$state)))
     expect_true(inherits(plot$theme$axis.text.y, "element_blank"))
 
     built <- ggplot2::ggplot_build(plot)
-    expect_length(built$data, 2L)
+    expect_length(built$data, 3L)
+    expect_true(any(vapply(
+        plot$layers,
+        function(layer) inherits(layer$geom, "GeomPoint"),
+        logical(1L)
+    )))
+    expect_gt(nrow(built$data[[3L]]), 0L)
     expect_setequal(
         unique(built$data[[1L]]$xintercept),
         rtmle_object$time_grid_scale
@@ -83,4 +94,45 @@ test_that("exposure-interval long data treat absent intervals as unexposed", {
     )
     expect_false(any(grepl("Missing", levels(plot$data$state), fixed = TRUE)))
     expect_silent(ggplot2::ggplot_build(plot))
+})
+
+test_that("continuous trajectories show observed points and put missing last", {
+    x <- rtmle_init(
+        time_grid = c(0, 2, 4),
+        name_id = "id",
+        name_outcome = "Y",
+        name_competing = NULL,
+        name_censoring = "Censored",
+        censored_label = "censored"
+    )
+    x <- add_long_data(
+        x,
+        outcome_data = data.frame(id = 1, date = 4),
+        timevar_data = list(
+            LDL = data.frame(
+                id = c(1, 1, 2),
+                date = c(1, 3, 2),
+                value = c(120, 130, 110)
+            ),
+            statins = data.frame(
+                id = 1,
+                start_date = 0.5,
+                end_date = 1.5
+            )
+        )
+    )
+
+    plot <- plot_treatment_trajectories(x, treatment_variables = "LDL")
+    built <- ggplot2::ggplot_build(plot)
+    point_data <- built$data[[length(built$data)]]
+
+    expect_equal(sort(point_data$x), c(1, 2, 3))
+    expect_equal(tail(levels(plot$data$state), 1L), "LDL=Missing")
+
+    statin_plot <- plot_treatment_trajectories(
+        x,
+        treatment_variables = "statins"
+    )
+    statin_points <- ggplot2::ggplot_build(statin_plot)$data[[2L]]
+    expect_equal(sort(statin_points$x), c(0.5, 1.5))
 })

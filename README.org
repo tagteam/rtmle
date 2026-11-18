@@ -38,9 +38,7 @@ devtools::install_github("tagteam/rtmle")
   [[./R/add_wide_data.R]]
   [[./R/discretize_data.R]]
   [[./R/map_data_to_grid.R]]
-  [[./R/long_to_wide.R]]
   [[./R/prepare_rtmle_data.R]]
-  [[./R/widen_outcome.R]]
 
 *** Descriptive 
 
@@ -97,6 +95,7 @@ devtools::install_github("tagteam/rtmle")
 
 *** Internal functions
 
+ [[./R/widen_outcome.R]]
  [[./R/rtmle-package.R]]
  [[./R/change_outcome_in_formula.R]]
  [[./R/count_followup.R]]
