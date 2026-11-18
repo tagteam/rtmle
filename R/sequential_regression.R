@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 30 2024 (14:30)
 ## Version:
-## Last-Updated: maj 28 2026 (14:45) 
+## Last-Updated: nov 18 2026 (14:19) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 646
+##     Update #: 648
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -124,9 +124,6 @@ sequential_regression <- function(x,
         fit_last_interval <- fit_last_interval$predicted_values
         # set predicted value as outcome for next regression
         if (estimator == "tmle"){
-            old_action <- options()$na.action
-            on.exit(options(na.action = old_action))
-            options(na.action = "na.pass")
             # note that we can still predict those who are censored at C_j but uncensored at C_{j-1}
             ## y <- riskRegression::predictRisk(fit_last_interval,newdata = intervened_data)
             # avoid missing values due to logit

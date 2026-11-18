@@ -36,9 +36,11 @@ tmle_update <- function(Y,
         m <- stats::glm(formula = f,
                         family = stats::quasibinomial(),
                         data = data.frame(data.temp[has_weight, ],weights),
+                        na.action = stats::na.pass,
                         weights = weights,
                         control = stats::glm.control(maxit = 100))
-        Qstar <- stats::predict(m, newdata = data.temp, type = "response")
+        Qstar <- stats::predict(m, newdata = data.temp, type = "response",
+                               na.action = stats::na.pass)
     } else {
         Qstar <- stats::plogis(offset)
         attr(Qstar,"diagnostics") <- data.table(Function = 'rtmle::tmle_update',
