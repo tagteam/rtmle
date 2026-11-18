@@ -11,7 +11,8 @@ prepare_rtmle_data(x, ...)
 wide-format data, usually added with \code{\link{add_wide_data}} or
 created from long-format data with \code{\link{discretize_data}}.}
 
-\item{...}{Not used.}
+\item{...}{Continuous-time preparation options: \code{min_events}
+(default 40), and \code{last_non_terminal_event} control event-history pooling. Not used for discrete-time preparation.}
 }
 \value{
 The object augmented with a new element called

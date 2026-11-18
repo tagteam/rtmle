@@ -70,16 +70,16 @@ via \code{fitter()}, which is called from
 \item{save_fitted_objects}{Logical. If \code{TRUE}, store the 
 fitted object as element \code{fit}}
 
-\item{reuse_fit}{Optional fitted object returned by a previous call. If
-supplied, skip fitting and only predict in \code{intervened_data}.}
+\item{reuse_fit}{Reserved for compatibility with individual learners.
+Super learner ensembles are currently refitted.}
 
 \item{...}{Not used.}
 }
 \value{
 A list whose first element, \code{predicted_values}, is the
-  prediction vector from the super learner. Element \code{fit} contains the
-  ensemble weights, and element \code{object} contains the fitted final
-  learners when available.
+  prediction vector from the super learner. Element \code{fit_summary}
+  contains the ensemble weights. When requested, element \code{fit}
+  contains the fitted models for learners with positive weight.
 }
 \description{
 Super learn nuisance-parameter models

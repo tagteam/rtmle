@@ -1,0 +1,78 @@
+# Numerical scenarios from contICEIPCW/tests/testthat/test_continuous_time_function.R.
+# TMLE and untreated-regime bugs have separate mathematical regression tests;
+# their erroneous source snapshots are deliberately not used as oracles.
+test_that("valid conservative contICEIPCW scenarios retain their numerical results", {
+    scenarios <- data.frame(
+        uncensored = c(TRUE, TRUE, FALSE, FALSE, FALSE, FALSE),
+        competing = c(FALSE, TRUE, FALSE, TRUE, FALSE, TRUE),
+        marginal = c(TRUE, TRUE, FALSE, FALSE, TRUE, TRUE),
+        estimate = c(.282948697909507, .2596497654234689, .2704115512526602,
+                     .2850948048585022, .2703931183785679, .28476394511718484),
+        se = c(.0165150186058971, .016206822172967386, .016772384907760802,
+               .016871074553021198, .016771944465327843, .01684741059880183),
+        ice = c(.283170820624823, .2604858194566298, .2715225167322129,
+                .28497862786528977, .2714253421481474, .284662875273469),
+        ipw = c(.282975855447292, .2593272643831233, .26932434652272763,
+                .28529536955788065, .2693019050719549, .28495738884128674)
+    )
+    for (j in seq_len(nrow(scenarios))) {
+        s <- scenarios[j, ]
+        set.seed(34)
+        d <- simulate_continuous_time_data(1000, uncensored = s$uncensored,
+                                           no_competing_events = !s$competing)
+        x <- continuous_analysis(d, 720, marginal_censoring = s$marginal, regimes = "Always_A")
+        x <- run_rtmle(x, learner = "learn_oipcw", propensity_learner = "learn_glm",
+                       estimator = "one-step", targets = "risk")
+        e <- x$estimate$Main_analysis[Regime == "Always_A"]
+        expect_equal(e$Estimate, s$estimate, tolerance = 1e-7, info = paste("scenario", j))
+        expect_equal(e$Standard_error, s$se, tolerance = 1e-7, info = paste("scenario", j))
+        expect_equal(e$ICE_IPCW, s$ice, tolerance = 1e-7, info = paste("scenario", j))
+        expect_equal(e$IPW, s$ipw, tolerance = 1e-7, info = paste("scenario", j))
+    }
+})
+
+test_that("multiple event-time horizons agree with separate analyses", {
+    set.seed(34)
+    d <- simulate_continuous_time_data(500, uncensored = FALSE)
+    joint <- run_rtmle(continuous_analysis(d, c(100, 720), regimes = "Always_A"), learner = "learn_oipcw",
+                       propensity_learner = "glm", estimator = "one-step")
+    for (th in c(100, 720)) {
+        separate <- run_rtmle(continuous_analysis(d, th, regimes = "Always_A"), learner = "learn_oipcw",
+                               propensity_learner = "glm", estimator = "one-step")
+        expect_equal(joint$estimate$Main_analysis[Time_horizon == th, Estimate],
+                     separate$estimate$Main_analysis$Estimate, tolerance = 1e-7)
+    }
+})
+
+test_that("optional regression strategies reproduce valid source scenarios", {
+    set.seed(34)
+    d <- simulate_continuous_time_data(1000, uncensored = FALSE, no_competing_events = TRUE)
+    x <- continuous_analysis(d, 720, marginal_censoring = FALSE, regimes = "Always_A")
+    all_history <- run_rtmle(x, learner = "learn_oipcw", propensity_learner = "glm",
+                             estimator = "one-step", intervene_all_sequential_regression = TRUE)
+    expect_equal(all_history$estimate$Main_analysis$Estimate, .2704117241871661, tolerance = 1e-7)
+    stratified <- run_rtmle(x, learner = "learn_oipcw", propensity_learner = "glm",
+                            estimator = "one-step", stratify_sequential_regression = TRUE)
+    expect_equal(stratified$estimate$Main_analysis$Estimate, .27017318205896285, tolerance = 1e-7)
+    expect_equal(stratified$estimate$Main_analysis$Standard_error, .016761529026793245, tolerance = 1e-7)
+    set.seed(34)
+    d <- simulate_continuous_time_data(1000, uncensored = FALSE)
+    excluded <- run_rtmle(continuous_analysis(d, 720, regimes = "Always_A"),
+                          learner = "learn_oipcw", propensity_learner = "glm",
+                          estimator = "one-step", exclude_latest_covariate = "time")
+    expect_equal(excluded$estimate$Main_analysis$Estimate, .28445004193932516, tolerance = 1e-7)
+    expect_equal(excluded$estimate$Main_analysis$IPW, .28368580294914786, tolerance = 1e-7)
+})
+
+test_that("ordinary learners accept censored pseudo-outcomes and TMLE scores are solved", {
+    set.seed(34)
+    d <- simulate_continuous_time_data(1000, uncensored = FALSE)
+    x <- continuous_analysis(d, 720, regimes = "Always_A")
+    fit <- run_rtmle(x, learner = "glm", estimator = "one-step")
+    expect_true(all(is.finite(fit$estimate$Main_analysis$Estimate)))
+    fit <- run_rtmle(x, learner = "learn_oipcw", propensity_learner = "glm", estimator = "tmle")
+    for (regime in x$targets$risk$regimes) {
+        expect_equal(mean(fit$IC$risk[[regime]]$time_horizon_720), 0, tolerance = 1e-8)
+    }
+    expect_true(all(fit$estimate$Main_analysis$Estimate >= 0 & fit$estimate$Main_analysis$Estimate <= 1))
+})

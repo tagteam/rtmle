@@ -36,12 +36,12 @@
 ##'   variables defining subgroups in which separate adherence propensities are
 ##'   fitted. This argument is only for dynamic treatment rules. If it is
 ##'   \code{NULL}, one pooled binary adherence model is fitted. Unsuffixed
-##'   time-varying names, such as \code{"bleeding"}, refer to the latest value
-##'   known before the decision: \code{bleeding_{k-1}} at node \code{k}; at
-##'   node 0, \code{bleeding_0} is treated as pre-first-decision information.
-##'   Unsuffixed time-varying names are lagged automatically: at node (k),
-##'   "bleeding" resolves to \code{bleeding_{k-1}}.
-##'   The argument only defines fitting strata and never adds predictors to the adherence-model
+##'   time-varying names refer to the latest pre-decision value. At a discrete
+##'   node \code{k}, \code{bleeding} resolves to \code{bleeding_{k-1}}
+##'   (or \code{bleeding_0} at baseline). At a continuous treatment event,
+##'   it resolves to \code{bleeding_k}, including measurements made at the
+##'   treatment event. The current treatment assignment is not pre-decision.
+##'   The argument defines fitting strata and does not add model predictors.
 ##'   Multiple variables define strata by their combinations.
 ##' @param verbose Logical. If \code{FALSE}, suppress all messages.
 ##' @param ... Additional arguments are not used. The former
@@ -62,6 +62,20 @@
 ##'   be supplied through \code{intervene_function_args}, avoiding a wrapper
 ##'   when a dynamic rule such as \code{\link{treat_unless}} has fixed
 ##'   parameters.
+##'
+##'   In continuous time, supply a single binary nominal value for treatment
+##'   \code{A} and optionally an intervention function. The function is
+##'   evaluated at baseline and at observed treatment opportunities; its
+##'   \code{time_node} is the event index, not calendar time. It receives the
+##'   history through that event and an intervention table containing the
+##'   nominal value at each index up to that event. It must return a binary
+##'   \code{A_<time_node>} for each subject. Covariate-only events contribute
+##'   to the history but do not themselves assign treatment. The optional
+##'   \code{adherence_model_strata} specifies separate adherence models using
+##'   variables known before each treatment decision. A rule may retain the observed treatment
+##'   for some histories, with adherence probability one for those histories.
+##'   Rules that flip the current observed treatment are not supported, as
+##'   they require different weighting.
 ##' @seealso \code{\link{rtmle_init}}, \code{\link{prepare_rtmle_data}},
 ##'   \code{\link{intervention_match}}, \code{\link{target}},
 ##'   \code{\link{model_formula}}, \code{\link{run_rtmle}}
@@ -107,6 +121,37 @@ protocol <- function(x,
                      adherence_model_strata = NULL,
                      intervene_function_args = NULL,
                      ...) {
+    if (isTRUE(x$continuous_time)) {
+        if (length(list(...))) stop("Unused arguments for continuous-time regime.")
+        validate_adherence_model_strata(adherence_model_strata)
+        if (length(adherence_model_strata) && is.null(intervene_function))
+            stop("`adherence_model_strata` is only for dynamic treatment rules; supply `intervene_function`.")
+        if (!identical(multiple_treatment_factorization, "joint"))
+            stop("Continuous time supports treatment A only.")
+        if (!is.null(intervene_function) &&
+            !(is.function(intervene_function) ||
+              (is.character(intervene_function) && length(intervene_function) == 1L &&
+               !is.na(intervene_function) && nzchar(intervene_function))))
+            stop("intervene_function must be a function or the name of a function.")
+        if (!is.null(intervene_function_args) && !is.list(intervene_function_args))
+            stop("intervene_function_args must be a named list.")
+        if (length(intervene_function_args)) {
+            nms <- names(intervene_function_args)
+            if (is.null(intervene_function) || is.null(nms) || anyNA(nms) ||
+                any(!nzchar(nms)) || anyDuplicated(nms) ||
+                any(nms %in% c("data", "intervention_table", "time_node", "time", "current_time", "current.time")))
+                stop("intervene_function_args requires an intervention function and unique, non-reserved argument names.")
+        }
+        x <- continuous_regime(x, name, intervention,
+                               if (missing(treatment_variables)) "A" else treatment_variables)
+        if (!is.null(intervene_function)) {
+            x$regimes[[name]]$dynamic_intervention <- TRUE
+            x$regimes[[name]]$intervene_function <- intervene_function
+            x$regimes[[name]]$intervene_function_args <- intervene_function_args
+            x$regimes[[name]]$adherence_model_strata <- adherence_model_strata
+        }
+        return(x)
+    }
     dots <- list(...)
     if (length(dots) > 0L) {
         dot_names <- names(dots)

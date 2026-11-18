@@ -1,0 +1,143 @@
+#+TITLE: Continuous-time analyses with rtmle
+#+OPTIONS: toc:nil
+# The companion .html.rsp is generated with pandoc -f org -t html5 --standalone;
+# retain its leading R.rsp vignette metadata when regenerating it.
+
+* Continuous-time ICE-IPCW
+
+Event-time ICE-IPCW estimation from =contICEIPCW= is available through the
+usual =rtmle= analysis pipeline. Treatment =A= is binary. Static interventions
+set its value at baseline and at observed treatment opportunities. Only the
+conservative influence function is implemented.
+
+* Data
+
+Baseline data use =add_baseline_data=. The other input tables follow
+=add_long_data=. When supplying separate tables, use =treatment_events= to
+name the tables in =timevar_data= whose rows mark treatment visits. Include
+visits where treatment stays unchanged. With a single =event_data= table,
+=treatment_events= names the corresponding event labels instead. All these
+visits concern the same treatment =A=.
+
+The =A= table must record an observed 0/1 value at every treatment visit;
+treatment exposure intervals are not supported. Covariate measurement events
+can be specified using table names, an identifier/time table, or event labels
+in =event_data=. Covariate exposure intervals provide binary states but do not
+themselves define measurement events.
+
+In a single event table, covariate values supplied at treatment events update
+the covariates at those times, even if the treatment label is not listed in
+=covariate_events=. They are treated as available before the treatment decision.
+Covariate values supplied on terminal-event rows are also retained. Treatment
+and covariate events at the same time are combined into a treatment event. A
+terminal event may not share its time with another event for the same person.
+A covariate value recorded at a terminal time can still be supplied without
+declaring a separate covariate event at that time.
+
+A covariate table containing only identifier and time records occurrences of
+an event, and the resulting covariate is its cumulative count. Without a
+supplied baseline count, events at time zero establish the initial count. A
+supplied baseline count must be at least the number observed at time zero. For an
+ever-event indicator instead, give event rows ~value = 1~ and supply the
+indicator's baseline value for each subject; point-valued histories retain their
+supplied values.
+
+An initial value for treatment =A= can be supplied as baseline =A= or =A_0=;
+it takes precedence over a conflicting time-zero treatment record. Without a
+baseline value, the latest treatment observation at or before zero is used;
+when none exists, the initial treatment is zero. Other initial covariates use
+baseline values or observations at time zero; conflicting values are rejected.
+All event times must be numeric durations since baseline.
+
+* Example analysis
+
+The following example supplies all event types in one table. The help page
+~?add_continuous_data~ also illustrates the equivalent separate-table input.
+
+#+BEGIN_SRC R
+library(rtmle)
+set.seed(34)
+d <- simulate_continuous_time_data(1000, static_intervention_baseline = NULL)
+x <- rtmle_init(c(0, 100, 720), name_id = "id", name_time = "time",
+                name_outcome = "Y", name_competing = "D",
+                name_censoring = "C", continuous_time = TRUE)
+events <- d$timevarying_data
+x <- add_baseline_data(x, d$baseline_data)
+x <- add_continuous_data(x, event_data = events,
+                         time_covariates = "L",
+                         treatment_events = "A", covariate_events = "L")
+x <- prepare_rtmle_data(x)
+x <- regime(x, "Always_A", intervention = 1, treatment_variables = "A")
+x <- regime(x, "Never_A", intervention = 0, treatment_variables = "A")
+x <- target(x, "risk", regimes = c("Always_A", "Never_A"))
+x <- model_formula(x)
+x <- run_rtmle(x, learner = "learn_glm", estimator = "one-step",
+               propensity_learner = "learn_glm",
+               censoring_learner = list(name = "cox", fun = "learn_coxph"))
+summary(x)
+plot(x)
+#+END_SRC
+
+
+* Choosing learners and estimators
+
+** Censoring with covariates updated at recorded event times
+
+Set =time_varying = TRUE= in the censoring learner to fit one hazard model
+across follow-up. Each subject contributes start-stop intervals. On the interval
+from their =(k-1)=th event to their =k=th event, predictors take the values
+recorded at the earlier event. At the first interval they take baseline values.
+Values on outcome, competing-event or censoring rows are not predictors.
+
+For Cox, the censoring survival contribution over an interval =(a,b)= is
+=exp(-exp(beta' Z(a)) * (H0(b-) - H0(a)))=. The inverse enters the IPCW weight.
+For Aalen it is =exp(-X(a)' (B(b-) - B(a)))=, where =B= contains the cumulative
+additive coefficients, including the intercept. Cox-Aalen multiplies that
+additive cumulative-hazard contribution by =exp(beta' Z(a))=.
+If event-history pooling combines recorded intervals, their hazard contributions
+are summed; covariates still stay fixed within each recorded interval.
+
+The following specifications can be supplied to =run_rtmle=:
+
+#+BEGIN_SRC R
+cox_censoring <- list(
+    name = "cox", fun = "learn_coxph", time_varying = TRUE,
+    censoring_formula = ~ A + L + age)
+aalen_censoring <- list(
+    name = "aalen", fun = "learn_aalen", time_varying = TRUE,
+    censoring_formula = ~ A + L + age)
+cox_aalen_censoring <- list(
+    name = "cox_aalen", fun = "learn_cox_aalen", time_varying = TRUE,
+    censoring_formula = ~ L + prop(A) + prop(age))
+
+fit_cox <- run_rtmle(x, estimator = "one-step", learner = "learn_oipcw",
+                     propensity_learner = "learn_glm",
+                     censoring_learner = cox_censoring)
+# Substitute aalen_censoring or cox_aalen_censoring for the other models.
+#+END_SRC
+
+In the Cox-Aalen formula, =prop()= marks proportional effects; unwrapped terms
+have additive effects with coefficients that can change with time. In an Aalen
+formula, =const()= instead requests a constant additive coefficient. Cox formulas
+may include =strata()=. If =censoring_formula= is omitted, the model uses current
+treatment/covariates and fixed baseline predictors; initial =*_0= covariates can
+be included explicitly. The usual exclusion and inclusion rules apply, but a
+shared model requires the same predictor selection at every event index.
+
+Aalen and Cox-Aalen require the optional =timereg= package. They currently reject
+tied censoring times across subjects to avoid =timereg='s random tie breaking.
+They also reject random effects and additive predictors that cannot be estimated
+from a censoring risk set; simplify the formula if this occurs.
+Negative fitted additive hazard jumps are set to zero with a warning; for
+=const()= terms, negative constant hazard components are likewise set to zero.
+Use the Cox learner when tied censoring times are present. These models use
+absolute follow-up time; =marginal_censoring = FALSE= without =time_varying = TRUE=
+retains the existing separately fitted models for elapsed times between events.
+
+Use ~estimator = "tmle"~ for sequential targeting, or ~learner = "learn_oipcw"~
+for the unscaled logistic estimating-equation outcome learner. Learners also
+accept the named lists, custom functions, and outcome/treatment ensembles
+used in discrete-time analyses. Ordinary outcome learners use scaled IPCW
+pseudo-outcomes, so censored data can be analysed with =learn_glm=,
+=learn_glmnet=, or =learn_ranger=. See ~?run_rtmle~ for the continuous-time
+options and the locations of model summaries and influence curves.

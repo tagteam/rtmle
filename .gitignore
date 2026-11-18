@@ -30,3 +30,4 @@ revdep
 *.vrb
 *.nav
 *.snmR/cheap_bootstrap.R
+*.Rproj

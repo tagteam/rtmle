@@ -27,7 +27,8 @@
 ##' @param x An object initialized with \code{\link{rtmle_init}} containing
 ##'   wide-format data, usually added with \code{\link{add_wide_data}} or
 ##'   created from long-format data with \code{\link{discretize_data}}.
-##' @param ... Not used.
+##' @param ... Continuous-time preparation options: \code{min_events}
+##'   (default 40), and \code{last_non_terminal_event} control event-history pooling. Not used for discrete-time preparation.
 ##' @return The object augmented with a new element called
 ##'   \code{prepared_data}.
 ##' @seealso \code{\link{rtmle_init}}, \code{\link{add_long_data}},
@@ -53,6 +54,7 @@
 ##' @export
 ##' @author Thomas A. Gerds <tag@@biostat.ku.dk>
 prepare_rtmle_data <- function(x,...){
+    if (isTRUE(x$continuous_time)) return(continuous_prepare_rtmle(x, ...))
     
     # check object x
     K = length(x$time_grid)

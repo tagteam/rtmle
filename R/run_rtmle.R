@@ -14,7 +14,7 @@
 #----------------------------------------------------------------------
 ##
 ### Code:
-#' Sequential regression with TMLE update step for discretized follow-up data
+#' Sequential regression for discrete or continuous follow-up data
 #'
 #' Runs the analysis defined by \code{\link{rtmle_init}},
 #' \code{\link{regime}}, \code{\link{target}}, and
@@ -42,10 +42,12 @@
 #'       }
 #'   }
 #' @param estimator Character specifying the estimator: either
-#'     \code{"tmle"} or \code{"g-formula"}.
+#'     \code{"tmle"} or \code{"g-formula"}. Continuous-time analyses also
+#'     support \code{"one-step"} for debiased ICE-IPCW.
 #' @param time_horizon The time horizon at which to calculate
 #'     risks. If this is a vector, the analysis is performed for
-#'     each element.
+#'     each element. These are indices into the registered time grid, starting
+#'     at 1; by default the last node is used.
 #' @param refit Logical. If \code{TRUE}, ignore any propensity score
 #'     and censoring models learned in previous calls to this
 #'     function. This may be useful to save computation time. The default
@@ -83,10 +85,83 @@
 #'   previous run on the same object, learner-dependent estimates, fitted
 #'   objects, diagnostics, and derived intervention probabilities are cleared
 #'   before the new analysis is run.
+#'
+#' For continuous-time analyses, initialize with
+#' \code{rtmle_init(continuous_time = TRUE)} and supply event histories with
+#' \code{add_continuous_data}, using the separate tables accepted by
+#' \code{add_long_data}. Add baseline predictors with \code{add_baseline_data}.
+#' Continue with \code{prepare_rtmle_data},
+#' \code{regime}, \code{target}, \code{model_formula}, and this function.
+#' Entries in \code{time_grid} are expressed in the original time units;
+#' \code{time_horizon} selects their node indices as in discrete time.
+#' Static and dynamic interventions on binary treatment \code{A} are
+#' supported at baseline and at each treatment opportunity. Only
+#' \code{conservative = TRUE} is implemented: the censoring martingale
+#' correction is omitted.
+#'
+#' Continuous-time options passed through \code{...} are:
+#' \itemize{
+#'   \item \code{propensity_learner}: a learner specification for treatment,
+#'     defaulting to \code{learner}.
+#'   \item \code{censoring_learner}: a single survival learner specification,
+#'     defaulting to \code{"learn_coxph"}. Include \code{marginal_censoring}
+#'     in the learner list to choose a baseline-only model (\code{TRUE}, the
+#'     default) or event-history models (\code{FALSE}). For a marginal model,
+#'     \code{marginal_censoring_formula} in the same list optionally gives a
+#'     one-sided formula; Cox models may use \code{strata()}. Both model types
+#'     support \code{"learn_coxph"}, \code{"learn_weibull"}, and custom learners.
+#'     Marginal custom learners must accept \code{reuse_fit}, \code{time_variable},
+#'     and \code{time_ref}, returning interval survival in \code{predicted_values}.
+#'     Alternatively, \code{time_varying = TRUE} in the learner list fits one
+#'     hazard model on absolute follow-up time, with covariates held fixed
+#'     between recorded events. Use \code{learn_coxph}, \code{learn_aalen}, or
+#'     \code{learn_cox_aalen}, and optionally a one-sided
+#'     \code{censoring_formula}, for example \code{~ A + L + age} for Cox/Aalen
+#'     or \code{~ L + prop(A) + prop(age)} for Cox-Aalen. The default uses current
+#'     treatment/covariates and fixed baseline predictors. Initial \code{*_0}
+#'     values can be requested explicitly. This mode cannot be combined with
+#'     \code{marginal_censoring = TRUE}. Terminal-row covariate values are ignored
+#'     by these models; pooled intervals integrate over the recorded updates.
+#'     The workflow constructs its interval data from \code{add_continuous_data}.
+#'     The Aalen learners require the optional \code{timereg} package, reject
+#'     tied censoring times, and truncate negative fitted hazard increments
+#'     at zero with a warning. See the continuous-time vignette for examples.
+#'   \item \code{lag}: an optional positive number of previous event indices
+#'     included in event-history models. Their baseline covariates are always
+#'     included. Time-varying hazard models use the current and fixed baseline
+#'     predictors selected by their formula.
+#'   \item \code{gbound}: an optional lower bound in \eqn{(0,1]} for each
+#'     treatment probability under the regime.
+#'   \item \code{scale_pseudo_outcome}: scales IPCW outcomes to \eqn{[0,1]}
+#'     before fitting ordinary probability learners, then restores the original
+#'     scale. The default is \code{TRUE}, except for \code{learn_oipcw}, which
+#'     fits the unscaled logistic estimating equation directly.
+#'   \item \code{stratify_sequential_regression}: fit only adherent histories
+#'     (default \code{FALSE}).
+#'   \item \code{intervene_all_sequential_regression}: set all preceding
+#'     treatment columns to the intervention value when predicting (default
+#'     \code{FALSE}; otherwise intervene only at the current opportunity).
+#'     This option is currently unavailable for dynamic continuous-time regimes.
+#'   \item \code{intervention_hook}: an optional function \code{function(data, k)}
+#'     updating treatment-dependent predictors after intervention. It must
+#'     preserve subject identifiers and row order.
+#'   \item \code{exclude_latest_covariate}: covariate names whose current values
+#'     should be omitted from treatment models.
+#' }
+#' Changing continuous-time analysis settings clears previous estimates so
+#' stored influence curves and estimates refer to the same analysis. Nuisance
+#' fits can be reused with \code{refit = FALSE}. Continuous-time subset analyses
+#' and censoring ensembles are not supported. The continuous \code{"g-formula"}
+#' option returns the ICE-IPCW plug-in estimate without influence-based inference.
+#' \code{summary} and risk plots use the usual rtmle methods. Outcome model
+#' summaries are stored in \code{x$sequential_outcome_regression}; treatment and
+#' censoring summaries are stored in \code{x$continuous_nuisance}.
 #' @seealso \code{\link{rtmle_init}}, \code{\link{prepare_rtmle_data}},
 #'   \code{\link{regime}}, \code{\link{target}}, \code{\link{model_formula}},
 #'   \code{\link{learn_glm}}, \code{\link{learn_glmnet}},
 #'   \code{\link{superlearn}}, \code{\link{summary.rtmle}}
+#' @seealso \code{\link{add_continuous_data}}, \code{\link{learn_oipcw}},
+#'   \code{\link{learn_coxph}}
 #' @author Thomas A Gerds \email{tag@@biostat.ku.dk}
 #' @examples
 #' tau <- 3
@@ -173,6 +248,16 @@ run_rtmle <- function(x,
                       progressbar = 0,
                       verbose = FALSE,
                       ...){
+    if (isTRUE(x$continuous_time)) {
+        return(run_rtmle_continuous(x,
+                                    targets = if (missing(targets)) NULL else targets,
+                                    learner = learner, estimator = estimator,
+                                    time_horizon = if (missing(time_horizon)) NULL else time_horizon,
+                                    refit = refit, seed = seed, subsets = subsets,
+                                    keep_influence = keep_influence,
+                                    save_fitted_objects = save_fitted_objects,
+                                    progressbar = progressbar, verbose = verbose, ...))
+    }
     if (length(x$models) == 0) {
         stop(paste0("\nTODO: Use the function 'model_formula' to initialize the formula for the nuisance parameter models."))
     }

@@ -17,7 +17,8 @@ rtmle_init(
   weight_truncation = c(0, 1),
   prediction_range = c(0.0001, 0.9999),
   time_grid_labels = time_grid,
-  time_unit = NULL
+  time_unit = NULL,
+  continuous_time = FALSE
 )
 }
 \arguments{
@@ -74,6 +75,9 @@ x-axes. Defaults to \code{time_grid}.}
 
 \item{time_unit}{Character string used as the x-axis label in plots. If
 \code{NULL} (the default), plots use \code{"Time"}.}
+
+\item{continuous_time}{Logical. If \code{TRUE}, prepare the object for continuous-time analysis.
+Add continuous-time data with \code{\link{add_continuous_data}}.}
 }
 \value{
 A list with class \code{"rtmle"} and the following elements:

@@ -38,6 +38,24 @@
 ##' request separate fits in pre-decision subgroups. Stratification variables
 ##' are not added as current-interval predictors.
 ##'
+##' In continuous time, formula rules refer to event indices rather than
+##' discretized time intervals. For example, \code{A_0} is baseline treatment,
+##' \code{A_1} treatment at the first follow-up event when it is a treatment
+##' event, and \code{Y_1} and
+##' \code{C_1} the outcome and censoring models for the first event interval
+##' when the initialized names are \code{Y} and \code{C}. Use the names
+##' supplied to \code{rtmle_init} for outcome and censoring rules. At a
+##' treatment event, the current covariate measurement is included as a
+##' pre-decision predictor when available. For a variable in \code{Markov},
+##' only its most recent available value is included by default; a later
+##' inclusion rule may add an earlier value explicitly.
+##' A marginal censoring learner fits one model shared across event intervals,
+##' so its censoring rules (such as \code{C_1}, \code{C_2}, and so on) must
+##' select the same predictors at every event index. Use a conditional
+##' censoring learner for different node-specific censoring formulas. The same
+##' rules also apply to terms in a custom \code{marginal_censoring_formula},
+##' including \code{strata()} terms.
+##'
 ##' @title Model formulas for nuisance parameters
 ##' @param x An object of class \code{"rtmle"} with prepared data and at least
 ##'   one regime defined by \code{\link{regime}}.
@@ -56,6 +74,8 @@
 ##' @param inclusion_rules Additional inclusion rules given as a
 ##'   named list. Names are variables occurring on the left-hand side of a
 ##'   formula, and elements are variables to include on the right-hand side.
+##'   In continuous time, matching is restricted to variables available at
+##'   the modeled event; future values cannot be included.
 ##' @param verbose Logical. If \code{FALSE} suppress all messages. \code{TRUE} is the default.
 ##' @return The modified \code{rtmle} object.
 ##' @seealso \code{\link{prepare_rtmle_data}}, \code{\link{regime}},
@@ -109,6 +129,50 @@ model_formula <- function(x,
                           exclude_variables = NULL,
                           exclusion_rules = NULL,
                           inclusion_rules = NULL){
+    if (isTRUE(x$continuous_time)) {
+        if (is.null(x$continuous_prepared)) stop("Run prepare_rtmle_data first.")
+        if (!length(x$regimes)) stop("Define a regime first.")
+        valid_names <- function(value, name) {
+            if (!is.null(value) && (!is.character(value) || anyNA(value) || any(!nzchar(value))))
+                stop(name, " must be a character vector of non-empty names.")
+        }
+        valid_rules <- function(rules, name) {
+            if (is.null(rules)) return(invisible(NULL))
+            if (!is.list(rules) || (length(rules) &&
+                (is.null(names(rules)) || anyNA(names(rules)) || any(!nzchar(names(rules))))))
+                stop(name, " must be a named list of character vectors.")
+            for (rule in rules) {
+                if (!is.character(rule) || !length(rule) || anyNA(rule) || any(!nzchar(rule)))
+                    stop(name, " must contain non-empty character vectors.")
+            }
+            for (pattern in c(names(rules), unlist(rules, use.names = FALSE))) {
+                valid <- tryCatch({
+                    suppressWarnings(grepl(pattern, ""))
+                    TRUE
+                }, error = function(e) FALSE)
+                if (!valid) stop("Invalid regular expression in ", name, ": ", pattern)
+            }
+            invisible(NULL)
+        }
+        valid_names(Markov, "Markov")
+        valid_names(exclude_variables, "exclude_variables")
+        valid_rules(exclusion_rules, "exclusion_rules")
+        valid_rules(inclusion_rules, "inclusion_rules")
+        unknown_markov <- setdiff(Markov, x$continuous_prepared$time_covariates)
+        if (length(unknown_markov))
+            stop("Markov variables must be time-varying covariates: ", paste(unknown_markov, collapse = ", "))
+        unknown <- setdiff(exclude_variables, c(x$continuous_prepared$baseline_covariates,
+                                               x$continuous_prepared$time_covariates,
+                                               names(x$continuous_prepared$wide_data)))
+        if (length(unknown)) stop("Unknown excluded variables: ", paste(unknown, collapse = ", "))
+        x$models <- list(continuous = list(
+            exclude_variables = exclude_variables,
+            Markov = Markov,
+            exclusion_rules = exclusion_rules,
+            inclusion_rules = inclusion_rules,
+            node_names = list(outcome = x$names$outcome, censoring = x$names$censoring)))
+        return(x)
+    }
     time_node <- NULL
     default_propensity_factorization <- "joint"
     exclude_variables = c("start_followup_date",exclude_variables)

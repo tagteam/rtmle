@@ -32,6 +32,14 @@
 #' @method print rtmle
 #' @export
 print.rtmle <- function(x, ...) {
+    if (isTRUE(x$continuous_time)) {
+        cat("\nContinuous-time ICE-IPCW analysis\n")
+        cat("Subjects:", NROW(x$prepared_data), "\n")
+        cat("Time horizons:", paste(x$time_grid_scale[-1], collapse = ", "), "\n")
+        cat("Regimes:", paste(names(x$regimes), collapse = ", "), "\n")
+        if (length(x$estimate)) print(summary(x))
+        return(invisible(x))
+    }
     format_index <- function(x, max_show = 5) {
         n <- length(x)
         if (n <= max_show) {

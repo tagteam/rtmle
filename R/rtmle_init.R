@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 19 2024 (07:23) 
 ## Version: 
-## Last-Updated: sep 18 2026 (08:24) 
-##           By: Thomas Alexander Gerds
-##     Update #: 58
+## Last-Updated: Nov  5 2026 (11:59) 
+##           By: Johan Sebastian Ohlendorff
+##     Update #: 60
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -62,6 +62,8 @@
 ##'   x-axes. Defaults to \code{time_grid}.
 ##' @param time_unit Character string used as the x-axis label in plots. If
 ##'   \code{NULL} (the default), plots use \code{"Time"}.
+##' @param continuous_time Logical. If \code{TRUE}, prepare the object for continuous-time analysis.
+##'   Add continuous-time data with \code{\link{add_continuous_data}}. 
 ##' @return A list with class \code{"rtmle"} and the following elements:
 ##' \itemize{
 ##' \item targets
@@ -99,7 +101,13 @@ rtmle_init <- function(time_grid,
                        weight_truncation = c(0,1),
                        prediction_range = c(0.0001,0.9999),
                        time_grid_labels = time_grid,
-                       time_unit = NULL){
+                       time_unit = NULL,
+                       continuous_time = FALSE){
+    if (!is.logical(continuous_time) || length(continuous_time) != 1L || is.na(continuous_time))
+        stop("continuous_time must be TRUE or FALSE.")
+    if (continuous_time && (!is.numeric(time_grid) || any(!is.finite(time_grid)) ||
+                            any(diff(time_grid) <= 0)))
+        stop("Continuous time_grid must contain finite, strictly increasing times starting at zero.")
     if(!(time_grid[1] == 0 & length(time_grid) > 1))
         stop("time_grid must be a vector of length > 1 starting with 0")
     if (length(time_grid_labels) != length(time_grid)){
@@ -123,7 +131,8 @@ rtmle_init <- function(time_grid,
     }else{
         uncensored_label <- NULL
     }
-    x = list(targets = NULL,
+    x = list(continuous_time = continuous_time,
+             targets = NULL,
              estimate = NULL,
              data = NULL,
              names = list("id" = name_id,

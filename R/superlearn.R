@@ -57,13 +57,13 @@
 ##'   \code{intervention_probabilities()} and \code{sequential_regression()}.
 ##' @param save_fitted_objects Logical. If \code{TRUE}, store the 
 #'   fitted object as element \code{fit}
-##' @param reuse_fit Optional fitted object returned by a previous call. If
-##'   supplied, skip fitting and only predict in \code{intervened_data}.
+##' @param reuse_fit Reserved for compatibility with individual learners.
+##'   Super learner ensembles are currently refitted.
 ##' @param ... Not used.
 ##' @return A list whose first element, \code{predicted_values}, is the
-##'   prediction vector from the super learner. Element \code{fit} contains the
-##'   ensemble weights, and element \code{object} contains the fitted final
-##'   learners when available.
+##'   prediction vector from the super learner. Element \code{fit_summary}
+##'   contains the ensemble weights. When requested, element \code{fit}
+##'   contains the fitted models for learners with positive weight.
 ##' @seealso \code{\link{run_rtmle}}, \code{\link{parse_learners}},
 ##'   \code{\link{learn_glm}}, \code{\link{learn_glmnet}},
 ##'   \code{\link{learn_ranger}}, \code{\link{learn_xgboost}}
@@ -285,6 +285,7 @@ superlearn <- function(folds,
             ## add winner's arguments but do not include duplicate arguments
             predicted_values_args <- c(learners[[this_learner]]$args,
                                        learner_args[!names(learner_args)%in%names(learners[[this_learner]]$args)])
+            predicted_values_args$save_fitted_objects <- save_fitted_objects
             do.call(what = learners[[this_learner]]$fun,predicted_values_args)
         })
         if (length(predicted_value_ensemble) == 1){
@@ -293,7 +294,7 @@ superlearn <- function(folds,
             predicted_values <- do.call(cbind,lapply(predicted_value_ensemble,`[[`,"predicted_values"))%*%ensemble_weights[ensemble_weights>0]
         }
         if (isTRUE(save_fitted_objects)){
-            fitted_objects <- lapply(predicted_value_ensemble,`[[`,"reuse_fit")
+            fitted_objects <- lapply(predicted_value_ensemble,`[[`,"fit")
             names(fitted_objects) <- names(ensemble_weights)[ensemble_weights>0]
         }
     }

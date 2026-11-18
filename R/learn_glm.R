@@ -128,6 +128,11 @@ learn_glm <- function(character_formula,
             }
         }
         fit$terms <- tf
+        # Both fitting backends need the training factor levels when building
+        # prediction matrices. Unused levels in newdata otherwise add columns
+        # with no fitted coefficient, producing missing predictions.
+        fit$xlevels <- stats::.getXlevels(tf, model_frame)
+        fit$contrasts <- attr(X, "contrasts")
         fit_summary <- coef(summary(fit))
     }else{
         fit <- reuse_fit$fit

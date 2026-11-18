@@ -36,7 +36,9 @@ where the outcome is a censoring node (assuming \code{x$name$censoring="dropout"
 
 \item{inclusion_rules}{Additional inclusion rules given as a
 named list. Names are variables occurring on the left-hand side of a
-formula, and elements are variables to include on the right-hand side.}
+formula, and elements are variables to include on the right-hand side.
+In continuous time, matching is restricted to variables available at
+the modeled event; future values cannot be included.}
 }
 \value{
 The modified \code{rtmle} object.
@@ -65,6 +67,24 @@ treatment response to observed-versus-intervened adherence. The response is
 binary, and \code{adherence_model_strata} in \code{\link{regime}} can
 request separate fits in pre-decision subgroups. Stratification variables
 are not added as current-interval predictors.
+
+In continuous time, formula rules refer to event indices rather than
+discretized time intervals. For example, \code{A_0} is baseline treatment,
+\code{A_1} treatment at the first follow-up event when it is a treatment
+event, and \code{Y_1} and
+\code{C_1} the outcome and censoring models for the first event interval
+when the initialized names are \code{Y} and \code{C}. Use the names
+supplied to \code{rtmle_init} for outcome and censoring rules. At a
+treatment event, the current covariate measurement is included as a
+pre-decision predictor when available. For a variable in \code{Markov},
+only its most recent available value is included by default; a later
+inclusion rule may add an earlier value explicitly.
+A marginal censoring learner fits one model shared across event intervals,
+so its censoring rules (such as \code{C_1}, \code{C_2}, and so on) must
+select the same predictors at every event index. Use a conditional
+censoring learner for different node-specific censoring formulas. The same
+rules also apply to terms in a custom \code{marginal_censoring_formula},
+including \code{strata()} terms.
 }
 \examples{
 data(simulated_cohort)
