@@ -30,7 +30,9 @@ are displayed side by side.
 \details{
 For multiple treatment variables, colour identifies the joint treatment
 state (for example, \code{A=1, B=0}), preserving one horizontal trajectory
-per subject.
+per subject. In the continuous-time panel, observed point-format values are
+overlaid as points; exposure-interval starts and ends are marked as points.
+Legend entries are sorted, with states containing \code{Missing} last.
 }
 \examples{
 data(rtmle_object)
