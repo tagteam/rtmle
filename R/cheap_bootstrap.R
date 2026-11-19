@@ -69,6 +69,9 @@ cheap_bootstrap <- function(x,
             stop("None of the specified subsets in 'analyses' exist in the object.")
         }
     }
+    if (missing(M)){
+        M <- round(0.632 * NROW(x$prepared_data))
+    }
     analyses <- setdiff(analyses,"Cheap_bootstrap")
     Target_parameter <- Main_estimate <- Bootstrap_estimate <- Bootstrap_lower <- Bootstrap_upper <- Main <- cheap_lower <- cheap_upper <- cheap_variance <- Estimate <- Estimator <- tq <- Time_horizon <- Regime <- Target <- NULL
     for (v in analyses){
@@ -96,14 +99,16 @@ cheap_bootstrap <- function(x,
             x$estimate$Cheap_bootstrap[[v]] <- NULL
             B_offset <- 0
         }
+        x$estimate$CB <- data.table::copy(x$estimate$Cheap_bootstrap[[v]])
+        max_B <- B + B_offset
         if (missing(seeds)) {
-            seeds <- sample.int(1e+09, B+B_offset)
+            seeds <- sample.int(1e+09, max_B)
         }else{
             if (length(seeds) == 1){
                 set.seed(seeds)
-                seeds <- sample.int(1e+09, B+B_offset)
+                seeds <- sample.int(1e+09, max_B)
             }else{
-                stopifnot(length(seeds) == B)
+                stopifnot(length(seeds) == max_B)
             }
         }
         N <- NROW(x$prepared_data)
@@ -153,7 +158,7 @@ cheap_bootstrap <- function(x,
         cheap_scale <- sqrt(M / (N - M))
       }
       # t-distribution 
-      cb[,tq := stats::qt(1 - alpha / 2, df = B)]
+      cb[, tq := stats::qt(1 - alpha / 2, df = max_B)]
       cb[,cheap_variance := cumsum((Main_estimate-Bootstrap_estimate)^2)/seq_len(.N),by = c("Target","Regime","Time_horizon")]
       cb[,cheap_lower := Main_estimate - tq * cheap_scale * sqrt(cheap_variance)]
       cb[,cheap_upper := Main_estimate + tq * cheap_scale * sqrt(cheap_variance)]
@@ -168,7 +173,6 @@ cheap_bootstrap <- function(x,
                                                                Bootstrap_standard_error = sqrt(cheap_variance),
                                                                Bootstrap_lower = pmax(0,cheap_lower),
                                                                Bootstrap_upper = pmin(1,cheap_upper))]
-      max_B <- B+B_offset
       data.table::setattr(x$estimate$Cheap_bootstrap[[v]],
                           "cheap_scale",cheap_scale)
       data.table::setattr(x$estimate$Cheap_bootstrap[[v]],

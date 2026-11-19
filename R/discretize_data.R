@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 22 2024 (14:07)
 ## Version:
-## Last-Updated: okt 11 2026 (14:44) 
-##           By: Thomas Alexander Gerds
-##     Update #: 410
+## Last-Updated: Nov 18 2026 (15:49) 
+##           By: Johan Sebastian Ohlendorff
+##     Update #: 411
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -87,19 +87,19 @@
 #'       positive overlap counts as
 #'       exposure. When \code{baseline_exposure_start}
 #'       is set to \code{TRUE} then the wide format variable at time zero takes value 1
-#'       if a {start_date} equals time zero. This is interpreted as a baseline treatment assignment. The source data require a \code{start_date}
-#'       and a \code{end_date} column.}
+#'       if a \code{start_date} equals time zero. This is interpreted as a baseline treatment assignment.
+#'       The source data require a \code{start_date} and a \code{end_date} column.}
 #'     \item{\code{"has_exposure"}}{Same as \code{any_exposure} but with default threshold 0.5.}
 #'     \item{\code{"exposure_time"}}{Returns the total amount of time for
 #'       which the exposure overlaps each grid interval. When \code{baseline_exposure_start}
 #'       is set to \code{TRUE} then the wide format variable at time zero takes value 1
-#'       if a {start_date} equals time zero. This is interpreted as a baseline treatment assignment. 
+#'       if a \code{start_date} equals time zero. This is interpreted as a baseline treatment assignment.
 #'       The source data require a \code{start_date} and a \code{end_date}
 #'       column.}
 #'     \item{\code{"exposure_percent"}}{Returns the fraction of each grid
 #'       interval covered by the exposure. When \code{baseline_exposure_start}
 #'       is set to \code{TRUE} then the wide format variable at time zero takes value 1
-#'       if a {start_date} equals time zero. This is interpreted as a baseline treatment assignment.
+#'       if a \code{start_date} equals time zero. This is interpreted as a baseline treatment assignment.
 #'       The source data require a \code{start_date} and a \code{end_date}
 #'       column.}
 #'   }
@@ -514,6 +514,7 @@ discretize_data <- function(x,
         if (anyNA(start_dates)) {
             stop("The start_followup_date column cannot contain missing values.")
         }
+        x$long_data <- data.table::copy(x$long_data)
         subtract_start_followup <- function(current_data, date_columns, label) {
             if (is.null(current_data) || NROW(current_data) == 0L) {
                 return(invisible(NULL))

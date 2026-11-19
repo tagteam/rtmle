@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Sep 23 2024 (12:49) 
 ## Version: 
-## Last-Updated: maj  7 2026 (09:45) 
-##           By: Thomas Alexander Gerds
-##     Update #: 154
+## Last-Updated: Nov 18 2026 (16:13) 
+##           By: Johan Sebastian Ohlendorff
+##     Update #: 165
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -64,6 +64,7 @@ learn_glm <- function(character_formula,
     ## if (!("speed"%in%names(args))) speed <- FALSE
     if (length(reuse_fit) == 0){    
         speed <- TRUE
+        no_covariates <- FALSE
         # extract the data
         if (length(learn_variables)>0){
             allvars <- all.vars(stats::formula(character_formula))
@@ -76,6 +77,7 @@ learn_glm <- function(character_formula,
                 character_formula <- paste0(outcome_variable,"~",paste0(keepvars,collapse = "+"))
             } else{
                 # No covariates
+                no_covariates <- TRUE
                 Y <- data[[outcome_variable]]
                 mean_Y <- mean(Y,na.rm = TRUE)
                 predicted_values <- rep(mean_Y,NROW(intervened_data))
@@ -83,62 +85,66 @@ learn_glm <- function(character_formula,
                 # learner_output
                 fit = matrix(intercept,ncol = 1,nrow = 1,dimnames = list("(Intercept)","Estimate"))
                 class(fit) <- c("constant_probability","list")
-                predicted_values <- list(predicted_values = predicted_values,
-                                         fit = fit,
-                                         fit_summary = mean_Y)
+                fit_summary = mean_Y
             }
         }
-        model_frame <- stats::model.frame(stats::formula(character_formula),
-                                          data = data,
-                                          drop.unused.levels = TRUE,
-                                          na.action = na.pass)
-        Y <- as.numeric(model_frame[[1]])
-        Y_label <- names(model_frame)[[1]]
-        tf <- stats::terms(model_frame)
-        X <- stats::model.matrix(object = tf, data = model_frame)
-        if (speed &&
-            requireNamespace("speedglm", quietly = TRUE) &&
-            !inherits(try(
-                 fit <- speedglm::speedglm.wfit(y = Y[!is.na(Y)],
-                                                X = X[!is.na(Y),],
-                                                intercept = attributes(tf)$intercept,
-                                                offset = stats::model.offset(model_frame),
-                                                family = quasibinomial(),
-                                                maxit = maxit),
-                 silent = TRUE),
-                 "try-error")){
-            class(fit) <- c("speedglm", "speedlm")
-        }else{
-            if (!inherits(try(
-                     fit <- stats::glm.fit(y = Y[!is.na(Y)],
-                                           x = X[!is.na(Y),],
-                                           offset = stats::model.offset(model_frame),
-                                           intercept = attributes(tf)$intercept,
-                                           family = quasibinomial(),
-                                           control = glm.control(maxit = maxit))
-                    ,silent = TRUE),
+        if (!no_covariates){
+            model_frame <- stats::model.frame(stats::formula(character_formula),
+                                              data = data,
+                                              drop.unused.levels = TRUE,
+                                              na.action = na.pass)
+            Y <- as.numeric(model_frame[[1]])
+            Y_label <- names(model_frame)[[1]]
+            tf <- stats::terms(model_frame)
+            X <- stats::model.matrix(object = tf, data = model_frame)
+            if (speed &&
+                requireNamespace("speedglm", quietly = TRUE) &&
+                !inherits(try(
+                     fit <- speedglm::speedglm.wfit(y = Y[!is.na(Y)],
+                                                    X = X[!is.na(Y),],
+                                                    intercept = attributes(tf)$intercept,
+                                                    offset = stats::model.offset(model_frame),
+                                                    family = quasibinomial(),
+                                                    maxit = maxit),
+                     silent = TRUE),
                      "try-error")){
-                class(fit) <- c(class(fit),c("glm","lm"))
+                class(fit) <- c("speedglm", "speedlm")
             }else{
-                stop(paste0("\nCould not fit model with glm:\n",
-                            "Outcome: ",
-                            names(model_frame)[[1]],
-                            "\nRight hand side: ",
-                            paste0(colnames(X),collapse = "+ ")))
+                if (!inherits(try(
+                         fit <- stats::glm.fit(y = Y[!is.na(Y)],
+                                               x = X[!is.na(Y),],
+                                               offset = stats::model.offset(model_frame),
+                                               intercept = attributes(tf)$intercept,
+                                               family = quasibinomial(),
+                                               control = glm.control(maxit = maxit))
+                        ,silent = TRUE),
+                         "try-error")){
+                    class(fit) <- c(class(fit),c("glm","lm"))
+                }else{
+                    stop(paste0("\nCould not fit model with glm:\n",
+                                "Outcome: ",
+                                names(model_frame)[[1]],
+                                "\nRight hand side: ",
+                                paste0(colnames(X),collapse = "+ ")))
+                }
             }
+            fit$terms <- tf
+            fit_summary <- coef(summary(fit))
         }
-        fit$terms <- tf
-        fit_summary <- coef(summary(fit))
     }else{
         fit <- reuse_fit$fit
         fit_summary = reuse_fit$fit_summary
     }
-    predicted_values <- predict(
-        fit,
-        type = "response",
-        newdata = intervened_data,
-        se = FALSE
-    )
+    if (inherits(fit,"constant_probability")){
+        predicted_values <- rep(fit_summary,NROW(intervened_data))
+    }else{
+        predicted_values <- predict(
+            fit,
+            type = "response",
+            newdata = intervened_data,
+            se = FALSE
+        )
+    }
     #parse_learner_output
     output <- list(predicted_values = predicted_values,
                    fit_summary = fit_summary)

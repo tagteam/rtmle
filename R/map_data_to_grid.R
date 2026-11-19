@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: feb 24 2026 (11:04)
 ## Version:
-## Last-Updated: okt 22 2026 (16:39) 
-##           By: Thomas Alexander Gerds
-##     Update #: 141
+## Last-Updated: Nov 19 2026 (10:09) 
+##           By: Johan Sebastian Ohlendorff
+##     Update #: 146
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -179,11 +179,10 @@ map_data_to_grid <- function(method,
         # This also allows measurements in a pre-baseline lookback interval
         # when the caller supplies one.
         nonzero_dates <- data[!is.na(date) & date != 0]
+        measurement_join <- c(id, "start_interval < date", "end_interval >= date")
         overlap <- data[!is.na(date) & date != 0,
                         interval := grid[nonzero_dates,
-                                         on = list(id,
-                                                   start_interval < date,
-                                                   end_interval >= date),
+                                         on = measurement_join,
                                          x.interval]]
         ## discard information beyond the last interval (outside the grid)
         overlap <- overlap[!is.na(interval)]

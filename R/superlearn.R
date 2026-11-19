@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Oct 31 2024 (07:29) 
 ## Version: 
-## Last-Updated: jun 18 2026 (09:01) 
-##           By: Thomas Alexander Gerds
-##     Update #: 309
+## Last-Updated: Nov 18 2026 (17:14) 
+##           By: Johan Sebastian Ohlendorff
+##     Update #: 311
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -267,6 +267,7 @@ superlearn <- function(folds,
     names(learners) <- learner_names
     learner_args <- list(character_formula = character_formula,
                          data = data,
+                         save_fitted_objects = save_fitted_objects,
                          intervened_data = intervened_data)
     if (all(ensemble_weights == 0)){
         # NULL model prediction
@@ -293,7 +294,7 @@ superlearn <- function(folds,
             predicted_values <- do.call(cbind,lapply(predicted_value_ensemble,`[[`,"predicted_values"))%*%ensemble_weights[ensemble_weights>0]
         }
         if (isTRUE(save_fitted_objects)){
-            fitted_objects <- lapply(predicted_value_ensemble,`[[`,"reuse_fit")
+            fitted_objects <- lapply(predicted_value_ensemble,`[[`,"fit")
             names(fitted_objects) <- names(ensemble_weights)[ensemble_weights>0]
         }
     }
