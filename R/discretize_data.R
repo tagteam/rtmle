@@ -87,19 +87,19 @@
 #'       positive overlap counts as
 #'       exposure. When \code{baseline_exposure_start}
 #'       is set to \code{TRUE} then the wide format variable at time zero takes value 1
-#'       if a {start_date} equals time zero. This is interpreted as a baseline treatment assignment. The source data require a \code{start_date}
-#'       and a \code{end_date} column.}
+#'       if a \code{start_date} equals time zero. This is interpreted as a baseline treatment assignment.
+#'       The source data require a \code{start_date} and a \code{end_date} column.}
 #'     \item{\code{"has_exposure"}}{Same as \code{any_exposure} but with default threshold 0.5.}
 #'     \item{\code{"exposure_time"}}{Returns the total amount of time for
 #'       which the exposure overlaps each grid interval. When \code{baseline_exposure_start}
 #'       is set to \code{TRUE} then the wide format variable at time zero takes value 1
-#'       if a {start_date} equals time zero. This is interpreted as a baseline treatment assignment. 
+#'       if a \code{start_date} equals time zero. This is interpreted as a baseline treatment assignment.
 #'       The source data require a \code{start_date} and a \code{end_date}
 #'       column.}
 #'     \item{\code{"exposure_percent"}}{Returns the fraction of each grid
 #'       interval covered by the exposure. When \code{baseline_exposure_start}
 #'       is set to \code{TRUE} then the wide format variable at time zero takes value 1
-#'       if a {start_date} equals time zero. This is interpreted as a baseline treatment assignment.
+#'       if a \code{start_date} equals time zero. This is interpreted as a baseline treatment assignment.
 #'       The source data require a \code{start_date} and a \code{end_date}
 #'       column.}
 #'   }

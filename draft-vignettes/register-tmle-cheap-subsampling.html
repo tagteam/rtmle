@@ -1,0 +1,511 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<!-- 2025-12-08 Mon 16:31 -->
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Using rtmle with the cheap subsampling confidence interval</title>
+<meta name="generator" content="Org Mode" />
+<style type="text/css">
+  #content { max-width: 60em; margin: auto; }
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #e6e6e6;
+    border-radius: 3px;
+    background-color: #f2f2f2;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: auto;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    top: -8px;
+    right: 12px;
+    padding: 3px;
+    color: #555;
+    background-color: #f2f2f299;
+  }
+  pre.src:hover:before { display: inline; margin-top: 14px;}
+  /* Languages per Org manual */
+  pre.src-asymptote:before { content: 'Asymptote'; }
+  pre.src-awk:before { content: 'Awk'; }
+  pre.src-authinfo::before { content: 'Authinfo'; }
+  pre.src-C:before { content: 'C'; }
+  /* pre.src-C++ doesn't work in CSS */
+  pre.src-clojure:before { content: 'Clojure'; }
+  pre.src-css:before { content: 'CSS'; }
+  pre.src-D:before { content: 'D'; }
+  pre.src-ditaa:before { content: 'ditaa'; }
+  pre.src-dot:before { content: 'Graphviz'; }
+  pre.src-calc:before { content: 'Emacs Calc'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-fortran:before { content: 'Fortran'; }
+  pre.src-gnuplot:before { content: 'gnuplot'; }
+  pre.src-haskell:before { content: 'Haskell'; }
+  pre.src-hledger:before { content: 'hledger'; }
+  pre.src-java:before { content: 'Java'; }
+  pre.src-js:before { content: 'JavaScript'; }
+  pre.src-latex:before { content: 'LaTeX'; }
+  pre.src-ledger:before { content: 'Ledger'; }
+  pre.src-lisp:before { content: 'Lisp'; }
+  pre.src-lilypond:before { content: 'Lilypond'; }
+  pre.src-lua:before { content: 'Lua'; }
+  pre.src-matlab:before { content: 'MATLAB'; }
+  pre.src-mscgen:before { content: 'Mscgen'; }
+  pre.src-ocaml:before { content: 'Objective Caml'; }
+  pre.src-octave:before { content: 'Octave'; }
+  pre.src-org:before { content: 'Org mode'; }
+  pre.src-oz:before { content: 'OZ'; }
+  pre.src-plantuml:before { content: 'Plantuml'; }
+  pre.src-processing:before { content: 'Processing.js'; }
+  pre.src-python:before { content: 'Python'; }
+  pre.src-R:before { content: 'R'; }
+  pre.src-ruby:before { content: 'Ruby'; }
+  pre.src-sass:before { content: 'Sass'; }
+  pre.src-scheme:before { content: 'Scheme'; }
+  pre.src-screen:before { content: 'Gnu Screen'; }
+  pre.src-sed:before { content: 'Sed'; }
+  pre.src-sh:before { content: 'shell'; }
+  pre.src-sql:before { content: 'SQL'; }
+  pre.src-sqlite:before { content: 'SQLite'; }
+  /* additional languages in org.el's org-babel-load-languages alist */
+  pre.src-forth:before { content: 'Forth'; }
+  pre.src-io:before { content: 'IO'; }
+  pre.src-J:before { content: 'J'; }
+  pre.src-makefile:before { content: 'Makefile'; }
+  pre.src-maxima:before { content: 'Maxima'; }
+  pre.src-perl:before { content: 'Perl'; }
+  pre.src-picolisp:before { content: 'Pico Lisp'; }
+  pre.src-scala:before { content: 'Scala'; }
+  pre.src-shell:before { content: 'Shell Script'; }
+  pre.src-ebnf2ps:before { content: 'ebfn2ps'; }
+  /* additional language identifiers per "defun org-babel-execute"
+       in ob-*.el */
+  pre.src-cpp:before  { content: 'C++'; }
+  pre.src-abc:before  { content: 'ABC'; }
+  pre.src-coq:before  { content: 'Coq'; }
+  pre.src-groovy:before  { content: 'Groovy'; }
+  /* additional language identifiers from org-babel-shell-names in
+     ob-shell.el: ob-shell is the only babel language using a lambda to put
+     the execution function name together. */
+  pre.src-bash:before  { content: 'bash'; }
+  pre.src-csh:before  { content: 'csh'; }
+  pre.src-ash:before  { content: 'ash'; }
+  pre.src-dash:before  { content: 'dash'; }
+  pre.src-ksh:before  { content: 'ksh'; }
+  pre.src-mksh:before  { content: 'mksh'; }
+  pre.src-posh:before  { content: 'posh'; }
+  /* Additional Emacs modes also supported by the LaTeX listings package */
+  pre.src-ada:before { content: 'Ada'; }
+  pre.src-asm:before { content: 'Assembler'; }
+  pre.src-caml:before { content: 'Caml'; }
+  pre.src-delphi:before { content: 'Delphi'; }
+  pre.src-html:before { content: 'HTML'; }
+  pre.src-idl:before { content: 'IDL'; }
+  pre.src-mercury:before { content: 'Mercury'; }
+  pre.src-metapost:before { content: 'MetaPost'; }
+  pre.src-modula-2:before { content: 'Modula-2'; }
+  pre.src-pascal:before { content: 'Pascal'; }
+  pre.src-ps:before { content: 'PostScript'; }
+  pre.src-prolog:before { content: 'Prolog'; }
+  pre.src-simula:before { content: 'Simula'; }
+  pre.src-tcl:before { content: 'tcl'; }
+  pre.src-tex:before { content: 'TeX'; }
+  pre.src-plain-tex:before { content: 'Plain TeX'; }
+  pre.src-verilog:before { content: 'Verilog'; }
+  pre.src-vhdl:before { content: 'VHDL'; }
+  pre.src-xml:before { content: 'XML'; }
+  pre.src-nxml:before { content: 'XML'; }
+  /* add a generic configuration mode; LaTeX export needs an additional
+     (add-to-list 'org-latex-listings-langs '(conf " ")) in .emacs */
+  pre.src-conf:before { content: 'Configuration File'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .equation-container {
+    display: table;
+    text-align: center;
+    width: 100%;
+  }
+  .equation {
+    vertical-align: middle;
+  }
+  .equation-label {
+    display: table-cell;
+    text-align: right;
+    vertical-align: middle;
+  }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  .org-svg { }
+</style>
+<script>
+  window.MathJax = {
+    tex: {
+      ams: {
+        multlineWidth: '85%'
+      },
+      tags: 'ams',
+      tagSide: 'right',
+      tagIndent: '.8em'
+    },
+    chtml: {
+      scale: 1.0,
+      displayAlign: 'center',
+      displayIndent: '0em'
+    },
+    svg: {
+      scale: 1.0,
+      displayAlign: 'center',
+      displayIndent: '0em'
+    },
+    output: {
+      font: 'mathjax-modern',
+      displayOverflow: 'overflow'
+    }
+  };
+</script>
+
+<script
+  id="MathJax-script"
+  async
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+</script>
+</head>
+<body>
+<div id="preamble" class="status">
+<br>Johan Sebastian Ohlendorff
+</div>
+<div id="content" class="content">
+<h1 class="title">Using rtmle with the cheap subsampling confidence interval</h1>
+<div id="outline-container-org64aed62" class="outline-2">
+<h2 id="org64aed62"><span class="section-number-2">1.</span> About</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+The R-package <code>rtmle</code> implements a class of targeted minimum loss
+estimators for the analysis of longitudinal register data.
+In this vignette, we detail how to use cheap subsampling with
+the <code>rtmle</code> package to obtain robust inference.
+In particular, the researcher may want to supplement their confidence intervals
+with robust bootstrap confidence intervals if these appear
+to be very narrow or wide. 
+Cheap subsampling has been demonstrated to have
+good coverage with few bootstrap data sets, see <a href="https://arxiv.org/abs/2501.10289">https://arxiv.org/abs/2501.10289</a>.
+Furthermore, we highlight two important features of using cheap subsampling with
+<code>rtmle</code>:
+</p>
+
+<ol class="org-ol">
+<li>Bootstrap confidence intervals based on the doubly robust LTMLE estimator, which, therefore, make the confidence intervals "doubly robust".</li>
+<li>Stability of the confidence intervals when the estimated propensity scores are close to zero.</li>
+</ol>
+</div>
+</div>
+<div id="outline-container-orgda6ada0" class="outline-2">
+<h2 id="orgda6ada0"><span class="section-number-2">2.</span> Cheap subsampling confidence intervals</h2>
+<div class="outline-text-2" id="text-2">
+<p>
+We consider register data in the following format.
+See the document <code>register-tmle-intro.org</code>
+for a more complete introduction to <code>rtmle</code>,
+but we must first prepare and run <code>run_rtmle</code>
+as we would normally do. 
+</p>
+
+<div class="org-src-container">
+<pre class="src src-R"><code><span style="color: #a2cd5a;">library</span>(rtmle)
+<span style="color: #a2cd5a;">library</span>(prodlim)
+<span style="color: #a2cd5a;">library</span>(riskRegression)
+<span style="color: #a2cd5a;">library</span>(data.table)
+
+tau <span style="color: #a2cd5a;">&lt;-</span> 2
+set.seed(17)
+ld <span style="color: #a2cd5a;">&lt;-</span> simulate_long_data(n = 91,number_visits = 20,beta = list(A_on_Y = -.2,A0_on_Y = -0.3,A0_on_A = 6),register_format = <span style="color: #98f5ff;">TRUE</span>)
+x <span style="color: #a2cd5a;">&lt;-</span> rtmle_init(intervals = tau,name_id = <span style="color: #deb887;">"id"</span>,name_outcome = <span style="color: #deb887;">"Y"</span>,name_competing = <span style="color: #deb887;">"Dead"</span>,name_censoring = <span style="color: #deb887;">"Censored"</span>,censored_label = <span style="color: #deb887;">"censored"</span>)
+x <span style="color: #a2cd5a;">&lt;-</span> add_long_data(x,
+                   outcome_data=ld$outcome_data,
+                   censored_data=ld$censored_data,
+                   competing_data=ld$competing_data,
+                   timevar_data=ld$timevar_data)
+x <span style="color: #a2cd5a;">&lt;-</span> add_baseline_data(x,data=ld$baseline_data)
+x <span style="color: #a2cd5a;">&lt;-</span> long_to_wide(x,intervals = seq(0,2000,30.45*12))
+x <span style="color: #a2cd5a;">&lt;-</span> protocol(x,name = <span style="color: #deb887;">"Always_A"</span>,intervention = data.frame(<span style="color: #deb887;">"A"</span> = factor(<span style="color: #deb887;">"1"</span>,levels = c(<span style="color: #deb887;">"0"</span>,<span style="color: #deb887;">"1"</span>))),verbose = <span style="color: #98f5ff;">FALSE</span>)
+x <span style="color: #a2cd5a;">&lt;-</span> protocol(x,name = <span style="color: #deb887;">"Never_A"</span>,intervention = data.frame(<span style="color: #deb887;">"A"</span> = factor(<span style="color: #deb887;">"0"</span>,levels = c(<span style="color: #deb887;">"0"</span>,<span style="color: #deb887;">"1"</span>))),verbose = <span style="color: #98f5ff;">FALSE</span>)
+x <span style="color: #a2cd5a;">&lt;-</span> prepare_data(x)
+x <span style="color: #a2cd5a;">&lt;-</span> target(x,name = <span style="color: #deb887;">"Outcome_risk"</span>,estimator = <span style="color: #deb887;">"tmle"</span>,protocols = c(<span style="color: #deb887;">"Always_A"</span>,<span style="color: #deb887;">"Never_A"</span>))
+x <span style="color: #a2cd5a;">&lt;-</span> model_formula(x)
+<span style="color: #7f7f7f;"># </span><span style="color: #7f7f7f;">the overall analysis is stored as estimate$Main_analysis
+</span>x <span style="color: #a2cd5a;">&lt;-</span> run_rtmle(x,learner = <span style="color: #deb887;">"learn_glmnet"</span>,time_horizon = tau,verbose = <span style="color: #98f5ff;">FALSE</span>)
+</code></pre>
+</div>
+
+<pre class="example">
+Missing start_followup_date variable, for now assume 0, which implies that all event times must be given on the time on study scale.
+</pre>
+
+<p>
+To then obtain the cheap subsampling confidence intervals, we
+run the <code>cheap_bootstrap</code> function. The important parameters are the following:
+</p>
+<ol class="org-ol">
+<li><code>B</code>: The number of bootstrap samples. 25
+is a sensible default, but if one wants
+to minimize Monte Carlo error
+(e.g., random noise from bootstrapping),
+one should set it higher.</li>
+<li><code>M</code>: Size of the bootstrap samples which by default
+is 63.2% of the number of rows of data.</li>
+</ol>
+
+<p>
+Additional options can be found in the documentation for
+the <code>cheap_bootstrap</code> function in <code>R</code>.
+Later, we discuss how to determine these two important
+parameters, but for now we demonstrate how to use the function:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-R"><code>x <span style="color: #a2cd5a;">&lt;-</span> cheap_bootstrap(x,B = 25,M = 0.632*NROW(x$prepared_data))
+summary(x)
+</code></pre>
+</div>
+
+<pre class="example" id="orgdc3cff4">
+         Target Protocol Time_horizon Bootstrap_standard_error Bootstrap_lower Bootstrap_upper
+         &lt;fctr&gt;   &lt;fctr&gt;        &lt;num&gt;                    &lt;num&gt;           &lt;num&gt;           &lt;num&gt;
+1: Outcome_risk Always_A            2               0.06410298      0.07905442       0.4250836
+2: Outcome_risk  Never_A            2               0.08177774      0.16828033       0.6097183
+3: Outcome_risk  Never_A            2               0.09979294      0.11005182       0.1638087
+4: Outcome_risk  Never_A            2               0.37972663      1.04571203       2.2774380
+   Target_parameter Estimator  Estimate   P_value Standard_error      Lower     Upper
+             &lt;fctr&gt;    &lt;fctr&gt;     &lt;num&gt;     &lt;num&gt;          &lt;num&gt;      &lt;num&gt;     &lt;num&gt;
+1:             Risk      tmle 0.2520690 1.0000000     0.07550702  0.1040780 0.4000601
+2:             Risk      tmle 0.3889993 1.0000000     0.08318565  0.2259584 0.5520402
+3:  Risk_difference      tmle 0.1369303 0.2222327     0.11218159 -0.0829416 0.3568021
+4:       Risk_ratio      tmle 1.5432253 0.2378117     0.36754267  0.7508902 3.1716278
+   Estimate (CI_95) Reference
+             &lt;char&gt;    &lt;char&gt;
+1: 25.2 [10.4;40.0]          
+2: 38.9 [22.6;55.2]          
+3: 13.7 [-8.3;35.7]  Always_A
+4:    1.5 [0.8;3.2]  Always_A
+</pre>
+</div>
+</div>
+<div id="outline-container-orgebcfef1" class="outline-2">
+<h2 id="orgebcfef1"><span class="section-number-2">3.</span> When to use cheap subsampling</h2>
+<div class="outline-text-2" id="text-3">
+<p>
+Because cheap subsampling makes the confidence intervals `doubly robust`,
+one should, in principle, always use it since cheap subsampling
+may provide inference when either the propensity score models
+or outcome regressions are misspecified (but not both),
+provided that nuisance parameter estimators converge sufficiently fast,
+such as when one uses parametric models.
+The influence curve-based confidence interval cannot provide
+one with this feature.
+Another feature is confidence intervals which are typically
+less sensitive to small estimated propensity scores.
+See for instance below:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-R"><code><span style="color: #a2cd5a;">library</span>(rtmle)
+<span style="color: #a2cd5a;">library</span>(prodlim)
+<span style="color: #a2cd5a;">library</span>(riskRegression)
+<span style="color: #a2cd5a;">library</span>(data.table)
+
+tau <span style="color: #a2cd5a;">&lt;-</span> 2
+set.seed(450)
+ld <span style="color: #a2cd5a;">&lt;-</span> simulate_long_data(n = 91,number_visits = 20,beta = list(age_on_A = -0.5, A_on_Y = -.2,A0_on_Y = -0.3,A0_on_A = 6),register_format = <span style="color: #98f5ff;">TRUE</span>)
+x <span style="color: #a2cd5a;">&lt;-</span> rtmle_init(intervals = tau,name_id = <span style="color: #deb887;">"id"</span>,name_outcome = <span style="color: #deb887;">"Y"</span>,name_competing = <span style="color: #deb887;">"Dead"</span>,name_censoring = <span style="color: #deb887;">"Censored"</span>,censored_label = <span style="color: #deb887;">"censored"</span>)
+x <span style="color: #a2cd5a;">&lt;-</span> add_long_data(x,
+                   outcome_data=ld$outcome_data,
+                   censored_data=ld$censored_data,
+                   competing_data=ld$competing_data,
+                   timevar_data=ld$timevar_data)
+x <span style="color: #a2cd5a;">&lt;-</span> add_baseline_data(x,data=ld$baseline_data)
+x <span style="color: #a2cd5a;">&lt;-</span> long_to_wide(x,intervals = seq(0,2000,30.45*12))
+x <span style="color: #a2cd5a;">&lt;-</span> protocol(x,name = <span style="color: #deb887;">"Always_A"</span>,intervention = data.frame(<span style="color: #deb887;">"A"</span> = factor(<span style="color: #deb887;">"1"</span>,levels = c(<span style="color: #deb887;">"0"</span>,<span style="color: #deb887;">"1"</span>))),verbose = <span style="color: #98f5ff;">FALSE</span>)
+x <span style="color: #a2cd5a;">&lt;-</span> protocol(x,name = <span style="color: #deb887;">"Never_A"</span>,intervention = data.frame(<span style="color: #deb887;">"A"</span> = factor(<span style="color: #deb887;">"0"</span>,levels = c(<span style="color: #deb887;">"0"</span>,<span style="color: #deb887;">"1"</span>))),verbose = <span style="color: #98f5ff;">FALSE</span>)
+x <span style="color: #a2cd5a;">&lt;-</span> prepare_data(x)
+x <span style="color: #a2cd5a;">&lt;-</span> target(x,name = <span style="color: #deb887;">"Outcome_risk"</span>,estimator = <span style="color: #deb887;">"tmle"</span>,protocols = c(<span style="color: #deb887;">"Always_A"</span>,<span style="color: #deb887;">"Never_A"</span>))
+x <span style="color: #a2cd5a;">&lt;-</span> model_formula(x)
+<span style="color: #7f7f7f;"># </span><span style="color: #7f7f7f;">the overall analysis is stored as estimate$Main_analysis
+</span>x<span style="color: #a2cd5a;">&lt;-</span>run_rtmle(x,learner = <span style="color: #deb887;">"learn_glmnet"</span>,time_horizon = tau,verbose = <span style="color: #98f5ff;">FALSE</span>)
+summary(x)
+</code></pre>
+</div>
+
+<p>
+:results:
+Missing start<sub>followup</sub><sub>date</sub> variable, for now assume 0, which implies that all event times must be given on the time on study scale.
+         Target Protocol Target<sub>parameter</sub> Time<sub>horizon</sub> Estimator   Estimate   P<sub>value</sub>
+         &lt;fctr&gt;   &lt;fctr&gt;           &lt;fctr&gt;        &lt;num&gt;    &lt;fctr&gt;      &lt;num&gt;     &lt;num&gt;
+1: Outcome<sub>risk</sub> Always<sub>A</sub>             Risk            2      tmle 0.36177373 1.0000000
+2: Outcome<sub>risk</sub>  Never<sub>A</sub>             Risk            2      tmle 0.40579533 1.0000000
+3: Outcome<sub>risk</sub>  Never<sub>A</sub>  Risk<sub>difference</sub>            2      tmle 0.04402159 0.6646738
+4: Outcome<sub>risk</sub>  Never<sub>A</sub>       Risk<sub>ratio</sub>            2      tmle 1.12168267 0.6613372
+   Standard<sub>error</sub>      Lower     Upper Estimate (CI<sub>95</sub>) Reference
+            &lt;num&gt;      &lt;num&gt;     &lt;num&gt;           &lt;char&gt;    &lt;char&gt;
+1:     0.06538511  0.2336213 0.4899262 36.2 [23.4;49.0]          
+2:     0.08296455  0.2431878 0.5684029 40.6 [24.3;56.8]          
+3:     0.10155642 -0.1550253 0.2430685 4.4 [-15.5;24.3]  Always<sub>A</sub>
+4:     0.26212831  0.6710363 1.8749688    1.1 [0.7;1.9]  Always<sub>A</sub>
+:end:x
+</p>
+
+<div class="org-src-container">
+<pre class="src src-R"><code><span style="color: #7f7f7f;"># </span><span style="color: #7f7f7f;">the bootstrap results are stored as estimate$Cheap_bootstrap
+</span>x <span style="color: #a2cd5a;">&lt;-</span> cheap_bootstrap(x,B = 25,M = 0.632*NROW(x$prepared_data))
+summary(x)
+</code></pre>
+</div>
+
+<pre class="example" id="org224999f">
+         Target Protocol Time_horizon Bootstrap_standard_error Bootstrap_lower Bootstrap_upper
+         &lt;fctr&gt;   &lt;fctr&gt;        &lt;num&gt;                    &lt;num&gt;           &lt;num&gt;           &lt;num&gt;
+1: Outcome_risk Always_A            2               0.07596474      0.05211446       0.4520236
+2: Outcome_risk  Never_A            2               0.07812320      0.18336323       0.5946354
+3: Outcome_risk  Never_A            2               0.11117424      0.10439701       0.1694635
+4: Outcome_risk  Never_A            2               0.40282783      1.00676924       2.3655314
+   Target_parameter Estimator  Estimate   P_value Standard_error      Lower     Upper
+             &lt;fctr&gt;    &lt;fctr&gt;     &lt;num&gt;     &lt;num&gt;          &lt;num&gt;      &lt;num&gt;     &lt;num&gt;
+1:             Risk      tmle 0.2520690 1.0000000     0.07550702  0.1040780 0.4000601
+2:             Risk      tmle 0.3889993 1.0000000     0.08318565  0.2259584 0.5520402
+3:  Risk_difference      tmle 0.1369303 0.2222327     0.11218159 -0.0829416 0.3568021
+4:       Risk_ratio      tmle 1.5432253 0.2378117     0.36754267  0.7508902 3.1716278
+   Estimate (CI_95) Reference
+             &lt;char&gt;    &lt;char&gt;
+1: 25.2 [10.4;40.0]          
+2: 38.9 [22.6;55.2]          
+3: 13.7 [-8.3;35.7]  Always_A
+4:    1.5 [0.8;3.2]  Always_A
+</pre>
+
+<p>
+Running cheap bootstrap gives a narrower confidence interval in this case,
+indicating perhaps that the estimated standard error was too high.
+</p>
+</div>
+</div>
+<div id="outline-container-orge0f0b90" class="outline-2">
+<h2 id="orge0f0b90"><span class="section-number-2">4.</span> How to use cheap subsampling</h2>
+<div class="outline-text-2" id="text-4">
+<p>
+These choices should be considered only
+if you have <span class="underline">time</span> to do them as they require
+more computation time.
+Otherwise, one should stick with the default choices
+of \(B\) and \(M\).
+</p>
+</div>
+<div id="outline-container-orgc66aed2" class="outline-3">
+<h3 id="orgc66aed2"><span class="section-number-3">4.1.</span> Selection of \(B\)</h3>
+<div class="outline-text-3" id="text-4-1">
+<p>
+Consider the example in the section `Cheap subsampling confidence intervals`.
+Here, we can inspect the values of the cheap subsampling confidence intervals
+using only \(b \leq B\) bootstrap samples in <code>x$estimate$Cheap_bootstrap</code>.
+In the following code, we look at the cheap subsampling confidence intervals
+only for the treated people:
+</p>
+
+
+<div id="org70e89cf" class="figure">
+<p><img src="cheap1.png" alt="cheap1.png" width="200" />
+</p>
+</div>
+
+<p>
+To find out whether the values have stabilized, we add
+another 25 bootstrap samples as follows to get
+a total of 50 bootstrap samples.
+It looks fairly stable!
+</p>
+
+
+<div id="org8ef7f0e" class="figure">
+<p><img src="cheap1.png" alt="cheap1.png" width="200" />
+</p>
+</div>
+</div>
+</div>
+<div id="outline-container-org423a8bf" class="outline-3">
+<h3 id="org423a8bf"><span class="section-number-3">4.2.</span> Selection of \(M\)</h3>
+<div class="outline-text-3" id="text-4-2">
+<p>
+This question is more difficult to answer in practice.
+A sensible default is to use \(M = 0.632 n\),
+where \(n\) is the number of rows in the data.
+One should make sure that the confidence intervals
+do not change too much when changing \(M\),
+for instance along a grid of values, such as
+\(M \in \{0.5 n, 0.632, 0.75 n, 0.8 n\}\).
+If they do, one should consider increasing \(B\)
+which should reduce the Monte Carlo error
+and help stabilize the confidence intervals.
+</p>
+</div>
+</div>
+</div>
+</div>
+<div id="postamble" class="status">
+<p class="date">Created: 2025-12-08 Mon 16:31</p>
+<p class="validation"><a href="https://validator.w3.org/check?uri=referer">Validate</a></p>
+</div>
+</body>
+</html>

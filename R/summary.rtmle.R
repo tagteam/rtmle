@@ -66,6 +66,7 @@
 #' @method summary rtmle
 summary.rtmle <- function(object,analysis = "Main_analysis",targets,reference = NULL,digits = 1,...){
     Reference <- risk_ratio_estimate <- risk_difference_estimate <- Regime <- Target <- Estimate <- Upper <- Lower <- Target_parameter <- Time_horizon <- x <- NULL
+    B <- Bootstrap_estimate <- NULL
     Target_parameter_label <- c("Risk_difference", "Risk_ratio")
     if (length(object$estimate) == 0) {
         message("The object contains no estimates. To obtain estimates You have to call run_rtmle first. See examples.")
