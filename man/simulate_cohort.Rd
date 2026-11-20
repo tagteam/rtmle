@@ -16,6 +16,7 @@ simulate_cohort(
   visit_events = NULL,
   visit_measurements = NULL,
   post_visit_hook = NULL,
+  next_visit_hook = NULL,
   intermediate_events = NULL,
   pre_intermediate_events_hook = NULL,
   post_intermediate_events_hook = NULL,
@@ -51,6 +52,8 @@ variables are simulated.}
 \item{visit_measurements}{Named list describing time-updated measurements.}
 
 \item{post_visit_hook}{Optional function applied to alter the data.table \code{update_information} after each visit update.}
+
+\item{next_visit_hook}{Optional hook applied to adjust next visit times (e.g., due to treatment pauses).}
 
 \item{intermediate_events}{Named list describing non-absorbing events.}
 
