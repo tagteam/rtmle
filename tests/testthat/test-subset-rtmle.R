@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Apr  8 2025 (14:47) 
 ## Version: 
-## Last-Updated: maj  7 2026 (16:29) 
-##           By: Thomas Alexander Gerds
-##     Update #: 47
+## Last-Updated: Nov 23 2026 (15:24) 
+##           By: Johan Sebastian Ohlendorff
+##     Update #: 48
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -52,10 +52,11 @@ test_that("run rtmle on a subset",{
     expect_equal(x1$IC, x79$IC)
 })
 
-test_that("stratified analyses",
-{
+test_that("stratification fits factor levels and numeric intervals separately", {
     set.seed(17)
     ld <- simulate_long_data(n = 91,number_visits = 20,beta = list(A_on_Y = -.2,A0_on_Y = -0.3,A0_on_A = 6),register_format = TRUE)
+    ld$baseline_data$sex <- factor(ld$baseline_data$sex, levels = c(1, 0),
+                                   labels = c("Male", "Female"))
     x <- rtmle_init(time_grid = seq(0,1500,30.45*12),name_id = "id",name_outcome = "Y",name_competing = "Dead",name_censoring = "Censored",censored_label = "censored")
     x <- add_long_data(x,outcome_data=ld$outcome_data,censored_data=ld$censored_data,competing_data=ld$competing_data,timevar_data=ld$timevar_data)
     x <- add_baseline_data(x,data=ld$baseline_data)
@@ -66,11 +67,44 @@ test_that("stratified analyses",
     x <- target(x,name = "Outcome_risk",estimator = "tmle",regimes = c("Always_A","Never_A"))
     x <- model_formula(x)
     x <- run_rtmle(x,learner = "learn_glmnet",time_horizon = 1:2,verbose = 0L)
-    strata <- list(Female = subset(x, sex == 0), Male = subset(x, sex == 1))
-    fits <- lapply(strata, run_rtmle, learner = "learn_glmnet", time_horizon = 2)
-    combined_summary <- data.table::rbindlist(lapply(fits, summary), idcol = "Sex")
-    expect_setequal(unique(combined_summary$Sex), c("Female", "Male"))
-    expect_false("Sex" %in% names(summary(x)))
+
+    by_sex <- stratify.rtmle(x, sex, learner = "learn_glmnet", time_horizon = 2)
+    expect_s3_class(by_sex, "stratified_rtmle")
+    expect_identical(names(by_sex), c("Male", "Female"))
+    expect_identical(attr(by_sex, "variable"), "sex")
+    expect_equal(attr(by_sex, "counts"), vapply(by_sex, function(fit) {
+        nrow(fit$prepared_data)
+    }, integer(1)))
+    for (level in names(by_sex)) {
+        manual <- run_rtmle(subset(x, sex == level), learner = "learn_glmnet",
+                            time_horizon = 2)
+        expect_equal(by_sex[[level]]$estimate$Main_analysis, manual$estimate$Main_analysis)
+        expect_equal(by_sex[[level]]$IC, manual$IC)
+    }
+    estimates <- summary(by_sex)
+    expect_identical(names(estimates)[1L], "sex")
+    expect_identical(unique(as.character(estimates$sex)), names(by_sex))
+    expect_false("sex" %in% names(summary(x)))
+    output <- capture.output(print(by_sex))
+    expect_true(any(grepl("^[[:space:]]*sex[[:space:]]+Participants", output)))
+    expect_true(any(grepl("^[[:space:]]*sex[[:space:]]+Target", output)))
+    expect_false(any(grepl("Stratum", output, fixed = TRUE)))
+    expect_s3_class(plot(by_sex), "ggplot")
+
+    original_data <- x$prepared_data
+    middle <- stats::median(original_data$age)
+    breaks <- c(min(original_data$age), middle, max(original_data$age), Inf)
+    by_age <- stratify(x, "age", breaks = breaks, learner = "learn_glmnet", time_horizon = 2)
+    expect_length(by_age, 2L)
+    expect_identical(attr(by_age, "breaks"), breaks)
+    rows <- list(original_data$age <= middle, original_data$age > middle)
+    original_formula <- x$models$time_0$outcome$Y_1$formula
+    expect_true("age" %in% all.vars(stats::formula(original_formula)))
+    for (i in seq_along(by_age)) {
+        expect_identical(by_age[[i]]$prepared_data$id, original_data$id[rows[[i]]])
+        expect_identical(by_age[[i]]$prepared_data$age, original_data$age[rows[[i]]])
+        expect_identical(by_age[[i]]$models$time_0$outcome$Y_1$formula, original_formula)
+    }
 })
 
 ######################################################################

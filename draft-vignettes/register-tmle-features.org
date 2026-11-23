@@ -17,6 +17,8 @@ library(rtmle)
 tau <- 2
 set.seed(17)
 ld <- simulate_long_data(n = 91,number_visits = 20,beta = list(A_on_Y = -.2,A0_on_Y = -0.3,A0_on_A = 6),register_format = TRUE)
+ld$baseline_data$sex <- factor(ld$baseline_data$sex, levels = c(0, 1),
+                               labels = c("Female", "Male"))
 x <- rtmle_init(time_grid = seq(0,2000,30.45*12),name_id = "id",name_outcome = "Y",name_competing = "Dead",name_censoring = "Censored",censored_label = "censored")
 x <- add_long_data(x,
                    outcome_data=ld$outcome_data,
@@ -37,12 +39,36 @@ summary(older)
 
 ** Strata defined by sex
 
-Store the stratum fits in a named list and combine their summaries with the stratum labels.
+Use =stratify.rtmle()= to fit the same analysis separately for each level of
+the baseline factor =sex=. A numeric indicator coded 0 and 1 can also be used
+directly. The resulting object has its own print, summary, and plot methods.
+Plots show one row per stratum and one column per target.
 
 #+BEGIN_SRC R  :results output verbatim  :exports both  :session *R* :cache yes  
-strata <- list(Female = subset(x, sex == 0), Male = subset(x, sex == 1))
-fits <- lapply(strata, run_rtmle, learner = "learn_glmnet", time_horizon = tau)
-data.table::rbindlist(lapply(fits, summary), idcol = "Sex")
+by_sex <- stratify.rtmle(x, sex, learner = "learn_glmnet", time_horizon = 1:tau)
+print(by_sex)
+summary(by_sex)
+
+# Inspect the fit for one stratum.
+summary(by_sex[["Female"]])
+
+# Plot the risk difference for Always_A versus Never_A in each stratum.
+plot(by_sex, target_parameter = "Risk_difference",
+     reference = list(Outcome_risk = "Never_A"))
+#+END_SRC
+
+** Strata defined by age intervals
+
+Supply break points to group a continuous baseline covariate. Here the two
+strata are participants aged 50 or younger and participants older than 50.
+The models in each stratum still use the original numeric =age= covariate.
+The younger group has fewer than 30 participants, so the function warns and
+fits both strata.
+
+#+BEGIN_SRC R  :results output verbatim  :exports both  :session *R* :cache yes
+by_age <- stratify.rtmle(x, age, breaks = c(-Inf, 50, Inf),
+                        learner = "learn_glmnet", time_horizon = tau)
+summary(by_age)
 #+END_SRC
 
 ** Cheap bootstrap confidence intervals

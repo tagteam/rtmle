@@ -24,7 +24,7 @@ jobs:
       - name: Install dependencies
         uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          extra-packages: any::covr, any::xml2
+          extra-packages: any::covr, any::htmltools, any::xml2
           needs: coverage
 
       - name: Test coverage
@@ -48,12 +48,15 @@ jobs:
           )
           print(coverage)
           covr::to_cobertura(coverage, filename = "cobertura.xml")
+          summary_file <- Sys.getenv("GITHUB_STEP_SUMMARY")
           cat(
-            sprintf("### R package coverage (including slow tests)\n\n**Line coverage:** %.2f%%\n",
+            sprintf("### R package coverage (including slow tests)\n\n**Line coverage:** %.2f%%\n\n",
                     covr::percent_coverage(coverage)),
-            file = Sys.getenv("GITHUB_STEP_SUMMARY"),
+            file = summary_file,
             append = TRUE
           )
+          source(".github/scripts/coverage-by-function.R")
+          write_function_coverage_summary(coverage, summary_file)
         shell: Rscript {0}
 
       - name: Upload coverage report

@@ -35,5 +35,6 @@ summary(women)
 }
 }
 \seealso{
-\code{\link{run_rtmle}}, \code{\link{cheap_bootstrap}}
+\code{\link{run_rtmle}}, \code{\link{cheap_bootstrap}},
+  \code{\link{stratify.rtmle}}
 }

@@ -151,7 +151,7 @@ x <- run_rtmle(
   \code{\link{regime}}, \code{\link{target}}, \code{\link{model_formula}},
   \code{\link{learn_glm}}, \code{\link{learn_glmnet}},
   \code{\link{superlearn}}, \code{\link{summary.rtmle}},
-  \code{\link{subset.rtmle}}
+  \code{\link{subset.rtmle}}, \code{\link{stratify.rtmle}}
 }
 \author{
 Thomas A Gerds \email{tag@biostat.ku.dk}

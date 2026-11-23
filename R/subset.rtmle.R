@@ -12,7 +12,8 @@
 #' @param ... Unused.
 #' @return An unfitted \code{rtmle} object with the selected participants,
 #'   model formulas, targets and regimes.
-#' @seealso \code{\link{run_rtmle}}, \code{\link{cheap_bootstrap}}
+#' @seealso \code{\link{run_rtmle}}, \code{\link{cheap_bootstrap}},
+#'   \code{\link{stratify.rtmle}}
 #' @examples
 #' \dontrun{
 #' data(rtmle_object)

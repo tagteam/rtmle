@@ -69,6 +69,35 @@ test_that("run rtmle on simulated data",{
     expect_equal(x$estimate$Main_analysis$Standard_error,0.06217111,tolerance = 0.001)
 })
 
+test_that("run rtmle on simulated data (contrast)",{
+    set.seed(112)
+    ld <- simulate_long_data(n = 91,number_visits = 20,beta = list(A_on_Y = -.2,A0_on_Y = -0.3,A0_on_A = 6),register_format = TRUE)
+    x <- rtmle_init(
+        time_grid = seq(0,1500,30.45*6),
+        name_id = "id",
+        name_outcome = "Y",
+        name_competing = "Dead",
+        name_censoring = "Censored",
+        censored_label = "censored"
+    )
+    x <- add_long_data(x,
+                       outcome_data=ld$outcome_data,
+                       censored_data=ld$censored_data,
+                       competing_data=ld$competing_data,
+                       timevar_data=ld$timevar_data)
+    x <- add_baseline_data(x,data=ld$baseline_data)
+    x <- discretize_data(x,start_followup_date=0)
+    x <- regime(x,name = "Always_A",treatment_variables = "A",intervention = 1)
+    x <- regime(x,name = "Never_A",treatment_variables = "A",intervention = 0)
+    x <- prepare_rtmle_data(x) 
+    x <- target(x,name = "Outcome_risk",estimator = "tmle",regimes = "Always_A")
+    x <- target(x,name = "Outcome_risk",estimator = "tmle",regimes = "Never_A")
+    x <- model_formula(x)
+    suppressWarnings(y <- summary(run_rtmle(x,time_horizon = 2,refit = TRUE,verbose=0L)))
+    expect_equal(y$Estimate[3],0.2038143,tolerance = 0.001)
+    expect_equal(y$Standard_error[3],0.09651369,tolerance = 0.001)
+})
+
 test_that("censoring models are reused across regimes",{
     set.seed(42)
     n <- 120
