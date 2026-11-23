@@ -29,11 +29,27 @@ jobs:
 
       - name: Test coverage
         run: |
-          coverage <- covr::package_coverage(quiet = FALSE)
+          slowtest_code <- deparse(quote(local({
+            Sys.setenv(NOT_CRAN = "true")
+            testthat::local_edition(3)
+            # Keep tests that look for the source checkout on the instrumented package.
+            stopifnot(file.copy("slowtests", tempdir(), recursive = TRUE))
+            files <- list.files(file.path(tempdir(), "slowtests"),
+                                pattern = "[.][rR]$", full.names = TRUE)
+            stopifnot(length(files) > 0L)
+            for (file in files) {
+              testthat::test_file(file, reporter = "summary", stop_on_failure = TRUE)
+            }
+          })))
+          coverage <- covr::package_coverage(
+            quiet = FALSE,
+            code = slowtest_code,
+            show_code_output = TRUE
+          )
           print(coverage)
           covr::to_cobertura(coverage, filename = "cobertura.xml")
           cat(
-            sprintf("### R package coverage\n\n**Line coverage:** %.2f%%\n",
+            sprintf("### R package coverage (including slow tests)\n\n**Line coverage:** %.2f%%\n",
                     covr::percent_coverage(coverage)),
             file = Sys.getenv("GITHUB_STEP_SUMMARY"),
             append = TRUE
