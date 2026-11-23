@@ -63,6 +63,12 @@ Here we specify:
 
 ### Examples: 
 
+```{r initialize}
+library(rtmle)
+
+x <- rtmle_init(time_grid = 0:3, name_id = "id", name_outcome = "Y")
+```
+
 #### Static Intervention: One single binary variable exposure (Always treated regime)
 
 ```{r}
@@ -73,30 +79,20 @@ intervention = 1)
 OR 
 
 ```{r}
-x <- regime(x,name = "always A",treatment_variables = c("A_1","A_2","A_3"),
-intervention = 1)
-```
-
-
-OR 
-
-```{r}
-x <- regime(x,name = "always A",treatment_variables = c("A_1","A_2","A_3"),
-intervention = c(1,1,1))
+x <- regime(x, name = "always A", intervention = data.frame(
+    time_node = x$intervention_nodes,
+    A = factor(1, levels = 0:1)
+))
 ```
 
 #### Static Intervention: Two binary variables exposures (A,B)
 
 ```{r}
-x <- regime(x,name = "always combined",treatment_variables = list("A"=c("A_1","A_2","A_3"),"B"=c("B_1","B_2","B_3")),
-intervention = list("A"=c(1,1,1),"B"=c(1,1,1)))
-```
-
-OR
-
-```{r}
-x <- regime(x,name = "always combined",treatment_variables = matrix(c("A_1","A_2","A_3", "B_1","B_2","B_3"),3),
-intervention = matrix(rep(1,6),3))
+x <- regime(x, name = "always combined", intervention = data.frame(
+    time_node = x$intervention_nodes,
+    A = factor(1, levels = 0:1),
+    B = factor(1, levels = 0:1)
+))
 ```
 
 OR
