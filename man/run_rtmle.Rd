@@ -97,9 +97,10 @@ Continue with \code{prepare_rtmle_data},
 Entries in \code{time_grid} are expressed in the original time units;
 \code{time_horizon} selects their node indices as in discrete time.
 Static and dynamic interventions on binary treatment \code{A} are
-supported at baseline and at each treatment opportunity. Only
-\code{conservative = TRUE} is implemented: the censoring martingale
-correction is omitted.
+supported at baseline and at each treatment opportunity. The default is
+\code{conservative = TRUE}. With \code{estimator = "one-step"},
+\code{conservative = FALSE} adds an experimental censoring-martingale
+correction to the estimate and to each participant's influence function.
 
 Continuous-time options passed through \code{...} are:
 \itemize{
@@ -128,6 +129,29 @@ Continuous-time options passed through \code{...} are:
     The Aalen learners require the optional \code{timereg} package, reject
     tied censoring times, and truncate negative fitted hazard increments
     at zero with a warning. See the continuous-time vignette for examples.
+  \item \code{event_learner}: survival learner for the time to the next
+    full-data event in the non-conservative analysis. The default is
+    \code{"learn_coxph"}. Each event index uses elapsed time and the
+    history through the preceding event. Treatment and covariate updates,
+    outcomes and competing events count as failures. Dropout and the
+    administrative end of follow-up right-censor the event time.
+    The baseline-only option is unavailable for this model. Custom survival
+    learners used for the correction must predict from a saved fit at
+    arbitrary endpoints and honor \code{left_limit} at hazard jumps.
+  \item \code{grid_learner}: outcome learner for interior grid times.
+    Defaults to \code{learner}. For example, use \code{learner = "learn_oipcw"}
+    with \code{grid_learner = "learn_glm"} if the estimating equation has
+    no finite solution in a sparse grid regression. The horizon predictions
+    and the original one-step correction still use \code{learner}.
+  \item \code{integration_grid_size}: number of equal subintervals from
+    zero to each requested horizon for the non-conservative correction
+    (default 100, minimum 2). At each interior grid time, the sequential
+    regression truncates the next event at that time and retains the
+    continuation value at the original horizon. Each integration cell is
+    clipped to the observed interval and horizon. The calculation uses the
+    right grid prediction for the outcome and the conditional censoring
+    probability over the cell for the compensator. It uses event survival
+    at the cell start for the compensator and its exact left limit at dropout.
   \item \code{lag}: an optional positive number of previous event indices
     included in event-history models. Their baseline covariates are always
     included. Time-varying hazard models use the current and fixed baseline

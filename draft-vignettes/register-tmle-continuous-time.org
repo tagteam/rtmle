@@ -7,8 +7,15 @@
 
 Event-time ICE-IPCW estimation from =contICEIPCW= is available through the
 usual =rtmle= analysis pipeline. Treatment =A= is binary. Static interventions
-set its value at baseline and at observed treatment opportunities. Only the
-conservative influence function is implemented.
+set its value at baseline and at observed treatment opportunities.
+For experimental non-conservative estimation, call
+~run_rtmle(x, estimator = "one-step", conservative = FALSE)~.
+This adds the censoring-martingale correction to the point estimate and the
+influence function used for inference. The event-time survival model uses
+the observed history at each event index. The correction uses 100 equal
+subintervals up to each analysis horizon by default. Set
+=integration_grid_size= to change the grid resolution. TMLE uses the
+conservative influence function.
 
 * Data
 

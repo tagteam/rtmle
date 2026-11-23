@@ -77,7 +77,7 @@ test_that("invalid continuous input is rejected before model fitting", {
     expect_error(prep(bad), "terminal")
     expect_error(prepare_continuous_data(d, NA_real_, c("A", "L"), c("A_0", "L_0")), "finite")
     expect_error(prep(d, min_events = -1), "min_events")
-    expect_error(run_rtmle(continuous_analysis(), conservative = FALSE), "conservative = TRUE")
+    expect_error(run_rtmle(continuous_analysis(), conservative = FALSE, estimator = "tmle"), "one-step")
     expect_error(run_rtmle(continuous_analysis(), estimator = "unknown"), "estimator")
     expect_error(run_rtmle(continuous_analysis(), time_horizon = 3), "time_horizon")
     expect_error(regime(continuous_analysis(), "late", data.frame(time = 999, A = 1)), "scheduled")

@@ -1,6 +1,7 @@
 # Integrate along the recorded intervals. Pooled endpoints may cross several
-# updates. Only the final endpoint uses a left limit; interior jumps count once.
-continuous_predict_censoring <- function(model, prediction, endpoint, start, specification, call_learner) {
+# updates. Interior jumps count once. Choose the limit at the final endpoint.
+continuous_predict_censoring <- function(model, prediction, endpoint, start, specification, call_learner,
+                                         left_limit = TRUE) {
     requests <- data.table::data.table(id = prediction$id,
         .rtmle_from = prediction[[start]], .rtmle_to = prediction[[endpoint]],
         .rtmle_request = seq_len(nrow(prediction)))
@@ -22,7 +23,7 @@ continuous_predict_censoring <- function(model, prediction, endpoint, start, spe
             1e-8 * pmax(1, covered)))
         stop("Censoring prediction extends beyond the recorded event history.")
     if (!nrow(pieces)) return(probabilities)
-    final <- pieces$.rtmle_stop == pieces$.rtmle_to
+    final <- left_limit & pieces$.rtmle_stop == pieces$.rtmle_to
     values <- numeric(nrow(pieces))
     for (left in c(FALSE, TRUE)) {
         rows <- which(final == left)

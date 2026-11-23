@@ -39,6 +39,7 @@ Imports:
     glmnet,
     matrixStats,
     Matrix,
+    withr,
     Rcpp
 LinkingTo:
     Rcpp,

@@ -247,8 +247,15 @@
 class="verbatim">contICEIPCW</code> is available through the usual <code
 class="verbatim">rtmle</code> analysis pipeline. Treatment <code
 class="verbatim">A</code> is binary. Static interventions set its value
-at baseline and at observed treatment opportunities. Only the
-conservative influence function is implemented.</p>
+at baseline and at observed treatment opportunities.
+For experimental non-conservative estimation, call
+<code>run_rtmle(x, estimator = "one-step", conservative = FALSE)</code>.
+This adds the censoring-martingale correction to the point estimate and the
+influence function used for inference. The event-time survival model uses
+the observed history at each event index. The correction uses 100 equal
+subintervals up to each analysis horizon by default. Set
+<code>integration_grid_size</code> to change the grid resolution. TMLE uses the
+conservative influence function.</p>
 <h1 id="data">Data</h1>
 <p>Baseline data use <code class="verbatim">add_baseline_data</code>.
 The other input tables follow <code

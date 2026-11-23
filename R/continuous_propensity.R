@@ -4,7 +4,7 @@ continuous_propensity <- function(prepared_data, learner = "learn_glm",
                                   exclude_latest_covariate = NULL,
                                   gbound = NULL, seed = NULL,
                                   save_fitted_objects = FALSE,
-                                  regime = NULL, model_options = NULL) {
+                                  regime = NULL, model_options = NULL, event_learner = NULL) {
     if (!is.list(prepared_data) || is.null(prepared_data$wide_data) ||
         is.null(prepared_data$info)) stop("prepared_data must come from prepare_continuous_data.")
     if (length(static_intervention) != 1L || is.na(static_intervention) ||
@@ -29,32 +29,27 @@ continuous_propensity <- function(prepared_data, learner = "learn_glm",
     censoring_name <- model_options$node_names$censoring
     if (is.null(censoring_name) || !length(censoring_name)) censoring_name <- "C"
     censoring <- continuous_censoring_specification(censoring_learner)
+    event_model <- if (!is.null(event_learner)) continuous_event_specification(event_learner)
+    needs_grid <- !is.null(event_model) && has_censoring
+    grid <- if (needs_grid) list(event_learner = event_model, censoring = censoring)
     if (has_censoring) {
         if (is.null(censoring)) stop("A censoring learner is required when censoring is present.")
         hazard_learner <- censoring$learner
     }
 
-    call_hazard <- function(args) {
-        withCallingHandlers(do.call(hazard_learner$fun, args), warning = function(w) {
+    call_hazard <- function(args, specification = hazard_learner) {
+        withCallingHandlers(do.call(specification$fun, args), warning = function(w) {
             learner_warnings <<- rbind(learner_warnings,
-                                      data.table::data.table(learner = hazard_learner$name,
+                                      data.table::data.table(learner = specification$name,
                                                              warning = conditionMessage(w)))
             invokeRestart("muffleWarning")
         })
-    }
-    fit_hazard <- function(training, prediction, outcome, covariates, time_variable, time_ref = NULL) {
-        formula <- continuous_nuisance_formula(outcome, covariates)
-        args <- c(list(character_formula = formula, data = training,
-                       intervened_data = prediction, time_variable = time_variable,
-                       time_ref = time_ref, save_fitted_objects = TRUE), hazard_learner$args)
-        result <- call_hazard(args)
-        continuous_nuisance_predictions(result, nrow(prediction), "Censoring", TRUE)
-        result
     }
     shared_censoring <- NULL
     if (has_censoring && censoring$time_varying) {
         shared_censoring <- continuous_fit_censoring(prepared_data, censoring, model_options, call_hazard)
         models$censoring$time_varying <- shared_censoring$fitted
+        if (needs_grid) grid$shared_censoring <- shared_censoring
     }
     # A marginal model is fitted once using baseline predictors. Its saved fit
     # is then used to predict survival across each person's event intervals.
@@ -114,6 +109,7 @@ continuous_propensity <- function(prepared_data, learner = "learn_glm",
         continuous_nuisance_predictions(marginal_fit, nrow(training), "Censoring", TRUE)
         marginal_formula <- formula
         models$censoring$marginal <- marginal_fit
+        if (needs_grid) grid$marginal_censoring <- list(fit = marginal_fit, formula = formula)
     }
 
     # At each event index, predict the probability of remaining uncensored
@@ -130,6 +126,7 @@ continuous_propensity <- function(prepared_data, learner = "learn_glm",
         if (!length(rows)) next
         for (column in survival_columns) {
             pooled_column <- startsWith(column, "survival_censoring_pooled_")
+            fit_grid_model <- needs_grid && (k < last_event || pooled_column)
             endpoint <- paste0(if (pooled_column) "time_pooled_" else "time_", k)
             event <- paste0(if (pooled_column) "event_pooled_" else "event_", k)
             prediction <- data.table::copy(data[rows])
@@ -147,22 +144,43 @@ continuous_propensity <- function(prepared_data, learner = "learn_glm",
                     reuse_fit = marginal_fit), hazard_learner$args))
                 probabilities <- continuous_nuisance_predictions(predicted, length(rows), "Censoring", TRUE)
             } else {
-                # Interevent hazards use elapsed times and history measured
-                # relative to the preceding event, as in contICEIPCW.
-                elapsed_start <- prediction[[paste0("time_", k - 1L)]]
-                data.table::set(prediction, j = endpoint, value = prediction[[endpoint]] - elapsed_start)
-                if (k > 1L) for (j in seq_len(k - 1L)) {
-                    past_time <- paste0("time_", j)
-                    data.table::set(prediction, j = past_time, value = elapsed_start - prediction[[past_time]])
-                }
+                prediction <- continuous_gap_history(prediction, k, endpoint)
                 covariates <- continuous_history(prediction, prepared_data$time_covariates,
                                                   prepared_data$baseline_covariates, "hazard", lag, k,
                                                   model_options = model_options,
                                                   outcome_name = paste0(censoring_name, "_", k))
                 outcome <- paste0('survival::Surv(`', endpoint, '`, `', event, '` == "C")')
-                fitted <- fit_hazard(prediction, prediction, outcome, covariates, endpoint)
-                probabilities <- fitted$predicted_values
+                formula <- continuous_nuisance_formula(outcome, covariates)
+                fitted <- call_hazard(c(list(character_formula = formula, data = prediction,
+                    intervened_data = prediction, time_variable = endpoint, time_ref = NULL,
+                    save_fitted_objects = TRUE), hazard_learner$args))
+                probabilities <- continuous_nuisance_predictions(fitted, nrow(prediction), "Censoring", TRUE)
                 models$censoring[[column]] <- fitted
+                if (fit_grid_model)
+                    grid$conditional_censoring[[endpoint]] <- list(formula = formula, fit = fitted,
+                                                                   training = prediction)
+            }
+            if (fit_grid_model) {
+                # Model the gap duration given the history at entry, including
+                # the original timing of earlier events.
+                if (!censoring$marginal && !censoring$time_varying) prediction <- data[rows]
+                start <- prediction[[paste0("time_", k - 1L)]]
+                data.table::set(prediction, j = endpoint, value = prediction[[endpoint]] - start)
+                covariates <- continuous_history(prediction, prepared_data$time_covariates,
+                    prepared_data$baseline_covariates, "event_survival", lag, k,
+                    model_options = model_options, outcome_name = paste0("S_", k))
+                outcome <- paste0('survival::Surv(`', endpoint, '`, `', event,
+                                  '` %in% c("A", "L", "Y", "D"))')
+                formula <- continuous_nuisance_formula(outcome, covariates)
+                # Adding S_k must not change the random draws used by the
+                # existing treatment, censoring and horizon regressions.
+                fitted <- withr::with_preserve_seed(call_hazard(c(list(
+                    character_formula = formula, data = prediction,
+                    intervened_data = prediction, time_variable = endpoint, time_ref = NULL,
+                    save_fitted_objects = TRUE), event_model$args), event_model))
+                continuous_nuisance_predictions(fitted, nrow(prediction), "Event survival")
+                grid$event[[endpoint]] <- list(formula = formula, fit = fitted,
+                                               training = prediction, rows = rows)
             }
             data.table::set(data, i = rows, j = column, value = as.numeric(probabilities))
         }
@@ -236,6 +254,7 @@ continuous_propensity <- function(prepared_data, learner = "learn_glm",
                 marginal_censoring_fit = marginal_fit, models = models,
                 diagnostics = list(learner_warnings = learner_warnings),
                 static_intervention = static_intervention)
+    if (needs_grid) out$grid_survival <- grid
     class(out) <- "debiased_prepared"
     out
 }
