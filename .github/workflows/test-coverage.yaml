@@ -10,7 +10,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      id-token: write
 
     steps:
       # Checkout repo
@@ -33,13 +32,17 @@ jobs:
           coverage <- covr::package_coverage(quiet = FALSE)
           print(coverage)
           covr::to_cobertura(coverage, filename = "cobertura.xml")
+          cat(
+            sprintf("### R package coverage\n\n**Line coverage:** %.2f%%\n",
+                    covr::percent_coverage(coverage)),
+            file = Sys.getenv("GITHUB_STEP_SUMMARY"),
+            append = TRUE
+          )
         shell: Rscript {0}
 
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v7
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v7
         with:
-          use_oidc: true
-          files: ./cobertura.xml
-          disable_search: true
-          # Codecov attempts a tokenless upload for pull requests from forks.
-          fail_ci_if_error: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
+          name: coverage-report
+          path: cobertura.xml
+          if-no-files-found: error
