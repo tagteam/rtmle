@@ -1,0 +1,181 @@
+* About
+
+The R-package =rtmle= implements a class of targeted minimum loss
+estimators for the analysis of longitudinal register data. The
+functionality is similar to the established R-package =ltmle= with the
+following additional features and focus points:
+
+- explicit handling of competing risks
+- polypharmacy (more than one treatment variable are controlled by the regimes of the target trial)
+- descriptive statistics
+- diagnostic tools (not to be confused with model goodness of fit)
+- subgroup analyses
+- support for glmnet and ranger
+- cheap bootstrap inference
+- cross-fitting 
+- parallel computing
+
+* Data structures  
+
+We consider register data in the following format.
+
+#+ATTR_LATEX: :options otherkeywords={}, deletekeywords={}
+#+BEGIN_SRC R  :results output verbatim drawer  :exports both  :session *R* :cache yes
+library(rtmle)
+library(prodlim)
+library(riskRegression)
+library(data.table)
+cohort <- simulate_cohort(
+    n = 7307,
+    seed = 347,
+    max_follow = 20,
+    baseline_variables = list(age = "normal",sex = "binomial","SBP" = "normal"),
+    intermediate_events = list(stroke = "Weibull",bleeding = "Weibull"),
+    visit_events = list("A" = "binomial","B" = "binomial"),
+    visit_measurements = list("changeSBP" = "normal"),
+    visit_schedule = list(mean = 1,sd = 0.1,skip = 0,minimum_time_between_visits = 1),
+    baseline_visit = list(A = "binomial",B = "binomial"),
+    absorbing_events = list(death = "Weibull",dropout = "Weibull"),
+    parameter_values = list(
+        intercept_sex=qlogis(0.4),
+        intercept_SBP=150,
+        intercept_age=50,
+        intercept_A=qlogis(0.3),
+        intercept_B=qlogis(0.15),
+        var_age=15,
+        var_SBP=20,
+        scale_death=0.01,
+        scale_stroke=0.01,
+        scale_bleeding=0.01,
+        scale_dropout=0.01,
+        effect_auto_A_A = 5,
+        effect_auto_B_B = 4,
+        effect_A_death = 0,
+        effect_B_death = -0.8,
+        effect_A_bleeding = 1.5,
+        effect_B_bleeding = 0.5,
+        effect_A_stroke = -0.5,
+        effect_B_stroke = 0,
+        effect_stroke_A = -2,
+        effect_stroke_B = -1,
+        effect_stroke_death = 2
+    )
+)
+ld <- register_format(cohort)
+#+END_SRC
+
+#+RESULTS[(2026-09-29 13:54:21) f348a529d3af56dc6e2c980f09520ee3e3c39d9b]:
+:results:
+riskRegression version 2026.03.11
+data.table 1.18.4 using 8 threads (see ?getDTthreads).  Latest news: r-datatable.com
+:end:
+
+* Example
+
+
+** Initializing
+
+
+#+ATTR_LATEX: :options otherkeywords={}, deletekeywords={}
+#+BEGIN_SRC R  :results output example :exports both  :session *R* :cache yes  
+x <- rtmle_init(time_grid = seq(0, 20, 4), name_id = "id",
+                name_outcome = "stroke", name_competing = "death",
+                name_censoring = "dropout", censored_label = "censored")
+x
+#+END_SRC
+
+#+RESULTS[(2026-09-29 13:54:21) 303dbbd13f4b9c4ae51d4e25e1924762b00dd4c8]:
+:results:
+
+Targeted minimum loss-based analysis of longitudinal data on a discretized time scale.
+
+Package version:     2026.9.21
+Subject id variable: id
+Outcome variable:    Y
+Censoring variable:  Censored
+Competing risk:      Dead
+Intervention nodes:  0, 1, ..., 9
+Minority threshold:  8
+Weight truncation:   (0,1)
+Prediction range:    (0.0001,0.9999)
+TODO: The object contains no baseline_data yet. Add them with the function rtmle::add_baseline_data
+TODO: The object contains no time varying data yet. Add them with rtmle::add_wide_data in discretized form or with rtmle::add_long_data followed by rtmle::discretize_data.
+TODO: The object contains no outcome data yet. Add them with rtmle::add_wide_data in discretized form or with rtmle::add_long_data followed by rtmle::discretize_data.
+TODO: The object contains no regimes. Add them with the function 'regime'.
+Prepared data:       n=0, p=-1
+TODO: Use the function 'model_formula' to initialize the formula for the nuisance parameter models.
+TODO: Use the function 'run_rtmle' to estimate the nuisance parameter models and the target parameter.
+Diagnostics:         No warnings (yet)
+:end:
+
+** Adding the data
+
+#+ATTR_LATEX: :options otherkeywords={}, deletekeywords={}
+#+BEGIN_SRC R  :results output verbatim drawer  :exports both  :session *R* :cache yes  
+x <- add_long_data(x,
+                   outcome_data = ld$timevar_data$stroke[!duplicated(id)], ## retain earliest stroke
+                   censored_data = ld$timevar_data$dropout,
+                   competing_data = ld$timevar_data$death,
+                   timevar_data = ld$timevar_data[c("A", "B", "changeSBP", "bleeding")])
+x <- add_baseline_data(x,data=ld$baseline_data)
+x
+#+END_SRC
+
+
+** Preparing the data
+
+#+ATTR_LATEX: :options otherkeywords={}, deletekeywords={}
+#+BEGIN_SRC R  :results output verbatim drawer  :exports both  :session *R* :cache yes  
+x <- discretize_data(x, start_followup_date = 0)
+x <- prepare_rtmle_data(x)
+x$prepared_data
+#+END_SRC
+
+
+** Defining the regimes
+
+#+ATTR_LATEX: :options otherkeywords={}, deletekeywords={}
+#+BEGIN_SRC R  :results output verbatim drawer  :exports both  :session *R* :cache yes  
+x <- regime(x,name = "always A",treatment_variables = "A",intervention = 1)
+x <- regime(x,name = "never A",treatment_variables = "A",intervention = 0)
+x
+#+END_SRC
+
+
+** Defining the targets
+
+#+ATTR_LATEX: :options otherkeywords={}, deletekeywords={}
+#+BEGIN_SRC R  :results output verbatim drawer  :exports both  :session *R* :cache yes  
+x <- target(x,name = "Outcome_risk",estimator = "tmle",regimes = c("always A","never A"))
+x <- model_formula(x)
+x
+#+END_SRC
+
+** Sequential regression with and without TMLE update step
+
+#+ATTR_LATEX: :options otherkeywords={}, deletekeywords={}
+#+BEGIN_SRC R  :results output verbatim drawer :exports both  :session *R* :cache yes
+x <- run_rtmle(x, learner = "learn_glm", time_horizon = 3)
+#+END_SRC
+
+#+ATTR_LATEX: :options otherkeywords={}, deletekeywords={}
+#+BEGIN_SRC R  :results output verbatim drawer :exports both  :session *R* :cache yes
+summary(x)
+#+END_SRC
+
+
+
+
+
+#+TITLE: Introduction to the R-package rtmle
+#+Author: Thomas Alexander Gerds
+#+Date: 
+#+EMAIL: tag@biostat.ku.dk
+#+LaTeX_CLASS: org-article
+#+OPTIONS: H:3 num:t toc:nil \n:nil @:t ::t |:t ^:t -:t f:t *:t <:t
+#+OPTIONS: TeX:t LaTeX:t skip:nil d:t todo:t pri:nil tags:not-in-toc author:nil
+#+LaTeX_HEADER:\usepackage{authblk}
+#+LaTeX_HEADER:\usepackage{natbib}
+#+LaTeX_HEADER:\author{Thomas Alexander Gerds}
+#+LaTeX_HEADER:\affil{Department of Biostatistics, University of Copenhagen}
+#+set: superman-org-export-target: html

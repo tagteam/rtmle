@@ -1,0 +1,363 @@
+* About
+
+The R-package =rtmle= implements a class of targeted minimum loss
+estimators for the analysis of longitudinal register data.  In this
+vignette, we detail how to use cheap subsampling with the =rtmle=
+package to obtain robust inference. In particular, one may want to
+supplement the analysis with cheap bootstrap confidence intervals if
+the asymptotic confidence intervals are suspiciously narrow or
+suspiciously wide. The standard confidence intervals are based on an
+estimate of the efficient influence function and prone to instability
+when the cumulative propensity/censoring probabilities are close to
+zero.  The LTMLE estimator is less vulnarable and hence bootstrap
+confidence intervals can be smaller than asymptotic confidence intervals.
+Furthermore, Cheap subsampling has been demonstrated to have
+good coverage readily with a few bootstrap data sets, see
+https://arxiv.org/abs/2501.10289. 
+
+* Cheap subsampling confidence intervals
+
+To obtain the cheap subsampling confidence intervals, we
+run the =cheap_bootstrap= function. The important parameters are the following:
+1. =B=: The number of bootstrap samples. 25
+   is a sensible default, but if one wants
+   to minimize Monte Carlo error
+   (e.g., random noise from bootstrapping),
+   one should set it higher.
+2. =M=: Size of the bootstrap samples which by default
+   is 63.2% of the number of rows of data.
+   
+Additional options can be found in the documentation for
+the =cheap_bootstrap= function in =R=.
+Later, we discuss how to determine these two important
+parameters, but for now we demonstrate how to use the function:
+
+#+ATTR_LATEX: :options otherkeywords={}, deletekeywords={}
+#+BEGIN_SRC R  :results output verbatim  :exports both  :session *R* :cache
+library(rtmle)
+data(rtmle_object)
+x <- rtmle_object
+x <- cheap_bootstrap(x,seeds = 19,B = 5,M = 0.632*NROW(x$prepared_data), time_horizon = 2)
+summary(x)
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+                Target   Regime Reference Time_horizon Estimator
+                <fctr>   <fctr>    <char>        <int>    <fctr>
+ 1:   Treatment effect Always_A                      1      tmle
+ 2:   Treatment effect Always_A                      2      tmle
+ 3:   Treatment effect Always_A                      3      tmle
+ 4:   Treatment effect Always_A                      4      tmle
+ 5:   Treatment effect  Never_A                      1      tmle
+ 6:   Treatment effect  Never_A                      2      tmle
+ 7:   Treatment effect  Never_A                      3      tmle
+ 8:   Treatment effect  Never_A                      4      tmle
+ 9:   Treatment effect  Never_A  Always_A            1      tmle
+10:   Treatment effect  Never_A  Always_A            2      tmle
+11:   Treatment effect  Never_A  Always_A            3      tmle
+12:   Treatment effect  Never_A  Always_A            4      tmle
+13:   Treatment effect  Never_A  Always_A            1      tmle
+14:   Treatment effect  Never_A  Always_A            2      tmle
+15:   Treatment effect  Never_A  Always_A            3      tmle
+16:   Treatment effect  Never_A  Always_A            4      tmle
+17: Treatment contrast Always_A                      1      tmle
+18: Treatment contrast Always_A                      2      tmle
+19: Treatment contrast Always_A                      3      tmle
+20: Treatment contrast Always_A                      4      tmle
+21: Treatment contrast Always_B                      1      tmle
+22: Treatment contrast Always_B                      2      tmle
+23: Treatment contrast Always_B                      3      tmle
+24: Treatment contrast Always_B                      4      tmle
+25: Treatment contrast Always_B  Always_A            1      tmle
+26: Treatment contrast Always_B  Always_A            2      tmle
+27: Treatment contrast Always_B  Always_A            3      tmle
+28: Treatment contrast Always_B  Always_A            4      tmle
+29: Treatment contrast Always_B  Always_A            1      tmle
+30: Treatment contrast Always_B  Always_A            2      tmle
+31: Treatment contrast Always_B  Always_A            3      tmle
+32: Treatment contrast Always_B  Always_A            4      tmle
+                Target   Regime Reference Time_horizon Estimator
+                <fctr>   <fctr>    <char>        <int>    <fctr>
+    Bootstrap_standard_error                Bootstrap_lower
+                       <num>                          <num>
+ 1:                       NA                             NA
+ 2:              0.013678491  0.013509594813119842060533671
+ 3:                       NA                             NA
+ 4:                       NA                             NA
+ 5:                       NA                             NA
+ 6:              0.022858489  0.000000000000000000000000000
+ 7:                       NA                             NA
+ 8:                       NA                             NA
+ 9:                      NaN                            NaN
+10:              0.019042822 -0.074430628449995012152484719
+11:                      NaN                            NaN
+12:                      NaN                            NaN
+13:                      NaN                            NaN
+14:             14.599802791  0.000000000000000000000347226
+15:                      NaN                            NaN
+16:                      NaN                            NaN
+17:                       NA                             NA
+18:              0.013678491  0.013509594813119842060533671
+19:                       NA                             NA
+20:                       NA                             NA
+21:                       NA                             NA
+22:              0.010116408  0.034581310794333422475865802
+23:                       NA                             NA
+24:                       NA                             NA
+25:                      NaN                            NaN
+26:              0.003375931  0.000544404778788622201179948
+27:                      NaN                            NaN
+28:                      NaN                            NaN
+29:                      NaN                            NaN
+30:              0.096982476  0.897922157061679437894952116
+31:                      NaN                            NaN
+32:                      NaN                            NaN
+    Bootstrap_standard_error                Bootstrap_lower
+                       <num>                          <num>
+                    Bootstrap_upper Target_parameter    Estimate   P_value
+                              <num>           <fctr>       <num>     <num>
+ 1:                              NA             Risk  0.02032449 1.0000000
+ 2:                      0.08383295             Risk  0.04867127 1.0000000
+ 3:                              NA             Risk  0.06431253 1.0000000
+ 4:                              NA             Risk  0.08040237 1.0000000
+ 5:                              NA             Risk  0.03837997 1.0000000
+ 6:                      0.09713959             Risk  0.03837997 1.0000000
+ 7:                              NA             Risk  0.03837997 1.0000000
+ 8:                              NA             Risk  0.05291926 1.0000000
+ 9:                             NaN  Risk_difference  0.01805548 0.3432478
+10:                      0.05384802  Risk_difference -0.01029130 0.6632384
+11:                             NaN  Risk_difference -0.02593256 0.3165196
+12:                             NaN  Risk_difference -0.02748311 0.3277554
+13:                             NaN       Risk_ratio  1.88836076 0.3566484
+14: 1790818352678786826240.00000000       Risk_ratio  0.78855486 0.6620740
+15:                             NaN       Risk_ratio  0.59677280 0.3146427
+16:                             NaN       Risk_ratio  0.65818037 0.3100648
+17:                              NA             Risk  0.02032449 1.0000000
+18:                      0.08383295             Risk  0.04867127 1.0000000
+19:                              NA             Risk  0.06431253 1.0000000
+20:                              NA             Risk  0.08040237 1.0000000
+21:                              NA             Risk  0.03316937 1.0000000
+22:                      0.08659142             Risk  0.06058637 1.0000000
+23:                              NA             Risk  0.09219764 1.0000000
+24:                              NA             Risk  0.11147182 1.0000000
+25:                             NaN  Risk_difference  0.01284488 0.2220754
+26:                      0.02328578  Risk_difference  0.01191509 0.4326744
+27:                             NaN  Risk_difference  0.02788511 0.2036415
+28:                             NaN  Risk_difference  0.03106945 0.1625586
+29:                             NaN       Risk_ratio  1.63199009 0.2327939
+30:                      1.72570151       Risk_ratio  1.24480747 0.4362226
+31:                             NaN       Risk_ratio  1.43358749 0.2099165
+32:                             NaN       Risk_ratio  1.38642453 0.1667133
+                    Bootstrap_upper Target_parameter    Estimate   P_value
+                              <num>           <fctr>       <num>     <num>
+    Standard_error        Lower      Upper Estimate (CI_95)
+             <num>        <num>      <num>           <char>
+ 1:     0.01151891  0.000000000 0.04290113    2.0 [0.0;4.3]
+ 2:     0.01809928  0.013197345 0.08414520    4.9 [1.3;8.4]
+ 3:     0.02097640  0.023199541 0.10542552   6.4 [2.3;10.5]
+ 4:     0.02350316  0.034337017 0.12646772   8.0 [3.4;12.6]
+ 5:     0.01527575  0.008440041 0.06831990    3.8 [0.8;6.8]
+ 6:     0.01527575  0.008440041 0.06831990    3.8 [0.8;6.8]
+ 7:     0.01527575  0.008440041 0.06831990    3.8 [0.8;6.8]
+ 8:     0.01536569  0.022803064 0.08303546    5.3 [2.3;8.3]
+ 9:     0.01905054 -0.019282887 0.05539385   1.8 [-1.9;5.5]
+10:     0.02363392 -0.056612927 0.03603032  -1.0 [-5.7;3.6]
+11:     0.02589021 -0.076676447 0.02481132  -2.6 [-7.7;2.5]
+12:     0.02808282 -0.082524415 0.02755820  -2.7 [-8.3;2.8]
+13:     0.68966111  0.488702275 7.29668456    1.9 [0.5;7.3]
+14:     0.54353611  0.271752241 2.28818266    0.8 [0.3;2.3]
+15:     0.51338084  0.218181771 1.63229852    0.6 [0.2;1.6]
+16:     0.41205986  0.293493807 1.47601548    0.7 [0.3;1.5]
+17:     0.01151891  0.000000000 0.04290113    2.0 [0.0;4.3]
+18:     0.01809928  0.013197345 0.08414520    4.9 [1.3;8.4]
+19:     0.02097640  0.023199541 0.10542552   6.4 [2.3;10.5]
+20:     0.02350316  0.034337017 0.12646772   8.0 [3.4;12.6]
+21:     0.01445558  0.004836941 0.06150179    3.3 [0.5;6.2]
+22:     0.01985637  0.021668605 0.09950413   6.1 [2.2;10.0]
+23:     0.02457169  0.044038021 0.14035726   9.2 [4.4;14.0]
+24:     0.02732374  0.057918262 0.16502537  11.1 [5.8;16.5]
+25:     0.01051972 -0.007773400 0.03346315   1.3 [-0.8;3.3]
+26:     0.01518575 -0.017848423 0.04167861   1.2 [-1.8;4.2]
+27:     0.02193527 -0.015107237 0.07087746   2.8 [-1.5;7.1]
+28:     0.02224780 -0.012535437 0.07467433   3.1 [-1.3;7.5]
+29:     0.41049546  0.729966868 3.64864731    1.6 [0.7;3.6]
+30:     0.28125397  0.717295940 2.16025986    1.2 [0.7;2.2]
+31:     0.28727185  0.816390532 2.51738965    1.4 [0.8;2.5]
+32:     0.23627292  0.872529989 2.20298787    1.4 [0.9;2.2]
+    Standard_error        Lower      Upper Estimate (CI_95)
+             <num>        <num>      <num>           <char>
+#+end_example
+* When to use cheap subsampling
+
+Because cheap subsampling makes the confidence intervals `doubly robust`,
+one should, in principle, always use it since cheap subsampling
+may provide inference when either the propensity score models
+or outcome regressions are misspecified (but not both),
+provided that nuisance parameter estimators converge sufficiently fast,
+such as when one uses parametric models.
+The influence curve-based confidence interval cannot provide
+one with this feature.
+Another feature is confidence intervals which are typically
+less sensitive to small estimated propensity scores.
+See for instance below:
+
+#+BEGIN_SRC R  :results output verbatim drawer  :exports both  :session *R* :cache yes
+  library(rtmle)
+  library(prodlim)
+  library(riskRegression)
+  library(data.table)
+  tau <- 2
+  set.seed(450)
+  ld <- simulate_long_data(n = 91,number_visits = 20,beta = list(age_on_A = -0.5, A_on_Y = -.2,A0_on_Y = -0.3,A0_on_A = 6),register_format = TRUE)
+  x <- rtmle_init(time_grid = seq(0,1500,30.45*12),name_id = "id",name_outcome = "Y",name_competing = "Dead",name_censoring = "Censored",censored_label = "censored")
+  x <- add_long_data(x,
+                     outcome_data=ld$outcome_data,
+                     censored_data=ld$censored_data,
+                     competing_data=ld$competing_data,
+                     timevar_data=ld$timevar_data)
+  x <- add_baseline_data(x,data=ld$baseline_data)
+  x <- discretize_data(x, start_followup_date = 0)
+  x <- regime(x, name = "Always_A", treatment_variables = "A", intervention = 1, verbose = FALSE)
+  x <- regime(x, name = "Never_A", treatment_variables = "A", intervention = 0, verbose = FALSE)
+  x <- prepare_rtmle_data(x)
+  x <- target(x,name = "Outcome_risk",estimator = "tmle",regimes = c("Always_A","Never_A"))
+  x <- model_formula(x)
+  # the overall analysis is stored as estimate$Main_analysis
+  x<-run_rtmle(x,learner = "learn_glmnet",time_horizon = tau,verbose = FALSE)
+  summary(x)
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+         Target   Regime Reference Target_parameter Time_horizon Estimator
+         <fctr>   <fctr>    <char>           <fctr>        <num>    <fctr>
+1: Outcome_risk Always_A                       Risk            2      tmle
+2: Outcome_risk  Never_A                       Risk            2      tmle
+3: Outcome_risk  Never_A  Always_A  Risk_difference            2      tmle
+4: Outcome_risk  Never_A  Always_A       Risk_ratio            2      tmle
+     Estimate   P_value Standard_error      Lower     Upper Estimate (CI_95)
+        <num>     <num>          <num>      <num>     <num>           <char>
+1: 0.34392873 1.0000000     0.07635972  0.1942664 0.4935910 34.4 [19.4;49.4]
+2: 0.41313752 1.0000000     0.08437790  0.2477599 0.5785152 41.3 [24.8;57.9]
+3: 0.06920879 0.5327749     0.11095141 -0.1482520 0.2866696 6.9 [-14.8;28.7]
+4: 1.20123004 0.5330264     0.29410997  0.6749620 2.1378294    1.2 [0.7;2.1]
+#+end_example
+
+#+BEGIN_SRC R  :results output verbatim  :exports both  :session *R* :cache 
+  # the bootstrap results are stored as estimate$Cheap_bootstrap
+  x <- cheap_bootstrap(x,B = 25,M = 0.632*NROW(x$prepared_data))
+  summary(x)
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+         Target   Regime Reference Time_horizon Estimator
+         <fctr>   <fctr>    <char>        <num>    <fctr>
+1: Outcome_risk Always_A                      2      tmle
+2: Outcome_risk  Never_A                      2      tmle
+3: Outcome_risk  Never_A  Always_A            2      tmle
+4: Outcome_risk  Never_A  Always_A            2      tmle
+   Bootstrap_standard_error Bootstrap_lower Bootstrap_upper Target_parameter
+                      <num>           <num>           <num>           <fctr>
+1:               0.08019809       0.1787577       0.5090998             Risk
+2:               0.06681171       0.2755362       0.5507388             Risk
+3:               0.07739217      -0.1421031       0.2805207  Risk_difference
+4:               0.22327287       0.6529341       2.2099530       Risk_ratio
+     Estimate   P_value Standard_error      Lower     Upper Estimate (CI_95)
+        <num>     <num>          <num>      <num>     <num>           <char>
+1: 0.34392873 1.0000000     0.07635972  0.1942664 0.4935910 34.4 [19.4;49.4]
+2: 0.41313752 1.0000000     0.08437790  0.2477599 0.5785152 41.3 [24.8;57.9]
+3: 0.06920879 0.5327749     0.11095141 -0.1482520 0.2866696 6.9 [-14.8;28.7]
+4: 1.20123004 0.5330264     0.29410997  0.6749620 2.1378294    1.2 [0.7;2.1]
+#+end_example
+Running cheap bootstrap gives a narrower confidence interval in this case,
+indicating perhaps that the estimated standard error was too high.
+
+* How to use cheap subsampling
+
+These choices should be considered only
+if you have _time_ to do them as they require
+more computation time.
+Otherwise, one should stick with the default choices
+of \(B\) and \(M\).
+
+** Selection of \(B\)
+
+Consider the example in the section `Cheap subsampling confidence intervals`.
+Here, we can inspect the values of the cheap subsampling confidence intervals
+using only \(b \leq B\) bootstrap samples in =x$estimate$Cheap_bootstrap$Main_analysis=.
+In the following code, we look at the cheap subsampling confidence intervals
+only for the treated people:
+
+#+BEGIN_SRC R  :results output verbatim  :exports both  :session *R* :cache 
+library(ggplot2)
+ggplot2::ggplot(
+    data = x$estimate$Cheap_bootstrap$Main_analysis[Target_parameter == "Risk" & Regime == "Always_A"],
+    ggplot2::aes(x = B, y = Main_Estimate)
+  ) +
+    ggplot2::geom_line() +
+    ggplot2::geom_ribbon(
+      alpha = 0.2,
+      ggplot2::aes(
+        ymin = Bootstrap_lower,
+        ymax = Bootstrap_upper
+      )
+    ) +
+    ggplot2::facet_wrap(~Time_horizon) + 
+    ggplot2::theme_bw() +
+    ggplot2::labs(x = "Number of bootstrap samples") +
+    ggplot2::ylab("")
+#+END_SRC
+
+To find out whether the values have stabilized, we add
+another 25 bootstrap samples as follows to get
+a total of 50 bootstrap samples.
+It looks fairly stable!
+
+#+BEGIN_SRC R  :results output verbatim  :exports both  :session *R* :cache
+x <- cheap_bootstrap(x,add =TRUE,B = 25,M = 0.632*NROW(x$prepared_data))
+ggplot2::ggplot(
+    data = x$estimate$Cheap_bootstrap$Main_analysis[Target_parameter == "Risk" & Regime == "Always_A"],
+    ggplot2::aes(x = B, y = Main_Estimate)
+  ) +
+    ggplot2::geom_line() +
+    ggplot2::geom_ribbon(
+      alpha = 0.2,
+      ggplot2::aes(
+        ymin = Bootstrap_lower,
+        ymax = Bootstrap_upper
+      )
+    ) +
+    ggplot2::facet_wrap(~Time_horizon) + 
+    ggplot2::theme_bw() +
+    ggplot2::labs(x = "Number of bootstrap samples") +
+    ggplot2::ylab("")
+#+END_SRC
+
+** Selection of \(M\)
+
+This question is more difficult to answer in practice.
+A sensible default is to use \(M = 0.632 n\),
+where \(n\) is the number of rows in the data.
+One should make sure that the confidence intervals
+do not change too much when changing \(M\),
+for instance along a grid of values, such as
+\(M \in \{0.5 n, 0.632, 0.75 n, 0.8 n\}\).
+If they do, one should consider increasing \(B\)
+which should reduce the Monte Carlo error
+and help stabilize the confidence intervals.
+
+#+TITLE: Using rtmle with the cheap subsampling confidence interval
+#+Author: Johan Sebastian Ohlendorff
+#+Date: 
+#+EMAIL: johan.ohlendorff@sund.ku.dk
+#+LaTeX_CLASS: org-article
+#+OPTIONS: H:3 num:t toc:nil \n:nil @:t ::t |:t ^:t -:t f:t *:t <:t
+#+OPTIONS: TeX:t LaTeX:t skip:nil d:t todo:t pri:nil tags:not-in-toc author:nil
+#+LaTeX_HEADER:\usepackage{authblk}
+#+LaTeX_HEADER:\usepackage{natbib}
+#+LaTeX_HEADER:\author{Johan Sebastian Ohlendorff}
+#+LaTeX_HEADER:\affil{Department of Biostatistics, University of Copenhagen}
+#+set: superman-org-export-target: html
+

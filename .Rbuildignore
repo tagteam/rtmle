@@ -18,6 +18,7 @@
 ^vignettes/.*\.aux$
 ^vignettes/.*\.log$
 ^vignettes/.*\.out$
+^draft-vignettes/*
 ^\.travis\.yml$
 ^.*\.Rproj$
 ^\.Rproj\.user$

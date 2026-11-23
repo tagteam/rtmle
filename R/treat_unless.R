@@ -237,7 +237,6 @@ treat_unless <- function(data,
         }
     )
     names(action_by_treatment) <- action_names
-
     available_names <- names(observed_data)
     has_contra_indication <- vapply(
         contra_indication,

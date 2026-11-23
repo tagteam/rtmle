@@ -3,7 +3,7 @@
 \name{protocol}
 \alias{protocol}
 \alias{regime}
-\title{Define a treatment regime for an emulated trial}
+\title{Define a treatment regime for an emulated target trial}
 \usage{
 protocol(
   x,
@@ -38,11 +38,14 @@ regime(
 
 \item{name}{Name of the regime.}
 
-\item{intervention}{A vector, data frame, tibble, or data table specifying
-the treatment values dictated by the regime. A vector contains 0/1
-values corresponding to \code{treatment_variables}; a data frame must
-contain factor treatment columns with two levels and a time column in
-longitudinal settings.}
+\item{intervention}{A vector or a data frame (tibble, data table) specifying
+factor columns with the treatment values dictated by the regime.
+A data frame must contain a time column with values that match all or a
+subset of \code{x$time_grid} and columns for all treatments that each contain factors
+with two levels allowing \code{NA} to mean no intervention on this variable at that time node.  
+The vector version is a shortcut to create the data.frame for regimes that are dictating
+the same value for all time nodes. It has 
+a single 0/1 value for each element of argument \code{treatment_variables}.}
 
 \item{expand}{Logical. If \code{FALSE} and \code{intervention} contains a
 time column, do not expand static interventions across time.}
@@ -94,9 +97,7 @@ Adds a named regime to an existing \code{rtmle} object. A regime
 defines treatment values at each time point during follow-up.
 }
 \details{
-A dynamic intervention function returns data only. The
-  \code{data} argument is the current prepared cohort or at-risk subset.
-  For a dynamic rule, \code{rtmle} constructs a binary adherence response
+For a dynamic rule, \code{rtmle} constructs a binary adherence response
   indicating whether the observed treatment agrees with the
   intervention-updated treatment. \code{adherence_model_strata} controls
   whether this response is modelled in one pooled model or in separate

@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Oct 17 2024 (09:26) 
 ## Version: 
-## Last-Updated: jun 18 2026 (08:52) 
+## Last-Updated: nov 18 2026 (14:20) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 613
+##     Update #: 616
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -205,7 +205,7 @@ intervention_probabilities <- function(x,
                     }
                     adherence <- as.integer(adherence)
                     adherence_name <- paste0(
-                        ".rtmle_adherence_",
+                        "rtmle_adherence_",
                         gsub("[^A-Za-z0-9_]", "_", task_variable)
                     )
                     current_data[[adherence_name]] <- adherence

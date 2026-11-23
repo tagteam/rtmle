@@ -2,9 +2,12 @@
 % Please edit documentation in R/cheap_bootstrap.R
 \name{cheap_bootstrap}
 \alias{cheap_bootstrap}
+\alias{cheap_bootstrap.rtmle}
 \title{Cheap subsampling bootstrap}
 \usage{
-cheap_bootstrap(
+cheap_bootstrap(x, ...)
+
+\method{cheap_bootstrap}{rtmle}(
   x,
   time_horizon,
   B = 20,
@@ -13,18 +16,20 @@ cheap_bootstrap(
   alpha = 0.05,
   add = TRUE,
   verbose = FALSE,
-  analyses = NULL,
   replace = FALSE,
+  targets = NULL,
   ...
 )
 }
 \arguments{
-\item{x}{An object of class \code{"rtmle"} with estimates produced by
+\item{x}{A discrete-time \code{rtmle} object with estimates produced by
 \code{\link{run_rtmle}}.}
+
+\item{...}{Additional arguments passed to \code{run_rtmle}.}
 
 \item{time_horizon}{The time horizon at which to calculate bootstrap
 confidence intervals. If this is a vector, the analysis is performed for
-each element.}
+each element. Requested horizons must have fitted estimates.}
 
 \item{B}{Number of bootstrap samples.}
 
@@ -37,18 +42,16 @@ randomness while drawing the bootstrap samples.}
 \item{alpha}{Significance level. Defaults to 0.05.}
 
 \item{add}{Logical. If \code{TRUE}, add new bootstrap results to existing
-bootstrap results.}
+bootstrap results for the same estimates and resampling settings.}
 
 \item{verbose}{Logical. Passed to \code{\link{run_rtmle}} to control
 verbosity.}
 
-\item{analyses}{Character vector specifying which analyses should receive
-cheap-bootstrap confidence intervals.}
-
 \item{replace}{Logical. Whether to sample with replacement. The default is
 \code{FALSE} and should usually not be changed.}
 
-\item{...}{Additional arguments passed to \code{run_rtmle}.}
+\item{targets}{Character vector specifying which fitted targets should receive
+cheap-bootstrap confidence intervals. Defaults to all fitted targets.}
 }
 \value{
 The modified \code{rtmle} object.
@@ -58,37 +61,16 @@ Cheap subsampling bootstrap confidence intervals
 }
 \details{
 Computes confidence intervals with the cheap subsampling bootstrap for a
-fitted \code{rtmle} object.
+fitted \code{rtmle} object. All estimates selected for bootstrapping must use the same estimation method.
 }
 \examples{
 \dontrun{
-tau <- 3
-data(simulated_cohort)
-ld <- register_format(simulated_cohort)
-x <- rtmle_init(time_grid = seq(0,20,4),name_id = "id",
-                name_outcome = "stroke",name_competing = "death",
-                name_censoring = "dropout",censored_label = "censored")
-x <- add_long_data(x,
-                   outcome_data=ld$timevar_data$stroke[!duplicated(id)],
-                   censored_data=ld$timevar_data$dropout,
-                   competing_data=ld$timevar_data$death,
-                   timevar_data=ld$timevar_data[c("bleeding","changeSBP","A","B")])
-x <- add_baseline_data(x,data=ld$baseline_data)
-x <- discretize_data(x,start_followup_date=0)
-x <- prepare_rtmle_data(x)
-x <- regime(x,name = "Always_A",
-                    intervention = data.frame(time=x$intervention_nodes,
-                                              "A" = factor("1",levels = c("0","1"))))
-x <- regime(x,name = "Never_A",
-                    intervention = data.frame(time=x$intervention_nodes,
-                                              "A" = factor("0",levels = c("0","1"))))
-x <- target(x,name = "Outcome_risk",
-                  estimator = "tmle",
-                  regimes = c("Always_A","Never_A"))
- x <- model_formula(x)
- x <- run_rtmle(x,learner = "learn_glm",time_horizon = 1:tau)
- x <- cheap_bootstrap(x,B=5,time_horizon=1:tau, M = 0.632*NROW(x$prepared_data))
- summary(x)
+data(rtmle_object)
+rtmle_object <- cheap_bootstrap(rtmle_object,
+                                 B=5,
+                                 time_horizon=1,
+                                 seeds=17)
+summary(rtmle_object)
 }
 
 }

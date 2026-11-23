@@ -22,35 +22,37 @@ data format and initialization of the =rtmle= object.
   library(rtmle)
   library(data.table)
 
-  ## Load data, put on register format, and fix date naming
+  ## Load data and put on register format, with A as exposure intervals
   data(simulated_cohort)
   ld <- register_format(simulated_cohort)
 
   ## Construct exposure-like format
-  setorder(ld$timevar_data$A, id, date)
-  ld$timevar_data$exposure <- ld$timevar_data$A[value == 1,
-    .(start_date = first(date), end_date = last(date)),
-    by = .(id, run = rleid(value))
-  ][, run := NULL]
+  treatment <- copy(ld$timevar_data$A)
+  setorder(treatment, id, date)
+  treatment[, run := rleid(value), by = id]
+  ld$timevar_data$exposure <- treatment[value == 1,
+                                        .(start_date = first(date), end_date = last(date)),
+                                        by = .(id, run)
+                                        ][, run := NULL]
 
   ## Initialize rtmle object
   x <- rtmle_init(
-      time_grid = seq(0, 20, 4),
-      name_id = "id",
-      name_outcome = "stroke",
-      name_competing = "death",
-      name_censoring = "dropout",
-      censored_label = "censored"
+    time_grid = seq(0, 20, 4),
+    name_id = "id",
+    name_outcome = "stroke",
+    name_competing = "death",
+    name_censoring = "dropout",
+    censored_label = "censored"
   )
 
   ## Add baseline and time-varying data to the rtmle object
   x <- add_baseline_data(x, data = ld$baseline_data)
   x <- add_long_data(
-      x,
-      outcome_data = ld$timevar_data$stroke[!duplicated(id)],
-      censored_data = ld$timevar_data$dropout,
-      competing_data = ld$timevar_data$death,
-      timevar_data = ld$timevar_data[c("bleeding", "changeSBP", "exposure")]
+    x,
+    outcome_data = ld$timevar_data$stroke[!duplicated(id)],
+    censored_data = ld$timevar_data$dropout,
+    competing_data = ld$timevar_data$death,
+    timevar_data = ld$timevar_data[c("bleeding", "changeSBP", "exposure")]
   )
 
   x
@@ -270,11 +272,13 @@ same names as the examples given at the beginning of this section.
   - =measurement= :: Construct univariate summary from the
     observations in the preceding interval using specified function
     that can be supplied with the =fun_aggregate= argument. The
-    default function is to use the last value. To use, e.g., the mean
+    default function is to use the last value. To use, e.g., the median
     instead, we can do
 
     #+BEGIN_SRC R
-      x <- discretize_data(x, changeSBP_mean=list(variable = "changeSBP", method="measurement",fun_aggregate="mean"))
+      x <- discretize_data(x, changeSBP_median = list(
+        variable = "changeSBP", method = "measurement", fun_aggregate = "median"
+      ))
     #+END_SRC
 
     #+RESULTS:
@@ -293,19 +297,18 @@ same names as the examples given at the beginning of this section.
   - =exposure_percent= :: The percentage of the time that the subject
     has been exposed in the preceding interval.
     
-  We illustrate the methods here, using ~threshold=2~. As the grid is
+  We illustrate the methods here, using ~threshold=0.5~. As the grid is
   equidistant with intervals equal to 4, this mean that wide variables
   =exposure_threshold_0=, =exposure_threshold_1=, ..., indicate
   whether the subject have been exposed at least half of the preceding
   interval.
 
   #+BEGIN_SRC R
-    x <- discretize_data(x,exposure_threshold = list(variable = "exposure", method = "has_exposure", threshold = 2))
     x <- discretize_data(x,
 		      exposure_any = list(variable = "exposure", method = "any_exposure"),
 		      exposure_percent = list(variable = "exposure", method = "exposure_percent"),
 		      exposure_time = list(variable = "exposure", method = "exposure_time"),
-		      exposure_threshold = list(variable = "exposure", method = "has_exposure", threshold = 2))
+		      exposure_threshold = list(variable = "exposure", method = "has_exposure", threshold = 0.5))
     lapply(x$data$timevar_data[paste0("exposure_", c("any", "percent", "time", "threshold"))], head)
   #+END_SRC
 

@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jun 16 2025 (08:58) 
 ## Version: 
-## Last-Updated: sep 19 2026 (07:34)
+## Last-Updated: okt  7 2026 (06:53) 
 ##           By: Thomas Alexander Gerds
-##     Update #: 168
+##     Update #: 171
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -215,15 +215,7 @@ model_formula <- function(x,
                 adherence_model_strata <-
                     intervention$adherence_model_strata
                 dynamic_adherence <- intervention$dynamic_adherence
-                regime_factorization <-
-                    intervention$multiple_treatment_factorization
-                validate_multiple_treatment_factorization(
-                    regime_factorization,
-                    paste0(
-                        "`multiple_treatment_factorization` for regime '",
-                        regime_name, "'"
-                    )
-                )
+                regime_factorization <- intervention$multiple_treatment_factorization
                 list(values = vals,
                      adherence_model_strata = adherence_model_strata,
                      dynamic_adherence = dynamic_adherence,
@@ -298,7 +290,7 @@ model_formula <- function(x,
                             adherence_model_strata
                         {
                             adherence_name <- paste0(
-                                ".rtmle_adherence_",
+                                "rtmle_adherence_",
                                 gsub(
                                     "[^A-Za-z0-9_]",
                                     "_",
@@ -335,7 +327,7 @@ model_formula <- function(x,
                                 adherence_model_strata
                             {
                                 adherence_name <- paste0(
-                                    ".rtmle_adherence_",
+                                    "rtmle_adherence_",
                                     gsub(
                                         "[^A-Za-z0-9_]",
                                         "_",

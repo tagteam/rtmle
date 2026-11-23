@@ -20,14 +20,14 @@ The object augmented with a new element called
 }
 \description{
 Prepare an \code{rtmle} object for estimation by checking the supplied data
-and storing the analysis data in \code{x$prepared_data}.
+and storing the wide-format analysis data in \code{x$prepared_data}.
 }
 \details{
-As part of this preparation, the function identifies intervention variables
-(\code{A_variables}), time-dependent covariates (\code{B_variables}),
-outcome variables (\code{outcome_variables}), competing-risk variables
-(\code{competing_variables}), and censoring variables
-(\code{censoring_variables}), and stores those names in the object.
+As part of this preparation, the function 
+stores the names of the baseline covariates as \code{x$names$name_baseline_covariates},
+the names of the time-dependent covariates (including treatment/intervention variables)
+as \code{x$names$name_baseline_covariates}, and the names of constant variables (if any)
+as \code{x$names$name_constant_covariates}.
 }
 \examples{
 data(simulated_cohort)

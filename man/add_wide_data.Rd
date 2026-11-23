@@ -29,27 +29,47 @@ Adds one-row-per-subject data in wide format to an existing \code{rtmle}
 object.
 }
 \examples{
-# Create wide-format data from simulated long-format data.
-data(simulated_cohort)
-ld <- register_format(simulated_cohort)
-x <- rtmle_init(time_grid = seq(0,20,4), name_id = "id",
-                name_outcome = "stroke", name_competing = "death",
-                name_censoring = "dropout",censored_label = "censored")
-x <- add_long_data(x,
-                   outcome_data=ld$timevar_data$stroke[!duplicated(id)],
-                   censored_data=ld$timevar_data$dropout,
-                   competing_data=ld$timevar_data$death,
-                   timevar_data=ld$timevar_data[c("bleeding","changeSBP","A","B")])
-x <- add_baseline_data(x,data=ld$baseline_data)
-x <- discretize_data(x,start_followup_date=0)
-outcome_data <- x$data$outcome_data
-timevar_data <- x$data$timevar_data
-x <- rtmle_init(time_grid = seq(0,20,4), name_id = "id",
-                name_outcome = "stroke", name_competing = "death",
-                name_censoring = "dropout",censored_label = "censored")
-x <- add_baseline_data(x,data=ld$baseline_data)
-x <- add_wide_data(x,outcome_data=outcome_data,timevar_data=timevar_data)
+# Example data: Three subjects are observed at the time nodes 1, 2, and 3.
+# Treatment and covariate values are available at the preceding nodes
+# 0, 1, and 2.
+outcome_long <- data.frame(
+    id = rep(1:3, each = 3),
+    time = rep(1:3, times = 3),
+    Y = c(0, 1, 1,
+          0, 0, 1,
+          0, 0, 0)
+)
+treatment_long <- data.frame(
+    id = rep(1:3, each = 3),
+    time = rep(0:2, times = 3),
+    A = c(0, 1, 1,
+          1, 1, 0,
+          0, 0, 1)
+)
+covariate_long <- data.frame(
+    id = rep(1:3, each = 3),
+    time = rep(0:2, times = 3),
+    L = c(10, 12, 11,
+          8, 9, 10,
+          15, 14, 13)
+)
 
+# Reshape each long-format table directly to the names expected by rtmle.
+outcome_data <- reshape(outcome_long, idvar = "id", timevar = "time",
+                        direction = "wide", sep = "_")
+treatment_data <- reshape(treatment_long, idvar = "id", timevar = "time",
+                          direction = "wide", sep = "_")
+covariate_data <- reshape(covariate_long, idvar = "id", timevar = "time",
+                          direction = "wide", sep = "_")
+
+x <- rtmle_init(time_grid = 0:3, name_id = "id", name_outcome = "Y")
+x <- add_wide_data(
+    x,
+    outcome_data = outcome_data,
+    timevar_data = list(A = treatment_data, L = covariate_data)
+)
+x$data$outcome_data
+x$data$timevar_data
 }
 \seealso{
 \code{\link{add_baseline_data}}, \code{\link{add_long_data}},

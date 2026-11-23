@@ -1,8 +1,6 @@
 library(testthat)
 library(data.table)
 library(rtmle)
-
-
 make_calendar_date_object <- function() {
     starts <- as.Date(c("2020-01-01", "2020-01-03", "2020-01-05"))
     x <- rtmle_init(
@@ -181,19 +179,55 @@ make_baseline_lookback_object <- function() {
 }
 
 
+test_that("measurement averages within intervals and carries values forward", {
+    grid <- data.table(
+        id = rep(1:2, each = 3),
+        interval = rep(0:2, times = 2),
+        start_interval = rep(c(0, 1, 2), times = 2),
+        end_interval = rep(c(1, 2, 3), times = 2)
+    )
+    measurement_data <- data.table(
+        id = c(1, 1, 1, 2),
+        date = c(0.2, 0.8, 1.5, 2.5),
+        value = c(10, 20, 30, 50)
+    )
+
+    measurement <- map_data_to_grid(
+        method = "measurement",
+        data = measurement_data,
+        grid = grid,
+        name = "L",
+        id = "id"
+    )
+    expect_equal(measurement$L_0, c(15, NA_real_))
+    expect_equal(measurement$L_1, c(30, NA_real_))
+    expect_equal(measurement$L_2, c(30, 50))
+
+    last_measurement <- map_data_to_grid(
+        method = "measurement",
+        data = measurement_data,
+        grid = grid,
+        name = "L",
+        id = "id",
+        fun_aggregate = "last"
+    )
+    expect_equal(last_measurement$L_0, c(20, NA_real_))
+})
+
+
 test_that("baseline_lookback extends only the time-varying grid", {
     x_without_lookback <- discretize_data(
         make_baseline_lookback_object(),
         bleeding = "event_interval",
         exposure = "any_exposure",
-        measurement = list(method = "measurement", fun_aggregate = "mean"),
+        measurement = "measurement",
         verbose = FALSE
     )
     x_with_lookback <- discretize_data(
         make_baseline_lookback_object(),
         bleeding = "event_interval",
         exposure = "any_exposure",
-        measurement = list(method = "measurement", fun_aggregate = "mean"),
+        measurement = "measurement",
         baseline_lookback = 10,
         verbose = FALSE
     )
@@ -216,9 +250,9 @@ test_that("baseline_lookback extends only the time-varying grid", {
         x_with_lookback$data$timevar_data$exposure$exposure_0,
         c(1, 0)
     )
-    expect_false(
-        "measurement_0" %in%
-            names(x_without_lookback$data$timevar_data$measurement)
+    expect_equal(
+        x_without_lookback$data$timevar_data$measurement$measurement_0,
+        c(NA_real_, NA_real_)
     )
     expect_equal(
         x_with_lookback$data$timevar_data$measurement$measurement_0,
@@ -229,6 +263,30 @@ test_that("baseline_lookback extends only the time-varying grid", {
     expect_identical(
         x_with_lookback$data$outcome_data,
         x_without_lookback$data$outcome_data
+    )
+})
+
+
+test_that("baseline_lookback can be specific to each output variable", {
+    x_mapping_default <- discretize_data(
+        make_baseline_lookback_object(),
+        bleeding = list(method = "event_interval", baseline_lookback = 0),
+        exposure = list(method = "any_exposure", baseline_lookback = 10),
+        measurement = "measurement",
+        baseline_lookback = 10,
+        verbose = FALSE
+    )
+    expect_equal(
+        x_mapping_default$data$timevar_data$bleeding$bleeding_0,
+        c(0, 0)
+    )
+    expect_equal(
+        x_mapping_default$data$timevar_data$exposure$exposure_0,
+        c(1, 0)
+    )
+    expect_equal(
+        x_mapping_default$data$timevar_data$measurement$measurement_0,
+        c(10, NA_real_)
     )
 })
 
@@ -246,6 +304,18 @@ test_that("baseline_lookback validates its value", {
     expect_error(
         discretize_data(x, baseline_lookback = "10", verbose = FALSE),
         "single finite non-negative numeric"
+    )
+    expect_error(
+        discretize_data(x, baseline_lookback = c(bleeding = 10, exposure = 20), verbose = FALSE),
+        "single finite non-negative numeric"
+    )
+    expect_error(
+        discretize_data(
+            x,
+            bleeding = list(method = "event_interval", baseline_lookback = -1),
+            verbose = FALSE
+        ),
+        "Mapping 'bleeding' baseline_lookback"
     )
 })
 

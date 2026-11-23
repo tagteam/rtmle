@@ -2,7 +2,7 @@
 % Please edit documentation in R/discretize_data.R
 \name{discretize_data}
 \alias{discretize_data}
-\title{Discretize longitudinal data onto a discrete time grid}
+\title{Discretize longitudinal data onto a time grid}
 \usage{
 discretize_data(
   x,
@@ -18,44 +18,102 @@ discretize_data(
 with \code{\link{add_long_data}} and baseline data added with
 \code{\link{add_baseline_data}}.}
 
-\item{start_followup_date}{Character scalar naming the Date-valued baseline
+\item{start_followup_date}{Name of a Date variable in the baseline data
 column that contains each subject's follow-up start. That date is
 subtracted from outcome, competing-risk, censoring, and time-varying
 covariate dates. Use \code{0} (or omit the argument) when all long-format
 dates are already durations on the time-on-study scale. If long-format
-dates are \code{Date} objects, this argument must name a \code{Date} column;
-the long-format date columns are converted to numeric days since each
-subject's start.}
+dates are \code{Date} objects, this argument must name a \code{Date} column.
+The long-format date columns are converted to numeric days since each
+subject's start of followup date.}
 
-\item{mappings}{Named list of instructions for how to map long-format variables
-  onto the discrete time scale. Names of \code{mappings} are output variable
-  names. Each mapping may optionally contain \code{variable}, naming the
-  source variable in \code{x$long_data$timevar_data}. If omitted, the source
-  variable is assumed to have
-  the same name as the output variable.
+\item{mappings}{Named list of instructions for how to map long-format source variables stored in
+  \code{x$long_data$timevar_data}
+  onto the discrete time scale. The discretized variables are stored in \code{x$data$timevar_data}.
+The mappings/instructions can also be communicated through 
+  \code{...}, in the sense that the following are equivalent:
+  \code{discretize_data(x, "bloodpressure"=list(method="measurement",fun_aggregate="mean"),
+                           "AF"="event")}
+  \code{discretize_data(x, mappings=list(
+                            "bloodpressure"=list(method="measurement",fun_aggregate="mean"),
+                           "AF"="event"))}
+  A mapping can be a character string naming a built-in
+  method (see below) or a named list containing \code{method} and method-specific arguments.
+  Each mapping may optionally contain \code{variable}, naming the source
+  variable in \code{x$long_data$timevar_data}, see @examples. If omitted, the name of the source variable
+  is assumed to be the same as the name of output variable.
+  Names of \code{mappings} become output variable names in wide format.
+  A mapping can include \code{baseline_lookback} to override the
+  function-level default for that output variable.
 
-  Built-in methods include \code{"measurement"}, \code{"locf"},
-  \code{"event"}, \code{"event_interval"}, \code{"any_exposure"},
-  \code{"has_exposure"}, \code{"exposure_time"}, and
-  \code{"exposure_percent"}. For exposure methods,
-  \code{baseline_exposure_start} controls whether an exposure that starts
-  exactly at time zero is assigned value 1 in interval 0. It defaults to
-  \code{TRUE} for compatibility with the existing treatment handling; set
-  it to \code{FALSE} when interval-0 exposure should reflect only measured
-  overlap (including a baseline lookback interval). For example, use
-  \code{A = list(method = "exposure_percent",
-  baseline_exposure_start = TRUE)} for a treatment variable.}
+  The built-in methods are:
+  \describe{
+    \item{\code{"measurement"}}{Summarizes measurements within the intervals.
+      By default, multiple measurements in an interval are averaged and in intervals
+      with no measurement the value of the previous interval is carried forward. 
+      Use \code{fun_aggregate}, for example, to calculate a median instead of the average.
+      The source data require
+      \code{date} and \code{value} columns.}
+    \item{\code{"locf"}}{Carries the last observed value forward to each
+      grid time (last observation carried forward). The source data require
+      \code{date} and \code{value} columns.}
+    \item{\code{"event"}}{Creates an indicator that is 1 after the event
+      has occurred and 0 before it. The source data require a \code{date}
+      column.}
+    \item{\code{"time_since_event"}}{Returns the time elapsed since the
+      most recent event at each grid time. The source data require a \code{date}
+      column.}
+    \item{\code{"chronic_disease"}}{Categorizes the time since the most
+      recent event as \code{"never"}, \code{"acute"}, or \code{"chronic"};
+      the built-in cut points are 0 and approximately six months (using
+      30.45 days per month). The source data require a \code{date}
+      column.
+}
+    \item{\code{"event_interval"}}{Creates an indicator that an event
+      occurred within the corresponding grid interval, rather than an
+      indicator carried forward after the first event.}
+    \item{\code{"periodic_event"}}{Alias for \code{"event_interval"}}
+    \item{\code{"any_exposure"}}{Calculates the overlap between exposure intervals
+      and intervals on the discrete time grid. Creates an indicator that exposure
+      overlaps the grid interval by more than \code{threshold} time units.
+      The threshold must be between 0 and 1. The default threshold is 0, so any
+      positive overlap counts as
+      exposure. When \code{baseline_exposure_start}
+      is set to \code{TRUE} then the wide format variable at time zero takes value 1
+      if a \code{start_date} equals time zero. This is interpreted as a baseline treatment assignment.
+      The source data require a \code{start_date} and a \code{end_date} column.}
+    \item{\code{"has_exposure"}}{Same as \code{any_exposure} but with default threshold 0.5.}
+    \item{\code{"exposure_time"}}{Returns the total amount of time for
+      which the exposure overlaps each grid interval. When \code{baseline_exposure_start}
+      is set to \code{TRUE} then the wide format variable at time zero takes value 1
+      if a \code{start_date} equals time zero. This is interpreted as a baseline treatment assignment.
+      The source data require a \code{start_date} and a \code{end_date}
+      column.}
+    \item{\code{"exposure_percent"}}{Returns the fraction of each grid
+      interval covered by the exposure. When \code{baseline_exposure_start}
+      is set to \code{TRUE} then the wide format variable at time zero takes value 1
+      if a \code{start_date} equals time zero. This is interpreted as a baseline treatment assignment.
+      The source data require a \code{start_date} and a \code{end_date}
+      column.}
+  }
+
+  With a positive value for \code{baseline_lookback} the time grid is expanded by 
+  the interval \code{[-baseline_lookback, 0]} for the calculation of exposure at time 0.}
 
 \item{verbose}{Logical. If \code{FALSE}, suppress informational messages
 generated while checking date formats.}
 
-\item{baseline_lookback}{Non-negative numeric length of the baseline
+\item{baseline_lookback}{Non-negative numeric scalar giving the default
 lookback interval, on the same time scale as \code{x$time_grid_scale}.
+This is the default for every time-varying output mapping. A scalar
+applies to every mapping. A mapping-specific
+\code{baseline_lookback} overrides this default.
 When positive, the first time-varying-covariate interval is changed from
-\code{[0, 0]} to \code{[-baseline_lookback, 0]}. This interval is used only
-for time-varying covariates; outcome, censoring, and competing-risk data
-continue to use the original follow-up grid. The default is \code{0}, which
-preserves the usual grid.}
+\code{[0, 0]} to
+\code{[-baseline_lookback, 0]}. This interval is used only for
+time-varying covariates; outcome, censoring, and competing-risk data
+continue to use the original follow-up grid. The default is \code{0},
+which preserves the usual grid.}
 
 \item{...}{alternative way to specify elements of \code{mappings}.}
 }
@@ -78,32 +136,38 @@ long-format variable. Calendar dates are converted to numeric time since
 subject-specific follow-up start before the discrete grid is constructed.
 If \code{baseline_lookback} is positive, observations between
 \code{-baseline_lookback} and zero can contribute to the interval-zero
-time-varying covariate values.
+time-varying covariate values. With variable-specific lookbacks, this
+extension is applied separately for each output mapping; a lookback in an
+individual mapping overrides the function-level default.
 The conversion is recorded in the object so that repeated calls do not
-subtract the start date a second time; supplying new data with
+subtract the start date a second time. Once the outcome, censoring, and
+competing-risk histories have been discretized, repeated calls reuse them
+and only update the time-varying data; supplying new data with
 \code{\link{add_long_data}} resets this state.
 }
 \examples{
-set.seed(17)
 x <- rtmle_init(time_grid = 0:2,name_id = "id",
                 name_outcome = "Y",name_competing = "Dead",
                 name_censoring = "Censored",censored_label = "censored")
-x <- add_long_data(x,outcome_data=data.frame(id=c(1,3,5),date=c(0.1,1.3,1.9)),
-                     censored_data=data.frame(id=c(2,6),date=c(0.5,1.5)),
-                    competing_data=data.frame(id=c(4,7),date=c(1.1,1.8)),
-                    timevar_data=list(A=data.frame(id=c(1,1,1,2,2,3,4,4),
-                                           start_date=c(0,.3,1.3,0,1,0,1.1,1.5),
-                                             end_date=c(.3,.6,2,1,2,.5,1.4,1.9)),
-                                      V=data.frame(id=c(1,1,1,2,2,3,4,4),
-                                           start_date=c(0,.5,1,0,1.3,0,0,0.4),
-                                             end_date=c(.3,.8,1.8,.5,1.4,2,.4,1.6)),
-                                      L=data.frame(id=c(1,2,2,2,3,4,5,6,7,7),
-                                                 date=c(0,0,.25,.75,0,0,0,0,0,1.4),
-                                                value=c(4,35,27.7,28.2,8.8,2,3.1,7,7.7,8.4))))
+x <- add_long_data(
+    x,
+    outcome_data=data.frame(id=c(1,3,5),date=c(0.1,1.3,1.9)),
+    censored_data=data.frame(id=c(2,6),date=c(0.5,1.5)),
+    competing_data=data.frame(id=c(4,7),date=c(1.1,1.8)),
+    timevar_data=list(A=data.frame(id=c(1,1,1,2,2,3,4,4),
+                                   start_date=c(0,.3,1.3,0,1,0,1.1,1.5),
+                                   end_date=c(.3,.6,2,1,2,.5,1.4,1.9)),
+                      V=data.frame(id=c(1,1,1,2,2,3,4,4),
+                                   start_date=c(0,.5,1,0,1.3,0,0,0.4),
+                                   end_date=c(.3,.8,1.8,.5,1.4,2,.4,1.6)),
+                      L=data.frame(id=c(1,2,2,2,3,4,5,6,7,7),
+                                   date=c(0,0,.25,.75,0,0,0,0,0,1.4),
+                                   value=c(4,35,27.7,28.2,8.8,2,3.1,7,7.7,8.4))))
 x <- add_baseline_data(x,data=data.frame(id=1:7,age=40:46))
-# When the time scale is days, include a 180-day pre-baseline interval
-# for interval-zero time-varying covariates.
-x <- discretize_data(x,L=list(method="locf"),A=list(method="exposure_percent"),
+# When the time scale is days, use a 180-day default, with a shorter
+# mapping-specific lookback for L.
+x <- discretize_data(x,L=list(method="locf", baseline_lookback=30),
+                A=list(method="exposure_percent"),
                 baseline_lookback=180)
 x$data$timevar_data$L
 x$data$timevar_data$V

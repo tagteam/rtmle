@@ -187,6 +187,8 @@ plot_model_coefficients <- function(x,
     if (is.numeric(times)){
         times <- paste0("time_",times)
         selected_times <- intersect(time_names, times)
+    }else if (is.character(times)) {
+        selected_times <- intersect(time_names, times)
     }else{
         selected_times <- paste0("time_",x$time_grid[x$time_grid<time_horizon])
     }
@@ -195,8 +197,10 @@ plot_model_coefficients <- function(x,
     # ---- extract long table ----
     df <- coef(x)
     df[,nth_time := suppressWarnings(as.integer(sub("^time_", "", time)))]
-    # labels for the discrete time scale
-    df[,time_label := factor(nth_time,)]
+    # Labels and ordering must use the numeric node index.  Ordering the
+    # original `time_*` strings would put time_10 before time_2.
+    time_levels <- sort(unique(df$nth_time[!is.na(df$nth_time)]))
+    df[,time_label := factor(nth_time, levels = time_levels)]
     ## df[,time_label := factor(
             ## nth_time,
             ## levels = unique(nth_time),
@@ -268,10 +272,10 @@ plot_model_coefficients <- function(x,
 
     # Build the x "outcome variable" label
     # (includes node so Placebo vs Lira stays distinct)
-    df[,x_cat := paste0("time_",time_label," | ",node," | ",outcome)]
+    df[,x_cat := paste0("time_",nth_time," | ",node," | ",outcome)]
 
     # Determine ordering for x_cat
-    setkey(df,time,node,outcome)
+    data.table::setorderv(df, c("nth_time", "node", "outcome"))
     x_levels <- unique(df$x_cat)
     df[,x_cat := factor(x_cat, levels = x_levels)]
     # Manhattan-like numeric x index (better for huge axes)

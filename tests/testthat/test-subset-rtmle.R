@@ -47,9 +47,9 @@ test_that("run rtmle on a subset",{
     x1 <- target(x1,name = "Test Outcome_risk",estimator = "tmle",regimes = c("Never_A"))
     x1 <- model_formula(x1)
     x1 <- run_rtmle(x1,learner = "learn_glmnet",time_horizon = 2,verbose = 0L)
-    x79 <- run_rtmle(x,learner = "learn_glmnet",time_horizon = 2,subsets = list(S = list(label = "S79",id = 1:79)),verbose = 0L,refit = TRUE)
-    data.table::setattr(x79$estimate$S79,"IC",NULL)
-    expect_equal(x1$estimate$Main_analysis,x79$estimate$S79)
+    x79 <- run_rtmle(subset(x, ids = 1:79), learner = "learn_glmnet", time_horizon = 2)
+    expect_equal(x1$estimate$Main_analysis, x79$estimate$Main_analysis)
+    expect_equal(x1$IC, x79$IC)
 })
 
 test_that("stratified analyses",
@@ -66,21 +66,11 @@ test_that("stratified analyses",
     x <- target(x,name = "Outcome_risk",estimator = "tmle",regimes = c("Always_A","Never_A"))
     x <- model_formula(x)
     x <- run_rtmle(x,learner = "learn_glmnet",time_horizon = 1:2,verbose = 0L)
-    # stratified analyses
-    sex_strata <- list(list(label="Sex",variable="Sex",level="Female",id=x$prepared_data[sex==0,id]),
-                       list(label="Sex",variable="Sex",level="Male",id=x$prepared_data[sex==1,id]))
-    x <- run_rtmle(x,learner = "learn_glmnet",time_horizon = 2,verbose=FALSE,subsets=sex_strata)
-    expect_output(print(x$estimate$Sex))
-    expect_setequal(as.character(unique(x$estimate$Sex$Sex)), c("Female","Male"))
-    main_summary <- summary(x, analysis = "Main_analysis")
-    subset_summary <- summary(x, analysis = "Sex")
-    combined_summary <- summary(x)
-    expect_equal(nrow(combined_summary), nrow(main_summary) + nrow(subset_summary))
-    expect_true("Sex" %in% names(combined_summary))
-    expect_setequal(
-        as.character(unique(stats::na.omit(combined_summary$Sex))),
-        c("Female", "Male")
-    )
+    strata <- list(Female = subset(x, sex == 0), Male = subset(x, sex == 1))
+    fits <- lapply(strata, run_rtmle, learner = "learn_glmnet", time_horizon = 2)
+    combined_summary <- data.table::rbindlist(lapply(fits, summary), idcol = "Sex")
+    expect_setequal(unique(combined_summary$Sex), c("Female", "Male"))
+    expect_false("Sex" %in% names(summary(x)))
 })
 
 ######################################################################

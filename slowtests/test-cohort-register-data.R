@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: maj  1 2026 (09:51) 
 ## Version: 
-## Last-Updated: sep  1 2026 (13:58) 
-##           By: Thomas Alexander Gerds
-##     Update #: 30
+## Last-Updated: Nov 23 2026 (11:58) 
+##           By: Johan Sebastian Ohlendorff
+##     Update #: 31
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -64,7 +64,7 @@ x <- add_long_data(x,
                    competing_data=ld$timevar_data$death,
                    timevar_data=ld$timevar_data[c("bleeding","changeSBP","A","B")])
 x <- add_baseline_data(x,data=ld$baseline_data)
-x <- discretize_data(x,start_followup_date=0)
+x <- discretize_data(x, start_followup_date = 0, A = "locf", B = "locf")
 x <- prepare_rtmle_data(x)
 x <- regime(x,name = "Always_A",
               intervention = data.frame(time=x$intervention_nodes,

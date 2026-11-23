@@ -25,14 +25,10 @@ x <- regime(x,name = "Always_A",intervention = data.frame(time=x$intervention_no
 x <- regime(x,name = "Never_A",intervention = data.frame(time=x$intervention_nodes,"A" = factor("0",levels = c("0","1"))))
 x <- target(x,name = "Outcome_risk",estimator = "tmle",regimes = c("Always_A","Never_A"))
 x <- model_formula(x)
-x <- run_rtmle(x,learner = "learn_glmnet",time_horizon = 3)
-# stratified analyses
-x <- run_rtmle(x,learner = "learn_glmnet",time_horizon = 3,
-               verbose=FALSE,
-               subsets=list(list(label="Sex",variable="Sex",
-                                 level="Female",id=x$prepared_data[sex==0,id]),
-                            list(label="Sex",variable="Sex",
-                                 level="Male",id=x$prepared_data[sex==1,id])))
-x$estimate
+tau <- 2
+x <- run_rtmle(x, learner = "learn_glmnet", time_horizon = tau)
+strata <- list(Female = subset(x, sex == 0), Male = subset(x, sex == 1))
+fits <- lapply(strata, run_rtmle, learner = "learn_glmnet", time_horizon = tau)
+data.table::rbindlist(lapply(fits, summary), idcol = "Sex")
 ######################################################################
 ### test-subset.R ends here

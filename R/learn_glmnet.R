@@ -82,7 +82,9 @@ learn_glmnet <- function(character_formula,
         if (missing(family)){
             family <- ifelse(length(unique(Y))>2,"gaussian","binomial")
         }
-        X <- model.matrix(RHS,data = data)
+        # Use the same complete cases for predictors and response, regardless
+        # of the caller's global na.action option.
+        X <- stats::model.matrix(RHS,data = model_frame)
         args <- list(x = X,y = Y,lambda = lambda,alpha = alpha,family = family,...)
         args <- args[unique(names(args))]
         if (length(lambda) == 1 || selector == "undersmooth"){
@@ -105,7 +107,11 @@ learn_glmnet <- function(character_formula,
         fit <- reuse_fit$fit
         fit_summary = reuse_fit$fit_summary
     }
-    iX <- stats::model.matrix(RHS,data = intervened_data)
+    # Preserve prediction row order, including NA predictions for incomplete
+    # rows, so predictions remain aligned with the intervention data.
+    prediction_frame <- stats::model.frame(RHS, data = intervened_data,
+                                           na.action = stats::na.pass)
+    iX <- stats::model.matrix(RHS,data = prediction_frame)
     predicted_values <- as.numeric(stats::predict(fit,newx=iX,type = "response", s=fit_summary$selected_lambda))
     #parse_learner_output
     output <- list(predicted_values = predicted_values,
