@@ -95,20 +95,23 @@ test_that("stratification warns below the minimum stratum size and still fits", 
 
 test_that("the number-of-strata warning counts only nonempty groups", {
     data("rtmle_object", package = "rtmle", envir = environment())
-    group <- factor(rep_len(letters[1:6], nrow(rtmle_object$prepared_data)),
-                    levels = letters[1:7])
-    x <- with_baseline_group(rtmle_object, "group", group)
-    expect_warning(
-        fits <- stratify.rtmle(x, group, time_horizon = 1, targets = "Treatment effect"),
-        "6 nonempty strata"
-    )
-    expect_identical(names(fits), letters[1:6])
+    group <- factor(rep_len(letters[1:21], nrow(rtmle_object$prepared_data)),
+                    levels = letters[1:22])
 
-    group[group == "f"] <- "e"
-    x <- with_baseline_group(rtmle_object, "group", group)
-    expect_silent(fits <- stratify.rtmle(x, group, time_horizon = 1,
-                                        targets = "Treatment effect"))
-    expect_identical(names(fits), letters[1:5])
+    fit_groups <- function(group) {
+        x <- with_baseline_group(rtmle_object, "group", group)
+        stratify.rtmle(x, "group", time_horizon = 1, targets = "Treatment effect")
+    }
+
+    expect_warning(
+        expect_warning(fits <- fit_groups(group), "21 nonempty strata"),
+        "Small strata"
+    )
+    expect_identical(names(fits), letters[1:21])
+
+    group[group == "u"] <- "e"
+    expect_silent(expect_warning(fits <- fit_groups(group), "Small strata"))
+    expect_identical(names(fits), letters[1:20])
 })
 
 test_that("stratified summaries and plots respect targets and reference regimes", {
