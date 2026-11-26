@@ -90,19 +90,17 @@ learn_ranger <- function(
     # then check for missing values
     no_missing <- !rowSums(is.na(intervened_data))
     predicted_values[!no_missing] <- as.numeric(NA)
-    if (probability) {
-        if (inherits(try(
-            predicted_values[no_missing] <- riskRegression::predictRisk(fit,newdata = intervened_data[no_missing])
-        ),"try-error")) {
-            stop("Ranger prediction failed")
+    tryCatch({
+        if (probability) {
+            predicted_values[no_missing] <- riskRegression::predictRisk(
+                fit, newdata = intervened_data[no_missing])
+        } else {
+            predicted_values[no_missing] <- stats::predict(
+                fit, data = intervened_data[no_missing], importance = "none")$predictions
         }
-    }else{
-        if (inherits(try(
-            predicted_values[no_missing] <- stats::predict(fit,data = intervened_data[no_missing],importance = "none")$predictions
-        ),"try-error")) {
-            stop("Ranger prediction failed")
-        }
-    }
+    }, error = function(e) {
+        stop("Ranger prediction failed: ", conditionMessage(e), call. = FALSE)
+    })
     #parse_learner_output
     output <- list(predicted_values = predicted_values,
                    fit_summary = NULL)

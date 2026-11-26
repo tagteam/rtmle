@@ -117,6 +117,7 @@ adherence_id_name <- function(x, followup) {
 #' data(rtmle_object)
 #' non_adherence <- adherence(rtmle_object, regimes = "Always_A")
 #' head(non_adherence)
+#' summary(non_adherence)
 #' @export
 adherence <- function(x, regimes = NULL) {
     regimes <- resolve_adherence_regimes(x, regimes)

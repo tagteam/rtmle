@@ -31,6 +31,17 @@
 #' the corresponding data column, so integer treatment histories are handled
 #' in the same way as factor histories.
 #' @seealso \code{\link{regime}}
+#' @examples
+#' observed <- data.table::data.table(A_0 = c(0L, 1L), A_1 = c(0L, 0L))
+#' assignments <- data.table::data.table(
+#'     time_node = 0:1,
+#'     variable = c("A_0", "A_1"),
+#'     value = factor(c("1", "1"), levels = c("0", "1"))
+#' )
+#' # At node 0, set only A_0 to 1.
+#' intervene(observed, assignments, time_node = 0)
+#' # At node 1, set both A_0 and A_1 to 1.
+#' intervene(observed, assignments, time_node = 1)
 #' @export
 intervene <- function(data,
                       intervention_table,
@@ -38,10 +49,9 @@ intervene <- function(data,
     interdata <- copy(data)
     N <- NROW(interdata)
     if ("time_node" %in% names(intervention_table)) {
-        intervention_table <- intervention_table[
-            !is.na(intervention_table[["time_node"]]) &
-                intervention_table[["time_node"]] <= time_node
-        ]
+        keep <- !is.na(intervention_table[["time_node"]]) &
+            intervention_table[["time_node"]] <= time_node
+        intervention_table <- intervention_table[keep]
     }
     if ("value" %in% names(intervention_table)) {
         intervention_table <- intervention_table[!is.na(intervention_table[["value"]])]

@@ -27,6 +27,7 @@ Extracts regression coefficients from fitted nuisance-parameter models in an
 }
 \examples{
 data(rtmle_object)
+head(stats::coef(rtmle_object))
 }
 \seealso{
 \code{\link{run_rtmle}}, \code{\link{plot_model_coefficients}}

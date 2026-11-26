@@ -46,10 +46,11 @@
 #' @param time_horizon The time horizon at which to calculate
 #'     risks. If this is a vector, the analysis is performed for
 #'     each element.
-#' @param refit Logical. If \code{TRUE}, ignore any propensity score
-#'     and censoring models learned in previous calls to this
-#'     function. This may be useful to save computation time. The default
-#'     is \code{TRUE}.
+#' @param refit Logical. The default, \code{TRUE}, fits the propensity
+#'     score and censoring models again. Set \code{FALSE} to reuse them from
+#'     a previous TMLE fit with the same learner and \code{save_fitted_objects}
+#'     setting when the previous fit covers the requested horizons and
+#'     regimes. The outcome regressions are fitted in each call.
 #' @param seed Seed used for cross-fitting.
 #' @param save_fitted_objects Logical. If \code{FALSE}, store the learner
 #'   summary returned as element \code{fit}. If \code{TRUE}, store the full
@@ -99,9 +100,18 @@
 #'                   estimator = "tmle",
 #'                   regimes = c("Always_A","Never_A"))
 #' x <- model_formula(x)
-#' # default is undersmoothing which means: take the smallest penalty
-#' # where the model still converges
-#' x <- run_rtmle(x,learner = "learn_glmnet",time_horizon = 1:tau)
+#'
+#' # Estimate the risk contrast at the last horizon by the g-formula.
+#' xg <- run_rtmle(x, learner = "learn_glmnet", estimator = "g-formula",
+#'                 time_horizon = tau)
+#' summary(xg)
+#'
+#' # Fit TMLE at the largest horizon first. The default glmnet selector
+#' # uses undersmoothing by taking the smallest penalty at convergence.
+#' x <- run_rtmle(x, learner = "learn_glmnet", time_horizon = tau)
+#' # Add earlier horizons using the same propensity and censoring models.
+#' x <- run_rtmle(x, learner = "learn_glmnet", time_horizon = seq_len(tau),
+#'                refit = FALSE)
 #' # with weight truncation
 #' xw <- run_rtmle(x,learner = "learn_glmnet",time_horizon = 1:tau,
 #' weight_truncation=c(0.4,0.6))

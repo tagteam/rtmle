@@ -27,6 +27,18 @@ convenient starting point inside a user-defined intervention function:
 first apply the nominal regime values, then replace treatment values for
 rows governed by a history-dependent rule.
 }
+\examples{
+observed <- data.table::data.table(A_0 = c(0L, 1L), A_1 = c(0L, 0L))
+assignments <- data.table::data.table(
+    time_node = 0:1,
+    variable = c("A_0", "A_1"),
+    value = factor(c("1", "1"), levels = c("0", "1"))
+)
+# At node 0, set only A_0 to 1.
+intervene(observed, assignments, time_node = 0)
+# At node 1, set both A_0 and A_1 to 1.
+intervene(observed, assignments, time_node = 1)
+}
 \seealso{
 \code{\link{regime}}
 }

@@ -27,12 +27,17 @@ Restricts the data to selected participants and clears fitted results.
 Use \code{\link{run_rtmle}} to fit the analysis on the selected data.
 }
 \examples{
-\dontrun{
 data(rtmle_object)
+
+# Select a subgroup and refit the analysis within it.
 women <- subset(rtmle_object, sex == 0)
 women <- run_rtmle(women, time_horizon = 2)
 summary(women)
-}
+
+# Select participants using a list of IDs.
+participant_ids <- c(1L, 3L, 5L)
+selected <- subset(rtmle_object, ids = participant_ids)
+selected$prepared_data$id
 }
 \seealso{
 \code{\link{run_rtmle}}, \code{\link{cheap_bootstrap}},

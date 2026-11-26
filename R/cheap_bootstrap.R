@@ -25,18 +25,24 @@
 #'   cheap-bootstrap confidence intervals. Defaults to all fitted targets.
 #' @param ... Additional arguments passed to \code{run_rtmle}.
 ##' @return The modified \code{rtmle} object.
-##' @seealso \code{\link{run_rtmle}}, \code{\link{summary.rtmle}}
+##' @seealso \code{\link{run_rtmle}}, \code{\link{summary.rtmle}},
+##'   \code{\link{plot.rtmle}}
 ##' @author Johan Sebastian Ohlendorff
 ##'     \email{johan.ohlendorff@@sund.ku.dk} and Thomas A Gerds
 ##'     \email{tag@@biostat.ku.dk}
 #' @examples
 #' \dontrun{
 #' data(rtmle_object)
-#' rtmle_object <- cheap_bootstrap(rtmle_object,
-#'                                  B=5,
-#'                                  time_horizon=1,
-#'                                  seeds=17)
-#' summary(rtmle_object)
+#' target_name <- "Treatment effect"
+#' horizons <- 1:4
+#'
+#' # Use a small number of subsamples for this example.
+#' boot <- cheap_bootstrap(rtmle_object, B = 5, M = 250, seeds = 17,
+#'                         time_horizon = horizons)
+#'
+#' # Risk under each treatment regime.
+#' plot(boot, targets = target_name, bootstrap_conf_int = TRUE,
+#'      conf_int = FALSE, x_breaks = c(0, horizons))
 #' }
 #'
 #' @export

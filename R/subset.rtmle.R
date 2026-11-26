@@ -15,12 +15,17 @@
 #' @seealso \code{\link{run_rtmle}}, \code{\link{cheap_bootstrap}},
 #'   \code{\link{stratify.rtmle}}
 #' @examples
-#' \dontrun{
 #' data(rtmle_object)
+#'
+#' # Select a subgroup and refit the analysis within it.
 #' women <- subset(rtmle_object, sex == 0)
 #' women <- run_rtmle(women, time_horizon = 2)
 #' summary(women)
-#' }
+#'
+#' # Select participants using a list of IDs.
+#' participant_ids <- c(1L, 3L, 5L)
+#' selected <- subset(rtmle_object, ids = participant_ids)
+#' selected$prepared_data$id
 #' @method subset rtmle
 #' @export
 subset.rtmle <- function(x, subset, ids, ...) {

@@ -78,12 +78,24 @@ Treatment assignments are evaluated separately by intervention
   a wrapper.
 }
 \examples{
-## Register a configured rule directly as a regime intervention function.
-## regime(...,
-##     intervene_function = treat_unless(
-##         contra_indication = "bleeding",
-##         action = 0
-##     ))
+history <- data.table::data.table(
+    A_0 = c(0L, 0L), A_1 = c(0L, 0L),
+    bleeding_0 = c(1L, 0L), bleeding_1 = c(0L, 1L)
+)
+assignments <- data.table::data.table(
+    time_node = 0:1,
+    variable = c("A_0", "A_1"),
+    value = factor(c("1", "1"), levels = c("0", "1"))
+)
+# With the default lookback, either record of bleeding prevents treatment
+# at node 1.
+treat_unless(history, assignments, time_node = 1,
+             contra_indication = "bleeding", action = 0)
+# Inspect only the current node. The first participant resumes treatment
+# at node 1.
+treat_unless(history, assignments, time_node = 1,
+             contra_indication = "bleeding", action = 0,
+             lookback_window = 0)
 }
 \seealso{
 \code{\link{intervene}}, \code{\link{regime}}

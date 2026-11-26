@@ -17,7 +17,7 @@
 #'   \code{learner}, \code{estimator}, and \code{time_horizon}.
 #' @details Empty factor levels and intervals are skipped. Participants with
 #'   missing values or values outside the specified intervals are excluded with
-#'   a warning. The function also warns when there are more than five nonempty
+#'   a warning. The function also warns when there are more than 20 nonempty
 #'   strata or when a stratum contains fewer than 30 participants.
 #'   The groups are used only to select participants.
 #' @return An object of class \code{stratified_rtmle}, a named list containing
@@ -104,9 +104,9 @@ stratify.rtmle <- function(x, variable, breaks = NULL, ...) {
                 "values of ", sQuote(column), ".", call. = FALSE)
     }
     counts <- lengths(strata_ids)
-    if (length(counts) > 5L) {
+    if (length(counts) > 20L) {
         warning("Stratifying by ", sQuote(column), " produced ", length(counts),
-                " nonempty strata (more than 5).", call. = FALSE)
+                " nonempty strata (more than 20).", call. = FALSE)
     }
     small_strata <- counts[counts < 30]
     if (length(small_strata) > 0L) {

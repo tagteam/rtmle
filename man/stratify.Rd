@@ -39,7 +39,7 @@ and refits the analysis in each group.
 \details{
 Empty factor levels and intervals are skipped. Participants with
   missing values or values outside the specified intervals are excluded with
-  a warning. The function also warns when there are more than five nonempty
+  a warning. The function also warns when there are more than 20 nonempty
   strata or when a stratum contains fewer than 30 participants.
   The groups are used only to select participants.
 }

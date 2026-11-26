@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jul 19 2024 (10:07)
 ## Version:
-## Last-Updated: Nov 18 2026 (16:21) 
+## Last-Updated: Nov 25 2026 (16:55) 
 ##           By: Johan Sebastian Ohlendorff
-##     Update #: 275
+##     Update #: 276
 #----------------------------------------------------------------------
 ##
 ### Commentary:
@@ -73,33 +73,6 @@ prepare_rtmle_data <- function(x,...){
     }
     if (NROW(x$prepared_data)>0){
         warning("Overwriting existing prepared data object")
-    }
-    if (FALSE){
-        # NOTE: these checks are obsolete, now that the add_data function perform these checks?
-        check_id <- function(data,id,allow_null = TRUE, name = ""){
-            if (NROW(data)>0){
-                if (!inherits(data,"data.table")){
-                    if (inherits(data,"data.frame")){
-                        data.table::setDT(data)
-                    } else{
-                        warning("The object x$data$outcome_data must be a data.table, data.frame, or tibble")
-                    }
-                }
-                if (match(id,names(data),nomatch = 0) == 0){
-                    stop(paste0("The object ",name," does not have a variable called '", id,".\n"))
-                }
-            }else{
-                if (!allow_null[[1]]){
-                    stop(paste0("Data ",name," has zero rows."))
-                }
-            }
-        }
-        check_id(data = x$data$outcome_data, id = x$names$id,allow_null = FALSE,name = "x$data$outcome_data")
-        check_id(data = x$data$baseline_data, id = x$names$id,name = "x$data$baseline_data")
-        # do something else when data were added via add_wide_data
-        nix = lapply(names(x$data$timevar_data),function(nn){
-            check_id(data = x$data$timevar_data[[nn]], id = x$names$id,name = paste0("x$data$timevar_data$",nn))
-        })
     }
     # initialize dataset with outcome data
     prepared_data <- x$data$outcome_data

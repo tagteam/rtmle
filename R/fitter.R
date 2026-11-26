@@ -118,6 +118,15 @@ fitter <- function(intervention_node,
             args <- list(character_formula = ff,
                          data = current_data,
                          intervened_data = intervened_data[,names(current_data)[-1],with = FALSE])
+            fit_error <- function(e) {
+                action <- if (learner$name == "superlearn") "superlearn/crossfit" else paste("apply", learner$name)
+                outcome <- current_outcome_name
+                if (outcome == "rtmle_predicted_outcome") {
+                    outcome <- paste0("the predicted outcome at intervention node (time): ", intervention_node)
+                }
+                stop("Failed to ", action, " with formula ", ff,
+                     "\nwhere the outcome is: ", outcome, "\n", conditionMessage(e), call. = FALSE)
+            }
             if (learner$name == "superlearn"){
                 #
                 # this needs a list of learners
@@ -129,54 +138,31 @@ fitter <- function(intervention_node,
                                outcome_variable = "rtmle_outcome",
                                outcome_variable_name = current_outcome_name,
                                id_variable = id_variable))
-                if (inherits(try(
-                    predicted_values <- do.call("superlearn",
-                                                c(args,
-                                                  list(diagnostics = diagnostics,
+                predicted_values <- tryCatch(
+                    do.call("superlearn", c(args, list(diagnostics = diagnostics,
                                                        current_constants,
                                                        seed = seed,
                                                        save_fitted_objects = save_fitted_objects,
                                                        reuse_fit = reuse_fit))),
-                    silent = FALSE),
-                    "try-error")) {
-                    stop(paste0("Failed to superlearn/crossfit with formula ",ff,"\nwhere the outcome is: ",
-                                ifelse(current_outcome_name == "rtmle_predicted_outcome",
-                                       paste0("the predicted outcome at intervention node (time): ",intervention_node),
-                                       current_outcome_name)))
-                }
+                    error = fit_error
+                )
             }else{
                 #
                 # this is a single learner 
                 #
                 learner_warnings <- list()
-                result <- withCallingHandlers({
-                    if (inherits(
-                        try(
-                            predicted_values <- do.call(
-                                learner$fun,
-                                c(args,c(learner$args,list(save_fitted_objects = save_fitted_objects,
-                                                           reuse_fit = reuse_fit)))
-                            ),
-                            silent = FALSE
-                        ),
-                        "try-error"
-                    )) {
-                        stop(paste0(
-                            "Failed to apply ",learner$name," with formula ", ff,
-                            "\nwhere the outcome is: ",
-                            ifelse(
-                                current_outcome_name == "rtmle_predicted_outcome",
-                                paste0("the predicted outcome at intervention node (time): ", intervention_node),
-                                current_outcome_name
-                            )
-                        ))
+                predicted_values <- withCallingHandlers(
+                    tryCatch(
+                        do.call(learner$fun, c(args, learner$args,
+                                               list(save_fitted_objects = save_fitted_objects,
+                                                    reuse_fit = reuse_fit))),
+                        error = fit_error
+                    ),
+                    warning = function(w) {
+                        learner_warnings <<- c(learner_warnings, conditionMessage(w))
+                        invokeRestart("muffleWarning")
                     }
-                    predicted_values
-                },
-                warning = function(w) {
-                    learner_warnings <<- c(learner_warnings, conditionMessage(w))
-                    invokeRestart("muffleWarning")
-                })
+                )
                 if (length(learner_warnings)>0){
                     if (length(learner_warnings)>1){
                         learner_warnings <- paste0("warning 1: ",learner_warnings[1]," warning 2: ",learner_warnings[2]," ...")
