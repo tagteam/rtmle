@@ -182,6 +182,33 @@ x <- discretize_data(
                   C=list(variable = "A", method="has_exposure",threshold=0.7),
                   start_followup_date=0
 )
+
+# Count only overlap with the baseline interval for an exposure covariate.
+x_overlap <- discretize_data(
+    x, A = list(method = "exposure_percent", baseline_exposure_start = FALSE)
+)
+x$data$timevar_data$A$A_0
+x_overlap$data$timevar_data$A$A_0
+
+# The same calendar event date falls in different intervals for these participants.
+start_dates <- as.Date(c("2020-01-01", "2020-02-03"))
+x_calendar <- rtmle_init(time_grid = c(0, 30, 120, 240), name_id = "id",
+                         name_outcome = "Y", time_unit = "Days")
+x_calendar <- add_baseline_data(x_calendar, data.frame(id = 1:2, start = start_dates))
+x_calendar <- add_long_data(
+    x_calendar,
+    outcome_data = data.frame(id = 1:2, date = start_dates + 250),
+    timevar_data = list(bleeding = data.frame(id = 1:2, date = as.Date("2020-02-18")))
+)
+# Use NA for elapsed time before the first event.
+x_calendar <- discretize_data(
+    x_calendar, start_followup_date = "start",
+    bleeding_in_interval = list(variable = "bleeding", method = "event_interval"),
+    days_since_bleeding = list(variable = "bleeding", method = "time_since_event",
+                               values = c(1, NA_real_)),
+    bleeding_status = list(variable = "bleeding", method = "chronic_disease")
+)
+x_calendar$data$timevar_data
 }
 \seealso{
 \code{\link{rtmle_init}}, \code{\link{add_baseline_data}},

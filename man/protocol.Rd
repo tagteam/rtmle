@@ -54,7 +54,9 @@ time column, do not expand static interventions across time.}
 \code{intervention} is supplied as a 0/1 vector.}
 
 \item{intervene_function}{A function, or a character string naming one,
-called as \code{fun(data, intervention_table, time_node)}. It must return
+with the standard arguments \code{data}, \code{intervention_table}, and
+\code{time_node}. Extra arguments are passed by name through
+\code{intervene_function_args}. The function must return
 the complete intervention-updated data while preserving its rows and
 required columns. For a dynamic treatment regime, use it to update
 treatment values according to the observed history.}
@@ -113,18 +115,19 @@ For a dynamic rule, \code{rtmle} constructs a binary adherence response
 x <- rtmle_init(time_grid = 0:3, name_id = "id",
                 name_outcome = "Y", name_competing = "Dead",
                 name_censoring = "Censored", censored_label = "censored")
-x <- regime(
-    x,
-    name = "Always_A_never_B",
-    intervention = data.frame(
-        time_node = x$intervention_nodes,
-        A = factor("1", levels = c("0", "1")),
-        B = factor("0", levels = c("0", "1"))
-    ),
-    multiple_treatment_factorization = "sequential"
+ab_intervention <- data.frame(
+    time_node = x$intervention_nodes,
+    A = factor("1", levels = c("0", "1")),
+    B = factor("0", levels = c("0", "1"))
 )
+x <- regime(x, name = "Always_A_never_B", intervention = ab_intervention,
+            multiple_treatment_factorization = "sequential")
 
-# A dynamic rule can stop A after a contraindication in the history.
+# Alternatively, model A and B separately given the same prior history.
+x <- regime(x, name = "Always_A_never_B", intervention = ab_intervention,
+            multiple_treatment_factorization = "independent")
+
+# Register a dynamic rule that stops A after a contraindication.
 x <- regime(
     x, name = "A_until_bleeding",
     intervention = data.frame(
@@ -138,6 +141,36 @@ x <- regime(
     adherence_model_strata = "bleeding",
     verbose = FALSE
 )
+
+# Compare always treating with stopping after bleeding recorded
+# before the decision. At the first node, everyone is assigned A.
+data(rtmle_object)
+stop_after_bleeding <- function(data, intervention_table, time_node, event) {
+    updated <- intervene(data, intervention_table, time_node)
+    nodes <- unique(intervention_table$time_node)
+    for (node in nodes[nodes > 0 & nodes <= time_node]) {
+        history <- paste0(event, "_", seq_len(node) - 1L)
+        has_bled <- Reduce(`|`, lapply(history, function(column) {
+            data[[column]] \%in\% c("1", "TRUE")
+        }))
+        treatment <- paste0("A_", node)
+        treatment_values <- updated[[treatment]]
+        no_treatment <- if (is.logical(treatment_values)) FALSE else 0L
+        treatment_values[has_bled] <- no_treatment
+        updated[[treatment]] <- treatment_values
+    }
+    updated
+}
+x <- regime(rtmle_object, name = "A_until_bleeding",
+            treatment_variables = "A", intervention = 1,
+            intervene_function = stop_after_bleeding,
+            intervene_function_args = list(event = "bleeding"),
+            verbose = FALSE)
+x <- target(x, name = "Bleeding rule",
+            regimes = c("Always_A", "A_until_bleeding"))
+x <- model_formula(x, verbose = FALSE)
+x <- run_rtmle(x, targets = "Bleeding rule", time_horizon = 3)
+summary(x, targets = "Bleeding rule")
 }
 \seealso{
 \code{\link{rtmle_init}}, \code{\link{prepare_rtmle_data}},

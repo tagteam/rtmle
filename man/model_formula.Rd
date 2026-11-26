@@ -106,6 +106,12 @@ x$models
 # remove all changeSBP_t variables from dropout_1 and dropout_2 formulas
 x <- model_formula(x,exclusion_rules=list("dropout_[1:2]"="changeSBP_*"))
 x$models
+# Keep age in the first stroke model and omit it from the other models.
+x <- model_formula(x, exclude_variables = "age",
+                   inclusion_rules = list(stroke_1 = "age"))
+x$models$time_0$outcome$stroke_1$formula
+x$models$time_1$outcome$stroke_2$formula
+x$models$time_0$Always_A$A_0$formula
 }
 \seealso{
 \code{\link{prepare_rtmle_data}}, \code{\link{regime}},

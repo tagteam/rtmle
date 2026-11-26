@@ -12,8 +12,6 @@ run_rtmle(
   time_horizon,
   refit = TRUE,
   seed = NULL,
-  subsets = NULL,
-  keep_influence = TRUE,
   save_fitted_objects = FALSE,
   progressbar = 0,
   verbose = FALSE,
@@ -52,30 +50,13 @@ fit nuisance-parameter models. Must be one of:
 risks. If this is a vector, the analysis is performed for
 each element.}
 
-\item{refit}{Logical. If \code{TRUE}, ignore any propensity score
-and censoring models learned in previous calls to this
-function. This may be useful to save computation time. The default
-is \code{TRUE}.}
+\item{refit}{Logical. The default, \code{TRUE}, fits the propensity
+score and censoring models again. Set \code{FALSE} to reuse them from
+a previous TMLE fit with the same learner and \code{save_fitted_objects}
+setting when the previous fit covers the requested horizons and
+regimes. The outcome regressions are fitted in each call.}
 
 \item{seed}{Seed used for cross-fitting.}
-
-\item{subsets}{A list structure for subset analyses. Each element
-is a list requiring a label, to name the subset, and a
-subset of the variable \code{x$names$id} in the data
-\code{x$prepared_data} to identify the subset. The results of
-the subset analysis are stored in
-\code{x$estimate[[subsets[[label]]]]}. An optional element of
-each subset list is called \code{append}. If a result with the same
-label already exists, estimates are appended by default; set
-\code{append = FALSE} to replace the existing result. Appending may be
-used for stratified analyses, seed-dependence studies (Monte Carlo
-error), and bootstrap analyses. See
-examples.}
-
-\item{keep_influence}{Logical. If \code{TRUE}, store the estimated
-influence function of the estimator in the object.  Currently
-this argument is used only when argument \code{subsets} is also
-specified.}
 
 \item{save_fitted_objects}{Logical. If \code{FALSE}, store the learner
 summary returned as element \code{fit}. If \code{TRUE}, store the full
@@ -132,9 +113,18 @@ x <- target(x,name = "Outcome_risk",
                   estimator = "tmle",
                   regimes = c("Always_A","Never_A"))
 x <- model_formula(x)
-# default is undersmoothing which means: take the smallest penalty
-# where the model still converges
-x <- run_rtmle(x,learner = "learn_glmnet",time_horizon = 1:tau)
+
+# Estimate the risk contrast at the last horizon by the g-formula.
+xg <- run_rtmle(x, learner = "learn_glmnet", estimator = "g-formula",
+                time_horizon = tau)
+summary(xg)
+
+# Fit TMLE at the largest horizon first. The default glmnet selector
+# uses undersmoothing by taking the smallest penalty at convergence.
+x <- run_rtmle(x, learner = "learn_glmnet", time_horizon = tau)
+# Add earlier horizons using the same propensity and censoring models.
+x <- run_rtmle(x, learner = "learn_glmnet", time_horizon = seq_len(tau),
+               refit = FALSE)
 # with weight truncation
 xw <- run_rtmle(x,learner = "learn_glmnet",time_horizon = 1:tau,
 weight_truncation=c(0.4,0.6))
@@ -165,24 +155,13 @@ x <- run_rtmle(
     time_horizon = tau
 )
 }
-\dontrun{
-# stratified analyses
-x <- run_rtmle(x,learner = "learn_glmnet",time_horizon = tau,
-               verbose=FALSE,
-               subsets=list(list(label="Sex",variable="Sex",
-                                 level="Female",id=x$prepared_data[sex==0,id]),
-                       list(label="Sex",variable="Sex",
-                                 level="Male",id=x$prepared_data[sex==1,id])))
-}
-
-
-
 }
 \seealso{
 \code{\link{rtmle_init}}, \code{\link{prepare_rtmle_data}},
   \code{\link{regime}}, \code{\link{target}}, \code{\link{model_formula}},
   \code{\link{learn_glm}}, \code{\link{learn_glmnet}},
-  \code{\link{superlearn}}, \code{\link{summary.rtmle}}
+  \code{\link{superlearn}}, \code{\link{summary.rtmle}},
+  \code{\link{subset.rtmle}}, \code{\link{stratify.rtmle}}
 }
 \author{
 Thomas A Gerds \email{tag@biostat.ku.dk}

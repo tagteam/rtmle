@@ -3,9 +3,9 @@
 ## Author: Thomas Alexander Gerds
 ## Created: Jun 16 2025 (08:58) 
 ## Version: 
-## Last-Updated: okt  7 2026 (06:53) 
-##           By: Thomas Alexander Gerds
-##     Update #: 171
+## Last-Updated: Nov 26 2026 (11:36) 
+##           By: Johan Sebastian Ohlendorff
+##     Update #: 172
 #----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -101,6 +101,12 @@
 ##' # remove all changeSBP_t variables from dropout_1 and dropout_2 formulas
 ##' x <- model_formula(x,exclusion_rules=list("dropout_[1:2]"="changeSBP_*"))
 ##' x$models
+##' # Keep age in the first stroke model and omit it from the other models.
+##' x <- model_formula(x, exclude_variables = "age",
+##'                    inclusion_rules = list(stroke_1 = "age"))
+##' x$models$time_0$outcome$stroke_1$formula
+##' x$models$time_1$outcome$stroke_2$formula
+##' x$models$time_0$Always_A$A_0$formula
 ##' @export 
 ##' @author Thomas A. Gerds <tag@@biostat.ku.dk>
 model_formula <- function(x,

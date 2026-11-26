@@ -212,11 +212,13 @@ superlearn <- function(folds,
                                            intervened_data = test_data_k),
                                       ## learner specific arguments such as tuning parameters
                                       this_learner$args)
-                    if (inherits(try( 
-                        predicted_k <- do.call(this_learner$fun, learner_args)
-                    ),"try-error")){
-                        stop(paste0("Learning failed in fold ",k," with learner ",this_learner))
-                    }
+                    predicted_k <- tryCatch(
+                        do.call(this_learner$fun, learner_args),
+                        error = function(e) {
+                            stop("Learning failed in fold ", k, " with learner ",
+                                 this_learner$name, ": ", conditionMessage(e), call. = FALSE)
+                        }
+                    )
                     set(level_one_data,
                         j = this_learner$name,
                         i = which(random_split == k),

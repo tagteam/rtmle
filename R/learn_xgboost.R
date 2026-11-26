@@ -115,21 +115,20 @@ learn_xgboost <- function(character_formula,
     intervened_data = intervened_data[no_missing]
     predicted_values[!no_missing] <- as.numeric(NA)
     rhs <- stats::reformulate(attr(stats::terms(stats::formula(character_formula)), "term.labels",exact = TRUE))
-    if (inherits(try(
-        new_model_matrix <- Publish::specialFrame(rhs,
-                                                  data = intervened_data,
-                                                  specials = NULL,
-                                                  na.action = na.omit)$design
-    ),"try-error")){
-        stop(paste0("Problem with the design matrix for the xgboost predictions.\n",
-                    "A possible reason could be a variable that has no variation in the intervened_data."))
-    }
+    new_model_matrix <- tryCatch(
+        Publish::specialFrame(rhs, data = intervened_data, specials = NULL,
+                              na.action = na.omit)$design,
+        error = function(e) {
+            stop("Problem with the design matrix for the xgboost predictions: ",
+                 conditionMessage(e), call. = FALSE)
+        }
+    )
     ## nd <- xgboost::xgb.DMatrix(data = new_model_matrix)
-    if (inherits(try(
-        predicted_values[no_missing] <- predict(fit,newdata = new_model_matrix)
-    ),"try-error")) {
-        stop("Xgboost prediction failed")
-    }
+    tryCatch({
+        predicted_values[no_missing] <- predict(fit, newdata = new_model_matrix)
+    }, error = function(e) {
+        stop("Xgboost prediction failed: ", conditionMessage(e), call. = FALSE)
+    })
     #parse_learner_output
     output <- list(predicted_values = predicted_values,
                    fit_summary = NULL)

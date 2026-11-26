@@ -44,6 +44,7 @@ For each selected regime, the function identifies the first
 data(rtmle_object)
 non_adherence <- adherence(rtmle_object, regimes = "Always_A")
 head(non_adherence)
+summary(non_adherence)
 }
 \seealso{
 \code{\link{plot_adherence}}, \code{\link{summary_adherence}},

@@ -571,14 +571,8 @@ the reference regime =Always_A= at each requested time horizon.
 
 ** Plotting the estimated values across time horizons
 
-#+BEGIN_SRC R :results file graphics :file ./vignettes/plot_rtmle_output.png :exports code :session *R* :cache yes :width 10 :height 5
-x <- run_rtmle(
-    x,
-    learner = "learn_glm",
-    time_horizon = 1:5,
-    verbose = FALSE
-)
-plot(x)
+#+BEGIN_SRC R :results file graphics :file plot_rtmle_output.png :exports code :session *R* :cache yes :width 10 :height 5
+plot(x, x_breaks = c(0, analysis_horizons))
 #+END_SRC
 
 * Inspect the fit, check adherence and inverse-probability weights
