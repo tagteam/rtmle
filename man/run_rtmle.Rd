@@ -239,6 +239,23 @@ x <- run_rtmle(
     time_horizon = tau
 )
 }
+
+# Continuous-time risk under always versus never treating
+set.seed(34)
+d <- simulate_continuous_time_data(1000, static_intervention_baseline = NULL)
+x <- rtmle_init(c(0, 500), name_id = "id", name_time = "time",
+                name_outcome = "Y", name_competing = "D",
+                name_censoring = "C", continuous_time = TRUE)
+x <- add_baseline_data(x, d$baseline_data)
+x <- add_continuous_data(x, event_data = d$timevarying_data,
+                         treatment_events = "A", covariate_events = "L")
+x <- prepare_rtmle_data(x)
+x <- regime(x, "Always_A", intervention = 1)
+x <- regime(x, "Never_A", intervention = 0)
+x <- target(x, "Risk", regimes = c("Always_A", "Never_A"))
+x <- model_formula(x)
+x <- run_rtmle(x, estimator = "one-step", time_horizon = 1) # Grid node 1 is time 500.
+summary(x)
 }
 \seealso{
 \code{\link{rtmle_init}}, \code{\link{prepare_rtmle_data}},
