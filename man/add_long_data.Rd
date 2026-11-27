@@ -48,15 +48,15 @@ Adds long-format outcome, censoring, competing-event, treatment, and
 time-varying covariate data.
 
 For discrete-time analyses, name the time column \code{date}.
-Supply calendar dates or numeric durations since the start of follow-up.
-If an outcome, censoring, or competing-event table contains multiple
-rows for one subject, the earliest row is stored.
+  Supply calendar dates or numeric durations since the start of follow-up.
+  If an outcome, censoring, or competing-event table contains multiple
+  rows for one subject, the earliest row is stored.
 
-For continuous-time analyses, use the time column configured in
-\code{\link{rtmle_init}} or \code{date}. Supply numeric durations
-since baseline and at most one row per subject in each outcome, censoring,
-or competing-event table. See \code{\link{add_continuous_data}} for
-continuous-time input and event definitions.
+  For continuous-time analyses, use the time column configured in
+  \code{\link{rtmle_init}} or \code{date}. Supply numeric durations
+  since baseline and at most one row per subject in each outcome, censoring,
+  or competing-event table. See \code{\link{add_continuous_data}} for
+  continuous-time input and event definitions.
 }
 \examples{
 data(simulated_cohort)

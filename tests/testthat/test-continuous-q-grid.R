@@ -14,7 +14,7 @@ test_that("grid regressions truncate the next event and retain its continuation 
         continuous_sequential_regression(
             nuisance, th = 2, a = 1, learner = continuous_nuisance_learner("learn_glm"),
             estimator = "one-step", lag = NULL, seed = 1, prediction_range = c(0.0001, 0.9999),
-            scale_pseudo_outcome = TRUE, stratify = FALSE, intervene_all = FALSE,
+            stratify = FALSE, intervene_all = FALSE,
             intervention_hook = NULL, save_fitted_objects = FALSE, q_grid = grid
         )
     }
@@ -45,7 +45,7 @@ test_that("auxiliary grid fits preserve the horizon fits of a stochastic learner
         result <- continuous_sequential_regression(
             nuisance, th = 2, a = 1, learner = continuous_nuisance_learner(random_learner),
             estimator = "one-step", lag = NULL, seed = NULL, prediction_range = c(0.0001, 0.9999),
-            scale_pseudo_outcome = TRUE, stratify = FALSE, intervene_all = FALSE,
+            stratify = FALSE, intervene_all = FALSE,
             intervention_hook = NULL, save_fitted_objects = FALSE, q_grid = grid,
             grid_learner = continuous_nuisance_learner(grid_learner)
         )

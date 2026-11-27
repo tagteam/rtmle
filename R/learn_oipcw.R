@@ -1,9 +1,11 @@
-#' Learn bounded regressions for continuous-time IPCW pseudo-outcomes
+#' Learner for sequential regressions for continuous-time analyses
 #'
 #' Fits the logistic estimating equation \eqn{X^T(Y - expit(X\beta))=0}.
 #' The non-negative response may exceed one, as happens with inverse censoring
 #' weighting. Predictions remain in \eqn{[0,1]}. An unsolved estimating equation
 #' raises an error rather than returning an unverified fit.
+#' The method is strongly inspired by Scheike, Zhang, and Gerds (2008),
+#' i.e., https://academic.oup.com/biomet/article-abstract/95/1/205/219426
 #'
 #' @param character_formula Regression formula as a character string.
 #' @param data Data used for learning.

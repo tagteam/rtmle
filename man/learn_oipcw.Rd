@@ -2,7 +2,7 @@
 % Please edit documentation in R/learn_oipcw.R
 \name{learn_oipcw}
 \alias{learn_oipcw}
-\title{Learn bounded regressions for continuous-time IPCW pseudo-outcomes}
+\title{Learner for sequential regressions for continuous-time analyses}
 \usage{
 learn_oipcw(
   character_formula,
@@ -41,6 +41,8 @@ Fits the logistic estimating equation \eqn{X^T(Y - expit(X\beta))=0}.
 The non-negative response may exceed one, as happens with inverse censoring
 weighting. Predictions remain in \eqn{[0,1]}. An unsolved estimating equation
 raises an error rather than returning an unverified fit.
+The method is strongly inspired by Scheike, Zhang, and Gerds (2008),
+i.e., https://academic.oup.com/biomet/article-abstract/95/1/205/219426
 }
 \seealso{
 \code{\link{run_rtmle}}, \code{\link{learn_glm}}

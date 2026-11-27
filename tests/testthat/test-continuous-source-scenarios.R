@@ -67,13 +67,13 @@ test_that("optional regression strategies reproduce valid source scenarios", {
     expect_equal(excluded$estimate$Main_analysis$IPW, .28368580294914786, tolerance = 1e-7)
 })
 
-test_that("ordinary learners accept censored pseudo-outcomes and TMLE scores are solved", {
+test_that("the default outcome learner fits censored pseudo-outcomes for TMLE", {
     set.seed(34)
     d <- simulate_continuous_time_data(1000, uncensored = FALSE)
     x <- continuous_analysis(d, 720, regimes = "Always_A")
-    fit <- run_rtmle(x, learner = "glm", estimator = "one-step")
-    expect_true(all(is.finite(fit$estimate$Main_analysis$Estimate)))
-    fit <- run_rtmle(x, learner = "learn_oipcw", propensity_learner = "glm", estimator = "tmle")
+    fit <- run_rtmle(x, estimator = "tmle")
+    expect_identical(fit$learner$fun, "learn_oipcw")
+    expect_identical(fit$continuous_nuisance_specification$propensity$fun, "learn_glm")
     for (regime in x$targets$risk$regimes) {
         expect_equal(mean(fit$IC$risk[[regime]]$time_horizon_1), 0, tolerance = 1e-8)
     }

@@ -19,8 +19,6 @@ test_that("continuous outcome and propensity models accept glmnet specifications
     outcome_models <- fit$sequential_outcome_regression$risk$Always_A$time_horizon_1
     expect_true(length(outcome_models) > 1L)
     for (model in outcome_models) expect_s3_class(model$fit, "glmnet")
-    expect_true(any(vapply(outcome_models, function(model) model$response_scale > 1,
-                           logical(1))))
 })
 
 test_that("continuous models accept forest specifications and propensity bounds", {

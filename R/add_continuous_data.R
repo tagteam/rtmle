@@ -1,119 +1,64 @@
-# Continuous-time flow:
-# 1. add_continuous_data stores the same long-data streams as add_long_data.
-# 2. continuous_prepare_rtmle assembles a chronological event table, then
-#    prepare_continuous_data makes one wide history per subject.
-# 3. run_rtmle_continuous fits treatment/censoring models and works backwards
-#    through those histories to estimate the target at each horizon.
-# Long streams are normalized, merged and completed by
-# continuous_normalize_long_data(), continuous_data_from_long(),
-# continuous_split_event_data() and continuous_complete_censoring().
-#
-#' Add event-time data to an rtmle analysis
+#' Add event-time data to a continuous-time rtmle analysis
 #'
 #' @param x An rtmle object initialized with \code{continuous_time = TRUE}.
 #' @inheritParams add_long_data
 #' @param outcome_data A data frame with subject identifiers and outcome times.
-#'   Times are numeric durations since baseline; only subjects with an outcome
-#'   need a row.
+#'   Times are durations since baseline; only subjects with an outcome
+#'   need a row. Durations need to be called \code{time}.
 #' @param censored_data A data frame with subject identifiers and censoring
 #'   times, as numeric durations since baseline. An optional \code{event} column
-#'   distinguishes censoring from the end of follow-up.
+#'   distinguishes censoring from the end of follow-up. Durations need to be called \code{time}.
 #' @param competing_data A data frame with subject identifiers and competing
-#'   event times, as numeric durations since baseline. Only subjects with a
-#'   competing event need a row.
+#'   event times, as durations since baseline. Only subjects with a
+#'   competing event need a row. Durations need to be called \code{time}.
 #' @param timevar_data A named list of treatment and covariate tables, each
-#'   with subject identifiers and numeric times since baseline. The treatment
-#'   table also needs a \code{value} column.
+#'   with subject identifiers and times since baseline. The treatment
+#'   table also needs a \code{value} column. Durations need to be called \code{time}.
 #' @param event_data An optional wide event table with identifier and time
 #'   columns named as configured in \code{rtmle_init}, an \code{event} column,
 #'   an \code{A} column, and any time-varying covariate columns. Event labels
-#'   identify treatment, covariate measurement and terminal events. Do not
-#'   combine this input with separate long-data inputs in the same call.
-#'   A new event table replaces previously added long-data tables.
+#'   identify treatment, covariate measurement and terminal events. 
 #' @param time_covariates Names of covariate columns in \code{event_data},
 #'   excluding \code{A}. With \code{NULL}, infer them from the other columns;
 #'   \code{character(0)} selects none.
 #' @param treatment_events A nonempty character vector naming distinct tables in
 #'   \code{timevar_data}, each with one row per treatment event time, or event
-#'   labels in \code{event_data}. They identify all treatment opportunities,
-#'   including opportunities where treatment remains unchanged.
-#'   Times from all named tables are combined as opportunities for the same
-#'   treatment \code{A}. The argument can be omitted in a later call to retain
-#'   a previously supplied specification.
+#'   labels in \code{event_data}. See examples.
 #' @param covariate_events Covariate-measurement times: names of tables in
 #'   \code{timevar_data} with one row per measurement time, a separate
 #'   identifier/time data frame, or
 #'   \code{NULL} for none. With \code{event_data}, use event labels or
 #'   \code{NULL}. Treatment and measurement events may coincide.
-#' @details The input can be a single wide \code{event_data} table or separate
-#' outcome, censoring, competing-risk and covariate tables, which use
-#' \code{add_long_data}. Add baseline predictors separately with
-#' \code{add_baseline_data}. Then call \code{prepare_rtmle_data} to assemble
-#' event histories without discretizing time. Times must be numeric durations
-#' since baseline.
+#' @details 
+#' Use numeric times since baseline. Add baseline data with
+#' \code{\link{add_baseline_data}}, then use \code{\link{prepare_rtmle_data}}
+#' to assemble the event histories.
+#' 
+#' Record binary treatment \code{A} at every treatment opportunity. For
+#' baseline \code{A}, a supplied baseline value takes precedence. Otherwise,
+#' RTMLE uses the latest treatment at or before time zero, or 0 if none is
+#' recorded.
 #'
-#' For \code{event_data}, explicitly specify \code{treatment_events} and
-#' \code{covariate_events}; the latter may be \code{NULL}. Values of \code{A} on
-#' treatment-event rows update treatment. Selected covariates are updated at
-#' covariate events and also at treatment events whenever their values are
-#' supplied. Supplied covariate values on terminal-event rows are retained as
-#' well. A missing covariate at a treatment or terminal event retains its previous
-#' value; covariate-event rows require values for all selected covariates. The
-#' same label may denote both a treatment and a covariate event; terminal labels
-#' must not overlap either role. Terminal
-#' labels are \code{Y}, \code{D}, \code{C},
-#' \code{tauend}, or the corresponding outcome, competing-event and censoring
-#' names configured in \code{rtmle_init}. If no terminal event is recorded,
-#' an administrative end is inferred at the last time-grid entry plus one.
+#' The time-varying covariate data is supplied either in \code{event_data}
+#' which has the data fully prepared or in \code{timevar_data}
+#' which prepares the data for the user.
+#' With \code{event_data}, specify both \code{treatment_events} and
+#' \code{covariate_events}. Use \code{NULL} if there are no separate covariate
+#' events. Supply all selected covariates on rows marked as covariate events.
+#' At other events, missing covariates keep their previous values. Covariates
+#' measured at a treatment visit are treated as available before assignment.
 #'
-#' In the separate-table form, covariate tables use identifier, time and
-#' \code{value} columns. A covariate table without \code{value} records event
-#' occurrences and produces a cumulative count, increasing by one at each
-#' event. Without a supplied baseline count, events at time zero establish the
-#' initial count. A supplied baseline count must be at least the number of events
-#' observed at time zero; those events are not added again. To use an ever-event indicator
-#' instead, give each event row an explicit \code{value = 1} and supply the
-#' indicator's baseline value for each subject. Values supplied at individual
-#' measurement times retain their supplied values.
-#' Treatment \code{A} must have a row with an observed 0/1 value at every
-#' treatment opportunity, including unchanged assignments. Treatment exposure
-#' intervals are not supported. If an \code{event_data} covariate-event row
-#' supplies \code{A}, it must agree with the treatment history; a change on a
-#' covariate-only event is rejected during preparation. When a static regime is analyzed, an error
-#' is raised if every observed opportunity before a requested horizon switches
-#' treatment; a warning is issued if at least 95 percent do. This pooled
-#' diagnostic does not establish support within every treatment history.
-#' Declare treatment and covariate event roles explicitly. Treatment
-#' opportunities include visits where treatment stays unchanged.
-#' Simultaneous covariate and treatment events are combined into one treatment
-#' event, including when they are separate rows in \code{event_data}.
-#' Conflicting values for the same variable at the same time are rejected.
-#' A terminal event cannot share its time with another event for the same
-#' subject; such ties raise an error. A covariate value recorded at a terminal
-#' time is allowed when it is not declared as a separate covariate event.
-#' Current covariate values at treatment events are treated as available before
-#' assignment; \code{exclude_latest_covariate} in \code{run_rtmle} can exclude
-#' current values recorded after assignment. Initial values may be supplied as
-#' baseline columns named either \code{A}, \code{L}, etc. or \code{A_0},
-#' \code{L_0}, etc. For treatment \code{A}, a supplied baseline value takes
-#' precedence over a conflicting time-zero record. Otherwise the most recent
-#' treatment observation at or before zero is used; if none exists, the initial
-#' value is zero. Other covariates use their baseline value or an observation at
-#' time zero; conflicting values are rejected.
-#' Covariate exposure intervals with \code{start_date} and \code{end_date}
-#' supply current binary states; they do not define measurement events. Specify
-#' those measurement times separately. Observed values are carried forward
-#' between declared events.
-#'
-#' Rows in \code{censored_data} without an \code{event} column are censoring
-#' events, including dates beyond the largest horizon. An optional \code{event}
-#' column can explicitly distinguish \code{"C"} from \code{"tauend"}.
-#' Subjects without a censoring, outcome or competing event receive an inferred
-#' \code{"tauend"} at the last initialized time-grid entry plus one during preparation.
-#' Preparation options such as \code{min_events}
-#' and \code{last_non_terminal_event} belong in \code{prepare_rtmle_data}.
-#' An explicitly supplied empty terminal-event table clears that component;
-#' omitted tables preserve previously added data.
+#' In separate tables for \code{event_data}, a covariate table without a \code{value} column
+#' represents a cumulative event count. Exposure intervals give the current
+#' binary state. Declare measurement times separately.
+#' 
+#' Use \code{"Y"}, \code{"D"}, \code{"C"}, and \code{"tauend"} for outcome,
+#' competing event, censoring, and administrative end of follow-up. The outcome,
+#' competing-event, and censoring names set in \code{rtmle_init()} also work.
+#' A terminal event must have a distinct time for that subject. If none is
+#' recorded, preparation adds \code{"tauend"} one time unit after the last
+#' time in the grid.
+#' 
 #' @return The rtmle object, ready for \code{prepare_rtmle_data}.
 #' @seealso \code{\link{run_rtmle}}, \code{\link{prepare_continuous_data}}
 #' @examples

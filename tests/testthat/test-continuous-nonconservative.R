@@ -2,14 +2,18 @@ test_that("the non-conservative update adds each subject's censoring contributio
     treatment <- c(1, 1, 1, 0, 0)
     event <- c("C", "D", "Y", "Y", "tauend")
     d <- list(baseline_data = data.frame(id = 1:5, A_0 = treatment, L_0 = 0),
-              timevarying_data = data.frame(id = 1:5, time = c(1, 1, 2, 1, 3),
+              timevarying_data = data.frame(id = 1:5, time = c(1, 1, 1.6, 1, 3),
                                             event = event, A = treatment, L = 0))
     x <- continuous_analysis(d, horizons = c(1, 2), regimes = "Always_A")
-    fit_mean <- function(character_formula, data, intervened_data, ...) {
+    observed <- list()
+    fit_mean <- function(character_formula, data, intervened_data, regression, ...) {
+        observed[[regression]] <<- c(observed[[regression]], data$rtmle_outcome)
         list(predicted_values = rep(mean(data$rtmle_outcome), nrow(intervened_data)))
     }
     fit <- function(x, conservative, time_horizon, grid = 4L) {
-        run_rtmle(x, estimator = "one-step", learner = fit_mean, propensity_learner = "glm",
+        run_rtmle(x, estimator = "one-step", propensity_learner = "glm",
+                  learner = list(name = "horizon_mean", fun = fit_mean, regression = "horizon"),
+                  grid_learner = list(name = "grid_mean", fun = fit_mean, regression = "grid"),
                   censoring_learner = list(name = "cox", fun = "learn_coxph",
                                            marginal_censoring_formula = ~ 1),
                   conservative = conservative, integration_grid_size = grid,
@@ -44,6 +48,8 @@ test_that("the non-conservative update adds each subject's censoring contributio
     changed <- fit(both, FALSE, 2, grid = 8L)
     expect_equal(changed$estimate$Main_analysis$Time_horizon, 2L)
     expect_equal(changed$IC, updated$IC)
+    expect_equal(max(observed$horizon), 1 / G)
+    expect_equal(max(observed$grid), 1 / G)
 })
 
 test_that("administrative follow-up without dropout gives zero censoring correction", {

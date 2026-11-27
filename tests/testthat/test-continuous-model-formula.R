@@ -34,19 +34,19 @@ continuous_formula_fixture <- function() {
 
 # Capture formulas actually passed to nuisance learners. Returning constant,
 # valid predictions keeps the test focused on formula construction.
-continuous_formula_spy <- function() {
+continuous_formula_spy <- function(prediction = 0.5) {
     captured <- list()
     learner <- function(character_formula, data, intervened_data,
                         time_variable = NULL, ...) {
         captured[[length(captured) + 1L]] <<- list(
             formula = character_formula, time_variable = time_variable)
-        list(predicted_values = rep(0.5, nrow(intervened_data)), fit = list())
+        list(predicted_values = rep(prediction, nrow(intervened_data)), fit = list())
     }
     list(learner = learner, calls = function() captured)
 }
 
 continuous_formula_fit <- function(x, treatment, censor, refit = TRUE) {
-    run_rtmle(x, learner = "learn_glm", estimator = "one-step",
+    run_rtmle(x, learner = continuous_formula_spy(0.1)$learner, estimator = "one-step",
               propensity_learner = treatment$learner,
               censoring_learner = list(name = "censor_spy", fun = censor$learner,
                                        marginal_censoring = FALSE),
@@ -57,7 +57,7 @@ continuous_formula_fit_marginal <- function(x, treatment, censor, formula = NULL
     censoring <- list(name = "censor_spy", fun = censor$learner,
                       marginal_censoring = TRUE)
     if (!is.null(formula)) censoring$marginal_censoring_formula <- formula
-    run_rtmle(x, learner = "learn_glm", estimator = "one-step",
+    run_rtmle(x, learner = continuous_formula_spy(0.1)$learner, estimator = "one-step",
               propensity_learner = treatment$learner, censoring_learner = censoring)
 }
 
@@ -230,7 +230,7 @@ test_that("custom marginal censoring formulas preserve strata and apply rules", 
 
     # Exercise a real Cox fit as well as the spy, including its strata parser.
     x <- model_formula(continuous_formula_fixture(), verbose = FALSE)
-    fit <- run_rtmle(x, learner = "learn_glm", estimator = "one-step",
+    fit <- run_rtmle(x, estimator = "one-step",
                      censoring_learner = list(name = "cox", fun = "learn_coxph",
                                               marginal_censoring_formula = ~ strata(group) + age))
     expect_true(all(is.finite(fit$estimate$Main_analysis$Estimate)))

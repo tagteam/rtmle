@@ -23,7 +23,7 @@ jobs:
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          extra-packages: any::pkgload, any::callr
+          extra-packages: any::pkgload, any::callr, github::jsohlendorff/contICEIPCW@9f248214e0f06b81127de49a871c01593ee7e736
           needs: check
 
       - name: Run extended tests

@@ -4,7 +4,8 @@ continuous_propensity <- function(prepared_data, learner = "learn_glm",
                                   exclude_latest_covariate = NULL,
                                   gbound = NULL, seed = NULL,
                                   save_fitted_objects = FALSE,
-                                  regime = NULL, model_options = NULL, event_learner = NULL) {
+                                  regime = NULL, model_options = NULL, event_learner = NULL,
+                                  keep_censoring_prediction_models = FALSE) {
     if (!is.list(prepared_data) || is.null(prepared_data$wide_data) ||
         is.null(prepared_data$info)) stop("prepared_data must come from prepare_continuous_data.")
     if (length(static_intervention) != 1L || is.na(static_intervention) ||
@@ -21,7 +22,7 @@ continuous_propensity <- function(prepared_data, learner = "learn_glm",
     }
     data <- data.table::copy(prepared_data$wide_data)
     info <- prepared_data$info
-    treatment_learner <- continuous_nuisance_learner(learner)
+    treatment_learner <- if (!is.null(learner)) continuous_nuisance_learner(learner)
     has_censoring <- any(info$is_censored)
     marginal_fit <- NULL
     models <- list(treatment = list(), censoring = list())
@@ -31,7 +32,9 @@ continuous_propensity <- function(prepared_data, learner = "learn_glm",
     censoring <- continuous_censoring_specification(censoring_learner)
     event_model <- if (!is.null(event_learner)) continuous_event_specification(event_learner)
     needs_grid <- !is.null(event_model) && has_censoring
-    grid <- if (needs_grid) list(event_learner = event_model, censoring = censoring)
+    needs_cutoff <- has_censoring && (needs_grid || keep_censoring_prediction_models)
+    grid <- if (needs_grid) list(event_learner = event_model)
+    cutoff_models <- if (needs_cutoff) list(specification = censoring)
     if (has_censoring) {
         if (is.null(censoring)) stop("A censoring learner is required when censoring is present.")
         hazard_learner <- censoring$learner
@@ -49,7 +52,7 @@ continuous_propensity <- function(prepared_data, learner = "learn_glm",
     if (has_censoring && censoring$time_varying) {
         shared_censoring <- continuous_fit_censoring(prepared_data, censoring, model_options, call_hazard)
         models$censoring$time_varying <- shared_censoring$fitted
-        if (needs_grid) grid$shared_censoring <- shared_censoring
+        if (needs_cutoff) cutoff_models$shared <- shared_censoring
     }
     # A marginal model is fitted once using baseline predictors. Its saved fit
     # is then used to predict survival across each person's event intervals.
@@ -109,7 +112,7 @@ continuous_propensity <- function(prepared_data, learner = "learn_glm",
         continuous_nuisance_predictions(marginal_fit, nrow(training), "Censoring", TRUE)
         marginal_formula <- formula
         models$censoring$marginal <- marginal_fit
-        if (needs_grid) grid$marginal_censoring <- list(fit = marginal_fit, formula = formula)
+        if (needs_cutoff) cutoff_models$marginal <- list(fit = marginal_fit, formula = formula)
     }
 
     # At each event index, predict the probability of remaining uncensored
@@ -156,9 +159,9 @@ continuous_propensity <- function(prepared_data, learner = "learn_glm",
                     save_fitted_objects = TRUE), hazard_learner$args))
                 probabilities <- continuous_nuisance_predictions(fitted, nrow(prediction), "Censoring", TRUE)
                 models$censoring[[column]] <- fitted
-                if (fit_grid_model)
-                    grid$conditional_censoring[[endpoint]] <- list(formula = formula, fit = fitted,
-                                                                   training = prediction)
+                if (needs_cutoff && (k < last_event || pooled_column))
+                    cutoff_models$conditional[[endpoint]] <- list(formula = formula, fit = fitted,
+                                                                   training = prediction, rows = rows)
             }
             if (fit_grid_model) {
                 # Model the gap duration given the history at entry, including
@@ -227,34 +230,36 @@ continuous_propensity <- function(prepared_data, learner = "learn_glm",
     }
     # Baseline treatment is modeled for everyone; later treatment models are
     # fitted only at observed treatment opportunities, using pre-decision history.
-    baseline_covariates <- setdiff(prepared_data$baseline_covariates, "A_0")
-    baseline_covariates <- continuous_history(data, prepared_data$time_covariates,
-                                               baseline_covariates,
-                                               "baseline", k = 0L,
-                                               model_options = model_options,
-                                               outcome_name = "A_0")
-    baseline <- fit_treatment(seq_len(nrow(data)), "A_0", baseline_covariates, 0L)
-    data.table::set(data, j = "propensity_0", value = baseline$probabilities)
-    models$treatment$A_0 <- baseline$fitted
-    if (last_event > 1L) for (k in seq_len(last_event - 1L)) {
-        rows <- which(data[[paste0("event_", k)]] == "A")
-        column <- paste0("propensity_", k)
-        data.table::set(data, j = column, value = rep(NA_real_, nrow(data)))
-        if (!length(rows)) next
-        covariates <- continuous_history(data[rows], prepared_data$time_covariates,
-                                          prepared_data$baseline_covariates, "propensity", lag, k,
-                                          exclude_latest_covariate,
-                                          model_options = model_options,
-                                          outcome_name = paste0("A_", k))
-        fitted <- fit_treatment(rows, paste0("A_", k), covariates, k)
-        data.table::set(data, i = rows, j = column, value = fitted$probabilities)
-        models$treatment[[paste0("A_", k)]] <- fitted$fitted
+    if (!is.null(treatment_learner)) {
+        baseline_covariates <- setdiff(prepared_data$baseline_covariates, "A_0")
+        baseline_covariates <- continuous_history(data, prepared_data$time_covariates,
+                                                   baseline_covariates, "baseline", k = 0L,
+                                                   model_options = model_options,
+                                                   outcome_name = "A_0")
+        baseline <- fit_treatment(seq_len(nrow(data)), "A_0", baseline_covariates, 0L)
+        data.table::set(data, j = "propensity_0", value = baseline$probabilities)
+        models$treatment$A_0 <- baseline$fitted
+        for (k in seq_len(last_event - 1L)) {
+            rows <- which(data[[paste0("event_", k)]] == "A")
+            column <- paste0("propensity_", k)
+            data.table::set(data, j = column, value = rep(NA_real_, nrow(data)))
+            if (!length(rows)) next
+            covariates <- continuous_history(data[rows], prepared_data$time_covariates,
+                                              prepared_data$baseline_covariates, "propensity", lag, k,
+                                              exclude_latest_covariate,
+                                              model_options = model_options,
+                                              outcome_name = paste0("A_", k))
+            fitted <- fit_treatment(rows, paste0("A_", k), covariates, k)
+            data.table::set(data, i = rows, j = column, value = fitted$probabilities)
+            models$treatment[[paste0("A_", k)]] <- fitted$fitted
+        }
     }
     out <- list(data = data, prepared_data_object = prepared_data,
                 marginal_censoring_fit = marginal_fit, models = models,
                 diagnostics = list(learner_warnings = learner_warnings),
                 static_intervention = static_intervention)
     if (needs_grid) out$grid_survival <- grid
+    if (needs_cutoff) out$censoring_prediction <- cutoff_models
     class(out) <- "debiased_prepared"
     out
 }

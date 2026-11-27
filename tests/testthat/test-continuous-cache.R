@@ -110,7 +110,56 @@ test_that("changing estimator keeps estimates and influence curves consistent", 
     expect_equal(as.character(unique(x$estimate$Main_analysis$Estimator)), "tmle")
     expect_equal(nrow(x$estimate$Main_analysis), 2L)
     expect_equal(mean(x$IC$risk$Always_A$time_horizon_1), 0, tolerance = 1e-8)
-    x <- run_rtmle(x, estimator = "g-formula", refit = FALSE)
+    x <- run_rtmle(x, estimator = "sequential_regression", refit = FALSE)
     expect_true(all(is.na(x$estimate$Main_analysis$Standard_error)))
     expect_true(all(is.na(summary(x)$Standard_error)))
+})
+
+test_that("continuous sequential regression uses censoring weights without fitting propensities", {
+    data <- continuous_example()
+    data$baseline_data$L_0 <- rep(0:1, 2)
+    data$timevarying_data$L <- data$baseline_data$L_0
+    data$timevarying_data$event[1L] <- "C"
+    data$timevarying_data$time[1L] <- 1
+    x <- continuous_analysis(data, regimes = "Always_A")
+
+    outcome <- function(character_formula, data, intervened_data, ...) {
+        list(predicted_values = rep(mean(data$rtmle_outcome), nrow(intervened_data)))
+    }
+    allow_propensity <- FALSE
+    propensity_calls <- 0L
+    propensity <- function(character_formula, data, intervened_data, ...) {
+        if (!allow_propensity) stop("Sequential regression must not fit treatment propensities.")
+        propensity_calls <<- propensity_calls + 1L
+        list(predicted_values = rep(0.5, nrow(intervened_data)))
+    }
+    censoring <- list(name = "cox", fun = "learn_coxph", marginal_censoring_formula = ~ 1)
+    fit <- function(x, estimator, ...) {
+        run_rtmle(x, estimator = estimator, learner = outcome,
+                  propensity_learner = propensity, censoring_learner = censoring, ...)
+    }
+
+    # At time 1 the Cox censoring hazard jumps by 1/4. The outcome at
+    # time 2 contributes exp(1/4) to the pseudo-outcome regression.
+    pooled <- fit(x, "sequential_regression")
+    estimate <- pooled$estimate$Main_analysis
+    expect_identical(as.character(estimate$Estimator), "sequential_regression")
+    expect_equal(estimate$Estimate, exp(1/4) / 4)
+    expect_equal(estimate$ICE_IPCW, estimate$Estimate)
+    expect_identical(estimate$IPW, NA_real_)
+    expect_identical(estimate$Standard_error, NA_real_)
+    expect_equal(pooled$IC$risk$Always_A$time_horizon_1, rep(NA_real_, 4))
+    expect_length(pooled$continuous_nuisance$Always_A$models$treatment, 0L)
+
+    # Only the two baseline-treated people enter the stratified regression.
+    stratified <- fit(pooled, "g-formula", refit = FALSE,
+                      stratify_sequential_regression = TRUE)
+    expect_identical(as.character(stratified$estimate$Main_analysis$Estimator),
+                     "sequential_regression")
+    expect_equal(stratified$estimate$Main_analysis$Estimate, exp(1/4) / 2)
+
+    allow_propensity <- TRUE
+    updated <- fit(pooled, "one-step", refit = FALSE)
+    expect_identical(propensity_calls, 1L)
+    expect_equal(updated$continuous_nuisance$Always_A$data$propensity_0, rep(0.5, 4))
 })

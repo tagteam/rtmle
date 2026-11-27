@@ -47,7 +47,7 @@ source_fit <- function(d, horizons = 720, marginal = TRUE, source_learner = "oip
 
 rtmle_fit <- function(d, horizons = 720, marginal = TRUE, exclude = NULL,
                       stratify = FALSE, intervene_all = FALSE, censoring_formula = NULL,
-                      learner = "learn_oipcw", scale_pseudo_outcome = NULL) {
+                      learner = "learn_oipcw") {
     d <- copy_data(d)
     x <- rtmle::rtmle_init(c(0, horizons), name_id = "id", name_time = "time",
         name_outcome = "Y", name_competing = "D", name_censoring = "C", continuous_time = TRUE)
@@ -65,8 +65,7 @@ rtmle_fit <- function(d, horizons = 720, marginal = TRUE, exclude = NULL,
         time_horizon = seq_along(horizons),
         estimator = "one-step", exclude_latest_covariate = exclude,
         stratify_sequential_regression = stratify,
-        intervene_all_sequential_regression = intervene_all,
-        scale_pseudo_outcome = scale_pseudo_outcome)
+        intervene_all_sequential_regression = intervene_all)
 }
 
 # Unpenalized Gaussian regression is included as an additional direct check.
@@ -94,7 +93,7 @@ cases <- list(
     list(name = "custom marginal censoring formula", uncensored = FALSE, competing = FALSE, censoring_formula = "~ age + A_0 + L_0"),
     list(name = "source time reparameterization (this fixture)", uncensored = FALSE, competing = TRUE, reduce_time = TRUE),
     list(name = "unpenalized Gaussian learner (additional)", uncensored = FALSE, competing = TRUE,
-         source_learner = "lm", learner = gaussian_learner, scale_pseudo_outcome = FALSE),
+         source_learner = "lm", learner = gaussian_learner),
     list(name = "covariate changes at treatment events", uncensored = FALSE, competing = TRUE,
          joint_covariate_events = TRUE)
 )
@@ -118,7 +117,7 @@ for (case in cases) {
         }
         shared <- case[intersect(names(case), c("horizons", "marginal", "exclude", "stratify", "intervene_all", "censoring_formula"))]
         source_args <- c(list(d = d), shared, case[intersect(names(case), c("source_learner", "reduce_time"))])
-        target_args <- c(list(d = d), shared, case[intersect(names(case), c("learner", "scale_pseudo_outcome"))])
+        target_args <- c(list(d = d), shared, case[intersect(names(case), "learner")])
         source <- do.call(source_fit, source_args)
         target <- do.call(rtmle_fit, target_args)
         fits[[name]] <- list(contICEIPCW = source, rtmle = target)

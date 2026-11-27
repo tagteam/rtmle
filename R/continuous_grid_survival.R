@@ -67,26 +67,7 @@ continuous_grid_survival <- function(nuisance, k, pooled, rows, u, from, jump_ro
         any(from < start | from > u))
         stop("Invalid cell start for grid survival prediction.")
     survival <- predict_event(from, seq_along(rows), FALSE)
-    censoring <- grid$censoring
-    if (!censoring$marginal && !censoring$time_varying) {
-        conditional <- grid$conditional_censoring[[endpoint]]
-        prediction <- conditional$training[index]
-        data.table::set(prediction, j = endpoint, value = u - start)
-        G <- predict_model(conditional, censoring$learner, conditional$training,
-                           prediction, NULL, FALSE, "Censoring")
-    } else {
-        prediction <- nuisance$data[rows]
-        data.table::set(prediction, j = endpoint, value = u)
-        if (censoring$marginal) {
-            G <- predict_model(grid$marginal_censoring, censoring$learner,
-                               nuisance$prepared_data_object$data_marginal_censoring,
-                               prediction, start_name, FALSE, "Censoring")
-        } else {
-            G <- continuous_predict_censoring(grid$shared_censoring, prediction, endpoint,
-                start_name, censoring, function(args) do.call(censoring$learner$fun, args),
-                left_limit = FALSE)
-        }
-    }
+    G <- continuous_censoring_at_cutoff(nuisance, k, pooled, rows, u)
     list(event = survival, censoring = G,
          event_at_jump = predict_event(u[jump_rows], jump_rows, TRUE))
 }

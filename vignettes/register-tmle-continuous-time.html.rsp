@@ -247,15 +247,14 @@
 class="verbatim">contICEIPCW</code> is available through the usual <code
 class="verbatim">rtmle</code> analysis pipeline. Treatment <code
 class="verbatim">A</code> is binary. Static interventions set its value
-at baseline and at observed treatment opportunities.
-For experimental non-conservative estimation, call
-<code>run_rtmle(x, estimator = "one-step", conservative = FALSE)</code>.
-This adds the censoring-martingale correction to the point estimate and the
-influence function used for inference. The event-time survival model uses
-the observed history at each event index. The correction uses 100 equal
-subintervals up to each analysis horizon by default. Set
-<code>integration_grid_size</code> to change the grid resolution. TMLE uses the
-conservative influence function.</p>
+at baseline and at observed treatment opportunities. The experimental
+non-conservative one-step estimator adds the censoring-martingale
+correction to the point estimate and the influence function used for
+inference. The event-time survival model uses the observed history at
+each event index. The correction uses 100 equal subintervals up to each
+analysis horizon by default. Set <code
+class="verbatim">integration_grid_size</code> to change the grid
+resolution. TMLE uses the conservative influence function.</p>
 <h1 id="data">Data</h1>
 <p>Baseline data use <code class="verbatim">add_baseline_data</code>.
 The other input tables follow <code
@@ -319,7 +318,7 @@ class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1
 <span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>x <span class="ot">&lt;-</span> <span class="fu">regime</span>(x, <span class="st">&quot;Never_A&quot;</span>, <span class="at">intervention =</span> <span class="dv">0</span>, <span class="at">treatment_variables =</span> <span class="st">&quot;A&quot;</span>)</span>
 <span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>x <span class="ot">&lt;-</span> <span class="fu">target</span>(x, <span class="st">&quot;risk&quot;</span>, <span class="at">regimes =</span> <span class="fu">c</span>(<span class="st">&quot;Always_A&quot;</span>, <span class="st">&quot;Never_A&quot;</span>))</span>
 <span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>x <span class="ot">&lt;-</span> <span class="fu">model_formula</span>(x)</span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>x <span class="ot">&lt;-</span> <span class="fu">run_rtmle</span>(x, <span class="at">learner =</span> <span class="st">&quot;learn_glm&quot;</span>, <span class="at">estimator =</span> <span class="st">&quot;one-step&quot;</span>,</span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>x <span class="ot">&lt;-</span> <span class="fu">run_rtmle</span>(x, <span class="at">learner =</span> <span class="st">&quot;learn_oipcw&quot;</span>, <span class="at">estimator =</span> <span class="st">&quot;one-step&quot;</span>,</span>
 <span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>               <span class="at">propensity_learner =</span> <span class="st">&quot;learn_glm&quot;</span>,</span>
 <span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>               <span class="at">censoring_learner =</span> <span class="fu">list</span>(<span class="at">name =</span> <span class="st">&quot;cox&quot;</span>, <span class="at">fun =</span> <span class="st">&quot;learn_coxph&quot;</span>))</span>
 <span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(x)</span>
@@ -389,16 +388,27 @@ censoring times are present. These models use absolute follow-up time;
 <code class="verbatim">marginal_censoring = FALSE</code> without <code
 class="verbatim">time_varying = TRUE</code> retains the existing
 separately fitted models for elapsed times between events.</p>
-<p>Use <code>estimator = "tmle"</code> for sequential targeting, or
-<code>learner = "learn_oipcw"</code> for the unscaled logistic
-estimating-equation outcome learner. Learners also accept the named
-lists, custom functions, and outcome/treatment ensembles used in
-discrete-time analyses. Ordinary outcome learners use scaled IPCW
-pseudo-outcomes, so censored data can be analysed with <code
-class="verbatim">learn_glm</code>, <code
-class="verbatim">learn_glmnet</code>, or <code
-class="verbatim">learn_ranger</code>. See <code>?run_rtmle</code> for
-the continuous-time options and the locations of model summaries and
-influence curves.</p>
+<p>Use <code>estimator = "tmle"</code> for sequential targeting. The
+default outcome learner, <code class="verbatim">learn_oipcw</code>, fits
+a logistic estimating equation to IPCW pseudo-outcomes, which may exceed
+one. Named learner specifications, custom functions, and ensembles use
+the same interface as in discrete-time analyses. See
+<code>?run_rtmle</code> for the continuous-time options and the
+locations of model summaries and influence curves.</p>
+<h2 id="non-conservative-one-step-estimation">Non-conservative one-step
+estimation</h2>
+<p>Use <code>conservative = FALSE</code> to add the censoring-martingale
+correction. This example uses <code class="verbatim">learn_oipcw</code>
+at the analysis horizon and <code class="verbatim">ipcw_glm</code> at
+the interior grid times. The grid learner fits logistic regressions to
+the unweighted pseudo-outcomes with inverse censoring probability
+weights.</p>
+<div class="sourceCode" id="cb3" data-org-language="R"><pre
+class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>fit_corrected <span class="ot">&lt;-</span> <span class="fu">run_rtmle</span>(x, <span class="at">estimator =</span> <span class="st">&quot;one-step&quot;</span>, <span class="at">time_horizon =</span> <span class="dv">2</span>,</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>                           <span class="at">learner =</span> <span class="st">&quot;learn_oipcw&quot;</span>, <span class="at">propensity_learner =</span> <span class="st">&quot;learn_glm&quot;</span>,</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>                           <span class="at">censoring_learner =</span> <span class="fu">list</span>(<span class="at">name =</span> <span class="st">&quot;cox&quot;</span>, <span class="at">fun =</span> <span class="st">&quot;learn_coxph&quot;</span>),</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>                           <span class="at">conservative =</span> <span class="cn">FALSE</span>, <span class="at">grid_learner =</span> <span class="st">&quot;ipcw_glm&quot;</span>,</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>                           <span class="at">integration_grid_size =</span> <span class="dv">20</span><span class="dt">L</span>)</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(fit_corrected)</span></code></pre></div>
 </body>
 </html>

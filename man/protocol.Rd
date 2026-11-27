@@ -66,13 +66,13 @@ treatment variables assigned at the same node are factorized. One of
 \code{"joint"}, \code{"sequential"}, or \code{"independent"}; the
 default is \code{"joint"}.}
 
-\item{adherence_model_strata}{Optional character vector of prepared-data
+\item{adherence_model_strata}{Optional character vector
 variables defining subgroups in which separate adherence propensities are
-fitted. This argument is only for dynamic treatment rules. If it is
+fitted. This argument is only used for dynamic treatment rules. If it is
 \code{NULL}, one pooled binary adherence model is fitted. Unsuffixed
-time-varying names refer to the latest pre-decision value. At a discrete
+time-varying names refer to the latest pre-decision value. At a discrete-time
 node \code{k}, \code{bleeding} resolves to \code{bleeding_{k-1}}
-(or \code{bleeding_0} at baseline). At a continuous treatment event,
+(or \code{bleeding_0} at baseline). At a continuous-time treatment event,
 it resolves to \code{bleeding_k}, including measurements made at the
 treatment event. The current treatment assignment is not pre-decision.
 The argument defines fitting strata and does not add model predictors.
@@ -116,12 +116,10 @@ For a dynamic rule, \code{rtmle} constructs a binary adherence response
   history through that event and an intervention table containing the
   nominal value at each index up to that event. It must return a binary
   \code{A_<time_node>} for each subject. Covariate-only events contribute
-  to the history but do not themselves assign treatment. The optional
+  to the history but are not considered. The option
   \code{adherence_model_strata} specifies separate adherence models using
   variables known before each treatment decision. A rule may retain the observed treatment
   for some histories, with adherence probability one for those histories.
-  Rules that flip the current observed treatment are not supported, as
-  they require different weighting.
 }
 \examples{
 x <- rtmle_init(time_grid = 0:3, name_id = "id",

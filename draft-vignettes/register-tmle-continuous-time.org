@@ -8,9 +8,8 @@
 Event-time ICE-IPCW estimation from =contICEIPCW= is available through the
 usual =rtmle= analysis pipeline. Treatment =A= is binary. Static interventions
 set its value at baseline and at observed treatment opportunities.
-For experimental non-conservative estimation, call
-~run_rtmle(x, estimator = "one-step", conservative = FALSE)~.
-This adds the censoring-martingale correction to the point estimate and the
+The experimental non-conservative one-step estimator adds the
+censoring-martingale correction to the point estimate and the
 influence function used for inference. The event-time survival model uses
 the observed history at each event index. The correction uses 100 equal
 subintervals up to each analysis horizon by default. Set
@@ -78,7 +77,7 @@ x <- regime(x, "Always_A", intervention = 1, treatment_variables = "A")
 x <- regime(x, "Never_A", intervention = 0, treatment_variables = "A")
 x <- target(x, "risk", regimes = c("Always_A", "Never_A"))
 x <- model_formula(x)
-x <- run_rtmle(x, learner = "learn_glm", estimator = "one-step",
+x <- run_rtmle(x, learner = "learn_oipcw", estimator = "one-step",
                propensity_learner = "learn_glm",
                censoring_learner = list(name = "cox", fun = "learn_coxph"))
 summary(x)
@@ -141,10 +140,25 @@ Use the Cox learner when tied censoring times are present. These models use
 absolute follow-up time; =marginal_censoring = FALSE= without =time_varying = TRUE=
 retains the existing separately fitted models for elapsed times between events.
 
-Use ~estimator = "tmle"~ for sequential targeting, or ~learner = "learn_oipcw"~
-for the unscaled logistic estimating-equation outcome learner. Learners also
-accept the named lists, custom functions, and outcome/treatment ensembles
-used in discrete-time analyses. Ordinary outcome learners use scaled IPCW
-pseudo-outcomes, so censored data can be analysed with =learn_glm=,
-=learn_glmnet=, or =learn_ranger=. See ~?run_rtmle~ for the continuous-time
-options and the locations of model summaries and influence curves.
+Use ~estimator = "tmle"~ for sequential targeting. The default outcome learner,
+=learn_oipcw=, fits a logistic estimating equation to IPCW pseudo-outcomes,
+which may exceed one. Named learner specifications, custom functions, and
+ensembles use the same interface as in discrete-time analyses. See
+~?run_rtmle~ for the continuous-time options and the locations of model
+summaries and influence curves.
+
+** Non-conservative one-step estimation
+
+Use ~conservative = FALSE~ to add the censoring-martingale correction. This
+example uses =learn_oipcw= at the analysis horizon and =ipcw_glm= at the
+interior grid times. The grid learner fits logistic regressions to the
+unweighted pseudo-outcomes with inverse censoring probability weights.
+
+#+BEGIN_SRC R
+fit_corrected <- run_rtmle(x, estimator = "one-step", time_horizon = 2,
+                           learner = "learn_oipcw", propensity_learner = "learn_glm",
+                           censoring_learner = list(name = "cox", fun = "learn_coxph"),
+                           conservative = FALSE, grid_learner = "ipcw_glm",
+                           integration_grid_size = 20L)
+summary(fit_corrected)
+#+END_SRC

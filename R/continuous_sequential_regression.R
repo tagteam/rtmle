@@ -1,10 +1,10 @@
 continuous_sequential_regression <- function(nuisance, th, a, learner, estimator,
                                               lag, seed, prediction_range,
-                                              scale_pseudo_outcome, stratify,
+                                              stratify,
                                               intervene_all, intervention_hook,
                                               save_fitted_objects, regime = NULL,
                                               model_options = NULL, q_grid = NULL,
-                                              grid_learner = learner, scale_grid_outcome = scale_pseudo_outcome) {
+                                             grid_learner = learner) {
     prepared <- nuisance$prepared_data_object
     last_event <- prepared$info$last_event[match(th, prepared$info$time_horizon)]
     data <- data.table::copy(nuisance$data)
@@ -14,9 +14,12 @@ continuous_sequential_regression <- function(nuisance, th, a, learner, estimator
         column <- paste0(variable, "_", last_event)
         data.table::set(data, j = column, value = data[[paste0(variable, "_pooled_", last_event)]])
     }
-    weights <- continuous_weights(data, a, last_event, regime)
+    fit_propensity <- estimator != "sequential_regression"
+    weights <- if (fit_propensity || stratify)
+        continuous_weights(data, a, last_event, regime, inverse_probability = fit_propensity)
     n <- nrow(data)
-    next_Q <- residuals <- ipw <- numeric(n)
+    next_Q <- numeric(n)
+    if (fit_propensity) residuals <- ipw <- numeric(n)
     models <- diagnostics <- list()
     if (!is.null(q_grid)) {
         if (!is.numeric(q_grid) || length(q_grid) < 2L || any(!is.finite(q_grid)) ||
@@ -37,15 +40,16 @@ continuous_sequential_regression <- function(nuisance, th, a, learner, estimator
         if (!length(rows)) next
         training <- data.table::copy(data[rows])
         event <- training[[paste0("event_", k)]]
-        before_horizon <- training[[paste0("time_", k)]] <= th
+        event_time <- training[[paste0("time_", k)]]
+        before_horizon <- event_time <= th
         # The outcome is one at an observed outcome event, the next Q at a
         # treatment or covariate event, and zero after other terminal events
         # or beyond the horizon. Divide by survival over the interval for IPCW.
-        response <- as.numeric(before_horizon & event == "Y") +
+        unweighted <- as.numeric(before_horizon & event == "Y") +
             as.numeric(before_horizon & event %in% c("A", "L")) * next_Q[rows]
         G <- training[[paste0("survival_censoring_", k)]]
         if (any(!is.finite(G)) || any(G <= 0 | G > 1)) stop("Invalid censoring survival probabilities.")
-        response <- response / G
+        response <- unweighted / G
         data.table::set(training, j = "rtmle_pseudo_outcome", value = response)
         # Fit on observed histories and predict on histories with treatment set
         # by the regime. By default only the most recent decision is changed.
@@ -69,6 +73,10 @@ continuous_sequential_regression <- function(nuisance, th, a, learner, estimator
             }
             data.table::set(prediction, i = intervention_rows, j = paste0("A_", j), value = desired)
         }
+        if (!fit_propensity && !stratify && k == 1L &&
+            !any(training$A_0 == prediction$A_0, na.rm = TRUE)) {
+            stop("No baseline treatment support for the requested regime.")
+        }
         if (!is.null(intervention_hook)) {
             prediction <- intervention_hook(prediction, k - 1)
             if (!is.data.frame(prediction) || !identical(prediction$id, training$id))
@@ -82,25 +90,49 @@ continuous_sequential_regression <- function(nuisance, th, a, learner, estimator
                                           model_options = model_options,
                                           outcome_name = paste0(outcome_name, "_", k))
         formula <- continuous_nuisance_formula("rtmle_pseudo_outcome", covariates)
-        # Ordinary bounded outcome learners need a response in [0, 1]. Undo
-        # this scaling immediately after prediction; the IPCW outcome itself
-        # can exceed one.
-        fit_q <- function(y, train_rows, prediction_data, save_fit, outcome_learner, scale_outcome) {
-            response_scale <- if (scale_outcome) max(1, y[train_rows]) else 1
-            data.table::set(training, j = "rtmle_pseudo_outcome", value = y / response_scale)
-            fit <- fitter(intervention_node = k, learner = outcome_learner, formula = formula,
-                          data = training[train_rows], intervened_data = prediction_data,
-                          id_variable = "id", minority_threshold = 0, seed = seed,
-                          save_fitted_objects = save_fit)
-            values <- as.numeric(fit$predicted_values) * response_scale
+        fit_q <- function(cutoff, train_rows, prediction_data, save_fit, outcome_learner) {
+            observed_by_cutoff <- event_time <= cutoff
+            if (is_ipcw_glm_learner(outcome_learner)) {
+                # Before the cutoff, only observed non-dropout events contribute.
+                # Beyond it the pseudo-outcome is zero and observed at the cutoff.
+                at_cutoff <- observed_by_cutoff[train_rows]
+                survival <- G[train_rows]
+                later <- which(!at_cutoff)
+                if (length(later)) {
+                    survival[later] <- continuous_censoring_at_cutoff(
+                        nuisance, k, k == last_event, rows[train_rows[later]], cutoff)
+                }
+                ipcw <- as.numeric(!at_cutoff | event[train_rows] != "C") / survival
+                fit_data <- training[train_rows]
+                data.table::set(fit_data, j = "rtmle_pseudo_outcome", value = unweighted[train_rows] * at_cutoff)
+                fit_covariates <- continuous_varying_covariates(fit_data, covariates)
+                weighted_formula <- continuous_nuisance_formula("rtmle_pseudo_outcome", fit_covariates)
+                warnings <- character()
+                fit <- withCallingHandlers(do.call(outcome_learner$fun, c(list(
+                    character_formula = weighted_formula, data = fit_data,
+                    intervened_data = prediction_data, weights = ipcw,
+                    save_fitted_objects = save_fit), outcome_learner$args)), warning = function(w) {
+                    warnings <<- c(warnings, conditionMessage(w))
+                    invokeRestart("muffleWarning")
+                })
+                if (length(warnings)) {
+                    fit$diagnostics <- list(learner_warnings = data.table::data.table(
+                        learner = outcome_learner$name, warning = warnings))
+                }
+            } else {
+                data.table::set(training, j = "rtmle_pseudo_outcome", value = response * observed_by_cutoff)
+                fit <- fitter(intervention_node = k, learner = outcome_learner, formula = formula,
+                              data = training[train_rows], intervened_data = prediction_data,
+                              id_variable = "id", minority_threshold = 0, seed = seed,
+                              save_fitted_objects = save_fit)
+            }
+            values <- as.numeric(fit$predicted_values)
             if (length(values) != nrow(prediction_data) || any(!is.finite(values)))
                 stop("Outcome learner must return one finite prediction per row.")
             fit$predicted_values <- pmax(0, pmin(1, values))
-            fit$response_scale <- response_scale
             fit
         }
-        fitted <- fit_q(response, learning_rows, prediction, save_fitted_objects,
-                        learner, scale_pseudo_outcome)
+        fitted <- fit_q(th, learning_rows, prediction, save_fitted_objects, learner)
         diagnostics <- continuous_merge_diagnostics(diagnostics, fitted$diagnostics)
         Q <- fitted$predicted_values
         epsilon <- NULL
@@ -115,18 +147,16 @@ continuous_sequential_regression <- function(nuisance, th, a, learner, estimator
             values <- matrix(0, nrow = n, ncol = length(q_grid))
             values[rows, length(q_grid)] <- Q
             entry <- previous_time[rows]
-            event_time <- training[[paste0("time_", k)]]
             for (j in which(q_grid > 0 & q_grid < th)) {
                 u <- q_grid[j]
                 eligible <- which(entry < u)
                 train_rows <- learning_rows[entry[learning_rows] < u]
-                truncated <- response * (event_time <= u)
-                if (!any(truncated[train_rows] > 0)) next
+                if (!any(event_time[train_rows] <= u & unweighted[train_rows] > 0)) next
                 # Grid refinements must not change the random draws used by
                 # stochastic learners for the original horizon regressions.
                 grid_fit <- tryCatch(
-                    withr::with_preserve_seed(fit_q(truncated, train_rows, prediction[eligible], FALSE,
-                                                    grid_learner, scale_grid_outcome)),
+                    withr::with_preserve_seed(fit_q(u, train_rows, prediction[eligible], FALSE,
+                                                    grid_learner)),
                     error = function(e) stop("Grid outcome regression failed at event ", k,
                         ", u = ", format(u), " (tau = ", format(th), "): ",
                         conditionMessage(e), call. = FALSE)
@@ -138,25 +168,26 @@ continuous_sequential_regression <- function(nuisance, th, a, learner, estimator
         }
         # Accumulate the influence-curve residual and the direct IPW estimate
         # before carrying the intervened Q backwards to the preceding event.
-        residuals[rows] <- residuals[rows] + weights[rows, k] * (response - Q)
-        ipw[rows] <- ipw[rows] + weights[rows, k] * as.numeric(before_horizon & event == "Y") / G
+        if (fit_propensity) {
+            residuals[rows] <- residuals[rows] + weights[rows, k] * (response - Q)
+            ipw[rows] <- ipw[rows] + weights[rows, k] * as.numeric(before_horizon & event == "Y") / G
+        }
         next_Q[rows] <- Q
         # Retain summaries; full objects follow run_rtmle's existing setting.
         models[[paste0("event_", k)]] <- list(formula = formula,
                                               fit_summary = fitted$fit_summary,
                                               fit = if (save_fitted_objects) fitted$fit,
-                                              response_scale = fitted$response_scale,
                                               epsilon = epsilon)
     }
     # After the baseline iteration next_Q is each subject's baseline Q.
     ice_ipcw <- mean(next_Q)
-    ic <- residuals + next_Q - ice_ipcw
+    ic <- if (fit_propensity) residuals + next_Q - ice_ipcw else rep(NA_real_, n)
     estimate <- if (estimator == "one-step") ice_ipcw + mean(ic) else ice_ipcw
-    # A plug-in g-formula analysis has no influence-based standard error here.
-    se <- if (estimator == "g-formula") NA_real_ else stats::sd(ic) / sqrt(n)
-    result <- list(estimate = estimate, se = se, ic = if (estimator == "g-formula") rep(NA_real_, n) else ic,
+    se <- if (fit_propensity) stats::sd(ic) / sqrt(n) else NA_real_
+    result <- list(estimate = estimate, se = se, ic = ic,
                    ice_ipcw = if (estimator == "tmle") NA_real_ else ice_ipcw,
-                   ipw = mean(ipw), models = models, diagnostics = diagnostics)
+                   ipw = if (fit_propensity) mean(ipw) else NA_real_,
+                   models = models, diagnostics = diagnostics)
     if (!is.null(q_grid)) {
         result$q_grid <- grid_predictions
         result$weights <- weights

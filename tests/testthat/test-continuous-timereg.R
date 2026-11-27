@@ -124,13 +124,13 @@ test_that("time-varying Aalen and Cox-Aalen learners run in the public workflow"
         formula <- if (learner == "learn_aalen") ~ -1 + factor(L) else ~ -1 + factor(L) + prop(A)
         specification <- list(name = learner, fun = learner, time_varying = TRUE,
                                censoring_formula = formula)
-        result <- run_rtmle(x, learner = "learn_glm", propensity_learner = "learn_glm",
+        result <- run_rtmle(x, learner = "learn_oipcw", propensity_learner = "learn_glm",
                             censoring_learner = specification, estimator = "one-step",
                             save_fitted_objects = TRUE)
         expect_true(all(is.finite(result$estimate$Main_analysis$Estimate)))
         fit <- result$continuous_nuisance$Always_A$models$censoring$time_varying
         expect_false(is.null(fit$fit))
-        other <- run_rtmle(changed, learner = "learn_glm", propensity_learner = "learn_glm",
+        other <- run_rtmle(changed, learner = "learn_oipcw", propensity_learner = "learn_glm",
                            censoring_learner = specification, estimator = "one-step",
                            save_fitted_objects = FALSE)
         expect_equal(result$estimate$Main_analysis$Estimate, other$estimate$Main_analysis$Estimate)

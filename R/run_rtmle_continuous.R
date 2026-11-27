@@ -1,14 +1,13 @@
 # Continuous-time ICE-IPCW recursion. The models and results use the same
 # learner protocol and result tables as the discrete-time analysis.
-run_rtmle_continuous <- function(x, targets = NULL, learner = "learn_glm",
+run_rtmle_continuous <- function(x, targets = NULL, learner = NULL,
                                  estimator = "tmle", time_horizon = NULL,
                                  refit = TRUE, seed = NULL, subsets = NULL,
                                  keep_influence = TRUE, save_fitted_objects = FALSE,
                                  progressbar = 0, verbose = FALSE,
-                                 propensity_learner = learner,
+                                 propensity_learner = if (is.null(learner)) "learn_glm" else learner,
                                  censoring_learner = "learn_coxph",
                                  conservative = TRUE, lag = NULL, gbound = NULL,
-                                 scale_pseudo_outcome = NULL,
                                  stratify_sequential_regression = FALSE,
                                  intervene_all_sequential_regression = FALSE,
                                  intervention_hook = NULL,
@@ -19,8 +18,9 @@ run_rtmle_continuous <- function(x, targets = NULL, learner = "learn_glm",
     if (!is.logical(conservative) || length(conservative) != 1L || is.na(conservative))
         stop("conservative must be TRUE or FALSE.")
     if (!is.character(estimator) || length(estimator) != 1L ||
-        !estimator %in% c("tmle", "one-step", "g-formula"))
-        stop("Continuous estimator must be 'tmle', 'one-step', or 'g-formula'.")
+        !estimator %in% c("tmle", "one-step", "sequential_regression", "g-formula"))
+        stop("Continuous estimator must be 'tmle', 'one-step', or 'sequential_regression'.")
+    if (estimator == "g-formula") estimator <- "sequential_regression"
     if (!conservative) {
         if (estimator != "one-step")
             stop("The experimental non-conservative correction requires estimator = 'one-step'.")
@@ -57,35 +57,46 @@ run_rtmle_continuous <- function(x, targets = NULL, learner = "learn_glm",
     if (intervene_all_sequential_regression &&
         any(vapply(x$regimes[regimes], function(regime) isTRUE(regime$dynamic_intervention), logical(1))))
         stop("intervene_all_sequential_regression is not supported for dynamic continuous-time regimes.")
-    parsed <- continuous_nuisance_learner(learner)
+    outcome_learner <- if (is.null(learner)) "learn_oipcw" else learner
+    parsed <- continuous_nuisance_learner(outcome_learner)
     parsed_grid <- if (!conservative && !missing(grid_learner)) continuous_nuisance_learner(grid_learner) else parsed
-    default_scaling <- function(spec) {
-        !(identical(spec$fun, "learn_oipcw") || identical(spec$fun, learn_oipcw))
+    for (spec in list(parsed, parsed_grid)) {
+        if (any(vapply(spec$learners, is_ipcw_glm_learner, logical(1)))) {
+            stop("ipcw_glm must be specified as a single continuous-time outcome or grid learner.")
+        }
     }
-    scale_grid_outcome <- if (is.null(scale_pseudo_outcome)) default_scaling(parsed_grid) else scale_pseudo_outcome
-    if (is.null(scale_pseudo_outcome)) scale_pseudo_outcome <- default_scaling(parsed)
-    if (!is.logical(scale_pseudo_outcome) || length(scale_pseudo_outcome) != 1L || is.na(scale_pseudo_outcome))
-        stop("scale_pseudo_outcome must be TRUE or FALSE.")
+    weighted_outcome <- is_ipcw_glm_learner(parsed)
+    fit_propensity <- estimator != "sequential_regression"
+    if (fit_propensity && weighted_outcome && missing(propensity_learner)) propensity_learner <- "learn_glm"
+    parsed_propensity <- if (fit_propensity) continuous_nuisance_learner(propensity_learner)
+    if (is_ipcw_glm_learner(parsed_propensity)) stop("ipcw_glm is an outcome learner.")
     prepared <- data.table::copy(x$continuous_prepared)
     model_options <- x$models$continuous
     # Cache only nuisance fits, which do not depend on the outcome learner.
-    specification <- list(propensity = continuous_nuisance_learner(propensity_learner),
+    specification <- list(propensity = parsed_propensity,
                            censoring = if (!is.null(censoring_learner)) continuous_censoring_specification(censoring_learner),
-                           lag = lag, gbound = gbound, model_options = model_options,
-                           exclude_latest_covariate = exclude_latest_covariate,
+                           lag = lag, gbound = if (fit_propensity) gbound, model_options = model_options,
+                           exclude_latest_covariate = if (fit_propensity) exclude_latest_covariate,
                            seed = seed, save_fitted_objects = save_fitted_objects)
     if (!conservative) specification$event_learner <- continuous_nuisance_learner(event_learner)
+    if (weighted_outcome || !conservative) specification$keep_censoring_prediction_models <- TRUE
     # Changing the outcome analysis invalidates results, but can leave the
     # nuisance fits reusable. Changing their specification invalidates both.
     analysis_specification <- list(nuisance = specification, learner = parsed,
-                                    estimator = estimator, scale_pseudo_outcome = scale_pseudo_outcome,
+                                    estimator = estimator,
                                     stratify = stratify_sequential_regression,
                                     intervene_all = intervene_all_sequential_regression,
                                     intervention_hook = intervention_hook)
     if (!conservative) {
         analysis_specification$integration_grid_size <- integration_grid_size
         analysis_specification$grid_learner <- parsed_grid
-        analysis_specification$scale_grid_outcome <- scale_grid_outcome
+    }
+    has_censoring <- any(prepared$info$is_censored)
+    experimental <- continuous_experimental_features(analysis_specification, x$regimes[regimes], has_censoring)
+    if (length(experimental)) {
+        message("The continuous-time RTMLE implementation is highly experimental for ",
+                paste(experimental, collapse = ", "),
+                ". These features lack a successful comparison with contICEIPCW.")
     }
     if (!identical(analysis_specification, x$continuous_analysis_specification)) {
         x$estimate <- x$IC <- x$sequential_outcome_regression <- NULL
@@ -101,11 +112,13 @@ run_rtmle_continuous <- function(x, targets = NULL, learner = "learn_glm",
         a <- regime$static_intervention
         if (is.null(x$continuous_nuisance[[regime_name]])) {
             x$continuous_nuisance[[regime_name]] <- continuous_propensity(
-                prepared, learner = propensity_learner, censoring_learner = censoring_learner,
-                lag = lag, static_intervention = a, exclude_latest_covariate = exclude_latest_covariate,
-                gbound = gbound, seed = seed, save_fitted_objects = save_fitted_objects,
+                prepared, learner = if (fit_propensity) propensity_learner,
+                censoring_learner = censoring_learner, lag = lag, static_intervention = a,
+                exclude_latest_covariate = specification$exclude_latest_covariate,
+                gbound = specification$gbound, seed = seed, save_fitted_objects = save_fitted_objects,
                 regime = regime, model_options = model_options,
-                event_learner = if (!conservative) event_learner)
+                event_learner = if (!conservative) event_learner,
+                keep_censoring_prediction_models = weighted_outcome)
             if (!save_fitted_objects) {
                 x$continuous_nuisance[[regime_name]]$marginal_censoring_fit <- NULL
                 x$continuous_nuisance[[regime_name]]$models$censoring <- lapply(
@@ -120,16 +133,16 @@ run_rtmle_continuous <- function(x, targets = NULL, learner = "learn_glm",
         # Nuisance models are shared across horizons for the same regime.
         for (node in time_horizon) {
             th <- x$time_grid_scale[node + 1L]
-            grid <- if (!conservative && any(prepared$info$is_censored))
+            grid <- if (!conservative && has_censoring)
                 seq(0, th, length.out = integration_grid_size + 1)
             if (verbose || progressbar) message("Continuous time: ", regime_name, ", horizon ", th)
             fitted <- continuous_sequential_regression(
                 nuisance, th, a, parsed, estimator, lag, seed,
-                x$tuning_parameters$prediction_range, scale_pseudo_outcome,
+                x$tuning_parameters$prediction_range,
                 stratify_sequential_regression, intervene_all_sequential_regression,
                 intervention_hook, save_fitted_objects, regime,
                 model_options = model_options, q_grid = grid,
-                grid_learner = parsed_grid, scale_grid_outcome = scale_grid_outcome)
+                grid_learner = parsed_grid)
             if (!is.null(grid)) {
                 phi_c <- withr::with_preserve_seed(
                     continuous_censoring_correction(nuisance, th, grid, fitted$q_grid, fitted$weights))
@@ -166,7 +179,7 @@ run_rtmle_continuous <- function(x, targets = NULL, learner = "learn_glm",
     data.table::setkeyv(new_results, c("Target", "Regime", "Target_parameter", "Time_horizon", "Estimator"))
     x$estimate$Main_analysis <- new_results
     x$learner <- parsed
-    x$unparsed_learner <- learner
+    x$unparsed_learner <- outcome_learner
     x$continuous_nuisance_specification <- specification
     x$continuous_analysis_specification <- analysis_specification
     x$run_time_horizons <- sort(unique(c(x$run_time_horizons, time_horizon)))
